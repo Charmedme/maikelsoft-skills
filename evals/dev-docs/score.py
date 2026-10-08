@@ -54,6 +54,10 @@ def score_run(ev, out_path, inputs):
         elif kind == "not_contains":
             hits = re.findall(value, text)
             ok, got = not hits, len(hits)
+        elif kind in ("exists", "absent"):
+            found = [f for f in value if (out_path.parent / f).is_file()]
+            wrong = [f for f in value if f not in found] if kind == "exists" else found
+            ok, got = not wrong, wrong
         elif kind == "go_flags_exist":
             code = pathlib.Path(resolve(value, inputs)).read_text(encoding="utf-8")
             names = set(re.findall(r'flag\.\w+Var\(&\w+, "([\w-]+)"', code)) | {"h", "help"}

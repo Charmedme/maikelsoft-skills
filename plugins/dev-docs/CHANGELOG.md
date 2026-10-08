@@ -6,6 +6,22 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-08
+
+### Added
+
+- Each skill asks for the output format: "Markdown, HTML, PDF, or Word?" The human can select more than one. The skill preselects the format of the request or the repo, and else Markdown.
+- `convert.py` in each skill: makes HTML, PDF, and Word files from the checked Markdown file with pandoc. When a tool is missing, it gives the command to run.
+- A new workflow step, Convert, between Check and Report.
+- `doc-plan` asks for the format one time, and the plan table has a format column.
+- Three evals: the skill asks for the format, the unattended default, and a Word request.
+
+### Changed
+
+- Markdown is always the source. The skill writes and checks the Markdown file before it makes another format.
+- In an unattended run, the skill uses Markdown when there is no signal, and lists the format as an open question.
+- `doc-code-comments` does not ask for the format. `CHANGELOG.md` and `README.md` in the repo stay Markdown.
+
 ## [1.1.0] - 2026-10-08
 
 ### Added
@@ -43,6 +59,7 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 - `doccheck.py --comments <source file>`: checks the comments in source code and gives the line numbers of the source file.
 - A fallback for unattended runs: when no human can answer, the skill takes the best signal, continues, and lists each choice as an open question.
 
-[Unreleased]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-docs-v1.1.0...HEAD
+[Unreleased]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-docs-v1.2.0...HEAD
+[1.2.0]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-docs-v1.1.0...dev-docs-v1.2.0
 [1.1.0]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-docs-v1.0.0...dev-docs-v1.1.0
 [1.0.0]: https://github.com/Charmedme/maikelsoft-skills/releases/tag/dev-docs-v1.0.0

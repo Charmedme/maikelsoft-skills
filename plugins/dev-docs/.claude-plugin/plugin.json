@@ -1,7 +1,7 @@
 {
   "name": "dev-docs",
   "displayName": "Developer docs",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Write, rewrite, and review developer documentation in ASD-STE100 Simplified Technical English or Begrijpelijk Nederlands (B1). Ten skills, one for each document type, with a built-in checker.",
   "author": {
     "name": "Maikel",

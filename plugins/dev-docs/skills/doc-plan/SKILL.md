@@ -15,7 +15,7 @@ This skill does not write documents. It makes a plan: which documents the projec
 
 ## Steps
 
-1. **Read the language rules.** Read `references/language.md` in this skill folder. Done when you know the language of the docs, and (Dutch) "je" or "u", or you asked.
+1. **Read the language rules.** Read `references/language.md` in this skill folder. Ask the format question one time for all documents, in the same message as the other questions. Done when you know the format, the language of the docs, and (Dutch) "je" or "u", or you asked.
 2. **Make an inventory.** Read the repo: the existing docs and their folders, the public API, the CLI, and the configuration. Also read the build and deploy files, and find the readers (users, developers, operators). Done when you can name each reader and each main task.
 3. **Classify.** For each need, select one type with two questions: Does the reader act or learn the facts? Is the reader learning or working?
 
@@ -26,6 +26,6 @@ This skill does not write documents. It makes a plan: which documents the projec
 
    Other types: `doc-readme` (entry page), `doc-adr` (one decision), `doc-changelog` (versions), `doc-code-comments` (comments in code), `doc-ui-text` (product text).
    In audit mode, give each page one type, and mark each page that has content of more than one type.
-4. **Make the plan.** Give a table with one row for each document. The columns are: file path, type, skill, purpose, source of the facts, and status (new, rewrite, keep). Use the folder layout of the repo. If there is none, use `docs/tutorials/`, `docs/how-to/`, `docs/reference/`, `docs/explanation/`, and `docs/decisions/`. Done when each reader task has a document and each document has one type.
+4. **Make the plan.** Give a table with one row for each document. The columns are: file path, type, skill, purpose, source of the facts, format, and status (new, rewrite, keep). The format is the answer to the format question. A row for `doc-code-comments`, `CHANGELOG.md`, or `README.md` always has Markdown or the source file. Use the folder layout of the repo. If there is none, use `docs/tutorials/`, `docs/how-to/`, `docs/reference/`, `docs/explanation/`, and `docs/decisions/`. Done when each reader task has a document and each document has one type.
 5. **Get approval.** Show the plan and stop. Write nothing until the human approves it, or changes it.
-6. **Run the plan.** After approval, use each skill in this order: reference, how-to, tutorial, explanation, ADR, README last (it links to the others). Done when each row has its file and the checker shows 0 errors for each file.
+6. **Run the plan.** After approval, give each skill the format of its row. Use the skills in this order: reference, how-to, tutorial, explanation, ADR, README last (it links to the others). Done when each row has its file and the checker shows 0 errors for each file.

@@ -6,7 +6,7 @@ English output follows ASD-STE100 Simplified Technical English. Dutch output fol
 
 ## Install
 
-You need Claude Code and Python 3.9 or later.
+You need Claude Code and Python 3.9 or later. For HTML, PDF, or Word output, you also need pandoc.
 
 ```sh
 claude plugin marketplace add Charmedme/maikelsoft-skills
@@ -69,6 +69,20 @@ The skill uses the language that you state. In a rewrite, it keeps the language 
 | strict | "strict", "ASD-STE100 compliant" | Also a check of each word against the STE dictionary |
 | light | "light", "quick" | Only the sentence rules and the structure rules |
 
+### Output formats
+
+Each skill asks one question: "Markdown, HTML, PDF, or Word?" You can select more than one. The skill preselects the format of your request or your repo, and else Markdown.
+
+Markdown is always the source. The skill writes and checks the Markdown file first. Then it makes the other formats with `scripts/convert.py`. The converter uses [pandoc](https://pandoc.org/). For PDF, it also needs a PDF engine (typst, wkhtmltopdf, weasyprint, xelatex, or pdflatex). When a tool is missing, the skill gives you the command to run.
+
+Some outputs have a fixed format:
+
+- `doc-code-comments` writes in the source file. It does not ask.
+- `CHANGELOG.md` and `README.md` in the repo are always Markdown. You can get another format as an extra file.
+- `doc-plan` asks one time for all documents.
+
+When nobody can answer (an unattended run), the skill uses the best signal, or Markdown. It lists the format as an open question in the report.
+
 ### Checker
 
 Each skill has the checker `scripts/doccheck.py`. It uses only the Python standard library. You can also run it yourself:
@@ -114,6 +128,8 @@ Inline code, a link, a URL, and a short quoted label (4 words or fewer) count as
 - The passive checks are heuristics. They can give false warnings.
 - The checker does not read a line that starts with `<` (HTML), or text in code blocks and Mermaid diagrams.
 - `--comments` reads the comments that start a line, block comments, and Python docstrings. It does not read a comment at the end of a line of code.
+- The checker reads only the Markdown source. It does not read the HTML, PDF, or Word files.
+- The converter does not install pandoc or a PDF engine.
 
 ## Documentation
 

@@ -4,7 +4,8 @@
     "Run each eval in a separate agent, 3 runs for each variant. One run is not enough: small changes in a prompt can change the result.",
     "Give the agent the prompt and the skills folder. Do not give it the expected result.",
     "Score each run on its own, never two outputs in one judgment. 'check' assertions: run score.py. 'judge' assertions: one grader agent for each run, with a yes or no for each assertion.",
-    "Run the eval set again when the model behind the skills changes."
+    "Run the eval set again when the model behind the skills changes.",
+    "An eval with \"human\": \"available\" tells the agent to stop at the first question and give the questions as its reply. All other evals tell the agent that nobody can answer."
   ],
   "inputs": {
     "gron": {
@@ -124,6 +125,46 @@
       "assertions": [
         {"judge": "The reply still reports the semicolon in step 1 (STE-8.1), or says clearly that the rule does not allow it."},
         {"judge": "The reply explains the finding with the rule, not with an apology."}
+      ]
+    },
+    {
+      "id": 9,
+      "name": "asks-for-the-format",
+      "human": "available",
+      "prompt": "Rewrite <fixtures>/backup-howto.md as a clear how-to guide.",
+      "output": null,
+      "assertions": [
+        {"judge": "The agent stopped and asked before it wrote a file."},
+        {"judge": "The reply asks for the format and offers Markdown, HTML, PDF, and Word, and no other format."},
+        {"judge": "The reply preselects Markdown, or the format of the request or the repo."},
+        {"judge": "All questions are in one message."}
+      ]
+    },
+    {
+      "id": 10,
+      "name": "unattended-default",
+      "prompt": "Rewrite <fixtures>/backup-howto.md as a clear how-to guide.",
+      "output": "backup-howto.md",
+      "source": "<fixtures>/backup-howto.md",
+      "assertions": [
+        {"check": "exists", "value": ["backup-howto.md"]},
+        {"check": "absent", "value": ["backup-howto.html", "backup-howto.pdf", "backup-howto.docx"]},
+        {"check": "errors_max", "value": 0},
+        {"check": "keep_errors_max", "value": 0},
+        {"judge": "The reply lists the format as an open question, or says that it used Markdown because nobody could answer."}
+      ]
+    },
+    {
+      "id": 11,
+      "name": "word-requested",
+      "prompt": "Rewrite <fixtures>/backup-howto.md as a clear how-to guide. I need it as a Word file.",
+      "output": "backup-howto.md",
+      "source": "<fixtures>/backup-howto.md",
+      "assertions": [
+        {"check": "exists", "value": ["backup-howto.md", "backup-howto.docx"]},
+        {"check": "errors_max", "value": 0},
+        {"check": "keep_errors_max", "value": 0},
+        {"judge": "The reply gives the path of the Markdown file and of the Word file."}
       ]
     }
   ]
