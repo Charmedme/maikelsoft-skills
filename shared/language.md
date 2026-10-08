@@ -22,6 +22,7 @@ Write in Begrijpelijk Nederlands, taalniveau B1. Apply the STE rules for sentenc
 - **"je" or "u" (Dutch).** Use the form that the human states, in all text. When there is no signal, ask.
 - **Terms.** Use one term for one item. Take the terms from the human first, then from a glossary in the repo (for example `CONTEXT.md`), then from the code and the existing docs. When two terms compete for one item, ask.
 - **Facts.** Write only facts that the human, the code, or the existing docs give. When a fact is missing, ask. Mark a fact that you cannot confirm as `TODO:`.
+- **Format.** Ask the human each time: "Markdown, HTML, PDF, or Word?" The human can select more than one. Preselect the format from the request or the repo, and else Markdown. Do not offer other formats. A skill with a fixed format says so and does not ask.
 - **No human to ask.** When nobody can answer (a scheduled or unattended run), take the best signal, continue, and list each choice as an open question in the report.
 
 ## Strictness
@@ -31,6 +32,19 @@ Write in Begrijpelijk Nederlands, taalniveau B1. Apply the STE rules for sentenc
 - **light**: the human says "light" or "quick". Apply only the sentence rules and the structure rules.
 
 The standard is a free download at asd-ste100.org.
+
+## Output formats
+
+Markdown is always the source. Write the Markdown file, check it, and then make each other format from it. Keep the Markdown file next to the output.
+
+Run the converter:
+
+```
+python3 <this skill folder>/scripts/convert.py <file.md> --to html,pdf,docx
+```
+
+- `MADE <file>`: the format is ready.
+- `NOT MADE <format>`: a tool is missing. Use the `docx` or `pdf` skill of your environment if it has one. For HTML, you can write the HTML from the Markdown yourself. Else, give the human the command that the converter printed.
 
 ## Check
 

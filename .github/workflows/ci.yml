@@ -21,7 +21,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
-      - name: Unit tests of the checker
+      - name: Unit tests of the checker and the converter
         run: python3 -m unittest discover -s tests -v
 
       - name: Shared files are in sync with each skill

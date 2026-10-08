@@ -7,6 +7,7 @@
 Each skill gets:
     references/language.md  <- shared/language.md
     scripts/doccheck.py     <- shared/doccheck.py
+    scripts/convert.py      <- shared/convert.py
 
 A SKILL.md that has these two marker lines also gets shared/workflow.md between them:
     <!-- BEGIN shared/workflow.md -->
@@ -22,6 +23,7 @@ SHARED = ROOT / "shared"
 COPIES = {
     SHARED / "language.md": pathlib.Path("references") / "language.md",
     SHARED / "doccheck.py": pathlib.Path("scripts") / "doccheck.py",
+    SHARED / "convert.py": pathlib.Path("scripts") / "convert.py",
 }
 BLOCK = re.compile(r"(<!-- BEGIN shared/workflow\.md -->\n).*?(<!-- END shared/workflow\.md -->)", re.DOTALL)
 
