@@ -1,0 +1,14 @@
+{
+  "name": "dev-docs",
+  "displayName": "Developer docs",
+  "version": "1.0.0",
+  "description": "Write, rewrite, and review developer documentation in ASD-STE100 Simplified Technical English or Begrijpelijk Nederlands (B1). Ten skills, one for each document type, with a built-in checker.",
+  "author": {
+    "name": "Maikel",
+    "url": "https://github.com/Charmedme"
+  },
+  "homepage": "https://github.com/Charmedme/maikelsoft-skills/tree/main/plugins/dev-docs",
+  "repository": "https://github.com/Charmedme/maikelsoft-skills",
+  "license": "MIT",
+  "keywords": ["documentation", "technical-writing", "asd-ste100", "dutch", "readme", "adr", "changelog"]
+}

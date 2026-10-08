@@ -1,0 +1,70 @@
+---
+name: doc-reference
+description: Reference documentation for code, APIs, CLIs, and configuration. Use when the user wants an API reference, endpoint docs, CLI options, configuration keys, or error codes documented, rewritten, or reviewed.
+allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/doccheck.py *)
+---
+
+# Reference
+
+Reference documentation describes the machinery: each command, endpoint, class, option, or error. The reader looks something up while they work. The structure of the document follows the structure of the code.
+
+- Use it for: an API, a CLI, a configuration file, a data model, error codes.
+- Not for: steps to do a task (`doc-howto`), the reason for a design (`doc-explanation`).
+
+<!-- BEGIN shared/workflow.md -->
+## Modes
+
+- **Write**: make a new document.
+- **Rewrite**: improve an existing document. Keep each fact, code sample, command, link, and heading anchor. Change the structure and the language.
+- **Review**: report the findings. Change nothing.
+
+## Steps
+
+1. **Read the language rules.** Read `references/language.md` in this skill folder. Done when you know the language, the level, and (Dutch) "je" or "u". If one is not clear, ask the human before you continue.
+2. **Collect the facts.** Read the request, the code, and the existing docs. Done when each section of the template below has its facts. A section with a missing fact has a question for the human or a `TODO:`.
+3. **Find the source errors.** Rewrite and review mode. Look for commands that cannot work and tools that are old. Also look for two names for one item, and facts that do not agree with the code. Done when you have a list of source errors. Do not fix a source error silently, and do not copy it silently.
+4. **Make the outline.** Use the template below. Give each part of the content one document type. If content of a different type has its own document, move the content there and add a link. If not, keep the content in its own section, and suggest the new document in the report. A rewrite never deletes content. Done when each heading has one purpose.
+5. **Write.** Write or rewrite mode only. In a rewrite, keep each heading that other pages can link to. If a heading must change, list the old anchor in the report. An explicit ID (`{#old-anchor}`) keeps the anchor on kramdown, MkDocs, and Hugo sites, but not on GitHub. Done when each section of the outline has its text.
+6. **Check.** Run `python3 ${CLAUDE_SKILL_DIR}/scripts/doccheck.py --level <level> <file>`. In rewrite mode, add `--source <original file>`. Outside Claude Code, use the path of the `scripts` folder of this skill. Done when the checker shows 0 errors, and you fixed each warning or gave a reason to keep it.
+7. **Report.** Give the file path, the checker summary line, the open questions, the `TODO:` items, and the source errors. In rewrite mode, also give the main changes and the changed anchors. In review mode, give each finding as: location, rule (a checker rule ID, an STE section, or "Source error"), problem, fix.
+<!-- END shared/workflow.md -->
+
+## Template
+
+Use the same entry format for each item:
+
+~~~markdown
+## `<name>`
+
+<One sentence: what it does. Simple present tense.>
+
+**Syntax**
+```
+<signature, route, or command line>
+```
+
+**Parameters**
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+
+**Returns** <type and meaning, or the response body.>
+
+**Errors**
+| Code | Cause |
+|------|-------|
+
+**Example**
+```<language>
+<smallest example that works>
+```
+~~~
+
+## Rules for this type
+
+- Take each name, type, default, and error from the source: the code, the OpenAPI file, the `--help` output, or the schema. Do not guess a default. If the source does not give it, write `TODO:`.
+- Order the items as the code does, or alphabetically. Use the same order of fields in each entry.
+- Describe. Do not instruct. Write "The command deletes the cache.", not "Use this to delete the cache."
+- Give one minimal example for each item. Put longer examples in a how-to guide and link to it.
+- Use tables for parameters. Keep each table cell to one sentence.
+- For a CLI, each option is an item. Leave out "Returns" and "Errors" when they are empty. Put the facts for the whole program (exit codes, environment variables) in their own sections after the options.
+- When a default is a behavior and not a value, describe the behavior in the Default cell: "Reads `https_proxy`".

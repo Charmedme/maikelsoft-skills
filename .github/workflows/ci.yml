@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.9", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Unit tests of the checker
+        run: python3 -m unittest discover -s tests -v
+
+      - name: Shared files are in sync with each skill
+        run: python3 scripts/sync_shared.py --check
+
+      - name: Manifests are valid JSON
+        run: |
+          python3 -m json.tool .claude-plugin/marketplace.json > /dev/null
+          for f in plugins/*/.claude-plugin/plugin.json; do python3 -m json.tool "$f" > /dev/null; done
+
+      - name: Repository docs follow the language rules
+        run: |
+          find . -name '*.md' -not -path './.git/*' -not -path './plugins/*/skills/*/references/*' -print0 \
+            | xargs -0 python3 shared/doccheck.py --level standard
+
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Validate the marketplace and each plugin
+        run: |
+          claude plugin validate .
+          for p in plugins/*/; do claude plugin validate --strict "$p"; done

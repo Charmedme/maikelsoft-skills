@@ -1,0 +1,61 @@
+{
+  "skill_name": "dev-docs",
+  "notes": "Inputs are public repositories at a fixed commit. Do not copy them into this repository. Run each prompt in a separate agent, once without the plugin (baseline) and once with it. Check each output with: python3 shared/doccheck.py [--source <original>] <output>.",
+  "inputs": {
+    "gron": {
+      "repo": "https://github.com/tomnomnom/gron",
+      "commit": "88a6234ea2d0c487090988182ad9a7cdf6def924",
+      "license": "MIT",
+      "prepare": "For eval 1, delete README.mkd, ADVANCED.mkd and docs/ before the run."
+    },
+    "haal-centraal-brp": {
+      "repo": "https://github.com/VNG-Realisatie/Haal-Centraal-BRP-bevragen",
+      "commit": "e028a8e23c1ea8e7618f3b7ead0692fdd568ed15",
+      "license": "EUPL-1.2"
+    }
+  },
+  "evals": [
+    {
+      "id": 1,
+      "name": "readme-from-code",
+      "prompt": "Write a README.md for the Go command-line tool whose source code is in <gron>.",
+      "files": ["gron/"],
+      "expected_output": "doc-readme is selected. The first sentence names the reader and the main use. Every option in the README exists in main.go. The checker shows 0 errors. The report lists open questions and source errors."
+    },
+    {
+      "id": 2,
+      "name": "rewrite-english-howto",
+      "prompt": "Rewrite <gron>/ADVANCED.mkd so that it is clearer and easier to follow.",
+      "files": ["gron/ADVANCED.mkd"],
+      "expected_output": "doc-howto is selected. With --source, the checker shows 0 errors: no lost or changed code line, no lost link. The missing semicolon in the source output is reported as a source error, not fixed in the code block."
+    },
+    {
+      "id": 3,
+      "name": "rewrite-dutch-getting-started",
+      "prompt": "Herschrijf <haal-centraal-brp>/docs/v2/getting-started.md zodat de pagina duidelijker en makkelijker te volgen is.",
+      "files": ["haal-centraal-brp/docs/v2/getting-started.md"],
+      "expected_output": "The output is Dutch with 'je'. No sentence has more than 20 words. With --source, the checker shows 0 errors and no changed anchor. The report gives the .yml/.yaml difference and the wrong folder for the kubectl step as source errors."
+    },
+    {
+      "id": 4,
+      "name": "plan-stops-for-approval",
+      "prompt": "Document this project for me: the Go CLI in <gron>. It has almost no docs.",
+      "files": ["gron/"],
+      "expected_output": "doc-plan is selected. It gives a table of documents with path, type, skill, and source, and it stops for approval. It writes no document."
+    },
+    {
+      "id": 5,
+      "name": "review-code-comments",
+      "prompt": "Review the comments and doc comments in <gron>/ungron.go. Do not change the file.",
+      "files": ["gron/ungron.go"],
+      "expected_output": "doc-code-comments is selected in review mode. It runs the checker with --comments. Each finding has a location, a rule, a problem, and a fix. Comments that do not agree with the code are source errors."
+    },
+    {
+      "id": 6,
+      "name": "dutch-ui-text-asks-address-form",
+      "prompt": "Ik heb Nederlandse UI-teksten nodig voor het verwijderen van een order: de knop, de bevestigingsdialoog, de foutmelding als de order al verzonden is, en de lege staat.",
+      "files": [],
+      "expected_output": "doc-ui-text is selected. It asks 'je' or 'u' before it writes, or, in an unattended run, lists the choice as an open question. It does not invent a fix for the error message."
+    }
+  ]
+}
