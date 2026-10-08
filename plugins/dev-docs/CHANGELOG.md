@@ -16,6 +16,7 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ### Changed
 
+- `doc-readme`: the first two sentences name the main use and the reader. Before, the first sentence had to name both.
 - `doccheck.py --source` ignores HTML comments. A rewrite does not have to keep a link or a code line that is only in a hidden comment.
 
 ## [1.0.0] - 2026-10-08

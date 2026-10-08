@@ -46,9 +46,23 @@ The variants:
 - **A side effect.** The Dutch UI example says that the human chose "u". With the examples, 2 of 3 UI runs chose "u". Without them, 0 of 3 did. The model copied the default from the example.
 - **Decision.** The examples are not in release 1.1.0. They are in `fixtures/candidate-examples/`, so that a later test on a new model can use them again.
 
+### Re-grade after the README rule change
+
+After this test, the human relaxed the README rule: the first two sentences must name the main use and the reader. Separate graders scored the same 6 README outputs again against the new assertion.
+
+| Eval | v3 | v3ex |
+|------|----|------|
+| README: reader and use in the first two sentences | 1/3 | 3/3 |
+| **Total (judge), new assertion** | **30/36** | **34/36** |
+
+- The README example puts the reader in the second sentence. This is the pattern that the new rule asks for, and all 3 v3ex runs followed it.
+- In the 2 failed v3 runs, the text addresses the reader only as "you". It does not name a group of readers.
+- One grader passed such a run, but its own evidence showed only "you". The author scored that run as a fail, because the assertion says that "you" alone does not name a reader.
+- The examples are still not adopted. The gain is in one eval with 3 runs, and the side effect in the UI text is still there. To adopt only the README example is an open decision for the human.
+
 ## Other findings
 
-- In 5 of 6 README runs, the reader is in the second sentence, not in the first. The skill asks for the first sentence.
+- In 5 of 6 README runs, the reader is in the second sentence, not in the first. The human then relaxed the rule to the first two sentences (see the re-grade above).
 - In 5 of 6 Dutch rewrites, one step has two instructions ("Download ... en lees het"). The source has the same step.
 
 ## Limits

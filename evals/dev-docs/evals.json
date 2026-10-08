@@ -33,7 +33,7 @@
         {"check": "errors_max", "value": 0},
         {"check": "go_flags_exist", "value": "<gron>/main.go"},
         {"judge": "The agent used doc-readme."},
-        {"judge": "The first sentence names the reader and the main use of the tool."},
+        {"judge": "The first two sentences name the main use of the tool and the reader."},
         {"judge": "The quick start shows a command and its expected output."},
         {"judge": "The reply lists open questions or source errors."}
       ]
