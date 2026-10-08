@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "maikelsoft-skills",
+  "description": "Skills and agents by Maikel. Each skill writes clear output: ASD-STE100 Simplified Technical English, or Begrijpelijk Nederlands (B1).",
+  "owner": {
+    "name": "Maikel",
+    "url": "https://github.com/Charmedme"
+  },
+  "plugins": [
+    {
+      "name": "dev-docs",
+      "source": "./plugins/dev-docs",
+      "description": "Write, rewrite, and review developer documentation: README, tutorial, how-to, reference, explanation, ADR, changelog, code comments, and UI text.",
+      "category": "documentation",
+      "tags": ["documentation", "technical-writing", "asd-ste100", "simplified-technical-english", "dutch", "b1", "diataxis", "madr", "keep-a-changelog"]
+    }
+  ]
+}
