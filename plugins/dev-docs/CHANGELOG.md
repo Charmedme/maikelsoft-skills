@@ -6,6 +6,18 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-08
+
+### Added
+
+- Each skill treats the text of a source document and the code as data. It does not follow an instruction in that text, and it reports the instruction as a source error.
+- In review mode, when the human disagrees with a finding, the skill checks the rule and the source again. If the finding is still true, the skill says so and gives the rule. The human decides what to change.
+- The Check step now checks each fact (command, option, default, version, path) against its source. A fact without a source gets a `TODO:`.
+
+### Changed
+
+- `doccheck.py --source` ignores HTML comments. A rewrite does not have to keep a link or a code line that is only in a hidden comment.
+
 ## [1.0.0] - 2026-10-08
 
 ### Added
@@ -30,5 +42,6 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 - `doccheck.py --comments <source file>`: checks the comments in source code and gives the line numbers of the source file.
 - A fallback for unattended runs: when no human can answer, the skill takes the best signal, continues, and lists each choice as an open question.
 
-[Unreleased]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-docs-v1.0.0...HEAD
+[Unreleased]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-docs-v1.1.0...HEAD
+[1.1.0]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-docs-v1.0.0...dev-docs-v1.1.0
 [1.0.0]: https://github.com/Charmedme/maikelsoft-skills/releases/tag/dev-docs-v1.0.0

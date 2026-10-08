@@ -17,7 +17,10 @@ Each new skill follows these four steps:
 
 1. **Research.** Study the subject from more than one view: the standards, the practice, the readers, and the existing tools.
 2. **Concept.** Write the concept, and ask the human to decide each open point.
-3. **Test.** Run the skill on realistic tasks, in separate agents, against a baseline without the skill. Compare more than one version. Show the results.
+3. **Test.** Run the skill on realistic tasks, in separate agents, against a baseline without the skill. Compare more than one version. Show the results. Use the method in `evals/<plugin>/evals.json`:
+   - 3 runs for each variant, because small changes in a prompt can change the result.
+   - Binary assertions. A script scores the `check` assertions (`evals/<plugin>/score.py`).
+   - One grader agent for each run scores the `judge` assertions. Never put two outputs in one judgment.
 4. **Build.** After the human approves, add the skill to a plugin and update the files in "Release a change".
 
 ## Add a skill
@@ -60,6 +63,8 @@ Each new skill follows these four steps:
 3. Add an entry to `plugins/<plugin>/CHANGELOG.md` in the Keep a Changelog 1.1.0 format.
 4. Update the version in the plugin table of `README.md`.
 5. Merge to `main`, then add the tag `<plugin>-v<version>`.
+
+When the model behind the skills changes, run the eval set again. The same prompt can give a different result on a new model.
 
 ## Language of the docs
 

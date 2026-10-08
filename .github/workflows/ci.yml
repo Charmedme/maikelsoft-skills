@@ -34,7 +34,7 @@ jobs:
 
       - name: Repository docs follow the language rules
         run: |
-          find . -name '*.md' -not -path './.git/*' -not -path './plugins/*/skills/*/references/*' -print0 \
+          find . -name '*.md' -not -path './.git/*' -not -path './plugins/*/skills/*/references/*' -not -path './evals/*/fixtures/*' -print0 \
             | xargs -0 python3 shared/doccheck.py --level standard
 
   validate:

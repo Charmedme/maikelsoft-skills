@@ -57,7 +57,7 @@ Each skill has three modes:
 
 - **Write**: make a new document.
 - **Rewrite**: improve a document. The skill keeps each fact, code line, link, and heading anchor.
-- **Review**: report the findings. The skill changes nothing.
+- **Review**: report the findings. The skill changes nothing. When you disagree with a finding, the skill checks the rule again and tells you if the finding is still true. You decide what to change.
 
 ### Language and strictness
 

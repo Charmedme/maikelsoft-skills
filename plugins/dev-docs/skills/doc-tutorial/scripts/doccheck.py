@@ -540,9 +540,15 @@ def facts(source: str) -> dict:
     return {"blocks": blocks, "links": links, "anchors": anchors}
 
 
+HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
+
+
 def compare(original: str, rewrite: str, name: str) -> list[Finding]:
-    """Report what a rewrite lost: code lines, link targets, heading anchors."""
-    before, after = facts(original), facts(rewrite)
+    """Report what a rewrite lost: code lines, link targets, heading anchors.
+
+    HTML comments are not visible content, so the compare ignores them on both sides.
+    """
+    before, after = facts(HTML_COMMENT.sub("", original)), facts(HTML_COMMENT.sub("", rewrite))
     out: list[Finding] = []
     kept_lines = {line for block in after["blocks"] for line in block}
     for block in before["blocks"]:

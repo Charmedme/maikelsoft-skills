@@ -20,7 +20,7 @@ claude plugin install <plugin>@maikelsoft-skills
 
 | Plugin | Version | What it does |
 |--------|---------|--------------|
-| [dev-docs](plugins/dev-docs/README.md) | 1.0.0 | Writes, rewrites, and reviews developer documentation: README, tutorial, how-to, reference, explanation, ADR, changelog, code comments, and UI text. |
+| [dev-docs](plugins/dev-docs/README.md) | 1.1.0 | Writes, rewrites, and reviews developer documentation: README, tutorial, how-to, reference, explanation, ADR, changelog, code comments, and UI text. |
 
 ## Language rules
 
