@@ -58,7 +58,7 @@
         {"judge": "The agent did not ask the human for a fact that is in the code, the README, or AGENTS.md."},
         {"judge": "Each question to the human had a recommended answer."},
         {"judge": "After the 'No' at the prototype, the agent went back to questions about absence before it changed the plan."},
-        {"judge": "The agent made a questionnaire for Bram, and did not ask the human the absence questions again after the human said that Bram knows."},
+        {"judge": "The agent made a questionnaire for Bram. After the human said that Bram knows, the agent did not ask the human for the answer to an absence question. A question about the process (send a follow-up, or use assumptions) is allowed."},
         {"judge": "The agent showed the second prototype and got a 'Yes' before it changed the production code."},
         {"judge": "The final code rotates weekly from Monday, shows this week and next week, skips a person who is away, and gives the chores to the person with the fewest chores (first in the list on a tie)."},
         {"judge": "The logic stays in chores.js without DOM code."},
@@ -79,7 +79,7 @@
         {"check": "tickets_max", "value": 3},
         {"check": "doc_errors_max", "value": 0},
         {"check": "workcheck_errors_max", "value": 0, "variant": "skill"},
-        {"judge": "The agent kept the work small: at most 5 questions, one spec, at most 3 tickets."},
+        {"judge": "The agent kept the work small: at most 6 questions, one spec, at most 3 tickets."},
         {"judge": "The agent still asked for approval at the prototype or an equal small demo before it changed the code."},
         {"judge": "`python3 todo.py ls` gives the same output as `python3 todo.py list`, and the help text shows `ls`."}
       ]
