@@ -12,7 +12,35 @@
       "source": "./plugins/dev-docs",
       "description": "Write, rewrite, and review developer documentation: README, tutorial, how-to, reference, explanation, ADR, changelog, code comments, and UI text.",
       "category": "documentation",
-      "tags": ["documentation", "technical-writing", "asd-ste100", "simplified-technical-english", "dutch", "b1", "diataxis", "madr", "keep-a-changelog"]
+      "tags": [
+        "documentation",
+        "technical-writing",
+        "asd-ste100",
+        "simplified-technical-english",
+        "dutch",
+        "b1",
+        "diataxis",
+        "madr",
+        "keep-a-changelog"
+      ]
+    },
+    {
+      "name": "dev-flow",
+      "source": "./plugins/dev-flow",
+      "description": "Plan and build a change from an idea to working code: research, questions, plan, specs, tickets, a prototype to validate, and then the build.",
+      "category": "development",
+      "tags": [
+        "planning",
+        "spec",
+        "tickets",
+        "prototype",
+        "tdd",
+        "grilling",
+        "asd-ste100",
+        "simplified-technical-english",
+        "dutch",
+        "b1"
+      ]
     }
   ]
 }

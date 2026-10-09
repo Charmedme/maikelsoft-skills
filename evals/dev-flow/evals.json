@@ -1,0 +1,88 @@
+{
+  "skill_name": "plan-and-build",
+  "method": [
+    "Run each eval in a separate agent, 3 runs for each variant. Use the prompt in runner.md.",
+    "The variant 'baseline' uses the six source skills of Matt Pocock, called one by one by the human. The variant 'skill' uses plan-and-build.",
+    "The orchestrator plays the human. It replies only from the answer sheet in humans/<eval>.md. The agent never sees the sheet.",
+    "Score each run on its own. 'check' assertions: run score.py. 'judge' assertions: one grader agent for each run, with yes or no and one line of evidence for each assertion."
+  ],
+  "inputs": {
+    "fixtures": {"path": "evals/dev-flow/fixtures", "license": "MIT (this repository)"}
+  },
+  "evals": [
+    {
+      "id": 1,
+      "name": "todo-due-dates",
+      "fixture": "todo-cli",
+      "human": "humans/todo-due-dates.md",
+      "request": "I want due dates on my to-do tasks, and a way to see what is overdue.",
+      "test_command": "python3 -m unittest discover -s tests",
+      "assertions": [
+        {"check": "tests_pass"},
+        {"check": "tests_added_min", "value": 4},
+        {"check": "commits_min", "value": 2},
+        {"check": "spec_exists"},
+        {"check": "tickets_min", "value": 2},
+        {"check": "prototype_in_history"},
+        {"check": "doc_errors_max", "value": 0},
+        {"check": "workcheck_errors_max", "value": 0, "variant": "skill"},
+        {"judge": "The agent did not ask the human for a fact that is in the code or the README."},
+        {"judge": "Each question to the human had a recommended answer."},
+        {"judge": "The agent got the human's approval of a shared understanding before it wrote the spec."},
+        {"judge": "The agent showed a prototype and asked if it is what the human wants, before it changed the production code."},
+        {"judge": "After the prototype feedback, the spec or the tickets contain the change 'overdue tasks first, with OVERDUE'."},
+        {"judge": "The tickets are vertical slices, and each ticket lists its blockers."},
+        {"judge": "The final code does what the human asked: optional due date, YYYY-MM-DD, overdue means before today and not done, a command for overdue tasks, invalid date gives exit code 1, overdue first in list."},
+        {"judge": "The final report is short and gives the test result."}
+      ]
+    },
+    {
+      "id": 2,
+      "name": "chores-rotation",
+      "fixture": "chores-web",
+      "human": "humans/chores-rotation.md",
+      "request": "Rotate the chores fairly between the people in our house, week by week.",
+      "test_command": "npm test",
+      "assertions": [
+        {"check": "tests_pass"},
+        {"check": "tests_added_min", "value": 3},
+        {"check": "commits_min", "value": 2},
+        {"check": "commit_format", "value": "^(feat|fix|test|refactor|docs|chore)(\\(.+\\))?: "},
+        {"check": "branch_format", "value": "^(feat|fix|test|refactor|docs|chore)/"},
+        {"check": "spec_exists"},
+        {"check": "tickets_min", "value": 2},
+        {"check": "questionnaire_exists"},
+        {"check": "prototype_in_history"},
+        {"check": "doc_errors_max", "value": 0},
+        {"check": "workcheck_errors_max", "value": 0, "variant": "skill"},
+        {"judge": "The agent did not ask the human for a fact that is in the code, the README, or AGENTS.md."},
+        {"judge": "Each question to the human had a recommended answer."},
+        {"judge": "After the 'No' at the prototype, the agent went back to questions about absence before it changed the plan."},
+        {"judge": "The agent made a questionnaire for Bram. After the human said that Bram knows, the agent did not ask the human for the answer to an absence question. A question about the process (send a follow-up, or use assumptions) is allowed."},
+        {"judge": "The agent showed the second prototype and got a 'Yes' before it changed the production code."},
+        {"judge": "The final code rotates weekly from Monday, shows this week and next week, skips a person who is away, and gives the chores to the person with the fewest chores (first in the list on a tie)."},
+        {"judge": "The logic stays in chores.js without DOM code."},
+        {"judge": "The final report is short and gives the test result."}
+      ]
+    },
+    {
+      "id": 3,
+      "name": "todo-alias",
+      "fixture": "todo-cli",
+      "human": "humans/todo-alias.md",
+      "request": "Let `ls` work as a short name for `list`.",
+      "test_command": "python3 -m unittest discover -s tests",
+      "assertions": [
+        {"check": "tests_pass"},
+        {"check": "tests_added_min", "value": 1},
+        {"check": "spec_exists"},
+        {"check": "tickets_max", "value": 3},
+        {"check": "doc_errors_max", "value": 0},
+        {"check": "workcheck_errors_max", "value": 0, "variant": "skill"},
+        {"judge": "The agent kept the work small: at most 6 questions, one spec, at most 3 tickets."},
+        {"judge": "The agent still asked for approval at the prototype or an equal small demo before it changed the code."},
+        {"judge": "`python3 todo.py ls` gives the same output as `python3 todo.py list`, and the help text shows `ls`."}
+      ]
+    }
+  ]
+}

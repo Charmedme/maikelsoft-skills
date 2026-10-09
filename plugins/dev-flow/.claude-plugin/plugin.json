@@ -1,0 +1,22 @@
+{
+  "name": "dev-flow",
+  "displayName": "Developer flow",
+  "version": "1.0.0",
+  "description": "Plan and build a change from an idea to working code, with the human in the loop: research, questions, plan, specs, tickets, a prototype to validate, and then the build. Output in ASD-STE100 Simplified Technical English or Begrijpelijk Nederlands (B1).",
+  "author": {
+    "name": "Maikel",
+    "url": "https://github.com/Charmedme"
+  },
+  "homepage": "https://github.com/Charmedme/maikelsoft-skills/tree/main/plugins/dev-flow",
+  "repository": "https://github.com/Charmedme/maikelsoft-skills",
+  "license": "MIT",
+  "keywords": [
+    "planning",
+    "spec",
+    "tickets",
+    "prototype",
+    "tdd",
+    "grilling",
+    "asd-ste100"
+  ]
+}
