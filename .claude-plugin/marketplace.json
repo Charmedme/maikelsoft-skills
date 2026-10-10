@@ -41,6 +41,26 @@
         "dutch",
         "b1"
       ]
+    },
+    {
+      "name": "dev-build",
+      "source": "./plugins/dev-build",
+      "description": "Build good agent skills and agents: research, concept, test, build. Skills build-skill and build-agent, with checkers. Agents for Claude Code, the Agent SDK, Managed Agents, and OpenClaw.",
+      "category": "development",
+      "tags": [
+        "skill",
+        "agent",
+        "subagent",
+        "skill-creator",
+        "claude-code",
+        "agent-sdk",
+        "managed-agents",
+        "openclaw",
+        "asd-ste100",
+        "simplified-technical-english",
+        "dutch",
+        "b1"
+      ]
     }
   ]
 }

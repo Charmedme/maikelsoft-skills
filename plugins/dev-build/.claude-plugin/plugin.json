@@ -1,0 +1,24 @@
+{
+  "name": "dev-build",
+  "displayName": "Developer build tools",
+  "version": "1.0.0",
+  "description": "Build good agent skills and agents. Two skills: build-skill (create, improve, or review a skill) and build-agent (create, improve, or review an agent for Claude Code, the Agent SDK, Managed Agents, or OpenClaw). Four steps: research, concept, test, build. Output in ASD-STE100 Simplified Technical English or Begrijpelijk Nederlands (B1).",
+  "author": {
+    "name": "Maikel",
+    "url": "https://github.com/Charmedme"
+  },
+  "homepage": "https://github.com/Charmedme/maikelsoft-skills/tree/main/plugins/dev-build",
+  "repository": "https://github.com/Charmedme/maikelsoft-skills",
+  "license": "MIT",
+  "keywords": [
+    "skill",
+    "agent",
+    "subagent",
+    "skill-creator",
+    "claude-code",
+    "agent-sdk",
+    "managed-agents",
+    "openclaw",
+    "asd-ste100"
+  ]
+}

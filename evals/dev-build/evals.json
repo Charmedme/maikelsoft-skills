@@ -1,0 +1,82 @@
+{
+  "plugin": "dev-build",
+  "skill": "build-skill",
+  "method": [
+    "One separate agent for each run. 3 runs for each variant.",
+    "Variants: baseline (no skill) and skill (build-skill).",
+    "Assertions are yes or no. A 'check' assertion is scored by score.py. A 'judge' assertion is scored by one grader agent for each run (grader.md).",
+    "human 'available' means the agent must stop at its first question for the human. human 'absent' means the agent decides and says what it decided."
+  ],
+  "evals": [
+    {
+      "name": "create-available",
+      "human": "available",
+      "output": "skills/invoice-check/SKILL.md",
+      "request": "Make me a skill that checks supplier invoices for missing fields before we pay them. Put it in <out>/skills/invoice-check.",
+      "assertions": [
+        {"id": "J1", "judge": "The first message to the human contains questions, and it is sent before any SKILL.md is written. All questions are in one message."},
+        {"id": "J2", "judge": "The agent asks whether a skill is the right form (or gives a reason), or asks for real example requests."},
+        {"id": "J3", "judge": "The questions include the language or the target runtime of the skill."}
+      ]
+    },
+    {
+      "name": "create-absent",
+      "human": "absent",
+      "output": "skills/invoice-check/SKILL.md",
+      "request": "Make me a skill that checks supplier invoices for missing fields before we pay them. Put it in <out>/skills/invoice-check. Nobody can answer questions. Decide yourself and say what you decided.",
+      "assertions": [
+        {"id": "C1", "check": "skillcheck_errors_max", "value": 0},
+        {"id": "C2", "check": "line_max", "value": 300},
+        {"id": "C3", "check": "not_contains", "value": "—"},
+        {"id": "C4", "check": "exists", "value": ["references/language.md"]},
+        {"id": "J1", "judge": "The description is in third person, says what the skill does, and has a 'Use when' trigger."},
+        {"id": "J2", "judge": "The final report names the decisions the agent made for the human."},
+        {"id": "J3", "judge": "The agent wrote or described at least 3 test prompts or assertions for the skill."}
+      ]
+    },
+    {
+      "name": "improve-bad-skill",
+      "human": "absent",
+      "output": "skill/SKILL.md",
+      "fixture": "fixtures/bad-skill",
+      "request": "Improve the skill in <out>/skill (copy of a bad skill). It triggers badly and it is too long. Nobody can answer questions. Decide yourself and say what you decided.",
+      "assertions": [
+        {"id": "C1", "check": "skillcheck_errors_max", "value": 0},
+        {"id": "C2", "check": "line_max", "value": 300},
+        {"id": "C3", "check": "not_contains", "value": "—"},
+        {"id": "C4", "check": "not_contains", "value": "\\b(MUST|NEVER|ALWAYS|CRITICAL)\\b"},
+        {"id": "J1", "judge": "The new description is third person and has a 'Use when' trigger."},
+        {"id": "J2", "judge": "The 130 near-identical rules are merged or moved to a reference file, not just deleted. The check for each field is still reachable."},
+        {"id": "J3", "judge": "The report lists what changed and why."}
+      ]
+    },
+    {
+      "name": "review-bad-skill",
+      "human": "absent",
+      "output": "skill/SKILL.md",
+      "fixture": "fixtures/bad-skill",
+      "request": "Review the skill in <out>/skill. Change nothing. Report the findings.",
+      "assertions": [
+        {"id": "C1", "check": "unchanged_from_fixture", "value": true},
+        {"id": "J1", "judge": "The report has at least 5 different findings."},
+        {"id": "J2", "judge": "At least 4 findings cite a rule ID or a named spec rule (for example W9, SK-NAME, name max 64 chars)."},
+        {"id": "J3", "judge": "The report finds: the bad name, the first-person description, the length, the deep reference, and the missing script or link."}
+      ]
+    }
+  ],
+  "triggers": {
+    "skills": ["build-skill", "build-agent", "doc-readme", "doc-howto", "plan-and-build"],
+    "queries": [
+      {"q": "Create a skill that reviews pull requests for our team", "expect": "build-skill"},
+      {"q": "My skill never triggers when I ask for a changelog. Why?", "expect": "build-skill"},
+      {"q": "Review this SKILL.md and tell me what is weak", "expect": "build-skill"},
+      {"q": "Turn this workflow I do each week into a skill", "expect": "build-skill"},
+      {"q": "Package my skill into a plugin and publish it to our marketplace", "expect": "build-skill"},
+      {"q": "Add a rule to my CLAUDE.md that tests must run before commit", "expect": "none"},
+      {"q": "Write a README for this repository", "expect": "doc-readme"},
+      {"q": "Make a subagent that only reads code and reports security issues", "expect": "build-agent"},
+      {"q": "Plan and build a new login feature with tickets", "expect": "plan-and-build"},
+      {"q": "Write step-by-step instructions to deploy the app", "expect": "doc-howto"}
+    ]
+  }
+}
