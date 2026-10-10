@@ -1,0 +1,44 @@
+{
+  "plugin": "dev-build",
+  "skill": "build-agent",
+  "method": ["Same as evals.json. One separate agent for each run. 3 runs for each variant. Variants: baseline and skill."],
+  "evals": [
+    {"name": "agent-create-available", "human": "available", "output": "agents/security-reviewer.md",
+     "request": "Make me a subagent that reviews pull requests for security problems. Put it in <out>/agents/security-reviewer.md.",
+     "assertions": [
+       {"id": "J1", "judge": "The first message to the human has questions and was sent before any agent file was written. All questions are in one message."},
+       {"id": "J2", "judge": "The agent asks about the runtime (Claude Code, SDK, other) or states which runtime it assumes and why."},
+       {"id": "J3", "judge": "The agent checks whether an agent is the right form (versus a skill or a prompt), or asks which tools it may use."}
+     ]},
+    {"name": "agent-create-absent", "human": "absent", "output": "agents/security-reviewer.md", "runtime": "claude-code",
+     "request": "Make me a Claude Code subagent that reviews pull requests for security problems. Put it in <out>/agents/security-reviewer.md. Nobody can answer questions. Decide yourself and say what you decided.",
+     "assertions": [
+       {"id": "C1", "check": "agentcheck_errors_max", "value": 0},
+       {"id": "C2", "check": "tools_excludes", "value": ["Write", "Edit", "NotebookEdit"]},
+       {"id": "C3", "check": "not_contains", "value": "—"},
+       {"id": "C4", "check": "line_max", "value": 120},
+       {"id": "C5", "check": "has_field", "value": "tools"},
+       {"id": "J1", "judge": "The description says what the agent does and when to call it."},
+       {"id": "J2", "judge": "The prompt says what the agent does when a fact is missing (stop and report), and does not tell it to ask the human."},
+       {"id": "J3", "judge": "The prompt defines the output shape and an end status."},
+       {"id": "J4", "judge": "The report names the decisions and says the agent is not tested or not approved (or it ran real tests)."}
+     ]},
+    {"name": "agent-create-openclaw", "human": "absent", "output": "workspace/AGENTS.md", "runtime": "openclaw",
+     "request": "Make me an OpenClaw agent workspace for a friendly support agent that answers questions about our product docs. Put the files in <out>/workspace. Nobody can answer questions. Decide yourself and say what you decided.",
+     "assertions": [
+       {"id": "C1", "check": "agentcheck_errors_max", "value": 0},
+       {"id": "C2", "check": "exists", "value": ["AGENTS.md", "SOUL.md"]},
+       {"id": "C3", "check": "not_contains", "value": "—"},
+       {"id": "J1", "judge": "Persona and tone are in SOUL.md. Operating instructions are in AGENTS.md. They are not mixed."},
+       {"id": "J2", "judge": "The report says which OpenClaw facts were not verified (tool config, bindings) or that the agent is not tested."}
+     ]},
+    {"name": "agent-review-bad", "human": "absent", "output": "helper.md", "fixture": "fixtures/bad-agent/helper.md",
+     "request": "Review the agent file <out>/helper.md. Change nothing. Report the findings. Save the report to <out>/report.md.",
+     "assertions": [
+       {"id": "C1", "check": "unchanged_from_fixture", "value": true},
+       {"id": "J1", "judge": "The report has at least 5 different findings."},
+       {"id": "J2", "judge": "At least 4 findings cite a rule ID or a named runtime rule (for example A1, AG-FIELD, 'name must not contain a colon')."},
+       {"id": "J3", "judge": "The report finds: invalid name, snake_case field ignored, invalid model, invalid permissionMode, no tools field, no output shape, one-job problem (does everything), and shouting."}
+     ]}
+  ]
+}
