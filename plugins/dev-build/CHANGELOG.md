@@ -6,7 +6,7 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
-## [0.1.0] - 2026-10-10
+## [1.0.0] - 2026-10-10
 
 ### Added
 
@@ -19,5 +19,5 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 - The shared language rules: English in ASD-STE100 Simplified Technical English, and Dutch in Begrijpelijk Nederlands (B1).
 - An eval set for both skills, and the results of the test rounds against a plain agent.
 
-[Unreleased]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-build-v0.1.0...HEAD
-[0.1.0]: https://github.com/Charmedme/maikelsoft-skills/releases/tag/dev-build-v0.1.0
+[Unreleased]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-build-v1.0.0...HEAD
+[1.0.0]: https://github.com/Charmedme/maikelsoft-skills/releases/tag/dev-build-v1.0.0
