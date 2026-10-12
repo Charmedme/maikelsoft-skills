@@ -37,6 +37,8 @@ VAGUE_WORDS = re.compile(r"\b(fast|quick|quickly|easy|easily|user-friendly|intui
                          r"belangrijkste|relevant|relevante|passend|enz)\b\.?", re.I)
 # S1: a qualifier before "user" does not make the role specific ("signed-in user", "app user").
 GENERIC_SUFFIX = re.compile(r"^(?:[\w-]+\s+){0,2}(user|gebruiker)s?$", re.I)
+EDGE_WORDS = re.compile(r"\b(when|if|unless|no|not|none|never|error|fails?|invalid|empty|wrong|expired|"
+                        r"als|wanneer|tenzij|geen|niet|nooit|fout|foute|ongeldig|leeg|verlopen)\b", re.I)
 CLICK_WORDS = re.compile(r"\b(clicks?|clicking|press(es)?|taps?|klikt|klik|drukt)\b", re.I)
 # A5: a Gherkin line starts with Given/Gegeven, or has the full Given ... when ... then form.
 GHERKIN = re.compile(r"^\s*(?:[-*]\s*(?:\[[ xX]\]\s*)?)?\**(given|gegeven)\b|\bgiven\b.+\bwhen\b.+\bthen\b|"
@@ -83,8 +85,10 @@ def check_item(start, title, block):
         if m := PARENT_LINE.match(s):
             parent = m.group(2).strip()
     special = kind in SPECIAL_TYPES
+    if kind in FEATURE_TYPES:
+        return check_feature(start, title, block, parent)
     if kind not in STORY_TYPES and not special:
-        return f  # not a story: the other skills check it
+        return f  # another item type: no rules yet
 
     if len(title) > TITLE_HARD_MAX:
         f.append(Finding(start, "error", "T1", f"Title is longer than {TITLE_HARD_MAX} characters.", title))
@@ -130,6 +134,9 @@ def check_item(start, title, block):
                 criteria.append((start + 1 + k, s, block[k]))
     if len(criteria) < CRITERIA_MIN:
         f.append(Finding(start, "error", "A1", "No acceptance criteria.", title))
+    # A6: one criterion should cover an edge case or an error. A condition word is the signal.
+    if criteria and not special and not any(EDGE_WORDS.search(t) for _, t, _ in criteria):
+        f.append(Finding(start, "warning", "A6", "No criterion for an edge case or an error.", title))
     if len(criteria) > CRITERIA_MAX:
         f.append(Finding(start, "warning", "A7", f"{len(criteria)} criteria. More than {CRITERIA_MAX}: split the story.", title))
     for ln, text, raw in criteria:
@@ -141,6 +148,67 @@ def check_item(start, title, block):
             f.append(Finding(ln, "warning", "A4", "Steps in the screen. Write the result for the user.", raw))
         if not re.match(r"^\s*[-*]\s+\[[ xX]\]", raw) and not GHERKIN.match(text):
             f.append(Finding(ln, "warning", "A5", "Write the criterion as a checklist item (- [ ]).", raw))
+    return f
+
+
+FEATURE_TYPES = {"feature", "kenmerk"}
+FEATURE_CRITERIA_MAX = 6   # F5: more feature criteria means story detail moved up
+FEATURE_STORIES_MAX = 8    # F3: more stories means the feature is too large
+SECTION = lambda names: re.compile(r"^#{2,6}\s*(" + names + r")\s*$", re.I)
+GOAL_HEAD = SECTION(r"goal|doel")
+SCOPE_HEAD = SECTION(r"scope")
+STORIES_HEAD = SECTION(r"stories|user stories")
+MEASURE_LINE = re.compile(r"^\s*\**(measure|meten|maatstaf)\b", re.I)
+SCOPE_IN = re.compile(r"^\s*[-*]\s+\**(in|binnen scope)\**:", re.I)
+SCOPE_OUT = re.compile(r"^\s*[-*]\s+\**(out|buiten scope)\**:", re.I)
+
+
+def section(block, head):
+    """Return the lines of the first section with a heading that matches head."""
+    start = next((k for k, l in enumerate(block) if head.match(l.strip())), None)
+    if start is None:
+        return None
+    out = []
+    for l in block[start + 1:]:
+        if HEADING.match(l.strip()):
+            break
+        out.append(l)
+    return out
+
+
+def check_feature(start, title, block, parent):
+    f = []
+    if len(title) > TITLE_HARD_MAX:
+        f.append(Finding(start, "error", "F1", f"Title is longer than {TITLE_HARD_MAX} characters.", title))
+    elif len(title) > TITLE_MAX:
+        f.append(Finding(start, "warning", "F1", f"Title is longer than {TITLE_MAX} characters.", title))
+    if LAYER_WORDS.search(title):
+        f.append(Finding(start, "warning", "F1", "Title names a layer of the system. Name the capability for the user.", title))
+    if parent is None:
+        f.append(Finding(start, "warning", "PARENT", "No **Parent:** line. Write the parent or \"None\".", title))
+    goal = section(block, GOAL_HEAD)
+    if goal is None or not any(l.strip() for l in goal):
+        f.append(Finding(start, "error", "F2", "No goal. Write the outcome for the users and the business.", title))
+    elif not any(MEASURE_LINE.match(l.strip().lstrip("-* ")) for l in goal):
+        f.append(Finding(start, "warning", "F2", "The goal has no \"Measure:\" line.", title))
+    scope = section(block, SCOPE_HEAD)
+    if scope is None or not any(SCOPE_IN.match(l) for l in scope) or not any(SCOPE_OUT.match(l) for l in scope):
+        f.append(Finding(start, "error", "F4", "The scope needs an \"In:\" line and an \"Out:\" line.", title))
+    crit = section(block, CRITERIA_HEAD)
+    items = [l for l in (crit or []) if ITEM_LINE.match(l)]
+    if not items:
+        f.append(Finding(start, "error", "F5", "No acceptance criteria for the feature.", title))
+    elif len(items) > FEATURE_CRITERIA_MAX:
+        f.append(Finding(start, "warning", "F5", f"{len(items)} criteria. Keep the feature at {FEATURE_CRITERIA_MAX} or less: detail goes in the stories.", title))
+    for l in items:
+        if GHERKIN.match(l):
+            f.append(Finding(start, "error", "A5", "Given/When/Then is not used. Write one checkable result.", l))
+        if VAGUE_WORDS.search(l):
+            f.append(Finding(start, "warning", "A3", f"Vague word \"{VAGUE_WORDS.search(l).group(0)}\". Use a number or an example.", l))
+    stories = section(block, STORIES_HEAD)
+    count = len([l for l in (stories or []) if ITEM_LINE.match(l)])
+    if count > FEATURE_STORIES_MAX:
+        f.append(Finding(start, "warning", "F3", f"{count} stories. More than {FEATURE_STORIES_MAX}: split the feature.", title))
     return f
 
 

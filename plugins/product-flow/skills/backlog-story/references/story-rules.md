@@ -47,7 +47,7 @@ The criteria tell when the product owner accepts the story. They come from the v
 
 - **Spike.** The team must learn something before it can estimate a story. Write the question and the time limit. The acceptance criterion is the answer: "The team has a decision on the payment provider, with the reason." Set **Type:** to "Spike".
 - **Enabler.** Work that has no direct user value but that later stories need (architecture, compliance, infrastructure). Name the stories that need it. Set **Type:** to "Enabler". Use it only when a vertical story is not possible.
-- **Defect.** When the request describes wrong behaviour of an existing function, it is a bug, not a story. Tell the human. Write it as a bug only when the human agrees.
+- **Bugs and tasks.** These skills do not write bugs or tasks. A bug is wrong behaviour of an existing function: it is not part of new work. A task is work that the developers plan. When the request is a bug or a task, tell the human. Do not write it as a story.
 
 ## Dutch
 

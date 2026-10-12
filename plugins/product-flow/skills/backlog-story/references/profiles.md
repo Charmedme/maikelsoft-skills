@@ -1,13 +1,18 @@
 # Profiles
 
-A profile sets the names and the extra fields. The rules of `story-rules.md` stay the same in each profile.
+A profile sets the names and the extra fields. The rules for each item type stay the same in each profile.
 
 ## Contents
 
+- Levels
 - Select the profile
 - Agile
 - Scrum
 - SAFe
+
+## Levels
+
+The default is 2 levels: Feature, then User Story. The goal goes in the Feature. Use 3 levels (Epic, Feature, User Story) only when the human asks for it. With 3 levels, the goal goes in the Feature, the lowest of the two parent levels. Bugs and tasks are not part of these levels.
 
 ## Select the profile
 
@@ -15,8 +20,7 @@ Use the profile that the human states. Else, use the signals: the names in the t
 
 ## Agile
 
-- **Type:** User Story.
-- Levels: Epic, Feature, User Story. The default is 2 levels: Feature or Epic, then User Story. Use 3 levels only when the human asks for it.
+- **Type:** User Story. The parent is a Feature.
 
 ## Scrum
 
@@ -27,4 +31,4 @@ Use the profile that the human states. Else, use the signals: the names in the t
 
 - **Type:** Story. Use "Enabler" for enabler stories.
 - A story fits in one iteration.
-- The parent is a Feature. Feature and Epic have a hypothesis and an outcome. The story does not.
+- The parent is a Feature. In SAFe, the goal of a Feature is a benefit hypothesis: "We believe that <feature> gives <outcome> for <users>." The "Measure:" line stays.

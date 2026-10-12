@@ -4,7 +4,7 @@ import tempfile
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "plugins/product-flow/skills/backlog-story/scripts/backlogcheck.py"
+SCRIPT = ROOT / "plugins/product-flow/shared/backlogcheck.py"
 spec = importlib.util.spec_from_file_location("backlogcheck", SCRIPT)
 bc = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(bc)
@@ -92,6 +92,22 @@ class BacklogCheckTest(unittest.TestCase):
     def test_short_is_vague(self):
         _, found = run(GOOD.replace("- [ ] A full order", "- [ ] A short message shows. A full order"))
         self.assertIn(("warning", "A3"), found)
+
+    def test_good_feature(self):
+        text = open(ROOT / "plugins/product-flow/skills/backlog-feature/references/feature-rules.md").read()
+        _, found = run(text.split("```markdown")[1].split("```")[0])
+        self.assertEqual(found, set())
+
+    def test_feature_without_goal_and_scope(self):
+        text = "## Product search\n\n**Type:** Feature\n**Parent:** None\n\n### Acceptance criteria\n\n- [ ] Search is fast.\n"
+        _, found = run(text)
+        for expected in [("error", "F2"), ("error", "F4"), ("warning", "A3")]:
+            self.assertIn(expected, found)
+
+    def test_story_without_edge_case(self):
+        text = GOOD.replace('- [ ] When no order matches, the agent sees "No orders found".\n', "")
+        _, found = run(text)
+        self.assertIn(("warning", "A6"), found)
 
 
 if __name__ == "__main__":
