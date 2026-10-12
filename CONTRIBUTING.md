@@ -4,7 +4,11 @@ This guide gives the steps to add or change a skill. You need Python 3.9 or late
 
 ## How the repository works
 
-- `shared/` holds the files that more than one skill uses: the language rules (`language.md`), the workflow of the dev-docs skills (`workflow.md`), and the checker (`doccheck.py`).
+- `shared/` holds the files that more than one skill uses:
+  - the language rules (`language.md`)
+  - the workflow of the dev-docs skills (`workflow.md`)
+  - the interview of the dev-build skills (`grill.md`)
+  - the checker (`doccheck.py`)
 - `scripts/sync_shared.py` copies the shared files into each skill. A skill then works alone, without the rest of the repository.
 - A script that only one skill uses stays in the folder of that skill, for example `plugins/dev-flow/skills/plan-and-build/scripts/workcheck.py`. Its tests are in `tests/`.
 - `plugins/<plugin>/` holds one plugin. Each plugin has `.claude-plugin/plugin.json`, a `README.md`, a `CHANGELOG.md`, and its skills in `skills/<skill>/SKILL.md`.
