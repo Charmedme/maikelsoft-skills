@@ -10,7 +10,7 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ### Added
 
-- Shared rules for procedures ("Optional:", the goal first, the location before the action) and for accessibility (alt text, link text, and the level of each heading).
+- Shared rules for procedures: "Optional:", the goal first, and the location before the action. Shared rules for accessibility: alt text, link text, and the level of each heading.
 - `doccheck.py`: three warnings for accessibility: `A11Y-ALT`, `A11Y-LINK`, and `A11Y-HEADING`. `HOUSE-WORDS` also finds "see below", "the following command", and "please".
 - `doc-plan`: troubleshooting pages, migration guides, and glossaries go to existing skills. `CONTRIBUTING.md` and `AGENTS.md` are out of scope.
 - `doc-readme`: a status and maintainer line, a template for a folder README, and a rule to run the quick-start commands.
