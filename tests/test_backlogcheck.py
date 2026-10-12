@@ -109,6 +109,21 @@ class BacklogCheckTest(unittest.TestCase):
         _, found = run(text)
         self.assertIn(("warning", "A6"), found)
 
+    def test_epic(self):
+        good = ("## Customers manage their own account\n\n**Type:** Epic\n**Parent:** None\n\n### Outcome\n\n"
+                "Fewer calls.\nMeasure: 20% fewer calls.\n\n### Scope\n\n- In: addresses\n- Out: invoices\n\n"
+                "### Features\n\n1. Manage addresses\n2. Manage users\n")
+        self.assertEqual(run(good)[1], set())
+        self.assertIn(("warning", "E3"), run(good.replace("2. Manage users\n", ""))[1])
+
+    def test_goals(self):
+        pg = ("## More customers order without help\n\n**Type:** Product Goal\n**Time frame:** Q1 2027\n\n"
+              "Measure: from 60% to 75%\n\n### Supports\n\n- Product search\n")
+        self.assertEqual(run(pg)[1], set())
+        sg = pg.replace("Product Goal", "Sprint Goal").replace("Measure:", "Check:")
+        self.assertEqual(run(sg)[1], set())
+        self.assertIn(("error", "SG2"), run(pg.replace("Product Goal", "Sprint Goal"))[1])
+
 
 if __name__ == "__main__":
     unittest.main()

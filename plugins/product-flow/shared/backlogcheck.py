@@ -87,6 +87,10 @@ def check_item(start, title, block):
     special = kind in SPECIAL_TYPES
     if kind in FEATURE_TYPES:
         return check_feature(start, title, block, parent)
+    if kind in EPIC_TYPES:
+        return check_epic(start, title, block)
+    if kind in GOAL_TYPES:
+        return check_goal(start, title, block, kind)
     if kind not in STORY_TYPES and not special:
         return f  # another item type: no rules yet
 
@@ -209,6 +213,59 @@ def check_feature(start, title, block, parent):
     count = len([l for l in (stories or []) if ITEM_LINE.match(l)])
     if count > FEATURE_STORIES_MAX:
         f.append(Finding(start, "warning", "F3", f"{count} stories. More than {FEATURE_STORIES_MAX}: split the feature.", title))
+    return f
+
+
+EPIC_TYPES = {"epic"}
+EPIC_FEATURES_MIN, EPIC_FEATURES_MAX = 2, 6   # E3: one feature is no epic, more than 6 is too wide
+OUTCOME_HEAD = SECTION(r"outcome|resultaat|hypothesis|hypothese")
+FEATURES_HEAD = SECTION(r"features")
+GOAL_TYPES = {"product goal", "productdoel", "sprint goal", "sprintdoel"}
+GOAL_WORDS_MAX = 25      # GL1: a reader must remember the goal
+TIMEFRAME_LINE = re.compile(r"^\s*\**(time frame|termijn):\**", re.I)
+CHECK_LINE = re.compile(r"^\s*\**(check|controle):", re.I)
+SUPPORTS_HEAD = SECTION(r"supports|draagt bij")
+
+
+def check_epic(start, title, block):
+    f = []
+    if len(title) > TITLE_MAX:
+        f.append(Finding(start, "warning", "E1", f"Title is longer than {TITLE_MAX} characters.", title))
+    if LAYER_WORDS.search(title):
+        f.append(Finding(start, "warning", "E1", "Title names a layer of the system. Name the change.", title))
+    outcome = section(block, OUTCOME_HEAD)
+    if outcome is None or not any(l.strip() for l in outcome):
+        f.append(Finding(start, "error", "E2", "No outcome. Write why the work is worth doing.", title))
+    elif not any(MEASURE_LINE.match(l.strip().lstrip("-* ")) for l in outcome):
+        f.append(Finding(start, "warning", "E2", "The outcome has no \"Measure:\" line.", title))
+    scope = section(block, SCOPE_HEAD)
+    if scope is None or not any(SCOPE_IN.match(l) for l in scope) or not any(SCOPE_OUT.match(l) for l in scope):
+        f.append(Finding(start, "error", "E4", "The scope needs an \"In:\" line and an \"Out:\" line.", title))
+    feats = [l for l in (section(block, FEATURES_HEAD) or []) if re.match(r"^\s*([-*]|\d+\.)\s+", l)]
+    if not EPIC_FEATURES_MIN <= len(feats) <= EPIC_FEATURES_MAX:
+        f.append(Finding(start, "warning", "E3", f"{len(feats)} features. An epic has {EPIC_FEATURES_MIN} to {EPIC_FEATURES_MAX}.", title))
+    if section(block, CRITERIA_HEAD) is not None:
+        f.append(Finding(start, "warning", "E7", "The epic has acceptance criteria. Put them in the features.", title))
+    return f
+
+
+def check_goal(start, title, block, kind):
+    f = []
+    words = len(title.split())
+    if words > GOAL_WORDS_MAX:
+        f.append(Finding(start, "error", "GL1", f"The goal has {words} words (max {GOAL_WORDS_MAX}).", title))
+    if re.search(r"\b(and|en)\b", title, re.I):
+        f.append(Finding(start, "warning", "GL3", "The goal has \"and\". Is it two goals?", title))
+    lines = [l.strip().lstrip("-* ") for l in block]
+    if not any(TIMEFRAME_LINE.match(l) for l in lines):
+        f.append(Finding(start, "error", "PG2", "No \"Time frame:\" line.", title))
+    if kind in {"product goal", "productdoel"}:
+        if not any(MEASURE_LINE.match(l) for l in lines):
+            f.append(Finding(start, "error", "PG1", "No \"Measure:\" line.", title))
+    elif not any(CHECK_LINE.match(l) for l in lines):
+        f.append(Finding(start, "error", "SG2", "No \"Check:\" line.", title))
+    if section(block, SUPPORTS_HEAD) is None:
+        f.append(Finding(start, "warning", "GL4", "No \"Supports\" section.", title))
     return f
 
 
