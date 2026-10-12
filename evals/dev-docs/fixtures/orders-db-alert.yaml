@@ -1,0 +1,18 @@
+# Prometheus alert rule (from the monitoring repo)
+- alert: OrdersDbDiskAlmostFull
+  expr: (1 - node_filesystem_avail_bytes{mountpoint="/var/lib/postgresql"} / node_filesystem_size_bytes{mountpoint="/var/lib/postgresql"}) > 0.90
+  for: 10m
+  labels:
+    severity: page
+    team: platform
+  annotations:
+    summary: Disk of the orders database is more than 90% full.
+
+# Notes from the platform team wiki
+# - When the disk is full, PostgreSQL stops accepting writes. Customers cannot place orders.
+# - Usual cause: WAL files pile up because the replication slot "analytics" is not consumed.
+#   Check: SELECT slot_name, active FROM pg_replication_slots;
+# - Fix: if the "analytics" slot is inactive, ask the data team before you drop it:
+#   SELECT pg_drop_replication_slot('analytics');
+# - Other cause: the nightly export writes temp files to /var/lib/postgresql/tmp. Delete files older than 1 day.
+# - Escalate to the on-call DBA (PagerDuty service "dba-oncall") when the disk is above 97%.

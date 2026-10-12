@@ -53,8 +53,8 @@ Use the same entry format for each item:
 **Returns** <type and meaning, or the response body.>
 
 **Errors**
-| Code | Cause |
-|------|-------|
+| Code | Cause | Client action | Retry |
+|------|-------|---------------|-------|
 
 **Example**
 ```<language>
@@ -69,5 +69,7 @@ Use the same entry format for each item:
 - Describe. Do not instruct. Write "The command deletes the cache.", not "Use this to delete the cache."
 - Give one minimal example for each item. Put longer examples in a how-to guide and link to it.
 - Use tables for parameters. Keep each table cell to one sentence.
+- For each error, give the action of the client and if a retry can help ("No", "Yes, after `Retry-After`", "Yes, with the same idempotency key"). Clients use the code, never the message text. If the source does not give the action, write `TODO:`.
+- For an HTTP API without its own error format, propose Problem Details (RFC 9457, `application/problem+json`) in the report. Do not change the documented format of an existing API.
 - For a CLI, each option is an item. Leave out "Returns" and "Errors" when they are empty. Put the facts for the whole program (exit codes, environment variables) in their own sections after the options.
 - When a default is a behavior and not a value, describe the behavior in the Default cell: "Reads `https_proxy`".

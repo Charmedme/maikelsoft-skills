@@ -1,0 +1,11 @@
+Merged pull requests since v2.3.1 (Shipwell)
+
+#812 feat: export orders to CSV with the VAT number of the customer
+#815 fix: the label printer skipped the last label of a batch
+#817 chore: update eslint to 9.12
+#820 fix(security): order export did not check the tenant of the order. Users of one tenant could download orders of another tenant.
+     Advisory: GHSA-7x2q-m4vr-9c3p (reported by an external researcher)
+#821 refactor: split ExportService into ExportQuery and ExportWriter
+#823 feat!: remove the /v1/labels endpoint, use /v2/labels
+
+Note from the security team: the export bug exists since 2.0.0. All versions from 2.0.0 to 2.3.1 are affected.

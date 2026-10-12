@@ -41,10 +41,17 @@ The checker reads each cell of the output table as a separate text.
 | Empty state | What this is. How to start. | No shipments yet. Create a shipment to start. | Nog geen zendingen. Maak een zending om te beginnen. |
 | Label | Noun, sentence case | Delivery date | Leverdatum |
 | Tooltip | One sentence of extra fact | The date that the carrier collects the goods. | De datum waarop de vervoerder de goederen ophaalt. |
+| Hint text | The expected input, before the user types | Use at least 12 characters. | Gebruik minimaal 12 tekens. |
+| Field error | Name the field. Say what to do. | Enter your first name. | Vul je voornaam in. |
+| Format error | The correct format, with an example | Enter the date as DD-MM-YYYY, for example 31-12-2026. | Vul de datum in als DD-MM-JJJJ, bijvoorbeeld 31-12-2026. |
+| Error summary | The number of problems and the action. Link each item to its field. | There are 2 problems. Fix them to continue. | Er zijn 2 fouten. Verbeter ze om verder te gaan. |
+| Success message | The result, in the past tense | Changes saved. | Wijzigingen opgeslagen. |
+| Accessible name | The action of an icon-only button, as for a button | Delete order | Order verwijderen |
+| Screen reader prefix | Hidden text before each field error | Error: | Fout: |
 
 ## Output format
 
-Give a table: element, text, number of characters, and a note for the translator when a word has more than one meaning. Write the table in Markdown first. Then make each other format that the human selected.
+Give a table with these columns: element, text, accessible text, number of characters, and a note for the translator. Fill in the accessible text only when it is different from the visible text. Give a translator note when a word has more than one meaning. Write the table in Markdown first. Then make each other format that the human selected.
 
 ## Rules for this type
 
@@ -54,4 +61,7 @@ Give a table: element, text, number of characters, and a note for the translator
 - When the product does not give the fix for an error, write `TODO:` in the "what to do" part. Do not invent a fix.
 - A link text says where the link goes. Not "click here".
 - Give no placeholder text as the only label of a field.
+- A field error names the field and says what to do. Never write only "This field is required" or "Dit is een verplicht veld".
+- Give each icon-only button an accessible name (`aria-label`). Give each field error the hidden prefix "Error:" or "Fout:", so that a screen reader user can tell the error from the label.
+- Write a hint text for each field that has a format or a limit. A good hint prevents the error.
 - Respect the character limits that the human gives. If there is no limit, keep a button to 3 words and an error message to 3 short sentences.

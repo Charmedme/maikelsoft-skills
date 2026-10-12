@@ -49,6 +49,17 @@ class SentenceLength(unittest.TestCase):
         self.assertEqual(m["sentences"], 3)
 
 
+class LowercaseSentenceStart(unittest.TestCase):
+    def test_lowercase_word_starts_a_new_sentence(self):
+        self.assertEqual(len(doccheck.split_sentences("The cache keeps the state. v4 used the script. npm runs it.")), 3)
+
+    def test_soft_abbreviation_continues_the_sentence(self):
+        self.assertEqual(len(doccheck.split_sentences("Use tools, images etc. and other files.")), 1)
+
+    def test_file_name_does_not_end_a_sentence(self):
+        self.assertEqual(len(doccheck.split_sentences("Edit config.yml and save it.")), 1)
+
+
 class Punctuation(unittest.TestCase):
     def test_semicolon(self):
         self.assertIn("STE-8.1", rules("Do this; do that.", "en")[0])

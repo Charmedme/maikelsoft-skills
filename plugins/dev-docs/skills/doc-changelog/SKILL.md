@@ -66,6 +66,9 @@ For the first release, the version link goes to the tag: `[1.0.0]: https://githu
 ## Install or update        (first release, or when the steps change)
 1. <Step.>
 
+## Security                 (only when there is a security fix)
+- <Advisory ID, affected versions, fixed version, and the effect for the user.>
+
 ## Action required          (only when there is a breaking change)
 1. <Step that the reader must do before or after the update.>
 
@@ -85,3 +88,4 @@ For the first release, the version link goes to the tag: `[1.0.0]: https://githu
 - Leave out internal changes that a user cannot see, unless the human asks for them.
 - Use only the six change types. Remove each empty heading from a released version.
 - A breaking change always gets an "Action required" section with steps, and a major version number.
+- A security fix goes under "Security", in the changelog and in the release notes. Give the advisory ID (CVE or GHSA), the affected versions, and the fixed version. Give the effect for the user: "A user of one tenant can read the orders of another tenant." Do not give the steps of an attack. If the advisory has no ID yet, write `TODO:` and ask. Tell the reader to update in the first sentence of the release notes.

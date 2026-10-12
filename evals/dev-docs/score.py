@@ -4,6 +4,8 @@
 Layout of a runs folder:
     <runs>/<eval name>/<variant>/<run number>/<output file>
 
+The output can be a glob pattern. A run folder without the output fails each check.
+
 Usage:
     python3 evals/dev-docs/score.py <runs> --input gron=<path> --input haal-centraal-brp=<path>
 
@@ -29,7 +31,8 @@ def resolve(value, inputs):
     return value
 
 
-def score_run(ev, out_path, inputs):
+def score_run(ev, out_path, inputs, run_dir=None):
+    run_dir = run_dir or out_path.parent
     text = out_path.read_text(encoding="utf-8")
     source = resolve(ev["source"], inputs) if ev.get("source") else None
     findings, metrics = doccheck.check(text, str(out_path), "auto", "standard")
@@ -55,9 +58,17 @@ def score_run(ev, out_path, inputs):
             hits = re.findall(value, text)
             ok, got = not hits, len(hits)
         elif kind in ("exists", "absent"):
-            found = [f for f in value if (out_path.parent / f).is_file()]
+            found = [f for f in value if any(run_dir.glob(f))]
             wrong = [f for f in value if f not in found] if kind == "exists" else found
             ok, got = not wrong, wrong
+        elif kind == "contains":
+            hits = re.findall(value, text, re.MULTILINE | re.IGNORECASE)
+            ok, got = bool(hits), len(hits)
+        elif kind == "file_contains":
+            files = sorted(run_dir.glob(value["file"]))
+            other = files[0].read_text(encoding="utf-8") if files else ""
+            ok = bool(files) and re.search(value["pattern"], other, re.MULTILINE | re.IGNORECASE) is not None
+            got = value["file"] if not files else ok
         elif kind == "go_flags_exist":
             code = pathlib.Path(resolve(value, inputs)).read_text(encoding="utf-8")
             names = set(re.findall(r'flag\.\w+Var\(&\w+, "([\w-]+)"', code)) | {"h", "help"}
@@ -84,9 +95,16 @@ def main():
     for ev in evals:
         if not ev.get("output"):
             continue
-        for out in sorted(runs.glob(f"{ev['name']}/*/*/{ev['output']}")):
-            variant, run = out.parent.parent.name, out.parent.name
-            r = score_run(ev, out, inputs)
+        for run_dir in sorted(p for p in runs.glob(f"{ev['name']}/*/*") if p.is_dir()):
+            variant, run = run_dir.parent.name, run_dir.name
+            outs = sorted(run_dir.glob(ev["output"]))
+            if not outs:
+                print(f"{ev['name']:32} {variant:10} run {run}: NO OUTPUT {ev['output']}")
+                n = sum("check" in a for a in ev["assertions"])
+                r = {"metrics": {}, "checks": [{"check": "output", "passed": False, "got": None}] * n}
+                report.setdefault(ev["name"], {}).setdefault(variant, {})[run] = r
+                continue
+            r = score_run(ev, outs[0], inputs, run_dir)
             report.setdefault(ev["name"], {}).setdefault(variant, {})[run] = r
             passed = sum(c["passed"] for c in r["checks"])
             print(f"{ev['name']:32} {variant:10} run {run}: {passed}/{len(r['checks'])} checks"
