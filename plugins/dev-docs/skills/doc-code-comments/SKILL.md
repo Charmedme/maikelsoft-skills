@@ -1,6 +1,6 @@
 ---
 name: doc-code-comments
-description: Code comments and API doc comments (C# XML docs, TSDoc, JSDoc, Python docstrings, Javadoc). Use when the user wants comments or doc comments added, rewritten, or reviewed in source code.
+description: Code comments and API doc comments (C# XML docs, TSDoc, JSDoc, Python docstrings, Javadoc). Use when the user wants comments or doc comments added, rewritten, or reviewed in source code. Writes in plain language (ASD-STE100).
 allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/doccheck.py *)
 ---
 
@@ -76,3 +76,10 @@ def customs_value(line: ShipmentLine) -> Decimal:
 - An inline comment gives the reason: a constraint, a workaround, a link to an issue or a specification. Delete a comment that only repeats the code.
 - Write `TODO(<owner or issue>): <action>` for open work. Do not leave code in comments.
 - Change only comments. Do not change the code.
+- Mark a deprecated member with the tag of the language. Give the replacement and, if known, the version that removes it.
+  - TSDoc, JSDoc, Javadoc: `@deprecated`.
+  - Go: `Deprecated:` as its own paragraph.
+  - Python: `.. deprecated:: <version>`.
+  - C#: `[Obsolete]` is code. Add it only when the human allows a code change. Else, write the deprecation in `<remarks>`.
+- A doc comment on a module, a class, or a package gives a short overview and the simplest example first.
+- Never put a password, a token, a key, or an internal URL in a comment. Report one that exists as a source error.

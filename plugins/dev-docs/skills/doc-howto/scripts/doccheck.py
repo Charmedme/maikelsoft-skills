@@ -43,6 +43,9 @@ RULES = {
     "STE-3.5": "Possible -ing form after a comma",
     "B1-PASSIVE": "Mogelijke lijdende vorm",
     "HOUSE-WORDS": "Filler word or formal word with a simple alternative",
+    "A11Y-ALT": "Image without alternative text",
+    "A11Y-LINK": "Link text that does not say where the link goes",
+    "A11Y-HEADING": "Heading level skips a level",
     "KEEP-CODE": "Rewrite lost or changed a code block",
     "KEEP-LINK": "Rewrite lost a link target",
     "KEEP-ANCHOR": "Rewrite changed a heading anchor",
@@ -67,7 +70,8 @@ EN_ING_ALLOW = {"including", "according", "during", "following", "something", "n
 EN_HOUSE_WORDS = [
     "utilize", "utilise", "leverage", "in order to", "prior to", "ensure", "simply", "just",
     "easily", "obviously", "seamless", "seamlessly", "robust", "powerful", "comprehensive",
-    "it is worth noting", "please note", "basically", "very",
+    "it is worth noting", "please note", "please", "basically", "very",
+    "see above", "see below", "shown above", "shown below", "the following command",
 ]
 NL_PASSIVE_AUX = re.compile(r"\b(word|wordt|worden|werd|werden)\b", re.IGNORECASE)
 NL_PARTICIPLE = re.compile(r"\bge\w{2,}(?:d|t|en)\b", re.IGNORECASE)
@@ -76,7 +80,13 @@ NL_HOUSE_WORDS = [
     "teneinde", "middels", "dient te", "dienen te", "in het kader van", "ten behoeve van",
     "betreffende", "inzake", "alsmede", "reeds", "omtrent", "derhalve", "dan wel",
     "ten aanzien van", "met betrekking tot", "gelieve", "simpelweg", "gewoon",
+    "zie hierboven", "zie hieronder", "het volgende commando",
 ]
+# Accessibility -------------------------------------------------------------
+EMPTY_ALT = re.compile(r"!\[\s*\]\(")
+VAGUE_LINK_TEXT = {"here", "click here", "this link", "link", "read more", "more", "this page",
+                   "hier", "klik hier", "deze link", "lees meer", "meer", "deze pagina"}
+LINK_TEXT = re.compile(r"(?<!!)\[([^\]]+)\]\(")
 
 EN_MARKERS = {"the", "a", "an", "and", "of", "to", "is", "you", "for", "with", "on", "that", "this", "it", "are", "in"}
 NL_MARKERS = {"de", "het", "een", "en", "van", "je", "is", "niet", "voor", "met", "op", "dat", "die", "zijn", "u", "in"}
@@ -312,6 +322,21 @@ def check(source: str, name: str, lang: str, level: str) -> tuple[list[Finding],
             visible = re.sub(r"\s-\s", " ", visible, count=1)
         if "—" in visible or re.search(r"\s(?:–|--?)\s", visible):
             add(line_no, "error", "HOUSE-DASH", "Use a comma, a colon, parentheses or two sentences.", raw.strip())
+
+    # Accessibility: images, link texts, heading levels.
+    last_level = 0
+    for line_no, raw in prose_lines:
+        if EMPTY_ALT.search(raw):
+            add(line_no, "warning", "A11Y-ALT", "Give the image a text that tells what it shows.", raw.strip())
+        for m in LINK_TEXT.finditer(raw):
+            if m.group(1).strip().lower().strip(".") in VAGUE_LINK_TEXT:
+                add(line_no, "warning", "A11Y-LINK", f"'{m.group(1)}': say where the link goes.", raw.strip())
+        h = HEADING.match(raw)
+        if h:
+            depth = len(raw) - len(raw.lstrip("#"))
+            if last_level and depth > last_level + 1:
+                add(line_no, "warning", "A11Y-HEADING", f"Heading level {depth} follows level {last_level}.", raw.strip())
+            last_level = depth
 
     for unit in units:
         masked = mask_inline(unit.text)

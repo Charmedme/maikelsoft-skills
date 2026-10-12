@@ -36,7 +36,8 @@
         {"judge": "The agent used doc-readme."},
         {"judge": "The first two sentences name the main use of the tool and the reader."},
         {"judge": "The quick start shows a command and its expected output."},
-        {"judge": "The reply lists open questions or source errors."}
+        {"judge": "The reply lists open questions or source errors."},
+        {"judge": "Each quick-start command was run, or is marked TODO: verify."}
       ]
     },
     {
@@ -190,7 +191,9 @@
         {"check": "contains", "value": "client action"},
         {"check": "contains", "value": "\\| *retry *\\|"},
         {"check": "contains", "value": "Retry-After"},
-        {"judge": "No default value or behavior is invented: a fact that the OpenAPI file does not give is a TODO."}
+        {"judge": "No default value or behavior is invented: a fact that the OpenAPI file does not give is a TODO."},
+        {"check": "contains", "value": "^#+ .*authenticat"},
+        {"check": "contains", "value": "^#+ .*rate limit"}
       ]
     },
     {
@@ -202,7 +205,8 @@
         {"check": "errors_max", "value": 0},
         {"check": "not_contains", "value": "(?m)^\\s*\\d+\\. (Run|Install|Open|Type)\\b"},
         {"judge": "The text explains the design and the reasons, and gives no steps to do."},
-        {"judge": "Each diagram (if any) has a text that tells what it shows."}
+        {"judge": "Each diagram (if any) has a text that tells what it shows."},
+        {"judge": "The architecture part starts with the context of the tool (users, input, output) before the inner parts."}
       ]
     },
     {
@@ -216,6 +220,7 @@
         {"check": "contains", "value": "^status: accepted"},
         {"check": "file_contains", "value": {"file": "repo/docs/decisions/0001-*.md", "pattern": "superseded by ADR-?0*2"}},
         {"check": "contains", "value": "0001"},
+        {"check": "file_contains", "value": {"file": "repo/docs/decisions/README.md", "pattern": "0002"}},
         {"check": "file_contains", "value": {"file": "repo/docs/decisions/0001-*.md", "pattern": "\\(\\.?/?0002-[^)]*\\.md\\)"}},
         {"judge": "The new ADR gives at least two options and bases the reason on the decision drivers."}
       ]
@@ -245,6 +250,7 @@
         {"check": "contains", "value": "^#+ .*diagnos"},
         {"check": "contains", "value": "last tested"},
         {"check": "contains", "value": "dba-oncall"},
+        {"check": "not_contains", "value": "(?i)the following command|see (above|below)"},
         {"judge": "The runbook tells the reader to ask the data team before dropping the replication slot."}
       ]
     },
@@ -273,6 +279,49 @@
         {"check": "contains", "value": "(hidden|screen.?reader).{0,60}\"?Error:|\"?Error:\"?.{0,60}(hidden|screen.?reader|prefix)"},
         {"check": "contains", "value": "aria-label|accessible"},
         {"judge": "Each field error names the field and says what to do."}
+      ]
+    },
+    {
+      "id": 20,
+      "name": "changelog-entry-commits",
+      "setup": "Copy <fixtures>/changelog-repo to <run>/repo before the run.",
+      "prompt": "Add the entry for Shipwell 2.4.0 (release date 2026-10-12) to <run>/repo/CHANGELOG.md. The changes are in <fixtures>/changes-2.4.0.txt. The project uses Conventional Commits. Also mark 2.3.0 as yanked: we pulled it back on 2026-09-01 because of a data loss bug.",
+      "output": "repo/CHANGELOG.md",
+      "assertions": [
+        {"check": "errors_max", "value": 0},
+        {"check": "contains", "value": "^## \\[2\\.4\\.0\\] - 2026-10-12"},
+        {"check": "contains", "value": "^### Security"},
+        {"check": "contains", "value": "^### Removed"},
+        {"check": "contains", "value": "^## \\[2\\.3\\.0\\] - 2026-08-28 \\[YANKED\\]"},
+        {"check": "not_contains", "value": "(?i)eslint|refactor"},
+        {"judge": "The reply reports that /v1/labels is removed without a deprecation in an earlier version."}
+      ]
+    },
+    {
+      "id": 21,
+      "name": "doc-comments-deprecated",
+      "setup": "Copy <fixtures>/pricing.ts to <run>/pricing.ts before the run.",
+      "prompt": "Add doc comments to the public functions in <run>/pricing.ts.",
+      "output": "pricing.ts",
+      "assertions": [
+        {"check": "contains", "value": "@deprecated"},
+        {"check": "contains", "value": "\\A\\s*/\\*\\*"},
+        {"check": "contains", "value": "@throws"},
+        {"judge": "The reply reports the service key in the comment as a source error."},
+        {"judge": "The agent changed no code line."}
+      ]
+    },
+    {
+      "id": 22,
+      "name": "ui-text-placeholders",
+      "prompt": "Write the English UI text for the toast after an order export. It shows the number of exported orders and the file name. Also write the error when the export fails because it has more than 10,000 orders. The texts go to German translators.",
+      "output": "export-toast.md",
+      "assertions": [
+        {"check": "lang", "value": "en"},
+        {"check": "errors_max", "value": 0},
+        {"check": "contains", "value": "\\{\\w+\\}"},
+        {"check": "contains", "value": "(?i)plural|\\b1 order\\b|one order"},
+        {"judge": "The translator notes mention that German text can be longer, or give a length limit."}
       ]
     }
   ]

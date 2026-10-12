@@ -1,6 +1,6 @@
 ---
 name: doc-ui-text
-description: User interface text (microcopy). Use when the user wants buttons, labels, error messages, confirmation dialogs, empty states, tooltips, or notifications written, rewritten, or reviewed, in English or Dutch.
+description: User interface text (microcopy). Use when the user wants buttons, labels, error messages, confirmation dialogs, empty states, tooltips, or notifications written, rewritten, or reviewed, in English or Dutch. Writes in plain language: ASD-STE100 for English, B1 for Dutch.
 allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/doccheck.py *), Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/convert.py *)
 ---
 
@@ -64,4 +64,7 @@ Give a table with these columns: element, text, accessible text, number of chara
 - A field error names the field and says what to do. Never write only "This field is required" or "Dit is een verplicht veld".
 - Give each icon-only button an accessible name (`aria-label`). Give each field error the hidden prefix "Error:" or "Fout:", so that a screen reader user can tell the error from the label.
 - Write a hint text for each field that has a format or a limit. A good hint prevents the error.
+- Mark each variable as a named placeholder: `{count}`, `{name}`. Do not build a sentence from parts, because the word order changes in other languages.
+- Give a text with a number in each plural form: "1 order exported", "{count} orders exported". Use the format of the project (for example ICU `{count, plural, one {…} other {…}}`).
+- Leave room for translation. A German or Dutch text is often about 30% longer than the English text. Note it for the translator when a text is near its limit.
 - Respect the character limits that the human gives. If there is no limit, keep a button to 3 words and an error message to 3 short sentences.

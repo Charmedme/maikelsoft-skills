@@ -1,6 +1,6 @@
 ---
 name: doc-tutorial
-description: Tutorial or getting-started lesson. Use when the user wants a learning path for a new user (first steps, build your first X, onboarding lesson), or wants a tutorial written, rewritten, or reviewed.
+description: Tutorial or getting-started lesson. Use when the user wants a learning path for a new user (first steps, build your first X, onboarding lesson), or wants a tutorial written, rewritten, or reviewed. Writes in plain language: ASD-STE100 for English, B1 for Dutch.
 allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/doccheck.py *), Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/convert.py *)
 ---
 
@@ -69,7 +69,7 @@ In this tutorial, you <make X>. At the end, you have <visible result>.
 ## Rules for this type
 
 - Give one path. Do not give options or alternatives.
-- Make the tutorial safe to repeat. Use a new folder, test data, and a local or test environment. Never use production data. The "Clean up" section removes each thing that the tutorial made, so that the learner can start again.
+- Make the tutorial safe to repeat. Use a new folder, test data, and a local or test environment. Never use production data. Pin the version of each tool and give the test data in the tutorial. The "Clean up" section removes each thing that the tutorial made, so that the learner can start again.
 - After a step that often fails, add one line: "If you see <message>, <fix>." The writer is responsible for the success of each step.
 - Show the expected result after each step, so that the reader knows that the step worked.
 - Run each command when you can, and copy the real output. Each step must work on each supported system. If you cannot confirm a command or an output, mark it `TODO: verify`.

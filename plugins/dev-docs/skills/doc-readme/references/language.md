@@ -16,6 +16,24 @@ Write in Begrijpelijk Nederlands, taalniveau B1. Apply the STE rules for sentenc
 - Keep the verb parts close together (no tangconstructie). Use verbs, not nouns made from verbs (no naamwoordstijl).
 - Join two clauses with a comma, a colon, parentheses, or write two sentences.
 
+## Procedures
+
+These rules are for each numbered step, in each language.
+
+- Start the step with the verb. Put the location before the action: "In the **Settings** window, select **Save**."
+- When a step has a goal, put the goal first: "To start the build, run `make`."
+- Start an optional step with "Optional:".
+- Number sub-steps with a, b, c. A procedure with only one step is a bullet, not a numbered list.
+- Do not write "above", "below", or "the following command". Say what the command does: "This command starts the build:".
+
+## Accessibility
+
+- Give each image a text that tells what it shows. After a diagram, write one or two sentences that tell what it shows.
+- Write a link text that says where the link goes. Do not write "here" or "read more".
+- Do not skip a heading level. Use one `#` heading in each document.
+
+The checker gives a warning for an image without text (`A11Y-ALT`), a vague link text (`A11Y-LINK`), and a skipped heading level (`A11Y-HEADING`).
+
 ## Choices that the human makes
 
 - **Language.** Use the language that the human states. In a rewrite, keep the language of the source. Code comments are always English. For a new document, the language of the existing docs and of the request are signals. When there is no signal, ask.
