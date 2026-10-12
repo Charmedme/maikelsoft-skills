@@ -1,6 +1,8 @@
 # dev-build
 
-dev-build is a Claude Code plugin for people who write agent skills and agents. It has two skills. `build-skill` makes a skill. `build-agent` makes an agent. Each skill follows four steps: research, concept, test, and build. You approve the concept before the skill builds anything.
+dev-build is a Claude Code plugin for people who write agent skills and agents. It has two skills. `build-skill` makes a skill. `build-agent` makes an agent.
+
+Each skill starts with a grill: an interview in rounds about your need, your workflow today, and what goes wrong. The decisions go into a brief. You approve the brief before the skill builds anything. Then the skill tests and builds.
 
 English output follows ASD-STE100 Simplified Technical English. Dutch output follows Begrijpelijk Nederlands (taalniveau B1).
 
@@ -26,8 +28,8 @@ claude plugin install dev-build@maikelsoft-skills
    Make a subagent that reviews pull requests for security problems.
    ```
 
-3. The skill checks that a skill or agent is the right form. Then it asks all questions in one message.
-4. Answer the questions and approve the concept. The skill builds the files and runs its checkers.
+3. The skill asks its questions in rounds. Each question has a recommended answer, so you can answer "ok". Round 1 asks if a skill or an agent is the right form. It also asks which steps you do today, and what goes wrong today.
+4. Answer until no question is open. Then approve the summary of the brief (gate G1). The skill builds the files and runs its checkers.
 
 ## Skills
 

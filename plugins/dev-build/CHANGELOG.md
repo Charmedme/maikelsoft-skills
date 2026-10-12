@@ -6,6 +6,22 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-12
+
+### Added
+
+- A grill phase at the start of `build-skill` and `build-agent`. The skill interviews the human in rounds. Each question has a recommended answer. Round 1 asks three things: is a skill or an agent the right form, which steps the human does today, and what goes wrong today.
+- A brief: the record of the decisions. For a skill, it is `brief.md` in the skill folder. For an agent, it is `docs/work/<agent-name>/brief.md`. The test assertions come from the success criteria in the brief.
+- Gate G1: the human approves a summary of the brief in its own message. The skill writes no skill or agent file before G1.
+- `shared/grill.md`, synced only into the dev-build skills. `sync_shared.py` now supports shared files for one plugin.
+- An eval with a simulated human and hidden facts (`evals/dev-build/humans/monday-mail.md`), and the results of three rounds.
+
+### Changed
+
+- Improve mode starts from one bad run, not from all topics.
+- The gate question is part of round 1. It is no longer a separate step.
+- In a run without a human, the brief records each choice as "recommended, not confirmed", with the status "not approved".
+
 ## [1.0.0] - 2026-10-10
 
 ### Added
@@ -19,5 +35,6 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 - The shared language rules: English in ASD-STE100 Simplified Technical English, and Dutch in Begrijpelijk Nederlands (B1).
 - An eval set for both skills, and the results of the test rounds against a plain agent.
 
-[Unreleased]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-build-v1.0.0...HEAD
+[Unreleased]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-build-v1.1.0...HEAD
+[1.1.0]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-build-v1.0.0...dev-build-v1.1.0
 [1.0.0]: https://github.com/Charmedme/maikelsoft-skills/releases/tag/dev-build-v1.0.0

@@ -62,6 +62,23 @@
         {"id": "J2", "judge": "At least 4 findings cite a rule ID or a named spec rule (for example W9, SK-NAME, name max 64 chars)."},
         {"id": "J3", "judge": "The report finds: the bad name, the first-person description, the length, the deep reference, and the missing script or link."}
       ]
+    },
+    {
+      "name": "grill-vague",
+      "human": "simulated",
+      "sheet": "humans/monday-mail.md",
+      "output": "skills/*/SKILL.md",
+      "request": "Make me a skill for my Monday status mail to the team. Put it in <out>/skills.",
+      "assertions": [
+        {"id": "C1", "check": "skillcheck_errors_max", "value": 0},
+        {"id": "C2", "check": "exists", "value": ["brief.md"]},
+        {"id": "J1", "judge": "Before any skill file was written, the agent asked about the current workflow (the steps, or a walkthrough of a real run)."},
+        {"id": "J2", "judge": "Count the hidden facts H1 to H7 of the sheet that are in the built skill (SKILL.md, references, or scripts). Pass when 6 or more."},
+        {"id": "J3", "judge": "The questions came in numbered rounds, each question with a recommended answer (80 percent or more)."},
+        {"id": "J4", "judge": "No skill file was written before the human approved a summary, concept, or brief."},
+        {"id": "J5", "judge": "The agent asked or answered with a reason whether a skill is the right form."},
+        {"id": "J6", "judge": "In the first message, the agent asked what goes wrong today."}
+      ]
     }
   ],
   "triggers": {

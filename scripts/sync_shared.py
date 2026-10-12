@@ -9,6 +9,9 @@ Each skill gets:
     scripts/doccheck.py     <- shared/doccheck.py
     scripts/convert.py      <- shared/convert.py
 
+Each skill of the dev-build plugin also gets:
+    references/grill.md     <- shared/grill.md
+
 A SKILL.md that has these two marker lines also gets shared/workflow.md between them:
     <!-- BEGIN shared/workflow.md -->
     <!-- END shared/workflow.md -->
@@ -25,6 +28,10 @@ COPIES = {
     SHARED / "doccheck.py": pathlib.Path("scripts") / "doccheck.py",
     SHARED / "convert.py": pathlib.Path("scripts") / "convert.py",
 }
+# Shared files for the skills of one plugin only.
+PLUGIN_COPIES = {
+    "dev-build": {SHARED / "grill.md": pathlib.Path("references") / "grill.md"},
+}
 BLOCK = re.compile(r"(<!-- BEGIN shared/workflow\.md -->\n).*?(<!-- END shared/workflow\.md -->)", re.DOTALL)
 
 
@@ -37,7 +44,9 @@ END = "<!-- END shared/workflow.md -->"
 
 
 def expected_files(skill: pathlib.Path) -> dict:
-    files = {skill / rel: src.read_text(encoding="utf-8") for src, rel in COPIES.items()}
+    copies = dict(COPIES)
+    copies.update(PLUGIN_COPIES.get(skill.parents[1].name, {}))
+    files = {skill / rel: src.read_text(encoding="utf-8") for src, rel in copies.items()}
     skill_md = skill / "SKILL.md"
     text = skill_md.read_text(encoding="utf-8")
     begin = [line.strip() for line in text.splitlines()].count(BEGIN)
