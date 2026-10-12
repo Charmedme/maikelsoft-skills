@@ -6,6 +6,26 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-12
+
+### Added
+
+- `doc-plan`: in audit mode, the table has the columns audience, ROT (redundant, outdated, or trivial), grade (A, C, or F), and last change. The plan proposes to delete or merge each ROT page.
+- `doc-tutorial`: a "Clean up" section, so that the learner can start again. A rule for a safe test environment and a fix line after a step that often fails.
+- `doc-howto`: the runbook template has "Impact", "Diagnose", and the line `Last tested: YYYY-MM-DD`.
+- `doc-reference`: the errors table has the columns "Client action" and "Retry". For an HTTP API without its own error format, the report proposes Problem Details (RFC 9457).
+- `doc-changelog`: rules and a template section for a security fix: the advisory ID, the affected versions, the fixed version, and the effect. The release notes tell the reader to update in the first sentence.
+- `doc-ui-text`: patterns for hint text, field errors, format errors, an error summary, and a success message. Also patterns for an accessible name and the hidden "Error:" prefix for screen readers. The output table has an "accessible text" column.
+- 8 evals: one for each of these changes, and the first evals for `doc-tutorial`, `doc-reference`, `doc-explanation`, `doc-adr`, and `doc-changelog`. `score.py` has the checks `contains` and `file_contains`.
+
+### Changed
+
+- `doc-adr`: when a new ADR supersedes an older ADR, the skill changes the status of the older ADR and links the two ADRs.
+
+### Fixed
+
+- `doccheck.py`: a sentence that starts with a lowercase word (`v4`, `npm`, `iOS`) is now a new sentence. Before, the checker joined it with the sentence before and gave a false error.
+
 ## [1.2.0] - 2026-10-08
 
 ### Added
@@ -59,7 +79,8 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 - `doccheck.py --comments <source file>`: checks the comments in source code and gives the line numbers of the source file.
 - A fallback for unattended runs: when no human can answer, the skill takes the best signal, continues, and lists each choice as an open question.
 
-[Unreleased]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-docs-v1.2.0...HEAD
+[Unreleased]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-docs-v1.3.0...HEAD
+[1.3.0]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-docs-v1.2.0...dev-docs-v1.3.0
 [1.2.0]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-docs-v1.1.0...dev-docs-v1.2.0
 [1.1.0]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-docs-v1.0.0...dev-docs-v1.1.0
 [1.0.0]: https://github.com/Charmedme/maikelsoft-skills/releases/tag/dev-docs-v1.0.0

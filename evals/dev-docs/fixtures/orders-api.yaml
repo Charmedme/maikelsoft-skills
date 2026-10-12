@@ -1,0 +1,47 @@
+openapi: 3.1.0
+info:
+  title: Orders API
+  version: 1.4.0
+servers:
+  - url: https://api.example.com/v1
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+  schemas:
+    Order:
+      type: object
+      required: [id, customerId, status]
+      properties:
+        id: {type: string, example: "ord_1042"}
+        customerId: {type: string, example: "cus_77"}
+        status: {type: string, enum: [open, shipped, cancelled]}
+        total: {type: number, description: Total in euros, including VAT.}
+    Problem:
+      type: object
+      properties:
+        code: {type: string}
+        message: {type: string}
+security:
+  - bearer: []
+paths:
+  /orders/{id}:
+    get:
+      summary: Get one order
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: The order., content: {application/json: {schema: {$ref: "#/components/schemas/Order"}}}}
+        "401": {description: The bearer token is missing or expired.}
+        "404": {description: No order with this id exists for the customer.}
+    delete:
+      summary: Cancel an order
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: Idempotency-Key, in: header, required: false, schema: {type: string}}
+      responses:
+        "204": {description: The order is cancelled.}
+        "404": {description: No order with this id exists for the customer.}
+        "409": {description: "The order is already shipped. Code: order_shipped."}
+        "429": {description: Too many requests. The response has a Retry-After header in seconds.}

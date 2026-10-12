@@ -11,7 +11,7 @@ This skill does not write documents. It makes a plan: which documents the projec
 ## Modes
 
 - **Plan**: make a plan for a project with few or no docs.
-- **Audit**: check an existing doc set. Classify each page as one type. Find the pages that mix types. Find the missing types and the duplicate content.
+- **Audit**: check an existing doc set. Classify each page as one type. Find the pages that mix types. Find the missing types and the duplicate content. Grade each page (step 4).
 
 ## Steps
 
@@ -26,6 +26,12 @@ This skill does not write documents. It makes a plan: which documents the projec
 
    Other types: `doc-readme` (entry page), `doc-adr` (one decision), `doc-changelog` (versions), `doc-code-comments` (comments in code), `doc-ui-text` (product text).
    In audit mode, give each page one type, and mark each page that has content of more than one type.
-4. **Make the plan.** Give a table with one row for each document. The columns are: file path, type, skill, purpose, source of the facts, format, and status (new, rewrite, keep). The format is the answer to the format question. A row for `doc-code-comments`, `CHANGELOG.md`, or `README.md` always has Markdown or the source file. Use the folder layout of the repo. If there is none, use `docs/tutorials/`, `docs/how-to/`, `docs/reference/`, `docs/explanation/`, and `docs/decisions/`. Done when each reader task has a document and each document has one type.
+4. **Make the plan.** Give a table with one row for each document. The columns are: file path, type, skill, purpose, source of the facts, format, and status (new, rewrite, keep). The format is the answer to the format question. A row for `doc-code-comments`, `CHANGELOG.md`, or `README.md` always has Markdown or the source file. Use the folder layout of the repo. If there is none, use `docs/tutorials/`, `docs/how-to/`, `docs/reference/`, `docs/explanation/`, and `docs/decisions/`. In audit mode, add four columns:
+   - **Audience**: the reader of the page.
+   - **ROT**: redundant (another page has the same content), outdated (it does not agree with the code), trivial (no reader needs it), or none.
+   - **Grade**: A, C, or F. Ask four questions: Does the page have one type? Do the facts agree with the code? Do the links work? Does it follow the template of its type? A has four yes answers, C has one or two no answers, F has more.
+   - **Last change**: the date of the last commit of the page.
+
+   Propose to delete or merge each page with ROT. A small set of correct pages is better than a large set with errors. Done when each reader task has a document and each document has one type.
 5. **Get approval.** Show the plan and stop. Write nothing until the human approves it, or changes it.
 6. **Run the plan.** After approval, give each skill the format of its row. Use the skills in this order: reference, how-to, tutorial, explanation, ADR, README last (it links to the others). Done when each row has its file and the checker shows 0 errors for each file.

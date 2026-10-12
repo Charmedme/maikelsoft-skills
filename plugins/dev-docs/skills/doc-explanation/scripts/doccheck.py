@@ -82,6 +82,8 @@ EN_MARKERS = {"the", "a", "an", "and", "of", "to", "is", "you", "for", "with", "
 NL_MARKERS = {"de", "het", "een", "en", "van", "je", "is", "niet", "voor", "met", "op", "dat", "die", "zijn", "u", "in"}
 
 ABBREVIATIONS = {"e.g.", "i.e.", "vs.", "cf.", "bijv.", "bv.", "o.a.", "d.w.z.", "m.b.t.", "i.p.v.", "z.o.z.", "nr.", "no."}
+# Abbreviations that can end a sentence. A lowercase word after them continues the sentence.
+SOFT_ABBREVIATIONS = {"etc.", "approx.", "ca.", "incl.", "excl.", "min.", "max.", "enz.", "evt.", "resp.", "zgn.", "vgl."}
 
 
 @dataclass
@@ -238,6 +240,17 @@ def units_from_markdown(source: str) -> tuple[list[Unit], list[tuple[int, str]]]
     return units, prose_lines
 
 
+def lowercase_start(tok: str, nxt: str) -> bool:
+    """True when a sentence ends with tok and the next sentence starts with a lowercase word (v4, npm, iOS)."""
+    word = tok.rstrip(".")
+    return (
+        nxt[:1].islower()
+        and tok.endswith(".") and not tok.endswith("..")
+        and tok.lower() not in SOFT_ABBREVIATIONS
+        and len(word) > 1 and "." not in word and word[-1:].isalpha()
+    )
+
+
 def split_sentences(text: str) -> list[str]:
     tokens = text.split()
     sentences: list[str] = []
@@ -247,7 +260,7 @@ def split_sentences(text: str) -> list[str]:
         nxt = tokens[idx + 1] if idx + 1 < len(tokens) else ""
         end = tok.endswith((".", "!", "?", ".)", "?)", "!)"))
         if end and tok.lower() not in ABBREVIATIONS and not re.fullmatch(r"\d+\.", tok):
-            if not nxt or nxt[:1].isupper() or nxt[:1] in "(\"'`" or nxt[:1].isdigit():
+            if not nxt or nxt[:1].isupper() or nxt[:1] in "(\"'`" or nxt[:1].isdigit() or lowercase_start(tok, nxt):
                 sentences.append(" ".join(current))
                 current = []
     if current:

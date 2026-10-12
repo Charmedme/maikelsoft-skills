@@ -90,6 +90,7 @@ Chosen option: "<option>", because <reason, linked to the decision drivers>.
 ## Rules for this type
 
 - One decision in each ADR.
+- When the new ADR supersedes an older ADR, change the older ADR in two places. Set `status: superseded by ADR-NNNN`, and add a link to the new ADR in "More Information". Add a link to the older ADR in "More Information" of the new ADR. This is the only change to an accepted ADR.
 - Give at least two real options. "Do nothing" is a valid option.
 - Base the "because" on the decision drivers, not on taste. Never choose an option because the team already uses it, unless familiarity is a decision driver that you state.
 - The human makes the decision. If the human did not choose, write `status: proposed` and give your recommendation in "More Information".

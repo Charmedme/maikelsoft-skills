@@ -166,6 +166,114 @@
         {"check": "keep_errors_max", "value": 0},
         {"judge": "The reply gives the path of the Markdown file and of the Word file."}
       ]
+    },
+    {
+      "id": 12,
+      "name": "tutorial-clean-up",
+      "prompt": "Write a getting-started tutorial for gron, the Go command-line tool whose source code is in <gron>.",
+      "output": "tutorial.md",
+      "assertions": [
+        {"check": "errors_max", "value": 0},
+        {"check": "go_flags_exist", "value": "<gron>/main.go"},
+        {"check": "contains", "value": "^#+ .*clean ?up"},
+        {"judge": "The tutorial gives one path, with no options or alternatives."},
+        {"judge": "The tutorial shows the expected output after the steps."}
+      ]
+    },
+    {
+      "id": 13,
+      "name": "reference-api-errors",
+      "prompt": "Write the API reference for the Orders API in <fixtures>/orders-api.yaml.",
+      "output": "orders-api.md",
+      "assertions": [
+        {"check": "errors_max", "value": 0},
+        {"check": "contains", "value": "client action"},
+        {"check": "contains", "value": "\\| *retry *\\|"},
+        {"check": "contains", "value": "Retry-After"},
+        {"judge": "No default value or behavior is invented: a fact that the OpenAPI file does not give is a TODO."}
+      ]
+    },
+    {
+      "id": 14,
+      "name": "explanation-from-code",
+      "prompt": "Explain how gron works inside (the design of the tool) for a new contributor. The source code is in <gron>.",
+      "output": "how-gron-works.md",
+      "assertions": [
+        {"check": "errors_max", "value": 0},
+        {"check": "not_contains", "value": "(?m)^\\s*\\d+\\. (Run|Install|Open|Type)\\b"},
+        {"judge": "The text explains the design and the reasons, and gives no steps to do."},
+        {"judge": "Each diagram (if any) has a text that tells what it shows."}
+      ]
+    },
+    {
+      "id": 15,
+      "name": "adr-supersedes",
+      "setup": "Copy <fixtures>/adr-repo to <run>/repo before the run.",
+      "prompt": "In the repository <run>/repo, record our decision to move the label queue from SQLite to PostgreSQL. Reason: we now run the label service on three servers, and they must share one queue. Decision-maker: Maikel. The decision is accepted. It replaces ADR 0001.",
+      "output": "repo/docs/decisions/0002-*.md",
+      "assertions": [
+        {"check": "errors_max", "value": 0},
+        {"check": "contains", "value": "^status: accepted"},
+        {"check": "file_contains", "value": {"file": "repo/docs/decisions/0001-*.md", "pattern": "superseded by ADR-?0*2"}},
+        {"check": "contains", "value": "0001"},
+        {"check": "file_contains", "value": {"file": "repo/docs/decisions/0001-*.md", "pattern": "\\(\\.?/?0002-[^)]*\\.md\\)"}},
+        {"judge": "The new ADR gives at least two options and bases the reason on the decision drivers."}
+      ]
+    },
+    {
+      "id": 16,
+      "name": "release-notes-security",
+      "prompt": "Write the release notes for Shipwell 2.4.0 (release date 2026-10-12) from <fixtures>/changes-2.4.0.txt.",
+      "output": "release-notes-2.4.0.md",
+      "assertions": [
+        {"check": "errors_max", "value": 0},
+        {"check": "contains", "value": "GHSA-7x2q-m4vr-9c3p"},
+        {"check": "contains", "value": "2\\.0\\.0"},
+        {"check": "not_contains", "value": "(?i)eslint|refactor"},
+        {"judge": "The first sentence or the first section tells the reader to update because of the security fix."},
+        {"judge": "The removed /v1/labels endpoint has an 'Action required' section with steps."}
+      ]
+    },
+    {
+      "id": 17,
+      "name": "runbook-from-alert",
+      "prompt": "Write a runbook for the alert OrdersDbDiskAlmostFull. The alert rule and the notes of the platform team are in <fixtures>/orders-db-alert.yaml.",
+      "output": "runbook-orders-db-disk.md",
+      "assertions": [
+        {"check": "errors_max", "value": 0},
+        {"check": "contains", "value": "^#+ .*impact"},
+        {"check": "contains", "value": "^#+ .*diagnos"},
+        {"check": "contains", "value": "last tested"},
+        {"check": "contains", "value": "dba-oncall"},
+        {"judge": "The runbook tells the reader to ask the data team before dropping the replication slot."}
+      ]
+    },
+    {
+      "id": 18,
+      "name": "audit-grades",
+      "prompt": "Audit the documentation in <fixtures>/audit-docs. Do not change any file. Write the audit to audit.md.",
+      "output": "audit.md",
+      "assertions": [
+        {"check": "contains", "value": "\\bROT\\b|redundant"},
+        {"check": "contains", "value": "\\bgrade\\b"},
+        {"check": "contains", "value": "installation-old"},
+        {"judge": "The audit proposes to delete or merge installation-old.md."},
+        {"judge": "The audit reports that install.md does not agree with the code (Python 3.11, version 3.0, --setup)."}
+      ]
+    },
+    {
+      "id": 19,
+      "name": "english-form-errors",
+      "prompt": "I need the UI text for a sign-up dialog: the fields first name, email address, and password (at least 12 characters), the submit button, the error messages, and the close button (an X icon).",
+      "output": "signup-ui.md",
+      "assertions": [
+        {"check": "lang", "value": "en"},
+        {"check": "errors_max", "value": 0},
+        {"check": "not_contains", "value": "(?i)this field is required"},
+        {"check": "contains", "value": "(hidden|screen.?reader).{0,60}\"?Error:|\"?Error:\"?.{0,60}(hidden|screen.?reader|prefix)"},
+        {"check": "contains", "value": "aria-label|accessible"},
+        {"judge": "Each field error names the field and says what to do."}
+      ]
     }
   ]
 }

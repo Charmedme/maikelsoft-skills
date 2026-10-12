@@ -56,6 +56,9 @@ In this tutorial, you <make X>. At the end, you have <visible result>.
 ## 2. <Next step group>
 ...
 
+## Clean up
+1. <Action that removes what the tutorial made: files, containers, accounts, data.>
+
 ## What you did
 - <One line for each thing the reader learned.>
 
@@ -66,6 +69,8 @@ In this tutorial, you <make X>. At the end, you have <visible result>.
 ## Rules for this type
 
 - Give one path. Do not give options or alternatives.
+- Make the tutorial safe to repeat. Use a new folder, test data, and a local or test environment. Never use production data. The "Clean up" section removes each thing that the tutorial made, so that the learner can start again.
+- After a step that often fails, add one line: "If you see <message>, <fix>." The writer is responsible for the success of each step.
 - Show the expected result after each step, so that the reader knows that the step worked.
 - Run each command when you can, and copy the real output. Each step must work on each supported system. If you cannot confirm a command or an output, mark it `TODO: verify`.
 - Use a concrete example with real names and values, not `foo` and `bar`.
