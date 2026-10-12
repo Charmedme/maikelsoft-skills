@@ -1,0 +1,24 @@
+{
+  "name": "product-flow",
+  "displayName": "Product flow",
+  "version": "1.0.0",
+  "description": "Take a product idea to an approved backlog: research, questions, a prototype with your branding, a spec with a story map, and goals, epics, features, and user stories that go into Jira, Azure DevOps, GitHub, GitLab, Linear, or files. For product owners and business analysts.",
+  "author": {
+    "name": "Maikel",
+    "url": "https://github.com/Charmedme"
+  },
+  "homepage": "https://github.com/Charmedme/maikelsoft-skills/tree/main/plugins/product-flow",
+  "repository": "https://github.com/Charmedme/maikelsoft-skills",
+  "license": "MIT",
+  "keywords": [
+    "product-owner",
+    "business-analyst",
+    "backlog",
+    "user-stories",
+    "prototype",
+    "jira",
+    "azure-devops",
+    "asd-ste100",
+    "dutch"
+  ]
+}

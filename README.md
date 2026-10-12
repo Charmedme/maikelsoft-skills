@@ -23,6 +23,7 @@ claude plugin install <plugin>@maikelsoft-skills
 | [dev-docs](plugins/dev-docs/README.md) | 1.3.0 | Writes, rewrites, and reviews developer documentation: README, tutorial, how-to, reference, explanation, ADR, changelog, code comments, and UI text. |
 | [dev-flow](plugins/dev-flow/README.md) | 1.0.0 | Plans and builds a change from an idea to working code: research, questions, plan, specs, tickets, a prototype to validate, and then the build. |
 | [dev-build](plugins/dev-build/README.md) | 1.1.0 | Builds agent skills and agents: research, concept, test, and build. Two skills, `build-skill` and `build-agent`, for Claude Code, the Agent SDK, Managed Agents, and OpenClaw. |
+| [product-flow](plugins/product-flow/README.md) | 1.0.0 | Takes a product idea to an approved backlog for product owners and business analysts: research, questions, a prototype, a spec, and the goals, features, and user stories in the ticket system. Seven skills. |
 
 ## Language rules
 
