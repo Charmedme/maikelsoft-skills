@@ -25,7 +25,7 @@ CRITERIA_MIN = 1        # A1
 STORY_TYPES = {"user story", "story", "product backlog item", "pbi", "requirement", "issue"}
 SPECIAL_TYPES = {"spike", "enabler"}
 
-STORY_EN = re.compile(r"\bas an? (?P<role>.+?),? i want (?P<goal>.+?)(?:,? so that (?P<value>.+))?$", re.I)
+STORY_EN = re.compile(r"\bas (?:an?|the) (?P<role>.+?),? i want (?P<goal>.+?)(?:,? so that (?P<value>.+))?$", re.I)
 STORY_NL = re.compile(r"\bals (?P<role>.+?),? wil ik (?P<goal>.+?)(?:,? zodat (?P<value>.+))?$", re.I)
 GENERIC_ROLES = {"user", "a user", "an user", "gebruiker", "een gebruiker", "de gebruiker", "the user",
                  "person", "someone", "iemand", "end user", "eindgebruiker"}  # too wide, see S1
@@ -59,18 +59,33 @@ class Finding:
 
 
 def split_items(lines):
-    """Return (start line, heading level, title, block lines) for each item with a Type line."""
+    """Return (start line, heading level, title, block lines) for each item with a Type line.
+
+    A block ends at the next heading of the same or a higher level, or at the next item.
+    """
     heads = [(i, len(m.group(1)), m.group(2).strip()) for i, l in enumerate(lines) if (m := HEADING.match(l))]
+
+    def is_item(n):
+        i = heads[n][0]
+        own = []
+        for l in lines[i + 1:i + 7]:
+            if HEADING.match(l):
+                break
+            own.append(l)
+        return any(TYPE_LINE.match(l.strip()) for l in own)
+
+    flags = [is_item(n) for n in range(len(heads))]
     items = []
     for n, (i, level, title) in enumerate(heads):
+        if not flags[n]:
+            continue
         end = len(lines)
-        for j, lvl, _ in heads[n + 1:]:
-            if lvl <= level:
+        for k in range(n + 1, len(heads)):
+            j, lvl, _ = heads[k]
+            if lvl <= level or flags[k]:
                 end = j
                 break
-        block = lines[i + 1:end]
-        if any(TYPE_LINE.match(l.strip()) for l in block[:6]):
-            items.append((i, level, title, block))
+        items.append((i, level, title, lines[i + 1:end]))
     return items
 
 

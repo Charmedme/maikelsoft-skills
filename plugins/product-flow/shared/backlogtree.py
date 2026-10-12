@@ -45,16 +45,28 @@ def parse(paths):
     for path in paths:
         lines = pathlib.Path(path).read_text(encoding="utf-8").splitlines()
         heads = [(i, len(m.group(1)), m.group(2).strip()) for i, l in enumerate(lines) if (m := HEADING.match(l))]
+        def own_type(n):
+            for l in lines[heads[n][0] + 1:heads[n][0] + 7]:
+                if HEADING.match(l):
+                    return False
+                if TYPE_LINE.match(l.strip()):
+                    return True
+            return False
+
+        flags = [own_type(n) for n in range(len(heads))]
         for n, (i, level, title) in enumerate(heads):
             end = len(lines)
-            for j, lvl, _ in heads[n + 1:]:
-                if lvl <= level:
+            for k in range(n + 1, len(heads)):
+                j, lvl, _ = heads[k]
+                if lvl <= level or flags[k]:
                     end = j
                     break
             block = lines[i + 1:end]
             kind = parent = None
             for l in block[:6]:
                 s = l.strip()
+                if HEADING.match(l):
+                    break
                 if m := TYPE_LINE.match(s):
                     kind = m.group(2).strip()
                 if m := PARENT_LINE.match(s):
@@ -64,7 +76,7 @@ def parse(paths):
             body = "\n".join(l for l in block if not TYPE_LINE.match(l.strip()) and not PARENT_LINE.match(l.strip()))
             items.append({"id": slug(title), "type": kind, "title": title,
                           "parent": None if (parent or "").lower() in NONE_PARENTS else parent,
-                          "parent_text": parent or "None",
+                          "parent_text": parent,
                           "rank": ORDER.get(kind.lower(), 5), "body": body.strip(),
                           "file": str(path), "line": i + 1})
     return items
@@ -219,7 +231,8 @@ def to_txt(md):
 
 
 def render(item):
-    head = f"## {item['title']}\n\n**Type:** {item['type']}\n**Parent:** {item['parent_text']}\n\n"
+    parent_line = f"**Parent:** {item['parent_text']}\n" if item["parent_text"] else ""
+    head = f"## {item['title']}\n\n**Type:** {item['type']}\n{parent_line}\n"
     return head + item["body"] + "\n"
 
 

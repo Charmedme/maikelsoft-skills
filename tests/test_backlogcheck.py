@@ -62,6 +62,15 @@ class BacklogCheckTest(unittest.TestCase):
         self.assertEqual(len(items), 1)
         self.assertEqual(found, set())
 
+    def test_as_the_role(self):
+        items, found = run(GOOD.replace("As a", "As the", 1).replace("As an", "As the", 1))
+        self.assertNotIn(("error", "S1"), found)
+
+    def test_section_heading_is_not_an_item(self):
+        nested = "## Backlog\n\nThe items.\n\n" + GOOD.replace("## ", "### ")
+        items, found = run(nested)
+        self.assertEqual(len(items), 1)
+
     def test_bad_story(self):
         _, found = run(BAD)
         for expected in [("error", "S1"), ("error", "A5"), ("warning", "T2"), ("warning", "S2"),

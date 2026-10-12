@@ -62,6 +62,17 @@ class BacklogTreeTest(unittest.TestCase):
         first = (self.dir / "out" / "01-inloggen-in-de-app.md").read_text()
         self.assertIn("**Parent:** Geen", first)
 
+    def test_nested_items_under_section_heading(self):
+        nested = "# Backlog: x\n\n## Backlog\n\nThe items.\n\n" + DRAFT.replace("## ", "### ").replace("### Doel", "#### Doel")
+        (self.dir / "nested.md").write_text(nested, encoding="utf-8")
+        data = json.loads(run("tree", "nested.md", "--json", cwd=self.dir).stdout)
+        self.assertEqual([i["type"] for i in data["items"]], ["Feature", "User Story"])
+
+    def test_export_without_parent_line(self):
+        (self.dir / "goal.md").write_text("## Doel\n\n**Type:** Product Goal\n\nKlanten bestellen sneller.\n", encoding="utf-8")
+        run("export", "goal.md", "--format", "md", "--combined", "--out", "out.md", cwd=self.dir)
+        self.assertNotIn("**Parent:**", "".join(p.read_text() for p in (self.dir / "out.md").glob("*.md")))
+
 
 if __name__ == "__main__":
     unittest.main()

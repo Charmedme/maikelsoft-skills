@@ -31,6 +31,7 @@ python3 <this skill folder>/scripts/backlogtree.py export <draft.md> --format md
 - `--combined` makes one file with all items, parents first.
 - In claude.ai, give each file to the human as a download, or publish the combined file as a document artifact when the session can.
 - In a repository, put the files in the work folder (for example `docs/work/<slug>/backlog/`).
+- The push log is optional for files. When you keep one, use `<file>#<item id>` as the remote id.
 
 ## Duplicates
 
