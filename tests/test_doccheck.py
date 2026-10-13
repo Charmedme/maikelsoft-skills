@@ -60,6 +60,31 @@ class LowercaseSentenceStart(unittest.TestCase):
         self.assertEqual(len(doccheck.split_sentences("Edit config.yml and save it.")), 1)
 
 
+class Accessibility(unittest.TestCase):
+    def test_image_without_alt_text(self):
+        self.assertIn("A11Y-ALT", rules("# T\n\n![](diagram.png)\n", "en")[0])
+        self.assertNotIn("A11Y-ALT", rules("# T\n\n![The data flow](diagram.png)\n", "en")[0])
+
+    def test_vague_link_text(self):
+        self.assertIn("A11Y-LINK", rules("# T\n\nFor the steps, click [here](a.md).\n", "en")[0])
+        self.assertIn("A11Y-LINK", rules("# T\n\nLees [meer](a.md).\n", "nl")[0])
+        self.assertNotIn("A11Y-LINK", rules("# T\n\nRead the [install guide](a.md).\n", "en")[0])
+
+    def test_heading_level_skip(self):
+        self.assertIn("A11Y-HEADING", rules("# T\n\n### Deep\n\nText.\n", "en")[0])
+        self.assertNotIn("A11Y-HEADING", rules("# T\n\n## A\n\n### B\n\n## C\n", "en")[0])
+
+    def test_heading_in_code_block_is_ignored(self):
+        self.assertNotIn("A11Y-HEADING", rules("# T\n\n```\n### not a heading\n```\n", "en")[0])
+
+    def test_heading_does_not_change_the_level(self):
+        _, metrics = rules("# T\n\n## A\n\nText.\n", "en", "strict")
+        self.assertEqual(metrics["level"], "strict")
+
+    def test_procedure_words(self):
+        self.assertIn("HOUSE-WORDS", rules("# T\n\nRun the following command to start.\n", "en")[0])
+
+
 class Punctuation(unittest.TestCase):
     def test_semicolon(self):
         self.assertIn("STE-8.1", rules("Do this; do that.", "en")[0])

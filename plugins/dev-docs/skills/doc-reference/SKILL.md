@@ -1,6 +1,6 @@
 ---
 name: doc-reference
-description: Reference documentation for code, APIs, CLIs, and configuration. Use when the user wants an API reference, endpoint docs, CLI options, configuration keys, or error codes documented, rewritten, or reviewed.
+description: Reference documentation for code, APIs, CLIs, and configuration. Use when the user wants an API reference, endpoint docs, CLI options, configuration keys, or error codes documented, rewritten, or reviewed. Writes in plain language: ASD-STE100 for English, B1 for Dutch.
 allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/doccheck.py *), Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/convert.py *)
 ---
 
@@ -73,3 +73,7 @@ Use the same entry format for each item:
 - For an HTTP API without its own error format, propose Problem Details (RFC 9457, `application/problem+json`) in the report. Do not change the documented format of an existing API.
 - For a CLI, each option is an item. Leave out "Returns" and "Errors" when they are empty. Put the facts for the whole program (exit codes, environment variables) in their own sections after the options.
 - When a default is a behavior and not a value, describe the behavior in the Default cell: "Reads `https_proxy`".
+- For an HTTP API, put the facts for the whole API in their own sections before the items. The sections are: authentication, rate limits (`429` and `Retry-After`), pagination, idempotency, and versioning. Leave out each section that has no facts, and list it as an open question.
+- Mark a deprecated item in its first sentence: "**Deprecated** in 2.3. Use `<replacement>`. Removed in 3.0." If the removal version is not known, write `TODO:`.
+- When an OpenAPI file or a schema exists, it is the source. Take each fact from it, and check each example against it. If the project generates its reference from the file, link to the generated page and do not write a second copy.
+- Use placeholder values in examples (`<token>`, `api.example.com`). Never put a real token, a password, an internal host name, or a stack trace in an example.

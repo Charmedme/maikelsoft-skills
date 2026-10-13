@@ -6,6 +6,28 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-10-12
+
+### Added
+
+- Shared rules for procedures: "Optional:", the goal first, and the location before the action. Shared rules for accessibility: alt text, link text, and the level of each heading.
+- `doccheck.py`: three warnings for accessibility: `A11Y-ALT`, `A11Y-LINK`, and `A11Y-HEADING`. `HOUSE-WORDS` also finds "see below", "the following command", and "please".
+- `doc-plan`: troubleshooting pages, migration guides, and glossaries go to existing skills. `CONTRIBUTING.md` and `AGENTS.md` are out of scope.
+- `doc-readme`: a status and maintainer line, a template for a folder README, and a rule to run the quick-start commands.
+- `doc-howto`: rules for risk and for two methods for one task.
+- `doc-reference`: sections for the whole API (authentication, rate limits, pagination, idempotency, and API versions). Rules for deprecated items, an OpenAPI source, and placeholder values in examples.
+- `doc-explanation`: a text after each diagram, and the C4 order for an architecture overview.
+- `doc-adr`: the skill updates the ADR index.
+- `doc-changelog`: the `[YANKED]` marker, a map from Conventional Commits, and a check for a removal without a deprecation.
+- `doc-code-comments`: deprecation tags for each language, module comments, and no secrets in comments.
+- `doc-ui-text`: named placeholders, plural forms, and room for translation.
+- 3 evals: changelog entry from commits, deprecated doc comments, and UI text with placeholders.
+
+### Changed
+
+- Each skill description says that the skill writes plain language (ASD-STE100, B1).
+- `doc-tutorial`: pin the version of each tool and give the test data.
+
 ## [1.3.0] - 2026-10-12
 
 ### Added
@@ -79,7 +101,8 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 - `doccheck.py --comments <source file>`: checks the comments in source code and gives the line numbers of the source file.
 - A fallback for unattended runs: when no human can answer, the skill takes the best signal, continues, and lists each choice as an open question.
 
-[Unreleased]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-docs-v1.3.0...HEAD
+[Unreleased]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-docs-v1.4.0...HEAD
+[1.4.0]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-docs-v1.3.0...dev-docs-v1.4.0
 [1.3.0]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-docs-v1.2.0...dev-docs-v1.3.0
 [1.2.0]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-docs-v1.1.0...dev-docs-v1.2.0
 [1.1.0]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-docs-v1.0.0...dev-docs-v1.1.0

@@ -115,7 +115,10 @@ The STE numbers refer to ASD-STE100 Issue 9. The labels are our own words.
 | `STE-3.6` | warning | The sentence is possibly passive. |
 | `STE-3.5` | warning | An -ing word follows a comma. |
 | `B1-PASSIVE` | warning | The Dutch sentence is possibly passive. |
-| `HOUSE-WORDS` | warning | The text has a filler word or a formal word ("just", "utilize", "teneinde"). |
+| `HOUSE-WORDS` | warning | The text has a filler word, a formal word, or a vague reference ("just", "utilize", "teneinde", "see below"). |
+| `A11Y-ALT` | warning | An image has no alternative text. |
+| `A11Y-LINK` | warning | A link text does not say where the link goes ("here", "read more"). |
+| `A11Y-HEADING` | warning | A heading skips a level (for example `###` after `#`). |
 | `KEEP-CODE` | error | A rewrite lost or changed a code line of the source. |
 | `KEEP-LINK` | error | A rewrite lost a link target of the source. |
 | `KEEP-ANCHOR` | warning | A rewrite changed a heading anchor. |

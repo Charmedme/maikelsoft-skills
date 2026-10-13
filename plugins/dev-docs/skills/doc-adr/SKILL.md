@@ -1,6 +1,6 @@
 ---
 name: doc-adr
-description: Architecture decision record (ADR) in MADR 4.0.0 format. Use when the user wants to record, compare, or review a technical decision (choose between technologies, patterns, or designs), or wants an ADR written, rewritten, or reviewed.
+description: Architecture decision record (ADR) in MADR 4.0.0 format. Use when the user wants to record, compare, or review a technical decision (choose between technologies, patterns, or designs), or wants an ADR written, rewritten, or reviewed. Writes in plain language: ASD-STE100 for English, B1 for Dutch.
 allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/doccheck.py *), Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/convert.py *)
 ---
 
@@ -95,4 +95,5 @@ Chosen option: "<option>", because <reason, linked to the decision drivers>.
 - Base the "because" on the decision drivers, not on taste. Never choose an option because the team already uses it, unless familiarity is a decision driver that you state.
 - The human makes the decision. If the human did not choose, write `status: proposed` and give your recommendation in "More Information".
 - Put action items in the issue tracker, not in the ADR.
+- If the ADR folder has an index (for example `README.md` or `index.md`), add the new ADR to it. If the ADR replaces an older ADR, update the status of the older ADR in the index too.
 - In the table of an option, use only the dimensions that have facts. Do not invent a rating. Remove the "(optional)" markers from the output.

@@ -1,6 +1,6 @@
 ---
 name: doc-plan
-description: Documentation plan and documentation audit for a whole project. Use when the user wants a project or repository documented, asks which docs are missing, or wants an existing doc set checked for structure. Selects the document types and sends each document to the correct doc- skill.
+description: Documentation plan and documentation audit for a whole project. Use when the user wants a project or repository documented, asks which docs are missing, or wants an existing doc set checked for structure. Selects the document types and sends each document to the correct doc- skill. Writes in plain language: ASD-STE100 for English, B1 for Dutch.
 allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/doccheck.py *)
 ---
 
@@ -25,6 +25,7 @@ This skill does not write documents. It makes a plan: which documents the projec
    | **Working** | how-to guide (`doc-howto`) | reference (`doc-reference`) |
 
    Other types: `doc-readme` (entry page), `doc-adr` (one decision), `doc-changelog` (versions), `doc-code-comments` (comments in code), `doc-ui-text` (product text).
+   More page types go to these skills: a troubleshooting page and a migration guide to `doc-howto`, a glossary to `doc-reference`. List `CONTRIBUTING.md` and `AGENTS.md` when they are missing, but do not write them. They are out of scope.
    In audit mode, give each page one type, and mark each page that has content of more than one type.
 4. **Make the plan.** Give a table with one row for each document. The columns are: file path, type, skill, purpose, source of the facts, format, and status (new, rewrite, keep). The format is the answer to the format question. A row for `doc-code-comments`, `CHANGELOG.md`, or `README.md` always has Markdown or the source file. Use the folder layout of the repo. If there is none, use `docs/tutorials/`, `docs/how-to/`, `docs/reference/`, `docs/explanation/`, and `docs/decisions/`. In audit mode, add four columns:
    - **Audience**: the reader of the page.

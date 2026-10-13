@@ -1,6 +1,6 @@
 ---
 name: doc-howto
-description: How-to guide and runbook. Use when the user wants steps that do one task (install, configure, deploy, migrate, rotate a key, recover from an incident), or wants a how-to guide or runbook written, rewritten, or reviewed.
+description: How-to guide and runbook. Use when the user wants steps that do one task (install, configure, deploy, migrate, rotate a key, recover from an incident), or wants a how-to guide or runbook written, rewritten, or reviewed. Writes in plain language: ASD-STE100 for English, B1 for Dutch.
 allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/doccheck.py *), Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/convert.py *)
 ---
 
@@ -75,3 +75,5 @@ Runbook: add these sections to the template:
 - Put a warning before the step that it is about: command or condition first, then the risk. "Do not run this on production. The command deletes all rows."
 - Give each command in a code block that the reader can copy. Use placeholders in `<angle-brackets>` and say what goes in each one.
 - Keep explanations to one sentence. Link to `doc-explanation` content for more.
+- Do not promise that a step is safe. Before a step that can lose data or stop a service, state the risk and what the reader must check first.
+- When there are two methods for one task (for example a CLI and a web console), give each method its own heading.
