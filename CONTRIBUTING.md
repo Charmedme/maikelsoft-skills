@@ -10,6 +10,7 @@ This guide gives the steps to add or change a skill. You need Python 3.9 or late
   - the interview of the dev-build skills (`grill.md`)
   - the checker (`doccheck.py`)
 - `scripts/sync_shared.py` copies the shared files into each skill. A skill then works alone, without the rest of the repository.
+- `plugins/<plugin>/shared/` holds the files that more than one skill of that plugin uses, for example the backlog checker of product-flow. The sync copies such a file only into the skills whose `SKILL.md` names it.
 - A script that only one skill uses stays in the folder of that skill, for example `plugins/dev-flow/skills/plan-and-build/scripts/workcheck.py`. Its tests are in `tests/`.
 - `plugins/<plugin>/` holds one plugin. Each plugin has `.claude-plugin/plugin.json`, a `README.md`, a `CHANGELOG.md`, and its skills in `skills/<skill>/SKILL.md`.
 - `.claude-plugin/marketplace.json` lists the plugins.

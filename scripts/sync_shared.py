@@ -12,6 +12,10 @@ Each skill gets:
 Each skill of the dev-build plugin also gets:
     references/grill.md     <- shared/grill.md
 
+Each skill of a plugin that has a plugins/<plugin>/shared/ folder also gets
+the files of that folder that its SKILL.md names: a .py file in scripts/, any
+other file in references/.
+
 A SKILL.md that has these two marker lines also gets shared/workflow.md between them:
     <!-- BEGIN shared/workflow.md -->
     <!-- END shared/workflow.md -->
@@ -47,6 +51,13 @@ def expected_files(skill: pathlib.Path) -> dict:
     copies = dict(COPIES)
     copies.update(PLUGIN_COPIES.get(skill.parents[1].name, {}))
     files = {skill / rel: src.read_text(encoding="utf-8") for src, rel in copies.items()}
+    text = (skill / "SKILL.md").read_text(encoding="utf-8")
+    plugin_shared = skill.parents[1] / "shared"
+    if plugin_shared.is_dir():
+        for src in sorted(plugin_shared.iterdir()):
+            if src.is_file() and src.name in text:
+                folder = "scripts" if src.suffix == ".py" else "references"
+                files[skill / folder / src.name] = src.read_text(encoding="utf-8")
     skill_md = skill / "SKILL.md"
     text = skill_md.read_text(encoding="utf-8")
     begin = [line.strip() for line in text.splitlines()].count(BEGIN)

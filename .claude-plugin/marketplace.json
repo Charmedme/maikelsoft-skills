@@ -61,6 +61,33 @@
         "dutch",
         "b1"
       ]
+    },
+    {
+      "name": "product-flow",
+      "source": "./plugins/product-flow",
+      "description": "Take a product idea to an approved backlog: research, questions, a prototype with your branding, a spec with a story map, and goals, epics, features, and user stories in your ticket system. For product owners and business analysts.",
+      "category": "productivity",
+      "tags": [
+        "product-owner",
+        "business-analyst",
+        "backlog",
+        "user-stories",
+        "epics",
+        "features",
+        "story-map",
+        "prototype",
+        "jira",
+        "azure-devops",
+        "github",
+        "gitlab",
+        "linear",
+        "scrum",
+        "safe",
+        "asd-ste100",
+        "simplified-technical-english",
+        "dutch",
+        "b1"
+      ]
     }
   ]
 }
