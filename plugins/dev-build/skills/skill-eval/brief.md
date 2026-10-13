@@ -28,6 +28,7 @@ A results table (assertion against baseline, v1, v2) with one line per change be
 - A multi-turn case uses the answer sheet and stops at the gates.
 
 ## Limits
+- No eval run in CI, because each run costs money and needs a token.
 - No fake human reply outside the answer sheet, because it makes the result worthless.
 - A cost limit on each run (`--max-cost-usd`), because each run uses the account of the human.
 
@@ -45,3 +46,5 @@ Output in English (ASD-STE100). Dutch (B1) when the human asks. Claude Code and 
 | Q9 | Move the eval sets of all plugins to the new format, when the new sets are of high quality | human |
 | Q10 | Hide the variant. Grade both orders only for a version compare | human |
 | Q14 | English STE, Dutch B1 on request | human |
+| Q15 | Cases in `plugins/<plugin>/evals/`. Large fixtures and old results stay in the root `evals/` | human |
+| Q16 | Evals run only local, not in CI | human |
