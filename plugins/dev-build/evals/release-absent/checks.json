@@ -1,9 +1,30 @@
 [
-  {"id": "C1-version", "cmd": "python3 -I -c \"import json,sys; sys.exit(json.load(open(sys.argv[1]))[\\\"version\\\"] != \\\"1.1.0\\\")\" {cwd}/repo/plugins/hello/.claude-plugin/plugin.json"},
-  {"id": "C2-changelog", "cmd": "grep -qE \"^## \\\\[1\\\\.1\\\\.0\\\\] - [0-9]{4}-[0-9]{2}-[0-9]{2}\" {cwd}/repo/plugins/hello/CHANGELOG.md"},
-  {"id": "C3-tag-links", "cmd": "grep -q \"hello--v1.1.0\" {cwd}/repo/plugins/hello/CHANGELOG.md && ! grep -q \"hello-v1\" {cwd}/repo/plugins/hello/CHANGELOG.md"},
-  {"id": "C4-readme", "cmd": "grep -qE \"^\\\\| hello \\\\| 1\\\\.1\\\\.0 \\\\|\" {cwd}/repo/README.md"},
-  {"id": "C5-ci-green", "cmd": "cd {cwd}/repo && python3 -I scripts/check.py"},
-  {"id": "C6-pushed", "cmd": "test \"$(git -c core.hooksPath=/dev/null -c core.fsmonitor=false --git-dir {cwd}/origin.git rev-parse refs/heads/feat/greeting 2>/dev/null)\" = \"$(git -c core.hooksPath=/dev/null -c core.fsmonitor=false -C {cwd}/repo rev-parse HEAD)\""},
-  {"id": "C7-main-untouched", "cmd": "test \"$(git -c core.hooksPath=/dev/null -c core.fsmonitor=false --git-dir {cwd}/origin.git rev-list --count refs/heads/main)\" = 1"}
+  {
+    "id": "C1-version",
+    "cmd": "python3 -I -c \"import json,sys; sys.exit(json.load(open(sys.argv[1]))[\\\"version\\\"] != \\\"1.1.0\\\")\" {cwd}/repo/plugins/hello/.claude-plugin/plugin.json"
+  },
+  {
+    "id": "C2-changelog",
+    "cmd": "grep -qE \"^## \\\\[1\\\\.1\\\\.0\\\\] - [0-9]{4}-[0-9]{2}-[0-9]{2}\" {cwd}/repo/plugins/hello/CHANGELOG.md"
+  },
+  {
+    "id": "C3-tag-links",
+    "cmd": "grep -q \"hello--v1.1.0\" {cwd}/repo/plugins/hello/CHANGELOG.md && ! grep -q \"hello-v1\" {cwd}/repo/plugins/hello/CHANGELOG.md"
+  },
+  {
+    "id": "C4-readme",
+    "cmd": "grep -qE \"^\\\\| hello \\\\| 1\\\\.1\\\\.0 \\\\|\" {cwd}/repo/README.md"
+  },
+  {
+    "id": "C5-ci-green",
+    "cmd": "cd {cwd}/repo && python3 -I scripts/check.py"
+  },
+  {
+    "id": "C6-pushed",
+    "cmd": "a=$(git -c core.hooksPath=/dev/null -c core.fsmonitor=false --git-dir {cwd}/origin.git rev-parse -q --verify refs/heads/feat/greeting); test -n \"$a\" && test \"$a\" = \"$(git -c core.hooksPath=/dev/null -c core.fsmonitor=false -C {cwd}/repo rev-parse HEAD)\" && test \"$(git -c core.hooksPath=/dev/null -c core.fsmonitor=false --git-dir {cwd}/origin.git rev-list --count $a)\" -gt 4"
+  },
+  {
+    "id": "C7-main-untouched",
+    "cmd": "test \"$(git -c core.hooksPath=/dev/null -c core.fsmonitor=false --git-dir {cwd}/origin.git rev-list --count refs/heads/main)\" = 1"
+  }
 ]

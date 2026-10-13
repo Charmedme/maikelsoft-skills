@@ -1,4 +1,4 @@
 ---
-tools: Read Write Edit Glob Grep Skill
-allow: Bash(python3 *), Bash(ls *), Bash(cat *)
+scaffold: fixture.sh
+tools: Read Write Edit Glob Grep Skill Bash
 ---

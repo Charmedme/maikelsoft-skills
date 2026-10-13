@@ -19,10 +19,10 @@ plugins/<plugin>/evals/
     prompt.md          one-turn case (claude plugin eval)
     request.md         or: the first message of a case with a simulated human
     human.md           the answer sheet of the simulated human
-    agent.md           optional: the tools of the agent in a simulated-human case
+    agent.md           optional: tools and scaffold of a simulated-human case
     graders/*.md       assertions that a grader scores
     checks.json        assertions that a command scores
-    case.yaml          optional: the scaffold script
+    case.yaml          one-turn case only: the scaffold script
   results/             results of each run (do not commit)
 ```
 
@@ -72,16 +72,16 @@ Give a fact only when a question touches its topic.
 - A request to publish: "Not now, stop here."
 ```
 
-`agent.md` sets the tools of the agent. The default is Read, Write, Edit, Glob, Grep, and Skill. Add a shell command only when the skill needs it:
+`agent.md` sets the tools and the scaffold of the case. The default tools are Read, Write, Edit, Glob, Grep, and Skill. Add Bash only when the skill needs a shell:
 
 ```markdown
 ---
-tools: Read Write Edit Glob Grep Skill
-allow: Bash(python3 *)
+scaffold: fixture.sh
+tools: Read Write Edit Glob Grep Skill Bash
 ---
 ```
 
-The agent runs without settings, skills, or project text of this computer. It sees only the plugin under test.
+With Bash, the agent runs in the OS sandbox of Claude Code: each command can write only in the work folder. On Linux, the sandbox needs `bubblewrap` and `socat`. Do not put a `case.yaml` in this kind of case, because `claude plugin eval` then loads it as a one-turn case.
 
 ## Checks
 
@@ -107,19 +107,21 @@ Run the checker from `{repo}`, not from the output. The output can contain code 
 
 A case that needs files at the start uses a scaffold script. Large fixtures stay in the root `evals/<plugin>/fixtures/` folder of the repository, so they do not go to the users with the plugin.
 
-`case.yaml`:
+`case.yaml` of a one-turn case:
 
 ```yaml
+schema_version: "1.1"
+name: release-absent
 context:
   scaffold_script: fixture.sh
 ```
 
-`fixture.sh` starts in the empty work folder. It finds the repository from its own real path, because the runner links the cases into a copy of the plugin:
+`fixture.sh` starts in the empty work folder. `evalrun.py` runs a copy of the cases, and writes the repository path to `evals/.repo-root` in the copy. The script reads that file first:
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
-repo="$(cd "$(dirname "$(readlink -f "$0")")/../../../.." && pwd)"
+repo="$(cat "$(dirname "$0")/../.repo-root" 2>/dev/null || (cd "$(dirname "$0")/../../../.." && pwd))"
 cp -r "$repo/evals/dev-build/fixtures/bad-skill" ./skill
 ```
 

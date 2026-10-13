@@ -9,12 +9,18 @@ The case folder has:
     request.md      the first message of the human
     human.md        the answer sheet. The simulated human answers only from it.
     graders/*.md    `llm` graders (judged here) and `regex` graders
-    case.yaml       optional: context.scaffold_script, as in claude plugin eval
-    agent.md        optional: frontmatter `tools:` (default Read Write Edit Glob Grep Skill)
-                    and `allow:` (Bash patterns, for example "Bash(python3 *)")
+    agent.md        optional frontmatter:
+                    tools:    the tools (default Read Write Edit Glob Grep Skill). With Bash,
+                              the agent runs in the OS sandbox of Claude Code: commands can
+                              write only in the work folder. This needs bubblewrap and socat
+                              on Linux.
+                    scaffold: a Bash script in the case folder that fills the work folder
 
-The agent runs as `claude -p --restricted` in an empty work folder, with only
-the plugin under test. Without --plugin it runs with no plugin (the baseline).
+Do not put a case.yaml in this kind of case: claude plugin eval loads each
+folder with a case.yaml as its own case.
+
+The agent runs as `claude -p` in an empty work folder, with a clean environment
+and only the plugin under test. Without --plugin it runs with no plugin (the baseline).
 A turn of the agent ends when it stops. The human model writes the reply.
 The run ends when the agent writes RUN COMPLETE, the human says "done", or
 after --max-turns agent turns.
@@ -72,6 +78,8 @@ Do not reward length.
 
 Reply with JSON only: {{"results": [{{"id": "<id>", "pass": true, "evidence": "..."}}]}}"""
 MAX_FILE_CHARS = 6000  # characters of one file shown to the judge
+SANDBOX = json.dumps({"sandbox": {"enabled": True, "autoAllowBashIfSandboxed": True,
+                                  "allowUnsandboxedCommands": False}})
 
 
 def frontmatter(text: str):
@@ -133,20 +141,23 @@ def main():
     work, config = temp / "cwd", temp / "config"  # one config folder per run, so --resume finds the session
     work.mkdir()
     config.mkdir()
-    yaml = (case / "case.yaml").read_text(encoding="utf-8") if (case / "case.yaml").is_file() else ""
-    script = re.search(r"scaffold_script:\s*(\S+)", yaml)
-    if script and a.scaffold:
-        subprocess.run(["bash", str(case / script.group(1))], cwd=work, check=True, timeout=120)
     meta, _ = frontmatter((case / "agent.md").read_text(encoding="utf-8")) if (case / "agent.md").is_file() else ({}, "")
+    if meta.get("scaffold") and a.scaffold:
+        subprocess.run(["bash", str(case / meta["scaffold"])], cwd=work, check=True, timeout=120)
     tools = meta.get("tools", "").split() or DEFAULT_TOOLS
-    allow = [x.strip() for x in meta.get("allow", "").split(",") if x.strip()]
     sheet = (case / "human.md").read_text(encoding="utf-8")
     message = (case / "request.md").read_text(encoding="utf-8").strip()
 
     session = str(uuid.uuid4())
-    base = ["--restricted", "--strict-mcp-config", "--tools", ",".join(tools + (["Bash"] if allow else [])),
+    if "Bash" in tools:
+        # --restricted refuses git writes, and allow rules refuse "cd x && y". The sandbox allows
+        # each command, but only writes in the work folder.
+        isolation = ["--setting-sources", "", "--settings", SANDBOX]
+    else:
+        isolation = ["--restricted"]
+    base = [*isolation, "--strict-mcp-config", "--tools", ",".join(tools),
             "--permission-mode", "dontAsk", "--append-system-prompt", RUN_RULES]
-    base += ["--allowedTools", *tools, *allow]  # dontAsk refuses each tool that is not in this list
+    base += ["--allowedTools", *[t for t in tools if t != "Bash"]]  # dontAsk refuses each tool not listed
     if a.plugin:  # --restricted confines file tools to the work folder; the skill must read its own files
         base += ["--plugin-dir", a.plugin, "--add-dir", a.plugin]
     if a.model:

@@ -42,12 +42,14 @@ HERE = pathlib.Path(__file__).resolve().parent
 CHECK_TIMEOUT = 120  # seconds for one check command
 
 
-def copy_plugin(src: pathlib.Path, dest: pathlib.Path, cases: pathlib.Path):
-    """Copy a plugin without its evals, then link the shared cases into it.
+def copy_plugin(src: pathlib.Path, dest: pathlib.Path, cases: pathlib.Path, repo: pathlib.Path):
+    """Copy a plugin without its evals, then copy the shared cases into it.
 
-    A link, not a copy: a scaffold script finds the repository from its real path."""
+    claude plugin eval refuses an evals link that points outside the plugin. So the
+    cases are a copy, and evals/.repo-root tells a scaffold script where the repository is."""
     shutil.copytree(src, dest, ignore=shutil.ignore_patterns("evals", ".git", "__pycache__"))
-    (dest / "evals").symlink_to(cases, target_is_directory=True)
+    shutil.copytree(cases, dest / "evals", ignore=shutil.ignore_patterns("results"))
+    (dest / "evals" / ".repo-root").write_text(str(repo), encoding="utf-8")
 
 
 def list_cases(evals: pathlib.Path, pattern: str):
@@ -202,7 +204,7 @@ def main():
         for i, (name, path) in enumerate(variants):
             label = labels[name]
             copy = work / label / pathlib.Path(path).resolve().name
-            copy_plugin(pathlib.Path(path).resolve(), copy, evals)
+            copy_plugin(pathlib.Path(path).resolve(), copy, evals, repo)
             with_baseline = i == 0 and not args.no_baseline
             if native_cases:
                 data = run_native(copy, label, args, out, "with-without" if with_baseline else "none")
@@ -210,7 +212,8 @@ def main():
                 if with_baseline:
                     arms["without"] = labels["baseline"]
                 rows += collect_native(data, arms, out)
-            for case in human_cases:
+            human_copies = [copy / "evals" / c.name for c in human_cases]
+            for case in human_copies:
                 arm_list = [(label, copy)] + ([(labels["baseline"], None)] if with_baseline else [])
                 for arm_label, arm_plugin in arm_list:
                     for n in range(1, args.runs + 1):

@@ -1,2 +1,4 @@
+schema_version: "1.1"
+name: release-absent
 context:
   scaffold_script: fixture.sh
