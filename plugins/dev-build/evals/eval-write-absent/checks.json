@@ -14,5 +14,9 @@
   {
     "id": "C4-blind-names",
     "cmd": "! find {cwd}/hello/evals -iregex '.*\\(baseline\\|variant\\|with-skill\\|without\\|/v[0-9]\\).*' | grep -q ."
+  },
+  {
+    "id": "C5-three-assertions-each",
+    "cmd": "dirs=$(find {cwd}/hello/evals -mindepth 1 -maxdepth 1 -type d ! -name results 2>/dev/null); test -n \"$dirs\" || exit 1; for d in $dirs; do n=$(ls $d/graders/*.md 2>/dev/null | wc -l); m=0; test -f $d/checks.json && m=$(python3 -I -c \"import json,sys; print(len(json.load(open(sys.argv[1]))))\" $d/checks.json); test $((n+m)) -ge 3 || exit 1; done"
   }
 ]

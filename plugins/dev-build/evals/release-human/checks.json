@@ -20,11 +20,11 @@
     "cmd": "cd {cwd}/repo && python3 -I scripts/check.py"
   },
   {
-    "id": "C6-pushed",
-    "cmd": "a=$(git -c core.hooksPath=/dev/null -c core.fsmonitor=false --git-dir {cwd}/origin.git rev-parse -q --verify refs/heads/feat/greeting); test -n \"$a\" && test \"$a\" = \"$(git -c core.hooksPath=/dev/null -c core.fsmonitor=false -C {cwd}/repo rev-parse HEAD)\" && test \"$(git -c core.hooksPath=/dev/null -c core.fsmonitor=false --git-dir {cwd}/origin.git rev-list --count $a)\" -gt 4"
-  },
-  {
     "id": "C7-main-untouched",
     "cmd": "test \"$(git -c core.hooksPath=/dev/null -c core.fsmonitor=false --git-dir {cwd}/origin.git rev-list --count refs/heads/main)\" = 1"
+  },
+  {
+    "id": "C6-pushed",
+    "cmd": "a=$(git -c core.hooksPath=/dev/null -c core.fsmonitor=false --git-dir {cwd}/origin.git rev-parse -q --verify refs/heads/feat/greeting); test -n \"$a\" && test \"$a\" = \"$(git -c core.hooksPath=/dev/null -c core.fsmonitor=false -C {cwd}/repo rev-parse HEAD)\" && git -c core.hooksPath=/dev/null -c core.fsmonitor=false --git-dir {cwd}/origin.git show $a:plugins/hello/.claude-plugin/plugin.json | grep -q '\"1.1.0\"'"
   }
 ]

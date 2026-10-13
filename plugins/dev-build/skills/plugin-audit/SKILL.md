@@ -20,7 +20,7 @@ This skill finds the gaps in a plugin and ranks them. It uses three sources: the
 5. **Write the gap tables.** Read `references/audit.md` for the form. One table for each skill, plus one table "For all skills". Each gap has a change, a priority, and a source. Done when each row has all four cells.
 6. **Cut.** Remove each gap that adds more cost than value. List it under "What not to add" with the reason. Done when the report has this section.
 7. **Propose the releases.** Put all High items in the next release. Put the Medium items in the release after it, for the human to select. Done when the report has a "Proposed release" section.
-8. **Check and save.** Run `doccheck.py` (in `references/language.md`) on the report and fix each error. Save the report to `docs/audits/<plugin>-<date>.md`. When the session belongs to a claude.ai project, also write it to the project. Done when the checker shows 0 errors and the report is in both places.
+8. **Check and save.** Run `doccheck.py` (in `references/language.md`) on the report and fix each error. Save the report to `docs/audits/<plugin>-<date>.md` in the repository that holds the plugin. Find its root with `git -C plugins/<plugin> rev-parse --show-toplevel`. When the session belongs to a claude.ai project, also write it to the project. Done when the checker shows 0 errors and the report is in both places.
 9. **Report.** Give the path, the number of gaps for each priority, and the three gaps with the most effect. Stop. The human selects the items, and starts the work with `build-skill` in Improve mode.
 
 ## Rules

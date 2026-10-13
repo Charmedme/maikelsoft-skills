@@ -55,6 +55,8 @@ A good `llm` grader names one thing to see: "The final report lists each decisio
 
 A regex sees the words of the reply. A reply that says "there is no X" also contains X. Test each pattern on a real reply.
 
+An `llm` grader with `focus: trace` sees only the first 12 and the last 12 messages. A file that the agent writes in the middle of a long run is not in that view. With `focus: files`, the judge sees only the file names. To grade the content of a file, give its path in `focus`. When the path is not fixed (for example a date in the name), use a check.
+
 ## Case with a simulated human
 
 Use this form when the skill asks the human questions. `request.md` holds the first message. `human.md` holds the answer sheet:

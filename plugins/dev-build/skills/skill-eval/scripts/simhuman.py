@@ -96,7 +96,7 @@ def frontmatter(text: str):
 
 def claude(args, prompt, cwd, timeout, config):
     """Run claude -p in a clean environment: no settings, skills, plugins, or project text of this computer."""
-    env = {"PATH": os.environ.get("PATH", ""), "HOME": os.environ.get("HOME", ""),
+    env = {"PATH": os.environ.get("PATH", ""), "HOME": str(config.parent / "home"),  # no git config of this computer
            "CLAUDE_CONFIG_DIR": str(config)}
     proc = subprocess.run(["claude", "-p", prompt, "--output-format", "json", *args], cwd=cwd,
                           capture_output=True, text=True, timeout=timeout, env=env)
@@ -141,9 +141,11 @@ def main():
     work, config = temp / "cwd", temp / "config"  # one config folder per run, so --resume finds the session
     work.mkdir()
     config.mkdir()
+    (temp / "home").mkdir()
     meta, _ = frontmatter((case / "agent.md").read_text(encoding="utf-8")) if (case / "agent.md").is_file() else ({}, "")
     if meta.get("scaffold") and a.scaffold:
-        subprocess.run(["bash", str(case / meta["scaffold"])], cwd=work, check=True, timeout=120)
+        subprocess.run(["bash", str(case / meta["scaffold"])], cwd=work, check=True, timeout=120,
+                       env={"PATH": os.environ.get("PATH", ""), "HOME": str(temp / "home")})
     tools = meta.get("tools", "").split() or DEFAULT_TOOLS
     sheet = (case / "human.md").read_text(encoding="utf-8")
     message = (case / "request.md").read_text(encoding="utf-8").strip()

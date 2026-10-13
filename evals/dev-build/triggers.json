@@ -1,0 +1,50 @@
+{
+  "release-plugin": {
+    "must": [
+      "release dev-build",
+      "Publish the new version of the dev-docs plugin and open the PR",
+      "bump the plugin version, update the changelog and push it",
+      "the product-flow branch is done, ship it to the marketplace",
+      "maak een release van de dev-flow plugin"
+    ],
+    "must_not": [
+      "write the changelog entry for this fix",
+      "check the deploy before we go to production",
+      "review this pull request",
+      "build a new skill for invoice checks",
+      "why does CI fail on main?"
+    ]
+  },
+  "skill-eval": {
+    "must": [
+      "test this skill against a baseline",
+      "run the evals of the dev-docs plugin",
+      "compare v1 and v2 of the build-skill skill",
+      "move our old evals.json to the plugin eval format",
+      "schrijf testcases voor mijn skill en draai ze"
+    ],
+    "must_not": [
+      "write unit tests for this parser",
+      "what test strategy do we need for the API?",
+      "validate the plugin manifest",
+      "improve the description of my skill so it triggers better",
+      "review the results table and tell me what to fix in the skill text"
+    ]
+  },
+  "plugin-audit": {
+    "must": [
+      "audit the dev-docs plugin",
+      "what can be better in the product-flow plugin?",
+      "check the dev-flow plugin against best practice before the next release",
+      "give me a gap analysis of all skills in this plugin",
+      "wat kan er beter aan de dev-build plugin?"
+    ],
+    "must_not": [
+      "review the SKILL.md of doc-readme",
+      "do a tech debt audit of this codebase",
+      "audit the docs of this repository",
+      "is this design accessible?",
+      "review this PR before I merge"
+    ]
+  }
+}
