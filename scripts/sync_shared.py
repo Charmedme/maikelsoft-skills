@@ -9,7 +9,7 @@ Each skill gets:
     scripts/doccheck.py     <- shared/doccheck.py
     scripts/convert.py      <- shared/convert.py
 
-Each skill of the dev-build plugin also gets:
+Each skill of the dev-build plugin whose SKILL.md names grill.md also gets:
     references/grill.md     <- shared/grill.md
 
 Each skill of a plugin that has a plugins/<plugin>/shared/ folder also gets
@@ -49,7 +49,9 @@ END = "<!-- END shared/workflow.md -->"
 
 def expected_files(skill: pathlib.Path) -> dict:
     copies = dict(COPIES)
-    copies.update(PLUGIN_COPIES.get(skill.parents[1].name, {}))
+    named = (skill / "SKILL.md").read_text(encoding="utf-8")
+    copies.update({src: rel for src, rel in PLUGIN_COPIES.get(skill.parents[1].name, {}).items()
+                   if rel.name in named})
     files = {skill / rel: src.read_text(encoding="utf-8") for src, rel in copies.items()}
     text = (skill / "SKILL.md").read_text(encoding="utf-8")
     plugin_shared = skill.parents[1] / "shared"

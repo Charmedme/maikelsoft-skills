@@ -43,9 +43,11 @@ CHECK_TIMEOUT = 120  # seconds for one check command
 
 
 def copy_plugin(src: pathlib.Path, dest: pathlib.Path, cases: pathlib.Path):
-    """Copy a plugin without its evals, then put the shared cases in it."""
+    """Copy a plugin without its evals, then link the shared cases into it.
+
+    A link, not a copy: a scaffold script finds the repository from its real path."""
     shutil.copytree(src, dest, ignore=shutil.ignore_patterns("evals", ".git", "__pycache__"))
-    shutil.copytree(cases, dest / "evals", ignore=shutil.ignore_patterns("results"))
+    (dest / "evals").symlink_to(cases, target_is_directory=True)
 
 
 def list_cases(evals: pathlib.Path, pattern: str):
