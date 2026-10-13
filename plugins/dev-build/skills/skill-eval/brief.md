@@ -1,6 +1,6 @@
 # Brief: skill-eval
 
-Status: draft
+Status: approved (G1, 2026-10-13)
 
 ## Need
 Step 3 of the four-step workflow. Each plugin has its own eval format and its own `score.py` today. The graders could see the variant name. Each new skill builds the harness again.

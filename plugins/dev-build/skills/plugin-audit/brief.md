@@ -1,6 +1,6 @@
 # Brief: plugin-audit
 
-Status: draft
+Status: approved (G1, 2026-10-13)
 
 ## Need
 A plugin goes out of date when practice, Claude Code, or the model changes. The dev-docs 1.3 and 1.4 releases came from a manual audit. Each plugin needs the same audit.

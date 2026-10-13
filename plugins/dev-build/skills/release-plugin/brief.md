@@ -1,6 +1,6 @@
 # Brief: release-plugin
 
-Status: draft
+Status: approved (G1, 2026-10-13)
 
 ## Need
 Maikel releases plugins of the maikelsoft-skills marketplace from claude.ai and Claude Code sessions. Each release today has the same faults. The PR tool gives 403. The tag push is blocked, so no tag exists. CI fails on `doccheck.py` after the push.
