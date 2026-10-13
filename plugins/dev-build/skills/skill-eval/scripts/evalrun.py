@@ -121,6 +121,13 @@ def collect_native(data: dict, label_for_arm: dict, out: pathlib.Path):
     return rows
 
 
+def fill(cmd: str, **values) -> str:
+    """Replace {cwd}, {repo}, {case}, and {run}. Other braces stay, for example a regex {4}."""
+    for key, value in values.items():
+        cmd = cmd.replace("{" + key + "}", str(value))
+    return cmd
+
+
 def run_checks(case_dir: pathlib.Path, out: pathlib.Path, repo: pathlib.Path):
     """Run the commands of checks.json on each copied run. Exit 0 is a pass."""
     checks_file = case_dir / "checks.json"
@@ -131,7 +138,7 @@ def run_checks(case_dir: pathlib.Path, out: pathlib.Path, repo: pathlib.Path):
     for label_dir in sorted((out / "runs" / case_dir.name).glob("*")):
         for run_dir in sorted(label_dir.glob("*"), key=lambda p: int(p.name)):
             for check in checks:
-                cmd = check["cmd"].format(cwd=run_dir / "cwd", repo=repo, case=case_dir, run=run_dir)
+                cmd = fill(check["cmd"], cwd=run_dir / "cwd", repo=repo, case=case_dir, run=run_dir)
                 try:
                     proc = subprocess.run(["bash", "-c", cmd], capture_output=True, text=True,
                                           timeout=CHECK_TIMEOUT, env={**os.environ, "PYTHONSAFEPATH": "1"})

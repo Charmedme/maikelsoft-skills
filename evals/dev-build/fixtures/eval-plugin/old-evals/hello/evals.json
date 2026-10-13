@@ -1,0 +1,23 @@
+{
+  "plugin": "hello",
+  "skill": "hello",
+  "method": ["3 runs for each variant. 'check' assertions are scored by score.py, 'judge' assertions by a grader agent."],
+  "evals": [
+    {"name": "dutch-file", "output": "greeting.txt",
+     "request": "Maak een welkomstbestand voor een nieuwe collega.",
+     "assertions": [
+       {"id": "C1", "check": "line_max", "value": 1},
+       {"id": "C2", "check": "contains", "value": "(?i)welkom|hallo|goedendag"},
+       {"id": "J1", "judge": "The agent asked no question."}]},
+    {"name": "english-default", "output": "greeting.txt",
+     "request": "Write a greeting file.",
+     "assertions": [
+       {"id": "C1", "check": "line_max", "value": 1},
+       {"id": "J1", "judge": "The greeting is in English."}]},
+    {"name": "reply-only", "output": null,
+     "request": "Greet me, please.",
+     "assertions": [
+       {"id": "C1", "check": "no_file", "value": "greeting.txt"},
+       {"id": "J1", "judge": "The reply contains a greeting of one line."}]}
+  ]
+}

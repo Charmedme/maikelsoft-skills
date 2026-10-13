@@ -195,8 +195,8 @@ def apply(plugin_dir: pathlib.Path, new_version: str, date: str):
     new_part = f"## [Unreleased]\n\n## [{new_version}] - {date}\n\n{body}\n\n"
     text = text[:m.start()] + new_part + text[m.end():]
     # Compare links: [Unreleased] starts at the new tag; the new version compares with the old tag.
-    repo_url = repo_web_url(root)
     links = dict(LINK.findall(text))
+    repo_url = repo_web_url(root, links.values())
     text = LINK.sub("", text).rstrip() + "\n\n"
     new_links = {"Unreleased": f"{repo_url}/compare/{name}--v{new_version}...HEAD"}
     first_release = not VERSION_HEADING.findall(text)[1:]
@@ -233,7 +233,12 @@ def apply(plugin_dir: pathlib.Path, new_version: str, date: str):
     return changed
 
 
-def repo_web_url(root):
+def repo_web_url(root, known_links=()):
+    """The web URL of the repository: from an existing changelog link, else from the git remote."""
+    for link in known_links:
+        m = re.match(r"(https://[^/]+/[^/]+/[^/]+)/(?:compare|releases)/", link)
+        if m:
+            return m.group(1)
     url = git("remote", "get-url", "origin", cwd=root, check=False)
     m = re.search(r"github\.com[:/](.+?)(?:\.git)?$", url)
     return f"https://github.com/{m.group(1)}" if m else "https://github.com/OWNER/REPO"

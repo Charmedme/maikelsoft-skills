@@ -1,0 +1,22 @@
+[
+  {
+    "id": "C1-one-case-each",
+    "cmd": "for n in dutch-file english-default reply-only; do test -d {cwd}/hello/evals/$n || exit 1; done"
+  },
+  {
+    "id": "C2-case-form",
+    "cmd": "for d in {cwd}/hello/evals/dutch-file {cwd}/hello/evals/english-default {cwd}/hello/evals/reply-only; do test -f $d/prompt.md && { ls $d/graders/*.md >/dev/null 2>&1 || test -f $d/checks.json; } || exit 1; done"
+  },
+  {
+    "id": "C3-judge-moved",
+    "cmd": "test $(grep -l -E '^type: llm$' {cwd}/hello/evals/*/graders/*.md 2>/dev/null | wc -l) -ge 3"
+  },
+  {
+    "id": "C4-dutch-request",
+    "cmd": "grep -q 'Maak een welkomstbestand' {cwd}/hello/evals/dutch-file/prompt.md"
+  },
+  {
+    "id": "C5-grader-types",
+    "cmd": "g=$(find {cwd}/hello/evals -path '*/graders/*.md' 2>/dev/null); test -n \"$g\" && ! grep -L -E '^type: (regex|file_exists|tool_used|tool_order|llm|baseline)$' $g | grep -q ."
+  }
+]

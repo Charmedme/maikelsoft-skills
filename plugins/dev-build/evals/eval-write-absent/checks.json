@@ -1,0 +1,18 @@
+[
+  {
+    "id": "C1-three-cases",
+    "cmd": "test $(find {cwd}/hello/evals -mindepth 1 -maxdepth 1 -type d ! -name results | wc -l) -ge 3"
+  },
+  {
+    "id": "C2-case-form",
+    "cmd": "dirs=$(find {cwd}/hello/evals -mindepth 1 -maxdepth 1 -type d ! -name results 2>/dev/null); test -n \"$dirs\" || exit 1; for d in $dirs; do { test -f $d/prompt.md || { test -f $d/request.md && test -f $d/human.md; }; } && { ls $d/graders/*.md >/dev/null 2>&1 || test -f $d/checks.json; } || exit 1; done"
+  },
+  {
+    "id": "C3-grader-types",
+    "cmd": "g=$(find {cwd}/hello/evals -path '*/graders/*.md' 2>/dev/null); test -n \"$g\" && ! grep -L -E '^type: (regex|file_exists|tool_used|tool_order|llm|baseline)$' $g | grep -q ."
+  },
+  {
+    "id": "C4-blind-names",
+    "cmd": "! find {cwd}/hello/evals -iregex '.*\\(baseline\\|variant\\|with-skill\\|without\\|/v[0-9]\\).*' | grep -q ."
+  }
+]

@@ -147,8 +147,8 @@ def main():
     base = ["--restricted", "--strict-mcp-config", "--tools", ",".join(tools + (["Bash"] if allow else [])),
             "--permission-mode", "dontAsk", "--append-system-prompt", RUN_RULES]
     base += ["--allowedTools", *tools, *allow]  # dontAsk refuses each tool that is not in this list
-    if a.plugin:
-        base += ["--plugin-dir", a.plugin]
+    if a.plugin:  # --restricted confines file tools to the work folder; the skill must read its own files
+        base += ["--plugin-dir", a.plugin, "--add-dir", a.plugin]
     if a.model:
         base += ["--model", a.model]
     transcript, cost, turns = [], 0.0, 0

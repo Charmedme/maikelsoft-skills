@@ -1,0 +1,6 @@
+[
+  {"id": "C1-report-saved", "cmd": "find {cwd}/notes/docs/audits -name '*.md' 2>/dev/null | grep -q ."},
+  {"id": "C2-read-only", "cmd": "test -z \"$(git -c core.hooksPath=/dev/null -c core.fsmonitor=false -C {cwd}/notes status --porcelain -- . ':!docs/audits' 2>/dev/null)\""},
+  {"id": "C3-not-to-add", "cmd": "grep -qiE '^#+ (What not to add|Wat we niet toevoegen|Niet toevoegen)' {cwd}/notes/docs/audits/*.md"},
+  {"id": "C4-doccheck", "cmd": "for f in {cwd}/notes/docs/audits/*.md; do python3 -I {repo}/shared/doccheck.py --level standard $f >/dev/null || exit 1; done"}
+]
