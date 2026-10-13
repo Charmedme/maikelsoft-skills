@@ -34,5 +34,5 @@ The last row comes from the replies of the agents, not from the grader.
 
 ## Changes
 
-- **v1 to v2.** In v1, the skill used low fidelity as the default, because the research recommends it. Then it used only one brand colour. The original request of the product owner asks for a prototype in the existing branding and designs. v2 uses all design sources that it finds. The banner and the fake data show that the page is not final. The plain style is only for when there is no design source.
+- **v1 to v2.** In v1, the skill used low fidelity as the default, because the research recommends it, and only one brand colour. The original request of the product owner asks for a prototype in the existing branding and designs. v2 uses all design sources that it finds. The banner and the fake data show that the page is not final. The plain style is only for when there is no design source.
 - **v2 to v3.** v1 and v2 added functions that nobody asked for. Examples: a cart, account links, filters, and history. v3 adds a "Scope" section to `build.md`. The agent builds only what the question needs. It asks about other functions in the reply. Tested on the search request: Q6 went from 0/3 to 3/3.
