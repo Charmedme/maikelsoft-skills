@@ -21,6 +21,7 @@ Each rule has an ID. The checker (`backlogcheck.py`) finds the rules marked "che
 
 - **F2 Outcome, with a measure.** The goal says what changes for the users and for the business. "Measure:" gives the number that shows it. Example: "Customers find a product without help. Measure: 30% fewer calls to customer service about products." (checker)
 - **F2a No invented target.** When nobody can give the number, write "Measure: open question" and put the question in the "Notes".
+- **F2b Own goal.** The goal is the part of the result that this feature gives, not a copy of the product goal or of another feature goal. Refer to the product goal with "Supports:". Example: the product goal is "Customers order without help". Then the goal of "Product search" is "Customers find a product by name or article number", with "Supports: Customers order without help". (checker: warning when the goal is the same as the "Supports:" line or as the goal of another feature)
 
 ## Size
 
@@ -43,7 +44,7 @@ Each rule has an ID. The checker (`backlogcheck.py`) finds the rules marked "che
 
 ## Dutch
 
-Use the headings "Doel", "Scope", "Acceptatiecriteria", "Stories", and "Notities". Use "Meten:", "Binnen scope:", and "Buiten scope:". Follow the Dutch rules in `language.md`.
+Use the headings "Doel", "Scope", "Acceptatiecriteria", "Stories", and "Notities". Use "Meten:", "Draagt bij aan:", "Binnen scope:", and "Buiten scope:". Follow the Dutch rules in `language.md`.
 
 ## Example
 
@@ -57,6 +58,7 @@ Use the headings "Doel", "Scope", "Acceptatiecriteria", "Stories", and "Notities
 
 Customers find the products that they need without help, at their own price.
 Measure: 30% fewer calls to customer service about products, 3 months after the release.
+Supports: More customers order without help.
 
 ### Scope
 

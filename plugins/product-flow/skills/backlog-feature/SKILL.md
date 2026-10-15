@@ -54,6 +54,7 @@ This skill always writes Markdown. Do not ask the format question.
 
 <One or two sentences: the outcome for the users and for the business.>
 Measure: <how the team knows that the goal is met, with a number>
+Supports: <the product goal or the outcome of the Epic. Leave out when there is none.>
 
 ### Scope
 

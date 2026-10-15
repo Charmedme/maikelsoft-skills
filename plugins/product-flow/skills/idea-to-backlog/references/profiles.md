@@ -12,7 +12,13 @@ A profile sets the names and the extra fields. The rules for each item type stay
 
 ## Levels
 
-The default is 2 levels: Feature, then User Story. The goal goes in the Feature. Use 3 levels (Epic, Feature, User Story) only when the human asks for it. With 3 levels, the goal goes in the Feature, the lowest of the two parent levels. Bugs and tasks are not part of these levels.
+The default is 2 levels: Feature, then User Story. Use 3 levels (Epic, Feature, User Story) only when the human asks for it. Bugs and tasks are not part of these levels.
+
+Goals:
+
+- Each Feature has its own goal and measure: the part of the result that this feature gives.
+- Write the product goal one time, above the features. Put it in the context file. Make a goal item only when the team keeps goals as items.
+- Each Feature refers to the product goal with a "Supports:" line in its "Goal" section. Do not copy the product goal into the features.
 
 ## Select the profile
 

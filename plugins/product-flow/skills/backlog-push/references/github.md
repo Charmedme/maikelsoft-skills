@@ -49,7 +49,8 @@ The GitHub MCP server gives these tools. Names can have a prefix in the session.
 
 ## Goals
 
-- Product goal: GitHub has no goal object. Use an issue type "Goal" when the organization has one, as the parent of the features. Else the goal stays in the feature.
+- Product goal: GitHub has no goal object. Use an issue type "Goal" when the organization has one, as the parent of the features. Else it stays in the "Supports:" line of each feature.
+- Feature goal: a text issue field of the organization for the goal, when `list_issue_fields` shows one. Then set the parent after the create, with `sub_issue_write`. Else the first section "Goal" of the body.
 - Sprint goal: a Projects iteration has no text field. It stays in the feature or the project README.
 
 ## Limits

@@ -284,12 +284,38 @@ def check_goal(start, title, block, kind):
     return f
 
 
+SUPPORTS_LINE = re.compile(r"^\s*\**(supports|draagt bij aan):", re.I)
+
+
+def goal_text(block):
+    """The goal sentences of a feature, without the Measure and Supports lines, in lower case."""
+    goal = section(block, GOAL_HEAD) or []
+    keep = [l.strip().lstrip("-* ") for l in goal
+            if l.strip() and not MEASURE_LINE.match(l.strip().lstrip("-* ")) and not SUPPORTS_LINE.match(l.strip().lstrip("-* "))]
+    return re.sub(r"\W+", " ", " ".join(keep)).strip().lower()
+
+
 def check_file(path):
     lines = path.read_text(encoding="utf-8").splitlines()
     items = split_items(lines)
     findings = []
+    goals = {}
     for start, _level, title, block in items:
         findings += check_item(start + 1, title, block)
+        kind = next((m.group(2).strip().lower() for l in block[:6] if (m := TYPE_LINE.match(l.strip()))), "")
+        if kind in FEATURE_TYPES:
+            text = goal_text(block)
+            supports = [re.sub(r"\W+", " ", SUPPORTS_LINE.sub("", l.strip().lstrip("-* "))).strip().lower()
+                        for l in (section(block, GOAL_HEAD) or []) if SUPPORTS_LINE.match(l.strip().lstrip("-* "))]
+            if text and text in supports:
+                findings.append(Finding(start + 1, "warning", "F2b",
+                                        "The goal is a copy of the product goal. Write the part of the result "
+                                        "that this feature gives.", title))
+            if text and text in goals:
+                findings.append(Finding(start + 1, "warning", "F2b",
+                                        f"Same goal as the feature \"{goals[text]}\". Write the goal of this feature, "
+                                        "and refer to the product goal with \"Supports:\".", title))
+            goals.setdefault(text, title)
     return items, findings
 
 

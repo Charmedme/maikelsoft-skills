@@ -30,14 +30,14 @@ Each rule has an ID. The checker (`backlogcheck.py`) finds the rules marked "che
 
 ## Where the goal goes
 
-The default backlog has 2 levels. The product goal then goes in the "Goal" section of the feature. With 3 levels, it goes in the feature, the lowest of the two parent levels. When the ticket system has its own place for goals, `backlog-push` also puts it there:
+Write the product goal one time, above the features. Each feature has its own goal, and refers to the product goal with a "Supports:" line. This is the same for 2 and 3 levels. When the ticket system has its own place for goals, `backlog-push` puts the product goal there:
 
 | System | Product goal | Sprint goal |
 |--------|--------------|-------------|
-| Jira | Atlassian Goal (Goals field), or the feature | `goal` field of the sprint |
-| Azure DevOps | The feature (no goal type) | Team wiki (no goal field) |
-| GitHub | The feature, or an issue type "Goal" when the organization has one | The feature (no field) |
-| GitLab | Objective (Ultimate, when the feature flag is on), else the feature | Description of the iteration cadence |
+| Jira | Atlassian Goal (Goals field), else the "Supports:" line of each feature | `goal` field of the sprint |
+| Azure DevOps | The "Supports:" line of each feature (no goal type) | Team wiki (no goal field) |
+| GitHub | An issue type "Goal" when the organization has one, else the "Supports:" line of each feature | The feature (no field) |
+| GitLab | Objective (Ultimate, when the feature flag is on), else the "Supports:" line of each feature | Description of the iteration cadence |
 | Linear | Initiative | Description of the cycle |
 
 ## Dutch
