@@ -6,6 +6,18 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-15
+
+### Changed
+
+- Each feature has its own goal and measure. A new "Supports:" line in the "Goal" section refers to the product goal. Before, each feature had a copy of the product goal.
+- The product goal is written one time, in the "Spec" section of the context file. `idea-to-backlog` makes a separate goal item only when the team keeps goals as items.
+- `backlog-goal` puts the product goal in the goal place of the ticket system, else in the "Supports:" line of each feature.
+
+### Added
+
+- Rule F2b and a checker warning: the goal of a feature is the same as the goal of another feature, or as its "Supports:" line.
+
 ## [1.0.0] - 2026-10-12
 
 ### Added
@@ -21,5 +33,6 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 - The shared language rules: English in ASD-STE100 Simplified Technical English, and Dutch in Begrijpelijk Nederlands (B1).
 - Test results for each skill against a baseline without the skill.
 
-[Unreleased]: https://github.com/Charmedme/maikelsoft-skills/compare/product-flow-v1.0.0...HEAD
+[Unreleased]: https://github.com/Charmedme/maikelsoft-skills/compare/product-flow-v1.1.0...HEAD
+[1.1.0]: https://github.com/Charmedme/maikelsoft-skills/compare/product-flow-v1.0.0...product-flow-v1.1.0
 [1.0.0]: https://github.com/Charmedme/maikelsoft-skills/releases/tag/product-flow-v1.0.0

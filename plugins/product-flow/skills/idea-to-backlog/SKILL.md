@@ -50,8 +50,8 @@ This skill takes a request of a product owner (PO) or a business analyst (BA) to
 3. **Prototype.** Use the `product-prototype` skill for the riskiest open point. If you cannot load that skill, read `${CLAUDE_SKILL_DIR}/../product-prototype/SKILL.md` and follow it. Gate **G2**: "Is this what you mean?" When the answer is "no", go back to phase 2 for that part only. Write the verdict in the "Prototype" section.
 4. **Spec.** Read `references/spec.md`. Write the goal, the users, the scope, and the story map in the "Spec" section. Done when each step of the first release slice has a story title.
 5. **Backlog.** Write the items in the "Backlog" section with the skills of this plugin, in this order:
-   1. `backlog-goal` for the product goal. Put the goal in the "Goal" section of each feature (see `profiles.md`). Do not write a separate goal item, unless the team keeps its goals as items.
-   2. `backlog-epic` (3 levels only) and `backlog-feature`. The features come from the activities of the story map.
+   1. `backlog-goal` for the product goal. Write it one time, in the "Spec" section. Write a separate goal item only when the team keeps its goals as items (see `profiles.md`).
+   2. `backlog-epic` (3 levels only) and `backlog-feature`. The features come from the activities of the story map. Each feature gets its own goal and measure, and a "Supports:" line with the product goal.
    3. `backlog-story` for each step of the story map, through `backlog-feature`.
 
    When you cannot load a skill, read its `SKILL.md` and its rules file in `${CLAUDE_SKILL_DIR}/../<skill>/`. Write the full detail for each item.

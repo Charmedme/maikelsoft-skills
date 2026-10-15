@@ -10,7 +10,7 @@
 
 Write these parts in the "Spec" section. Take each part from the decisions and the prototype verdict. Do not add new decisions here: when one is missing, go back to phase 2 for that question only.
 
-- **Goal:** the outcome for the users and the business, and the measure.
+- **Goal:** the product goal. It is the outcome for the users and the business, and the measure. The features refer to it. They do not copy it.
 - **Users:** each type of user, in one line each.
 - **Scope:** "In" and "Out".
 - **Constraints:** the fixed systems, dates, and technologies.

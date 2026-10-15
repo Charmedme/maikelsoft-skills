@@ -71,6 +71,20 @@ class BacklogCheckTest(unittest.TestCase):
         items, found = run(nested)
         self.assertEqual(len(items), 1)
 
+    def test_copied_feature_goal(self):
+        def feature(title, goal):
+            return (f"## {title}\n\n**Type:** Feature\n**Parent:** None\n\n### Goal\n\n{goal}\n"
+                    "Measure: open question\nSupports: Customers order without help.\n\n### Scope\n\n- In: a\n- Out: b\n\n"
+                    "### Acceptance criteria\n\n- [ ] The page shows the result.\n\n")
+        same = feature("Product search", "Customers order without help.") + feature("Order history", "Customers order without help.")
+        _, found = run(same)
+        self.assertIn(("warning", "F2b"), found)
+        _, found = run(feature("Product search", "Customers order without help."))
+        self.assertIn(("warning", "F2b"), found)
+        own = feature("Product search", "Customers find a product by name.") + feature("Order history", "Customers see what they ordered before.")
+        _, found = run(own)
+        self.assertNotIn(("warning", "F2b"), found)
+
     def test_bad_story(self):
         _, found = run(BAD)
         for expected in [("error", "S1"), ("error", "A5"), ("warning", "T2"), ("warning", "S2"),

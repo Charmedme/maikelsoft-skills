@@ -65,3 +65,15 @@ Not changed: the "No human to ask" rules stop the run at the prototype. The test
 ## Trigger test
 
 Haiku, 10 requests, 18 skills in the list (the 7 product-flow skills and 11 similar skills): 10 of 10 correct. The 5 requests for the full loop (also in Dutch, and "continue the run") went to idea-to-backlog. A single story, a push, a prototype, a plan-and-build request, and a PRD went to the other skills.
+
+## Follow-up 2026-10-15: one goal for each feature
+
+With 2 levels, each feature had a copy of the product goal. Now each feature has its own goal and a "Supports:" line.
+
+| Run | Before | After |
+|-----|--------|-------|
+| Status dashboard, phase 5 again | Separate goal item, and the product goal in both features | Product goal one time in the Spec, own goal in both features |
+| Required login, phase 5 again | Separate goal item, and one feature goal copied the product goal | Product goal one time in the Spec, own goal in both features |
+| `backlog-feature` direct, 2 features | Not run | Own goal in both features, "Supports:" line in both |
+
+`backlogcheck.py`: 0 errors and 0 warnings in all 3 runs. The direct run made up 2 targets in its measures (rule F2a). This is a different problem, and this change does not fix it.
