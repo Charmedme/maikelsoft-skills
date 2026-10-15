@@ -47,7 +47,8 @@ Set `parent_id` in `save_work_item` when you create the child. An issue has one 
 
 ## Goals
 
-- Product goal: an Objective (Ultimate) when the feature flag `okrs_mvc` is on. GitLab says that OKRs are not ready for production, so use them only when the team already does. Else the goal stays in the feature (the epic).
+- Product goal: an Objective (Ultimate) when the feature flag `okrs_mvc` is on. GitLab says that OKRs are not ready for production, so use them only when the team already does. Else it stays in the "Supports:" line of each feature.
+- Feature goal: a custom text field for the goal, when the work item type has one. Else the first section "Goal" of the description.
 - Sprint goal: the description of the iteration cadence. Write it only when the human asks.
 
 ## Limits

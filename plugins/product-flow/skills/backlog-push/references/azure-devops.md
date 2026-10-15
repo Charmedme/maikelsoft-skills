@@ -63,7 +63,8 @@ Use `add_child` to create the children under the parent. Or create the child and
 
 ## Goals
 
-- Product goal: Azure DevOps has no goal type. The goal stays in the "Goal" section of the feature.
+- Product goal: Azure DevOps has no goal type. It stays in the "Supports:" line of each feature.
+- Feature goal: a custom text field of the process for the goal, when the fields of the Feature type show one. Else the first section "Goal" of `System.Description` (HTML). "Business Value" is a number and "Value Area" is a list: do not put the goal there.
 - Sprint goal: iterations have no goal field. The team keeps it in the team wiki. Write it there only when the human asks and a wiki tool is available.
 
 ## Templates

@@ -16,6 +16,8 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ### Added
 
+- `backlog-push` always writes each goal to a place that the project has. The order is: the goal object of the system, a goal field of the item type, or the first section "Goal" of the description. The approval summary and the report show the place of each goal.
+- The fake tracker for tests can show the fields of a type and set fields.
 - Rule F2b and a checker warning: the goal of a feature is the same as the goal of another feature, or as its "Supports:" line.
 
 ## [1.0.0] - 2026-10-12

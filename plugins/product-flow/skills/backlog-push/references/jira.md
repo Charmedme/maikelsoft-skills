@@ -54,7 +54,8 @@ Set the `parent` field to the key of the parent (for example `SHOP-12`) when you
 
 ## Goals
 
-- Product goal: Atlassian Goals. A "Goals" field links a work item to a goal, when an admin turned it on for the type. Without it, the goal stays in the epic description.
+- Product goal: Atlassian Goals. A "Goals" field links a work item to a goal, when an admin turned it on for the type.
+- Feature goal: a custom text field for the goal when `getJiraIssueTypeMetaWithFields` shows one for the epic type. Else the first section "Goal" of the description (ADF).
 - Sprint goal: the `goal` field of the sprint (Jira Software Agile API). Write it only when the human asks.
 
 ## Limits

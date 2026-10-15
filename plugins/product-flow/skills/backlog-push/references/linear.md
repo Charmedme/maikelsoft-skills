@@ -40,4 +40,5 @@ The Linear MCP server (`https://mcp.linear.app/mcp`) can find, create, and updat
 ## Goals
 
 - Product goal: an Initiative, with the projects of the features linked to it.
+- Feature goal: the first section "Goal" of the description of the project.
 - Sprint goal: the description of the cycle. Write it only when the human asks.

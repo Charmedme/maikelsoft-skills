@@ -41,7 +41,13 @@ When the system has no level for a draft type, propose one option with a recomme
 
 ## Goals
 
-The product goal goes in the "Goal" section of the lowest parent level (the feature). When the system has its own goal object, also create the goal there and link it (see the system reference). When the goal has no place in the system, it stays in the feature only. This is normal.
+A goal is never lost in the push. Each feature goal and the product goal go to the first place in this list that the project has:
+
+1. **A goal object.** Only for the product goal: the goal type or object of the system (see the system reference). Create it and link the features to it.
+2. **A goal field.** Read the fields of the item type. Use a text field with a name like "Goal", "Objective", "Outcome", "Benefit hypothesis", "Doel", or "Success metric". When there is also a field for the measure, put the "Measure:" line there. Put the "Supports:" line in the goal field too. Then do not repeat the goal in the description. Do not put text in a number or list field, for example "Business Value".
+3. **The description.** Start the description with a section "Goal" that holds the goal, the "Measure:" line, and the "Supports:" line.
+
+The product goal without a goal object or a goal field stays in the "Supports:" line of each feature. Write the place of each goal in the mapping table (step 3) and in the report.
 
 ## Fields
 
@@ -50,7 +56,8 @@ Fill only the fields that the draft has. Do not invent a value for a size, a pri
 | Draft part | Where it goes |
 |------------|---------------|
 | Title | Title or summary |
-| Story sentence, goal, scope, notes | Description |
+| Goal, "Measure:", "Supports:" | The goal field, else the first section of the description (see "Goals") |
+| Story sentence, scope, notes | Description |
 | Acceptance criteria | The acceptance criteria field when the system has one, else a section of the description |
 | Spike, Enabler | A label or a tag, when the system has no type for it |
 

@@ -77,3 +77,15 @@ With 2 levels, each feature had a copy of the product goal. Now each feature has
 | `backlog-feature` direct, 2 features | Not run | Own goal in both features, "Supports:" line in both |
 
 `backlogcheck.py`: 0 errors and 0 warnings in all 3 runs. The direct run made up 2 targets in its measures (rule F2a). This is a different problem, and this change does not fix it.
+
+## Follow-up 2026-10-15: goal field in the ticket system
+
+`backlog-push` on 2 features with a fake tracker. The fake Jira has 2 text fields on the epic: "Goal" and "Success metric". The fake Azure DevOps has no goal field, only "Business Value" (number) and "Value Area" (list).
+
+| Run | Goal field | Goal in the description | Wrong field |
+|-----|------------|-------------------------|-------------|
+| Jira, old skill | Filled (from the template rule) | Yes, 2 times | No |
+| Jira, new skill | Filled, with the "Supports:" line | No | No |
+| Azure DevOps, new skill | None in the project | Yes, first section "Goal" | No |
+
+The old skill did not lose the goal either: the full body went to the description. The new rules make the place clear, prevent a copy in 2 places, and put the place in the mapping table and the report.
