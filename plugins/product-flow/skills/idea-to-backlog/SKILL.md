@@ -26,6 +26,7 @@ This skill takes a request of a product owner (PO) or a business analyst (BA) to
 | `references/grill.md` | Phase 2. |
 | `references/spec.md` | Phase 4: the spec and the story map. |
 | `references/profiles.md` | The team uses Scrum or SAFe, or asks for 3 levels. |
+| `references/team-profile.md` | At the start: which template applies, and the team profile. |
 | `references/language.md` | Before you write the first word to the human. |
 
 ## Rules for all phases
@@ -42,12 +43,13 @@ This skill takes a request of a product owner (PO) or a business analyst (BA) to
 
 1. **Find the context file.** Look for a run of this subject: the request names it, or a `backlog-<slug>.md` exists. When you find it, read it and continue at the first open phase. Else read `references/context-file.md` and make a new one. Done when the context file exists and its "Status" section names the current phase.
 2. **Set the levels and the profile.** The default is 2 levels (Feature, then User Story) and the Agile profile. Ask in the first round of questions when the request or the team signals 3 levels, Scrum, or SAFe. Done when the "Status" section has the levels and the profile.
+3. **Set the template.** Read `references/team-profile.md`. Look for a team profile and for templates in the ticket system. Ask which template applies in the first round of questions. Done when the "Status" section names the template.
 
 ## Phases
 
 1. **Scan and research.** Read `references/research.md`. Find the tools first, then the facts. Done when the "Sources" section lists each source with its link, and each open fact has a mark.
-2. **Grill.** Read `references/grill.md`. Ask in rounds until no question is open. Gate **G1**: give the shared understanding in at most 10 lines and ask: "Is this what you mean?"
-3. **Prototype.** Use the `product-prototype` skill for the riskiest open point. If you cannot load that skill, read `${CLAUDE_SKILL_DIR}/../product-prototype/SKILL.md` and follow it. Gate **G2**: "Is this what you mean?" When the answer is "no", go back to phase 2 for that part only. Write the verdict in the "Prototype" section.
+2. **Grill.** Read `references/grill.md`. Always start with round 1, the need, also when the documents describe the problem. Then ask in rounds until no question that blocks the scope is open. Gate **G1**: give the shared understanding in at most 10 lines and ask: "Is this what you mean?"
+3. **Prototype.** Use the `product-prototype` skill for the riskiest open point. If you cannot load that skill, read `${CLAUDE_SKILL_DIR}/../product-prototype/SKILL.md` and follow it. Before G2, compare each screen with the "Decisions" section. Fix each difference, or give it to the human as a question. Gate **G2**: "Is this what you mean?" When the answer is "no", go back to phase 2 for that part only. Write the verdict in the "Prototype" section. A function that the human adds while clicking through the prototype becomes a new decision.
 4. **Spec.** Read `references/spec.md`. Write the goal, the users, the scope, and the story map in the "Spec" section. Done when each step of the first release slice has a story title.
 5. **Backlog.** Write the items in the "Backlog" section with the skills of this plugin, in this order:
    1. `backlog-goal` for the product goal. Write it one time, in the "Spec" section. Write a separate goal item only when the team keeps its goals as items (see `profiles.md`).
@@ -56,7 +58,13 @@ This skill takes a request of a product owner (PO) or a business analyst (BA) to
 
    When you cannot load a skill, read its `SKILL.md` and its rules file in `${CLAUDE_SKILL_DIR}/../<skill>/`. Write the full detail for each item.
 
-   Then run `backlogtree.py tree` and `backlogcheck.py` on the context file. Done when both show 0 errors. Gate **G3**: give a summary of at most 15 lines and the path of the context file. The summary has the tree, the number of items, and the open questions. Ask: "Is this backlog correct?"
+   Rules for the items:
+   - Before you write the stories of a feature, ask the open questions of that feature in one short round.
+   - An open question goes in "Open questions". The item refers to it by number: "Open question: O3". An acceptance criterion never holds an open question.
+   - A claim without a source is an assumption. Write it as "Assumption:" in the "Notes", also when a human is present.
+   - When a backlog already exists, compare it with the draft. Mark each draft item "new", "overlap: <id>", or "replaces: <id>". An existing item in scope that the draft does not cover is a gap: write it in "Open questions".
+
+   Then run `backlogtree.py tree` and `backlogcheck.py` on the context file. With a team profile, run `backlogcheck.py <file> --profile <profile>`. Done when both show 0 errors. Gate **G3**: give a summary of at most 15 lines and the path of the context file. The summary has the tree, the number of items, the gaps, and the open questions for each owner. Ask: "Is this backlog correct?"
 6. **Push.** Use the `backlog-push` skill on the context file. It checks for duplicates and asks for gate **G4** itself. Done when the items are in the ticket system or in files, and the "Status" section has the push log.
 
 ## Keep the context file
