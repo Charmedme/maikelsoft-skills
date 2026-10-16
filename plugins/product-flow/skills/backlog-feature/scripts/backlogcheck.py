@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check backlog items (user stories) in a Markdown file.
 
-    python3 backlogcheck.py <file.md> [<file.md> ...] [--json]
+    python3 backlogcheck.py <file.md> [<file.md> ...] [--json] [--profile <team-profile.md>]
 
 An item starts at a heading line (## or #) and has a "**Type:**" line in
 its block. The checker finds the rules of references/story-rules.md that a
@@ -295,13 +295,65 @@ def goal_text(block):
     return re.sub(r"\W+", " ", " ".join(keep)).strip().lower()
 
 
-def check_file(path):
+# A8: an open question is not a criterion. T3: a title names the solution, not the need.
+OPEN_QUESTION = re.compile(r"\b(open (question|vraag)|tbd|to be decided|nog te bepalen|nader te bepalen)\b", re.I)
+UI_WORDS = re.compile(r"\b(wizard|modal|pop-?up|dialog|dialoog|dropdown|drop-down|button|knop|checkbox|"
+                      r"screen|scherm|tab|tabblad)\b", re.I)
+OQ_SECTION = re.compile(r"^#{1,6}\s*(open questions|open vragen)\s*$", re.I)
+OQ_LINE = re.compile(r"\b(open question|open vraag):", re.I)
+OQ_NUMBER = re.compile(r"\bO\d+\b")
+
+
+def read_profile(path):
+    """The key: value lines under "## Checker" of a team profile."""
+    settings, inside = {}, False
+    for line in pathlib.Path(path).read_text(encoding="utf-8").splitlines():
+        if HEADING.match(line):
+            inside = line.strip().lstrip("#").strip().lower() == "checker"
+            continue
+        if inside and ":" in line and not line.strip().startswith(("```", "<")):
+            key, _, value = line.partition(":")
+            settings[key.strip().lower()] = value.strip()
+    return settings
+
+
+def criteria_lines(start, block):
+    out, inside = [], False
+    for k, line in enumerate(block):
+        if HEADING.match(line.strip()):
+            inside = bool(CRITERIA_HEAD.match(line.strip()))
+            continue
+        if inside and ITEM_LINE.match(line):
+            out.append((start + 1 + k, line))
+    return out
+
+
+def check_file(path, profile=None):
+    profile = profile or {}
     lines = path.read_text(encoding="utf-8").splitlines()
     items = split_items(lines)
     findings = []
     goals = {}
+    has_oq_section = any(OQ_SECTION.match(l.strip()) for l in lines)
     for start, _level, title, block in items:
         findings += check_item(start + 1, title, block)
+        kind_line = next((m.group(2).strip().lower() for l in block[:6] if (m := TYPE_LINE.match(l.strip()))), "")
+        for ln, raw in criteria_lines(start, block):
+            if OPEN_QUESTION.search(raw):
+                findings.append(Finding(ln, "error", "A8", "An open question is not a criterion. "
+                                        "Put it in the Notes or in \"Open questions\".", raw))
+        if m := UI_WORDS.search(title):
+            findings.append(Finding(start + 1, "warning", "T3", f"The title names a part of the screen "
+                                    f"(\"{m.group(0)}\"). Name the need of the user.", title))
+        if has_oq_section:
+            for k, raw in enumerate(block):
+                if OQ_LINE.search(raw) and not OQ_NUMBER.search(raw):
+                    findings.append(Finding(start + 2 + k, "warning", "OQ", "Refer to the number in \"Open questions\" "
+                                            "(for example O3).", raw))
+        pattern = profile.get(f"title-pattern-{kind_line}") or profile.get("title-pattern")
+        if pattern and kind_line and not re.search(pattern, title):
+            findings.append(Finding(start + 1, "warning", "TP", f"The title does not match the format of the "
+                                    f"team profile ({pattern}).", title))
         kind = next((m.group(2).strip().lower() for l in block[:6] if (m := TYPE_LINE.match(l.strip()))), "")
         if kind in FEATURE_TYPES:
             text = goal_text(block)
@@ -316,6 +368,10 @@ def check_file(path):
                                         f"Same goal as the feature \"{goals[text]}\". Write the goal of this feature, "
                                         "and refer to the product goal with \"Supports:\".", title))
             goals.setdefault(text, title)
+    if profile.get("criteria", "").lower() == "scenarios":
+        findings = [x for x in findings if x.rule != "A5"]
+    if profile.get("epic-criteria", "").lower() == "yes":
+        findings = [x for x in findings if x.rule != "E7"]
     return items, findings
 
 
@@ -323,7 +379,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("files", nargs="+")
     parser.add_argument("--json", action="store_true")
+    parser.add_argument("--profile", help="team profile with a \"## Checker\" section")
     args = parser.parse_args()
+    profile = read_profile(args.profile) if args.profile else {}
     failed = False
     report = []
     for name in args.files:
@@ -332,7 +390,7 @@ def main():
             print(f"{name}: file not found")
             failed = True
             continue
-        items, findings = check_file(path)
+        items, findings = check_file(path, profile)
         errors = sum(x.severity == "error" for x in findings)
         warnings = len(findings) - errors
         failed |= errors > 0

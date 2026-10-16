@@ -85,6 +85,34 @@ class BacklogCheckTest(unittest.TestCase):
         _, found = run(own)
         self.assertNotIn(("warning", "F2b"), found)
 
+    def test_open_question_in_criteria(self):
+        text = GOOD.replace("### Acceptance criteria\n\n", "### Acceptance criteria\n\n- [ ] Open question: which statuses count?\n", 1)
+        _, found = run(text)
+        self.assertIn(("error", "A8"), found)
+
+    def test_ui_word_in_title(self):
+        _, found = run(GOOD.replace("## Find an order by its number", "## Order search wizard", 1))
+        self.assertIn(("warning", "T3"), found)
+
+    def test_open_question_needs_number_with_section(self):
+        text = GOOD + "\n### Notes\n\n- Open question: which statuses count?\n\n## Open questions\n\n| No | Question |\n"
+        _, found = run(text)
+        self.assertIn(("warning", "OQ"), found)
+        _, found = run(text.replace("- Open question: which", "- Open question: O1 which"))
+        self.assertNotIn(("warning", "OQ"), found)
+
+    def test_profile_switches_rules(self):
+        text = GOOD.replace("### Acceptance criteria\n\n", "### Acceptance criteria\n\n- [ ] Given an order, when I search, then I see it.\n", 1)
+        with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False, encoding="utf-8") as f:
+            f.write(text)
+        prof = pathlib.Path(f.name).with_suffix(".profile.md")
+        prof.write_text("# Team profile\n\n## Checker\ncriteria: scenarios\ntitle-pattern: ^Orders - .+\n", encoding="utf-8")
+        _, plain = bc.check_file(pathlib.Path(f.name))
+        _, profiled = bc.check_file(pathlib.Path(f.name), bc.read_profile(prof))
+        self.assertIn("A5", {x.rule for x in plain})
+        self.assertNotIn("A5", {x.rule for x in profiled})
+        self.assertIn("TP", {x.rule for x in profiled})
+
     def test_bad_story(self):
         _, found = run(BAD)
         for expected in [("error", "S1"), ("error", "A5"), ("warning", "T2"), ("warning", "S2"),

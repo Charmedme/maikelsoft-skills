@@ -6,6 +6,29 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-16
+
+### Added
+
+- `idea-to-backlog`: the grill always starts with round 1, the need. It asks 5 questions: current work, where it goes wrong, exceptions, groups that work differently, and success. It also asks them when the documents describe the problem.
+- An impact scan in round 2: admin screens, other modules, roles, and the log of each new or changed object.
+- The context file has a "Problem" section and an "Open questions" section with an owner and a status. Items refer to an open question by its number (O1, O2).
+- A short round with the open questions of each feature, before the stories of that feature.
+- An optional gap analysis against an existing backlog, before G3.
+- Team profile (`team-profile.md`): the standard of the team wins over the rules of the skills where they conflict. The skills ask one time which template applies.
+- `backlogcheck.py --profile <file>`: a team profile can allow Given/When/Then (A5), criteria on an epic (E7), and set a title format (TP).
+- New checker rules:
+  - A8 (error): an open question in an acceptance criterion.
+  - T3 (warning): a part of the screen in a title.
+  - OQ (warning): an open question without its number.
+- `product-prototype` compares each screen with the decisions before it asks the human.
+- Rule A9: a claim without a source is an "Assumption:", also when a human is present.
+- The grill test (`evals/product-flow/grill-test/`): a simulated product owner with hidden facts, 2 scenarios, and a score script.
+
+### Changed
+
+- An answer with facts but no choice goes to "Open questions". The skill no longer marks it "assumed".
+
 ## [1.1.0] - 2026-10-15
 
 ### Changed
@@ -35,6 +58,7 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 - The shared language rules: English in ASD-STE100 Simplified Technical English, and Dutch in Begrijpelijk Nederlands (B1).
 - Test results for each skill against a baseline without the skill.
 
-[Unreleased]: https://github.com/Charmedme/maikelsoft-skills/compare/product-flow-v1.1.0...HEAD
+[Unreleased]: https://github.com/Charmedme/maikelsoft-skills/compare/product-flow-v1.2.0...HEAD
+[1.2.0]: https://github.com/Charmedme/maikelsoft-skills/compare/product-flow-v1.1.0...product-flow-v1.2.0
 [1.1.0]: https://github.com/Charmedme/maikelsoft-skills/compare/product-flow-v1.0.0...product-flow-v1.1.0
 [1.0.0]: https://github.com/Charmedme/maikelsoft-skills/releases/tag/product-flow-v1.0.0

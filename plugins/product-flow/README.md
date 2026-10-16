@@ -44,7 +44,7 @@ claude plugin install product-flow@maikelsoft-skills
 | Phase | The skill makes | Gate (you decide) |
 |-------|-----------------|-------------------|
 | 1. Scan and research | Sources: your tools, documents, existing tickets, and the web | |
-| 2. Grill | Decisions | **G1** Is this what you mean? |
+| 2. Grill | Problem (round 1: the need), decisions, open questions | **G1** Is this what you mean? |
 | 3. Prototype | A prototype file | **G2** Is this what you mean? |
 | 4. Spec | Goal, users, scope, story map | |
 | 5. Backlog | Goal, features, stories | **G3** Is this backlog correct? |
@@ -61,9 +61,13 @@ claude plugin install product-flow@maikelsoft-skills
 
 One file holds the full run: `backlog-<slug>.md`. It has the request, the sources, the decisions, the prototype verdict, the spec, and all items in full detail. The skill keeps it in the claude.ai Project of the session, else in your repository (`docs/work/<slug>/`), else as a download. To continue later, give the file to the skill.
 
-### Templates
+### Templates and team profile
 
-When your ticket system or your documents have a template for an item, the skills use it. Else they use the plain templates in each skill. Acceptance criteria are a short rule list, not Given/When/Then.
+At the start, the skills ask which template applies. A team profile is one Markdown file with the standard of the team, for example an MVP framework. It wins over the rules of the skills where they conflict. Its "Checker" section can allow Given/When/Then, criteria on an epic, and a title format. Without a profile, the skills use the template of the ticket system or their own templates. Acceptance criteria are then a short rule list, not Given/When/Then.
+
+### Open questions
+
+The context file keeps each open question one time, with its owner and status. Items refer to it by number (O1, O2). The G3 summary gives the open questions for each owner, so the list can go to a refinement or a customer meeting.
 
 ### Duplicates
 
@@ -94,6 +98,7 @@ In a scheduled or unattended run, the skill takes its recommended answers and ma
 ## Documentation
 
 - [Changelog](CHANGELOG.md)
+- Grill test: [before](../../evals/product-flow/grill-test/results-before.md) and [after](../../evals/product-flow/grill-test/results-after.md) the change of 1.2.0.
 - Test results: [idea-to-backlog](../../evals/product-flow/results-2026-10-12-idea-to-backlog.md), [backlog-story](../../evals/product-flow/results-2026-10-12-backlog-story.md), [backlog-feature](../../evals/product-flow/results-2026-10-12-backlog-feature.md), [backlog-epic and backlog-goal](../../evals/product-flow/results-2026-10-12-backlog-epic-goal.md), [product-prototype](../../evals/product-flow/results-2026-10-12-product-prototype.md), [backlog-push](../../evals/product-flow/results-2026-10-12-backlog-push.md).
 
 ## License

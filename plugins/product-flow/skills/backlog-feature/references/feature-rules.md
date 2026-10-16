@@ -20,7 +20,7 @@ Each rule has an ID. The checker (`backlogcheck.py`) finds the rules marked "che
 ## Goal
 
 - **F2 Outcome, with a measure.** The goal says what changes for the users and for the business. "Measure:" gives the number that shows it. Example: "Customers find a product without help. Measure: 30% fewer calls to customer service about products." (checker)
-- **F2a No invented target.** When nobody can give the number, write "Measure: open question" and put the question in the "Notes".
+- **F2a No invented target.** When nobody can give the number, write "Measure: open question" and put the question in the "Notes". With a context file, give its number: "Measure: open question O2".
 - **F2b Own goal.** The goal is the part of the result that this feature gives, not a copy of the product goal or of another feature goal. Refer to the product goal with "Supports:". Example: the product goal is "Customers order without help". Then the goal of "Product search" is "Customers find a product by name or article number", with "Supports: Customers order without help". (checker: warning when the goal is the same as the "Supports:" line or as the goal of another feature)
 
 ## Size
@@ -41,6 +41,7 @@ Each rule has an ID. The checker (`backlogcheck.py`) finds the rules marked "che
 - **F6 Through backlog-story.** The stories follow the rules of the `backlog-story` skill. Each story has this feature as its parent.
 - **F7 No bugs, no tasks.** A bug is wrong behaviour of an existing function. A task is work that the developers plan. Neither is part of a feature. Tell the human when the request is one of these.
 - **F8 Need, not solution.** A technology in the request is a constraint. Put it in a "Security:" or other labelled criterion, or in the "Notes". Do not make a story for it.
+- **F9 No open question in the criteria.** The same as rule A8 of the stories. (checker)
 
 ## Dutch
 

@@ -9,7 +9,7 @@ Business buyers upload a CSV file with order lines on a new page "Upload order".
 3. Confirm button that places the order.
 
 ## File format
-Columns: article number; quantity. Separator: semicolon. Maximum 500 lines.
+Columns: article number and quantity. Separator: semicolon. Maximum 500 lines.
 
 ## Out of scope
 Excel files (.xlsx).

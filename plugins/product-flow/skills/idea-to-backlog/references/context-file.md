@@ -8,7 +8,7 @@
 
 ## Why one file
 
-The context file holds the full run. It has the request, the sources, the decisions, the prototype verdict, the spec, and all backlog items in full detail. A later run reads it and adds to it. It does not start again from zero. `backlog-push` can push straight from it.
+The context file holds the full run. It has the request, the sources, the problem, the decisions, the open questions, the prototype verdict, the spec, and all backlog items in full detail. A later run reads it and adds to it. It does not start again from zero. `backlog-push` can push straight from it.
 
 Name it `backlog-<slug>.md`. The slug is 2 or 3 words of the subject, for example `backlog-product-search.md`.
 
@@ -23,6 +23,7 @@ Name it `backlog-<slug>.md`. The slug is 2 or 3 words of the subject, for exampl
 - Levels: <2 (Feature, User Story) | 3 (Epic, Feature, User Story)>
 - Profile: <Agile | Scrum | SAFe>
 - Language: <English | Dutch, je | Dutch, u>
+- Template: <team profile: path | template of the ticket system | plugin default>
 - G1 Shared understanding: <open | approved | assumed> <date, one line of reason>
 - G2 Prototype: <open | approved | approved with changes | rejected> <date>
 - G3 Backlog review: <open | approved> <date>
@@ -38,11 +39,25 @@ Name it `backlog-<slug>.md`. The slug is 2 or 3 words of the subject, for exampl
 | Source | What it gave | Link |
 |--------|--------------|------|
 
+## Problem
+
+- Current work: <how the users do the task today>
+- Where it goes wrong: <...>
+- Exceptions: <...>
+- Groups that work differently: <...>, and the groups that do not need this
+- Success: <the number and its value today, or a reference to an open question>
+
 ## Decisions
 
-| No | Decision | By | Date |
-|----|----------|----|------|
-| Q1 | <question in short>: <answer> | human / recommended, accepted / assumed | <date> |
+| No | Decision | By | Date | Source |
+|----|----------|----|------|--------|
+| Q1 | <question in short>: <answer> | human / recommended, accepted / assumed | <date> | <document, prototype, or "human"> |
+
+## Open questions
+
+| No | Question | Owner | Status | Waits |
+|----|----------|-------|--------|-------|
+| O1 | <question> | customer / PO / team / expert / human | open / answered: <Q-number> | <the items that wait for the answer> |
 
 ## Prototype
 
@@ -60,6 +75,10 @@ Name it `backlog-<slug>.md`. The slug is 2 or 3 words of the subject, for exampl
 ```
 
 Start the "Backlog" section with a line that says it holds the items. Each item heading uses `##` or `###`, so that `backlogtree.py` finds it.
+
+An item refers to an open question by its number: "Open question: O3". The question itself is only in "Open questions". When the answer comes, change the status to "answered", add the decision, and update the items.
+
+When the scope changes, add a decision for it. When the subject changes, give the file a new name and say so in the "Status" section.
 
 ## Where to keep it
 
