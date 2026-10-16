@@ -13,7 +13,7 @@ Skill: `idea-to-backlog` 1.1.0. 3 runs for each scenario. The number is the ques
 
 ## Findings
 
-- N2 (where it goes wrong) and N3 (exceptions): 0 of 6. The skill asks which problem the solution solves, not where the user gets stuck today.
+- N2 (where it goes wrong) and N3 (exceptions) were found in 0 of 6 runs. The skill asks which problem the solution solves, not where the user gets stuck today.
 - N1 (current work): 2 of 3 without a problem statement, 0 of 3 with one. A stated problem stops the question about the current work.
 - N4 (groups of customers): 0 of 3 without a problem statement. With one, 2 of 3 runs found it only at G1, when the summary said "all customers".
 - I1 (related module): 0 of 6. I2 and I3 came up through questions about the measure and about who can use the page.
