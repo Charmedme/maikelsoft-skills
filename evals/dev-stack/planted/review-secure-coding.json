@@ -1,0 +1,89 @@
+{
+  "skill": "secure-coding",
+  "planted": [
+    {
+      "id": "P1",
+      "file": "src/Orders.Api/appsettings.json",
+      "line": 10,
+      "description": "Production database password committed in appsettings.json. Use user secrets or a secret store.",
+      "severity": "high"
+    },
+    {
+      "id": "P2",
+      "file": "src/Orders.Api/appsettings.json",
+      "line": 14,
+      "description": "JWT signing key committed in appsettings.json.",
+      "severity": "high"
+    },
+    {
+      "id": "P3",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 27,
+      "description": "RequireHttpsMetadata = false outside development.",
+      "severity": "medium"
+    },
+    {
+      "id": "P4",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 30,
+      "description": "JWT validation turned off: issuer, audience, and lifetime are not validated (expired tokens work forever).",
+      "severity": "high"
+    },
+    {
+      "id": "P5",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 40,
+      "description": "CORS allows any origin with credentials.",
+      "severity": "high"
+    },
+    {
+      "id": "P6",
+      "file": "src/Orders.Api/Orders/OrderEndpoints.cs",
+      "line": 67,
+      "description": "'My orders' takes the customer id from the query string, not from the signed-in user's claims. Any user reads any customer's orders (BOLA, CWE-639).",
+      "severity": "high"
+    },
+    {
+      "id": "P7",
+      "file": "src/Orders.Api/Orders/OrderEndpoints.cs",
+      "line": 77,
+      "description": "GET /orders/{id} has no owner check. Any signed-in user reads any order (BOLA). The existing list by customerId has the same hole.",
+      "severity": "high"
+    },
+    {
+      "id": "P8",
+      "file": "src/Orders.Api/Orders/OrderEndpoints.cs",
+      "line": 87,
+      "description": "SQL injection: interpolated SKU in FromSqlRaw, warning suppressed with a false reason, on an anonymous endpoint.",
+      "severity": "high"
+    },
+    {
+      "id": "P9",
+      "file": "src/Orders.Api/Invoices/InvoiceEndpoints.cs",
+      "line": 10,
+      "description": "Upload has no owner check on the order and no size limit (RequestSizeLimit / form limits).",
+      "severity": "high"
+    },
+    {
+      "id": "P10",
+      "file": "src/Orders.Api/Invoices/InvoiceEndpoints.cs",
+      "line": 20,
+      "description": "Trusts the client Content-Type. No extension allowlist and no file signature (%PDF-) check.",
+      "severity": "medium"
+    },
+    {
+      "id": "P11",
+      "file": "src/Orders.Api/Invoices/InvoiceEndpoints.cs",
+      "line": 29,
+      "description": "Client file name used in the path (path traversal) and the file is stored under wwwroot (served to anyone). Use a server-generated name outside the web root.",
+      "severity": "high"
+    },
+    {
+      "id": "P12",
+      "file": "src/Orders.Api/Invoices/InvoiceEndpoints.cs",
+      "line": 36,
+      "description": "Exception details (stack trace, server paths) returned to the client in ProblemDetails.",
+      "severity": "medium"
+    }
+  ]
+}

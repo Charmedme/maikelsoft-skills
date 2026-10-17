@@ -1,0 +1,337 @@
+{
+  "$schema": "http://json.schemastore.org/sarif-1.0.0",
+  "version": "1.0.0",
+  "runs": [
+    {
+      "tool": {
+        "name": "Microsoft (R) Visual C# Compiler",
+        "version": "5.9.0.0",
+        "fileVersion": "5.9.0-1.26505.111 (a8dd0577c5c13f43a2f57fe33b4ff11b90f6371e)",
+        "semanticVersion": "5.9.0"
+      },
+      "results": [
+        {
+          "ruleId": "CA2007",
+          "level": "warning",
+          "message": "Consider calling ConfigureAwait on the awaited task",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///home/claude/maikelsoft-skills/evals/dev-stack/fixtures/review-dotnet-analyzers/tests/Orders.Api.Tests/OrderEndpointsTests.cs",
+                "region": {
+                  "startLine": 21,
+                  "startColumn": 15,
+                  "endLine": 21,
+                  "endColumn": 64
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CA2007",
+          "level": "warning",
+          "message": "Consider calling ConfigureAwait on the awaited task",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///home/claude/maikelsoft-skills/evals/dev-stack/fixtures/review-dotnet-analyzers/tests/Orders.Api.Tests/AssemblyFixture.cs",
+                "region": {
+                  "startLine": 23,
+                  "startColumn": 15,
+                  "endLine": 23,
+                  "endColumn": 63
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CA2007",
+          "level": "warning",
+          "message": "Consider calling ConfigureAwait on the awaited task",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///home/claude/maikelsoft-skills/evals/dev-stack/fixtures/review-dotnet-analyzers/tests/Orders.Api.Tests/OrderEndpointsTests.cs",
+                "region": {
+                  "startLine": 29,
+                  "startColumn": 15,
+                  "endLine": 29,
+                  "endColumn": 39
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CA2007",
+          "level": "warning",
+          "message": "Consider calling ConfigureAwait on the awaited task",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///home/claude/maikelsoft-skills/evals/dev-stack/fixtures/review-dotnet-analyzers/tests/Orders.Api.Tests/OrdersApiFactory.cs",
+                "region": {
+                  "startLine": 17,
+                  "startColumn": 33,
+                  "endLine": 17,
+                  "endColumn": 60
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CA2007",
+          "level": "warning",
+          "message": "Consider calling ConfigureAwait on the awaited task",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///home/claude/maikelsoft-skills/evals/dev-stack/fixtures/review-dotnet-analyzers/tests/Orders.Api.Tests/OrdersApiFactory.cs",
+                "region": {
+                  "startLine": 19,
+                  "startColumn": 15,
+                  "endLine": 19,
+                  "endColumn": 43
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CA2007",
+          "level": "warning",
+          "message": "Consider calling ConfigureAwait on the awaited task",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///home/claude/maikelsoft-skills/evals/dev-stack/fixtures/review-dotnet-analyzers/tests/Orders.Api.Tests/AssemblyFixture.cs",
+                "region": {
+                  "startLine": 31,
+                  "startColumn": 19,
+                  "endLine": 31,
+                  "endColumn": 44
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "RCS1201",
+          "level": "warning",
+          "message": "Use method chaining",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///home/claude/maikelsoft-skills/evals/dev-stack/fixtures/review-dotnet-analyzers/tests/Orders.Api.Tests/OrdersApiFactory.cs",
+                "region": {
+                  "startLine": 24,
+                  "startColumn": 9,
+                  "endLine": 24,
+                  "endColumn": 89
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CA2007",
+          "level": "warning",
+          "message": "Consider calling ConfigureAwait on the awaited task",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///home/claude/maikelsoft-skills/evals/dev-stack/fixtures/review-dotnet-analyzers/tests/Orders.Api.Tests/OrderEndpointsTests.cs",
+                "region": {
+                  "startLine": 38,
+                  "startColumn": 30,
+                  "endLine": 38,
+                  "endColumn": 105
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CA2007",
+          "level": "warning",
+          "message": "Consider calling ConfigureAwait on the awaited task",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///home/claude/maikelsoft-skills/evals/dev-stack/fixtures/review-dotnet-analyzers/tests/Orders.Api.Tests/OrderEndpointsTests.cs",
+                "region": {
+                  "startLine": 41,
+                  "startColumn": 27,
+                  "endLine": 41,
+                  "endColumn": 107
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CA2007",
+          "level": "warning",
+          "message": "Consider calling ConfigureAwait on the awaited task",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///home/claude/maikelsoft-skills/evals/dev-stack/fixtures/review-dotnet-analyzers/tests/Orders.Api.Tests/OrderEndpointsTests.cs",
+                "region": {
+                  "startLine": 53,
+                  "startColumn": 30,
+                  "endLine": 53,
+                  "endColumn": 105
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CA2007",
+          "level": "warning",
+          "message": "Consider calling ConfigureAwait on the awaited task",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///home/claude/maikelsoft-skills/evals/dev-stack/fixtures/review-dotnet-analyzers/tests/Orders.Api.Tests/OrderEndpointsTests.cs",
+                "region": {
+                  "startLine": 63,
+                  "startColumn": 15,
+                  "endLine": 63,
+                  "endColumn": 163
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CA2007",
+          "level": "warning",
+          "message": "Consider calling ConfigureAwait on the awaited task",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///home/claude/maikelsoft-skills/evals/dev-stack/fixtures/review-dotnet-analyzers/tests/Orders.Api.Tests/OrderEndpointsTests.cs",
+                "region": {
+                  "startLine": 64,
+                  "startColumn": 15,
+                  "endLine": 64,
+                  "endColumn": 174
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CA2007",
+          "level": "warning",
+          "message": "Consider calling ConfigureAwait on the awaited task",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///home/claude/maikelsoft-skills/evals/dev-stack/fixtures/review-dotnet-analyzers/tests/Orders.Api.Tests/OrderEndpointsTests.cs",
+                "region": {
+                  "startLine": 66,
+                  "startColumn": 28,
+                  "endLine": 66,
+                  "endColumn": 141
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CA2007",
+          "level": "warning",
+          "message": "Consider calling ConfigureAwait on the awaited task",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///home/claude/maikelsoft-skills/evals/dev-stack/fixtures/review-dotnet-analyzers/tests/Orders.Api.Tests/OrderEndpointsTests.cs",
+                "region": {
+                  "startLine": 74,
+                  "startColumn": 30,
+                  "endLine": 74,
+                  "endColumn": 123
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        }
+      ],
+      "rules": {
+        "CA2007": {
+          "id": "CA2007",
+          "shortDescription": "Consider calling ConfigureAwait on the awaited task",
+          "fullDescription": "When an asynchronous method awaits a Task directly, continuation occurs in the same thread that created the task. Consider calling Task.ConfigureAwait(Boolean) to signal your intention for continuation. Call ConfigureAwait(false) on the task to schedule continuations to the thread pool, thereby avoiding a deadlock on the UI thread. Passing false is a good option for app-independent libraries. Calling ConfigureAwait(true) on the task has the same behavior as not explicitly calling ConfigureAwait. By explicitly calling this method, you're letting readers know you intentionally want to perform the continuation on the original synchronization context.",
+          "defaultLevel": "warning",
+          "helpUri": "https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2007",
+          "properties": {
+            "category": "Reliability",
+            "isEnabledByDefault": false,
+            "tags": [
+              "Telemetry",
+              "EnabledRuleInAggressiveMode"
+            ]
+          }
+        },
+        "RCS1201": {
+          "id": "RCS1201",
+          "shortDescription": "Use method chaining",
+          "defaultLevel": "note",
+          "helpUri": "https://josefpihrt.github.io/docs/roslynator/analyzers/RCS1201",
+          "properties": {
+            "category": "Roslynator",
+            "isEnabledByDefault": true
+          }
+        }
+      }
+    }
+  ]
+}

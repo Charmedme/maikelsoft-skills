@@ -1,0 +1,94 @@
+{
+  "skill": "migrate-fluentassertions",
+  "rules": [
+    {
+      "id": "MFA-USING-FA",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs",
+        "**/*.csproj",
+        "**/*.props"
+      ],
+      "pattern": "^\\s*(global\\s+)?using\\s+FluentAssertions(\\.\\w+)*\\s*;|<Using\\s+Include=\"FluentAssertions(\\.\\w+)*\"",
+      "message": "This file still uses the FluentAssertions namespace. Count these findings to see the work that is left.",
+      "fix": "Replace FluentAssertions with AwesomeAssertions in the namespace.",
+      "match": [
+        "using FluentAssertions;",
+        "using FluentAssertions.Execution;",
+        "global using FluentAssertions;",
+        "<Using Include=\"FluentAssertions\" />"
+      ],
+      "nomatch": [
+        "using AwesomeAssertions;",
+        "<Using Include=\"AwesomeAssertions\" />",
+        "// using FluentAssertions was removed"
+      ]
+    },
+    {
+      "id": "MFA-PKG-FA-LEFT",
+      "kind": "package",
+      "ecosystem": "nuget",
+      "package": "FluentAssertions*",
+      "versions": "*",
+      "severity": "warning",
+      "message": "This project still references a FluentAssertions package.",
+      "fix": "Replace FluentAssertions with AwesomeAssertions 9.6.0, FluentAssertions.Web with AwesomeAssertions.Web, FluentAssertions.Json with AwesomeAssertions.Json."
+    },
+    {
+      "id": "MFA-BRIDGE-LEFT",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\bServices\\.ThrowException\\s*=",
+      "message": "The FluentAssertions 7 bridge for MSTest 4 is not needed with AwesomeAssertions 9.3 or later.",
+      "fix": "Remove the line and the using FluentAssertions.Common directive. Remove the [AssemblyInitialize] method when it is empty.",
+      "match": [
+        "Services.ThrowException = message => throw new AssertFailedException(message);"
+      ],
+      "nomatch": [
+        "AssertionConfiguration.Current.Equivalency.Modify(o => o.ComparingByMembers<Money>());"
+      ]
+    },
+    {
+      "id": "MFA-XML-HAVEATTRIBUTE",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\.HaveAttribute\\(\\s*[^,()]+,\\s*[^,()]+\\)",
+      "message": "On XElement, HaveAttribute(name, value) in AwesomeAssertions checks only the name. The second argument becomes the because text, so the test passes with a wrong value. On XmlElement (System.Xml) the call is correct.",
+      "fix": "Use HaveAttributeWithValue(name, value).",
+      "match": [
+        "element.Should().HaveAttribute(\"id\", \"42\");",
+        "doc.Root.Should().HaveAttribute(name, expected);"
+      ],
+      "nomatch": [
+        "element.Should().HaveAttributeWithValue(\"id\", \"42\");",
+        "element.Should().HaveAttribute(\"id\");"
+      ]
+    },
+    {
+      "id": "MFA-EMPTY-ALLSATISFY",
+      "kind": "regex",
+      "severity": "info",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\.(AllSatisfy|OnlyContain)\\(",
+      "message": "Since FluentAssertions 8, AllSatisfy and OnlyContain pass on an empty collection. Check that an empty collection is not a bug here.",
+      "fix": "Add .NotBeEmpty() before the call when the collection must have items.",
+      "match": [
+        "orders.Should().AllSatisfy(o => o.Total.Should().BePositive());",
+        "lines.Should().OnlyContain(l => l.Length > 0);"
+      ],
+      "nomatch": [
+        "orders.Should().NotBeEmpty();",
+        "orders.Should().ContainSingle();"
+      ]
+    }
+  ]
+}

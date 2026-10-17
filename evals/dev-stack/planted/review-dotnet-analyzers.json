@@ -1,0 +1,89 @@
+{
+  "skill": "dotnet-analyzers",
+  "planted": [
+    {
+      "id": "P1",
+      "file": "Directory.Build.props",
+      "line": 7,
+      "description": "EnforceCodeStyleInBuild turned off. IDE rules from .editorconfig no longer reach the build.",
+      "severity": "medium"
+    },
+    {
+      "id": "P2",
+      "file": "Directory.Build.props",
+      "line": 8,
+      "description": "NoWarn hides nullable warnings (CS8602, CS8618) and the log template rule (CA2254) for the whole repo, to make the build pass.",
+      "severity": "high"
+    },
+    {
+      "id": "P3",
+      "file": "Directory.Build.props",
+      "line": 9,
+      "description": "Legacy rule set file. Configure severities in .editorconfig.",
+      "severity": "low"
+    },
+    {
+      "id": "P4",
+      "file": "Directory.Build.props",
+      "line": 10,
+      "description": "One SARIF path for all projects: each project overwrites the same file. Use a per-project path in obj/ (and add version=2.1).",
+      "severity": "medium"
+    },
+    {
+      "id": "P5",
+      "file": "Directory.Build.props",
+      "line": 14,
+      "description": "Microsoft.CodeAnalysis.NetAnalyzers package (old 9.0.0) in a .NET 10 project. The SDK already ships newer analyzers; use AnalysisLevel.",
+      "severity": "medium"
+    },
+    {
+      "id": "P6",
+      "file": "Directory.Build.props",
+      "line": 16,
+      "description": "SonarAnalyzer.CSharp: its SSALv1 license forbids AI analysis of its output. New package without approval.",
+      "severity": "high"
+    },
+    {
+      "id": "P7",
+      "file": "Directory.Build.props",
+      "line": 17,
+      "description": "SecurityCodeScan: not maintained since 2022 (LGPL). Use the CA security rules.",
+      "severity": "medium"
+    },
+    {
+      "id": "P8",
+      "file": ".editorconfig",
+      "line": 51,
+      "description": "Whole Roslynator category raised to warning. It also raises Hidden rules (noise). Raise single rule IDs.",
+      "severity": "medium"
+    },
+    {
+      "id": "P9",
+      "file": ".editorconfig",
+      "line": 54,
+      "description": "CA2007 (ConfigureAwait) as warning in an ASP.NET Core app, and ConfigureAwait(false) added to app code. Noise; turn CA2007 off for apps.",
+      "severity": "medium"
+    },
+    {
+      "id": "P10",
+      "file": "src/Orders.Api/Orders/OrderEndpoints.cs",
+      "line": 1,
+      "description": "File-wide '#pragma warning disable' with no restore and no reason. All warnings in the file are hidden.",
+      "severity": "high"
+    },
+    {
+      "id": "P11",
+      "file": "ci/check.sh",
+      "line": 6,
+      "description": "CI gate uses 'roslynator analyze' (silently skips newer analyzers such as Meziantou) and 'dotnet build' without -warnaserror, with a command-line ErrorLog that every project overwrites.",
+      "severity": "medium"
+    },
+    {
+      "id": "P12",
+      "file": "README.md",
+      "line": 23,
+      "description": "Since Roslynator 5.0 the VSIX has no analyzers. Use the NuGet package.",
+      "severity": "low"
+    }
+  ]
+}

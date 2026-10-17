@@ -1,0 +1,1447 @@
+{
+  "skill": "secure-coding",
+  "rules": [
+    {
+      "id": "SC-TYPENAMEHANDLING",
+      "kind": "regex",
+      "severity": "error",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\bTypeNameHandling\\s*(=|:)\\s*(Newtonsoft\\.Json\\.)?TypeNameHandling\\.(All|Auto|Objects|Arrays)\\b",
+      "message": "Newtonsoft TypeNameHandling other than None lets the payload choose the type: remote code execution (CWE-502, CA2326).",
+      "fix": "Use System.Text.Json with [JsonPolymorphic] and [JsonDerivedType] allowlists, or TypeNameHandling.None.",
+      "match": [
+        "var s = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto };",
+        "settings.TypeNameHandling = TypeNameHandling.All;",
+        "new JsonSerializerSettings { TypeNameHandling = Newtonsoft.Json.TypeNameHandling.Objects }"
+      ],
+      "nomatch": [
+        "var s = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.None };",
+        "[JsonDerivedType(typeof(ShipmentCreated), \"shipment-created\")]"
+      ]
+    },
+    {
+      "id": "SC-BINARYFORMATTER",
+      "kind": "regex",
+      "severity": "error",
+      "files": [
+        "**/*.cs",
+        "**/*.csproj",
+        "**/*.props",
+        "**/*.targets"
+      ],
+      "pattern": "\\b(BinaryFormatter|SoapFormatter|NetDataContractSerializer|LosFormatter|ObjectStateFormatter)\\b|<EnableUnsafeBinaryFormatterSerialization>\\s*true",
+      "message": "BinaryFormatter and its relatives deserialize any type: remote code execution (CWE-502). .NET 9+ removed it on purpose.",
+      "fix": "Use System.Text.Json or a typed contract serializer. Do not add the compatibility package.",
+      "match": [
+        "var f = new BinaryFormatter();",
+        "<EnableUnsafeBinaryFormatterSerialization>true</EnableUnsafeBinaryFormatterSerialization>",
+        "var s = new NetDataContractSerializer();"
+      ],
+      "nomatch": [
+        "var e = JsonSerializer.Deserialize<ShipmentEvent>(json);",
+        "var s = new DataContractSerializer(typeof(Order));"
+      ]
+    },
+    {
+      "id": "SC-PKG-BINARYFORMATTER",
+      "kind": "package",
+      "ecosystem": "nuget",
+      "package": "System.Runtime.Serialization.Formatters",
+      "versions": ">=9.0.0",
+      "severity": "error",
+      "message": "This compatibility package brings BinaryFormatter back, and with it remote code execution (CWE-502). Use System.Text.Json."
+    },
+    {
+      "id": "SC-PKG-SECURITYCODESCAN",
+      "kind": "package",
+      "ecosystem": "nuget",
+      "package": "SecurityCodeScan*",
+      "versions": "*",
+      "severity": "warning",
+      "message": "SecurityCodeScan has no release since 2022. Use AnalysisModeSecurity=All and Semgrep CE or Opengrep."
+    },
+    {
+      "id": "SC-PKG-SECURITY-SCAN",
+      "kind": "package",
+      "ecosystem": "nuget",
+      "package": "security-scan",
+      "versions": "*",
+      "severity": "warning",
+      "message": "security-scan (SecurityCodeScan) has no release since 2022. Use AnalysisModeSecurity=All and Semgrep CE or Opengrep."
+    },
+    {
+      "id": "SC-CORS-ANY-CREDENTIALS",
+      "kind": "regex",
+      "severity": "error",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\.AllowAnyOrigin\\s*\\(\\s*\\)[^;]*\\.AllowCredentials\\s*\\(\\s*\\)|\\.AllowCredentials\\s*\\(\\s*\\)[^;]*\\.AllowAnyOrigin\\s*\\(\\s*\\)",
+      "message": "Any origin together with credentials lets each web site call the API as the signed-in user.",
+      "fix": "List exact origins with WithOrigins(...) from configuration, or serve SPA and API on one origin (SEC-09).",
+      "match": [
+        "p.AllowAnyOrigin().AllowAnyHeader().AllowCredentials();",
+        "p.AllowCredentials().AllowAnyMethod().AllowAnyOrigin();"
+      ],
+      "nomatch": [
+        "p.WithOrigins(origins).AllowCredentials();",
+        "p.AllowAnyOrigin().AllowAnyHeader();"
+      ]
+    },
+    {
+      "id": "SC-CORS-ANY-ORIGIN-FUNC",
+      "kind": "regex",
+      "severity": "error",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\.SetIsOriginAllowed\\s*\\(\\s*(_|\\w+|\\(\\s*\\w*\\s*\\))\\s*=>\\s*true\\s*\\)",
+      "message": "SetIsOriginAllowed(_ => true) accepts each origin. With credentials this is the same as no same-origin policy.",
+      "fix": "Compare the origin with an allowlist from configuration, or use WithOrigins(...).",
+      "match": [
+        "p.SetIsOriginAllowed(_ => true).AllowCredentials();",
+        "policy.SetIsOriginAllowed(origin => true);"
+      ],
+      "nomatch": [
+        "p.SetIsOriginAllowed(origin => allowed.Contains(origin));",
+        "p.WithOrigins(\"https://app.example.com\");"
+      ]
+    },
+    {
+      "id": "SC-CERT-ACCEPT-ALL",
+      "kind": "regex",
+      "severity": "error",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\b(ServerCertificateCustomValidationCallback|ServerCertificateValidationCallback|RemoteCertificateValidationCallback)\\s*=\\s*(\\([^)]*\\)|\\w+)\\s*=>\\s*true\\b|\\bDangerousAcceptAnyServerCertificateValidator\\b",
+      "message": "A callback that returns true turns off TLS server authentication. A man in the middle can read credentials and data (CA5359).",
+      "fix": "Remove the callback. Fix the certificate chain (install the CA in the container) or pin the expected certificate.",
+      "match": [
+        "client.ServerCertificateValidationCallback = (s, c, h, e) => true;",
+        "new HttpClientHandler { ServerCertificateCustomValidationCallback = (_, _, _, _) => true }",
+        "handler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;"
+      ],
+      "nomatch": [
+        "client.ServerCertificateValidationCallback = ValidatePinnedCertificate;",
+        "using var client = new SmtpClient();"
+      ]
+    },
+    {
+      "id": "SC-TRUST-SERVER-CERT",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs",
+        "**/appsettings*.json",
+        "**/*.yaml",
+        "**/*.yml",
+        "**/*.env"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**",
+        "**/*.Tests/**",
+        "**/*.Test/**",
+        "**/appsettings.Development.json",
+        "**/appsettings.Local.json",
+        "**/*.AppHost/**",
+        "**/docker-compose*.yml",
+        "**/compose*.yaml",
+        "**/compose*.yml",
+        "**/rules.json"
+      ],
+      "pattern": "(?i)\\bTrustServerCertificate\\s*=\\s*(true|yes)\\b",
+      "message": "TrustServerCertificate=True accepts any database server certificate. A man in the middle can read the database traffic.",
+      "fix": "Remove it outside local development. Install the CA of the database server, or use Encrypt=Strict with a valid certificate.",
+      "match": [
+        "\"App\": \"Server=sql;Database=app;Encrypt=True;TrustServerCertificate=True\"",
+        "builder.TrustServerCertificate = true;"
+      ],
+      "nomatch": [
+        "\"App\": \"Server=sql;Database=app;Encrypt=Strict\"",
+        "builder.TrustServerCertificate = false;"
+      ]
+    },
+    {
+      "id": "SC-JWT-NO-LIFETIME",
+      "kind": "regex",
+      "severity": "error",
+      "files": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**",
+        "**/*.Tests/**",
+        "**/*.Test/**",
+        "**/rules.json"
+      ],
+      "pattern": "\\bValidateLifetime\\s*=\\s*false\\b",
+      "message": "The API accepts expired tokens. A stolen token then works for ever (ASVS V9).",
+      "fix": "Remove the line. Keep ValidateLifetime on and set ClockSkew to 1 or 2 minutes.",
+      "match": [
+        "o.TokenValidationParameters.ValidateLifetime = false;",
+        "ValidateLifetime = false,"
+      ],
+      "nomatch": [
+        "ValidateLifetime = true,",
+        "o.TokenValidationParameters.ClockSkew = TimeSpan.FromMinutes(1);"
+      ]
+    },
+    {
+      "id": "SC-JWT-NO-AUDIENCE",
+      "kind": "regex",
+      "severity": "error",
+      "files": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**",
+        "**/*.Tests/**",
+        "**/*.Test/**",
+        "**/rules.json"
+      ],
+      "pattern": "\\bValidateAudience\\s*=\\s*false\\b",
+      "message": "The API accepts tokens issued for other APIs of the same identity provider (token confusion, ASVS V9).",
+      "fix": "Set Audience (or ValidAudiences) to the audience of this API and keep ValidateAudience on.",
+      "match": [
+        "ValidateAudience = false,",
+        "p.ValidateAudience = false;"
+      ],
+      "nomatch": [
+        "ValidateAudience = true,",
+        "o.Audience = builder.Configuration[\"Auth:Audience\"];"
+      ]
+    },
+    {
+      "id": "SC-JWT-NO-ISSUER",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**",
+        "**/*.Tests/**",
+        "**/*.Test/**",
+        "**/rules.json"
+      ],
+      "pattern": "\\bValidateIssuer\\s*=\\s*false\\b",
+      "message": "The API accepts tokens from any issuer that has a trusted key. Only a multi-tenant API with its own IssuerValidator can turn this off.",
+      "fix": "Set Authority (or ValidIssuer) and keep ValidateIssuer on. For multi-tenant Entra ID, set an IssuerValidator.",
+      "match": [
+        "ValidateIssuer = false,",
+        "o.TokenValidationParameters.ValidateIssuer = false;"
+      ],
+      "nomatch": [
+        "ValidateIssuer = true,",
+        "o.Authority = builder.Configuration[\"Auth:Authority\"];"
+      ]
+    },
+    {
+      "id": "SC-JWT-UNSIGNED",
+      "kind": "regex",
+      "severity": "error",
+      "files": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**",
+        "**/*.Tests/**",
+        "**/*.Test/**",
+        "**/rules.json"
+      ],
+      "pattern": "\\b(RequireSignedTokens|ValidateIssuerSigningKey)\\s*=\\s*false\\b",
+      "message": "The API accepts tokens without a checked signature (alg none or a forged token).",
+      "fix": "Remove the setting. Let JwtBearer get the signing keys from the Authority and pin ValidAlgorithms.",
+      "match": [
+        "RequireSignedTokens = false,",
+        "ValidateIssuerSigningKey = false,"
+      ],
+      "nomatch": [
+        "RequireSignedTokens = true,",
+        "o.TokenValidationParameters.ValidAlgorithms = [SecurityAlgorithms.RsaSha256];"
+      ]
+    },
+    {
+      "id": "SC-JWT-HTTP-METADATA",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**",
+        "**/*.Tests/**",
+        "**/*.Test/**",
+        "**/rules.json"
+      ],
+      "pattern": "\\bRequireHttpsMetadata\\s*=\\s*false\\b",
+      "message": "The signing keys come over plain HTTP. A man in the middle can supply his own keys.",
+      "fix": "Use it only in local development, behind an environment check. Production uses an HTTPS Authority.",
+      "match": [
+        "o.RequireHttpsMetadata = false;"
+      ],
+      "nomatch": [
+        "o.RequireHttpsMetadata = !builder.Environment.IsDevelopment();",
+        "o.Authority = \"https://id.example.com/realms/app\";"
+      ]
+    },
+    {
+      "id": "SC-JWT-READ-NOT-VALIDATE",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**",
+        "**/*.Tests/**",
+        "**/*.Test/**",
+        "**/rules.json"
+      ],
+      "pattern": "\\.ReadJwtToken\\s*\\(|\\.ReadToken\\s*\\(",
+      "message": "ReadJwtToken and ReadToken decode a token without a signature check. Do not use the claims for a security decision.",
+      "fix": "Let JwtBearer validate the token, or call JsonWebTokenHandler.ValidateTokenAsync.",
+      "match": [
+        "var jwt = new JwtSecurityTokenHandler().ReadJwtToken(raw);",
+        "var t = handler.ReadToken(raw);"
+      ],
+      "nomatch": [
+        "var result = await handler.ValidateTokenAsync(raw, parameters);"
+      ]
+    },
+    {
+      "id": "SC-JWT-HARDCODED-KEY",
+      "kind": "regex",
+      "severity": "error",
+      "files": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**",
+        "**/*.Tests/**",
+        "**/*.Test/**",
+        "**/rules.json"
+      ],
+      "pattern": "new\\s+SymmetricSecurityKey\\s*\\(\\s*Encoding\\.\\w+\\.GetBytes\\s*\\(\\s*\\$?@?\\\"",
+      "message": "A signing key in source code is known to each person who can read the repository (CWE-798).",
+      "fix": "Use the keys of the identity provider (Authority). For an own HMAC key, read it from the secret store.",
+      "match": [
+        "var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(\"super-secret-key-1234567890\"));"
+      ],
+      "nomatch": [
+        "var key = new SymmetricSecurityKey(Convert.FromBase64String(options.SigningKey));"
+      ]
+    },
+    {
+      "id": "SC-DISABLE-ANTIFORGERY",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs",
+        "**/*.cshtml"
+      ],
+      "pattern": "\\.DisableAntiforgery\\s*\\(|\\[IgnoreAntiforgeryToken\\b",
+      "message": "This endpoint accepts a state change without an antiforgery token. With cookie authentication this is CSRF (CWE-352).",
+      "fix": "Keep antiforgery for endpoints that a browser calls with a cookie. Disable it only for bearer-token or API-key endpoints, with a reason.",
+      "match": [
+        "app.MapPost(\"/upload\", Upload).DisableAntiforgery();",
+        "[IgnoreAntiforgeryToken]"
+      ],
+      "nomatch": [
+        "app.MapPost(\"/upload\", Upload).RequireAuthorization();",
+        "[ValidateAntiForgeryToken]"
+      ]
+    },
+    {
+      "id": "SC-ALLOW-ANONYMOUS",
+      "kind": "regex",
+      "severity": "info",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\[AllowAnonymous\\]|\\.AllowAnonymous\\s*\\(",
+      "message": "This endpoint is open to callers without a token. Check that this is intended and that it does not change state or return private data.",
+      "fix": "Keep it only on the exact action that must be public (sign-in, health, public data). Add the route to the anonymous list in the authorization test.",
+      "match": [
+        "[AllowAnonymous]",
+        "app.MapGet(\"/health\", () => Results.Ok()).AllowAnonymous();"
+      ],
+      "nomatch": [
+        "app.MapGet(\"/orders\", GetOrders).RequireAuthorization(\"orders:read\");",
+        "[Authorize(Policy = \"orders:read\")]"
+      ]
+    },
+    {
+      "id": "SC-WEAK-HASH-SECRET",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "(?i)\\b(MD5|SHA1)\\w*\\b[^;\\n]*(password|passwd|pwd|passphrase|token|secret|apikey|api_key|otp|salt|resetcode)|(password|passwd|pwd|passphrase|token|secret|apikey|api_key|otp|salt|resetcode)\\w*\\b[^;\\n]*\\b(MD5|SHA1)\\w*\\b",
+      "message": "MD5 and SHA1 are broken. For passwords even SHA256 is too fast (CA5350, CA5351).",
+      "fix": "Passwords: the identity provider or PasswordHasher<T>. Tokens: RandomNumberGenerator plus SHA256 of the token. Integrity: HMACSHA256.",
+      "match": [
+        "var hash = MD5.HashData(Encoding.UTF8.GetBytes(password));",
+        "var tokenHash = SHA1.HashData(bytes); // token",
+        "string pwdHash = Convert.ToHexString(SHA1.HashData(data));"
+      ],
+      "nomatch": [
+        "var hash = SHA256.HashData(Encoding.UTF8.GetBytes(token));",
+        "var etag = Convert.ToHexString(MD5.HashData(fileBytes));"
+      ]
+    },
+    {
+      "id": "SC-RANDOM-SECRET",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**",
+        "**/*.Tests/**",
+        "**/*.Test/**",
+        "**/rules.json"
+      ],
+      "pattern": "(?i)\\w*(token|password|passwd|pwd|secret|otp|nonce|salt|code)\\w*\\b[^;\\n]*(new\\s+Random\\s*\\(|Random\\.Shared)|(new\\s+Random\\s*\\(|Random\\.Shared)[^;\\n]*\\w*(token|password|secret|otp|nonce|salt)\\w*",
+      "message": "System.Random is predictable. An attacker can guess the token, code or password (CWE-330, CA5394).",
+      "fix": "Use RandomNumberGenerator.GetBytes, GetInt32, GetHexString or GetString.",
+      "match": [
+        "var code = new Random().Next(100000, 999999);",
+        "var resetToken = Random.Shared.Next().ToString();"
+      ],
+      "nomatch": [
+        "var code = RandomNumberGenerator.GetInt32(0, 1_000_000).ToString(\"D6\");",
+        "var jitter = Random.Shared.Next(0, 100);"
+      ]
+    },
+    {
+      "id": "SC-DAPPER-SQL-INTERP",
+      "kind": "regex",
+      "severity": "error",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\.(Query|QueryAsync|QueryFirst\\w*|QuerySingle\\w*|QueryMultiple\\w*|Execute|ExecuteAsync|ExecuteScalar\\w*|ExecuteReader\\w*)\\s*(<[^>\\n]+>)?\\s*\\(\\s*(\\$@?\\\"|@\\$\\\"|\\$\\\"\\\"\\\"|\\\"[^\\\"\\n]*\\\"\\s*\\+)",
+      "message": "Dapper puts an interpolated or concatenated value into the SQL text as is: SQL injection (CWE-89). Dapper parameterizes only the parameter object.",
+      "fix": "Write the SQL as a constant with @Name placeholders and pass new { Name = value }. Map a dynamic column name through an allowlist.",
+      "match": [
+        "await conn.QueryAsync<Order>($\"SELECT * FROM orders WHERE ref = '{reference}'\");",
+        "conn.Execute(\"DELETE FROM orders WHERE id = \" + id);"
+      ],
+      "nomatch": [
+        "await conn.QueryAsync<Order>(\"SELECT * FROM orders WHERE ref = @Reference\", new { Reference = reference });",
+        "await db.Orders.Where(o => o.Id == id).ExecuteDeleteAsync(ct);"
+      ]
+    },
+    {
+      "id": "SC-PROCESS-SHELL",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "(?i)Process\\.Start\\s*\\(\\s*\\\"(/bin/)?(sh|bash|zsh|cmd(\\.exe)?|powershell(\\.exe)?|pwsh)\\\"|FileName\\s*=\\s*\\\"(/bin/)?(sh|bash|zsh|cmd(\\.exe)?|powershell(\\.exe)?|pwsh)\\\"",
+      "message": "A shell parses its arguments. User input in the command line is OS command injection (CWE-78).",
+      "fix": "Call the program directly with a fixed path and allowlisted arguments, or use a library instead of a process.",
+      "match": [
+        "Process.Start(\"sh\", $\"-c convert {name}\");",
+        "var psi = new ProcessStartInfo { FileName = \"cmd.exe\" };"
+      ],
+      "nomatch": [
+        "var psi = new ProcessStartInfo { FileName = \"/usr/bin/qpdf\" };"
+      ]
+    },
+    {
+      "id": "SC-DEV-EXCEPTION-PAGE",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "^(?![^\\n]*IsDevelopment)[ \\t]{0,3}\\w+\\.UseDeveloperExceptionPage\\s*\\(",
+      "message": "The developer exception page shows stack traces, source lines and configuration. Outside Development this leaks internals (CWE-209).",
+      "fix": "Put the call in an IsDevelopment() check. Use AddProblemDetails and UseExceptionHandler for other environments.",
+      "match": [
+        "app.UseDeveloperExceptionPage();"
+      ],
+      "nomatch": [
+        "if (app.Environment.IsDevelopment()) app.UseDeveloperExceptionPage();",
+        "    app.UseDeveloperExceptionPage();"
+      ]
+    },
+    {
+      "id": "SC-LOG-SECRET",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "(?i)\\bLog(Trace|Debug|Information|Warning|Error|Critical)?\\s*\\([^;]*\\{\\s*(password|passwd|pwd|secret|clientsecret|token|accesstoken|refreshtoken|idtoken|apikey|api_key|connectionstring|authorization|cookie)\\s*\\}",
+      "message": "A log line with a password, token, key or connection string leaks a secret to each person who can read the logs (CWE-532).",
+      "fix": "Do not log the value. Log an id, or mark the value with a data classification and turn on redaction (SEC-14).",
+      "match": [
+        "logger.LogInformation(\"Sign-in for {User} with {Password}\", user, password);",
+        "_logger.LogDebug(\"Calling partner with {ApiKey}\", key);"
+      ],
+      "nomatch": [
+        "logger.LogInformation(\"Token refreshed for {UserId}\", userId);",
+        "logger.LogWarning(\"Sign-in failed for {UserName}\", userName);"
+      ]
+    },
+    {
+      "id": "SC-FORWARDED-TRUST-ALL",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs",
+        "**/*.json",
+        "**/*.yaml",
+        "**/*.yml",
+        "**/Dockerfile",
+        "**/*.Dockerfile",
+        "**/Containerfile",
+        "**/*.env",
+        "**/.env",
+        "**/*.config"
+      ],
+      "pattern": "(?i)ASPNETCORE_FORWARDEDHEADERS_ENABLED\\W{1,4}\\\"?true|\\b(KnownProxies|KnownIPNetworks|KnownNetworks)\\.Clear\\s*\\(\\s*\\)",
+      "message": "The app trusts X-Forwarded-For from each caller. A client can then fake its IP and get past rate limits and audit logs.",
+      "fix": "Configure ForwardedHeadersOptions with KnownProxies or KnownIPNetworks of the gateway.",
+      "match": [
+        "\"ASPNETCORE_FORWARDEDHEADERS_ENABLED\": \"true\"",
+        "ENV ASPNETCORE_FORWARDEDHEADERS_ENABLED=true",
+        "o.KnownProxies.Clear();"
+      ],
+      "nomatch": [
+        "o.KnownIPNetworks.Add(System.Net.IPNetwork.Parse(\"10.0.0.0/8\"));"
+      ],
+      "exclude": [
+        "**/rules.json"
+      ]
+    },
+    {
+      "id": "SC-CLIENT-FILENAME-PATH",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "Path\\.Combine\\s*\\([^;\\n]*\\.FileName\\b|\\bWebRootPath\\b[^;\\n]*\\.FileName\\b",
+      "message": "The client chooses the file name. In a path this allows path traversal and overwrite (CWE-22, CWE-434).",
+      "fix": "Generate the storage name on the server (Guid). Keep the client name only as metadata.",
+      "match": [
+        "var path = Path.Combine(_env.WebRootPath, \"uploads\", file.FileName);",
+        "var target = Path.Combine(root, upload.FileName);"
+      ],
+      "nomatch": [
+        "var path = Path.Combine(root, $\"{Guid.NewGuid():N}.pdf\");",
+        "var name = Path.GetFileName(file.FileName);"
+      ]
+    },
+    {
+      "id": "SC-NO-SIZE-LIMIT",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\[DisableRequestSizeLimit\\]|\\.DisableRequestSizeLimit\\s*\\(|\\bMaxRequestBodySize\\s*=\\s*null\\b",
+      "message": "No limit on the request size: one caller can fill the memory or the disk (CWE-770, API4).",
+      "fix": "Set an explicit limit per endpoint with [RequestSizeLimit] or WithFormOptions, and keep a global limit (SEC-12).",
+      "match": [
+        "[DisableRequestSizeLimit]",
+        "k.Limits.MaxRequestBodySize = null;"
+      ],
+      "nomatch": [
+        "k.Limits.MaxRequestBodySize = 1_000_000;",
+        ".WithMetadata(new RequestSizeLimitAttribute(11 * 1024 * 1024));"
+      ]
+    },
+    {
+      "id": "SC-INSPECTOR-ALL-FORMATS",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**",
+        "**/*.Tests/**",
+        "**/*.Test/**",
+        "**/rules.json"
+      ],
+      "pattern": "new\\s+FileFormatInspector\\s*\\(\\s*\\)",
+      "message": "This inspector knows about 70 formats, including executables. A non-null result does not mean that the type is allowed.",
+      "fix": "Build the inspector from an allowlist: new FileFormatInspector(FileFormatLocator.GetFormats().Where(f => f is Pdf or Png)).",
+      "match": [
+        "services.AddSingleton<IFileFormatInspector>(new FileFormatInspector());"
+      ],
+      "nomatch": [
+        "services.AddSingleton<IFileFormatInspector>(new FileFormatInspector(allowed));"
+      ]
+    },
+    {
+      "id": "SC-SMTP-NO-TLS",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs",
+        "**/appsettings*.json"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**",
+        "**/*.Tests/**",
+        "**/*.Test/**",
+        "**/appsettings.Development.json",
+        "**/rules.json"
+      ],
+      "pattern": "\\bSecureSocketOptions\\.(Auto|StartTlsWhenAvailable|None)\\b|\\\"Security\\\"\\s*:\\s*\\\"(Auto|StartTlsWhenAvailable|None)\\\"",
+      "message": "Auto and StartTlsWhenAvailable continue in plain text when the server does not offer STARTTLS. Credentials and mail then travel unencrypted.",
+      "fix": "Use SecureSocketOptions.StartTls on port 587 or SslOnConnect on port 465. Use None only for a local test server.",
+      "match": [
+        "await client.ConnectAsync(host, 587, SecureSocketOptions.Auto, ct);",
+        "\"Security\": \"StartTlsWhenAvailable\""
+      ],
+      "nomatch": [
+        "await client.ConnectAsync(host, 587, SecureSocketOptions.StartTls, ct);"
+      ]
+    },
+    {
+      "id": "SC-NO-SANDBOX",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs",
+        "**/Dockerfile",
+        "**/*.Dockerfile",
+        "**/Containerfile",
+        "**/Dockerfile.*",
+        "**/*.yaml",
+        "**/*.yml",
+        "**/*.json",
+        "**/*.env"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**",
+        "**/*.Tests/**",
+        "**/*.Test/**",
+        "**/rules.json"
+      ],
+      "pattern": "--no-sandbox\\b|\\bPUPPETEER_DANGEROUS_NO_SANDBOX\\b",
+      "message": "Without the Chromium sandbox, a renderer exploit runs code with the rights of the container.",
+      "fix": "Run Chromium as a non-root user with the sandbox on. Accept --no-sandbox only for trusted templates, with an ADR and an isolated container.",
+      "match": [
+        "Args = [\"--no-sandbox\", \"--disable-setuid-sandbox\"],",
+        "ENV PUPPETEER_DANGEROUS_NO_SANDBOX=true"
+      ],
+      "nomatch": [
+        "Args = [\"--disable-dev-shm-usage\"],"
+      ]
+    },
+    {
+      "id": "SC-APPSETTINGS-SECRET",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/appsettings*.json"
+      ],
+      "pattern": "(?i)\\\"[\\w.:-]*(password|passwd|pwd|secret|apikey|api_key|accesskey|privatekey|accesstoken|refreshtoken|token|signingkey)\\\"\\s*:\\s*\\\"(?![<$#{])(?!(true|false)\\\")[^\\\"\\s]+\\\"|\\b(password|pwd)\\s*=\\s*(?![<$#{])[^;\\\"\\s]+",
+      "message": "A secret value in appsettings is in Git, in the image and in each copy of the repository (CWE-798, SEC-07).",
+      "fix": "Leave the value empty in appsettings. Read it from user-secrets in Development and from the secret store in other environments.",
+      "match": [
+        "\"ApiKey\": \"sk_live_abc123\"",
+        "\"ClientSecret\": \"9f8e7d6c\"",
+        "\"App\": \"Server=sql;Database=app;User Id=app;Password=Winter2026!\""
+      ],
+      "nomatch": [
+        "\"ApiKey\": \"\"",
+        "\"TokenLifetime\": \"00:05:00\"",
+        "\"App\": \"Server=sql;Database=app;Integrated Security=true\""
+      ],
+      "exclude": [
+        "**/rules.json"
+      ]
+    },
+    {
+      "id": "SC-PRIVATE-KEY",
+      "kind": "regex",
+      "severity": "error",
+      "files": [
+        "**/*"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**",
+        "**/*.Tests/**",
+        "**/*.Test/**",
+        "**/*.md",
+        "**/rules.json"
+      ],
+      "pattern": "-----BEGIN (RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----",
+      "message": "A private key is in the repository. Each person who can read the repository can use it.",
+      "fix": "Remove the key, rotate it, and load it from the secret store. Scan the history with gitleaks.",
+      "match": [
+        "-----BEGIN RSA PRIVATE KEY-----",
+        "-----BEGIN PRIVATE KEY-----"
+      ],
+      "nomatch": [
+        "-----BEGIN CERTIFICATE-----",
+        "-----BEGIN PUBLIC KEY-----"
+      ]
+    },
+    {
+      "id": "SC-DOCKER-SECRET-ARG",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/Dockerfile",
+        "**/*.Dockerfile",
+        "**/Containerfile",
+        "**/Dockerfile.*"
+      ],
+      "pattern": "(?im)^\\s*(ARG|ENV)\\s+\\w*(PASSWORD|PASSWD|SECRET|TOKEN|API_?KEY|ACCESS_?KEY)\\w*\\b",
+      "message": "ARG and ENV values stay in the image metadata and history. Each person who can pull the image can read them.",
+      "fix": "Use a BuildKit secret mount: RUN --mount=type=secret,id=nuget ... and docker build --secret.",
+      "match": [
+        "ARG NUGET_TOKEN",
+        "ENV API_KEY=abc"
+      ],
+      "nomatch": [
+        "ENV PATH=\"$PATH:/root/.dotnet/tools\"",
+        "RUN --mount=type=secret,id=nugetconfig,target=/root/.nuget/NuGet/NuGet.Config dotnet restore",
+        "ENV ASPNETCORE_HTTP_PORTS=8080"
+      ]
+    },
+    {
+      "id": "SC-ACTION-NOT-PINNED",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        ".github/workflows/*.yml",
+        ".github/workflows/*.yaml",
+        "**/action.yml",
+        "**/action.yaml",
+        "**/azure-pipelines*.yml",
+        "**/.gitlab-ci.yml"
+      ],
+      "pattern": "(?m)^\\s*-?\\s*uses:\\s*['\\\"]?[\\w.-]+/[\\w./-]+@(?![0-9a-f]{40}\\b)[\\w.-]+",
+      "message": "A tag can move. In March 2026 attackers force-pushed the tags of trivy-action to malware.",
+      "fix": "Pin the action to the full commit SHA and put the version in a comment: uses: owner/action@<40-hex-sha> # v4.2.1.",
+      "match": [
+        "      - uses: actions/checkout@v4",
+        "  - uses: aquasecurity/trivy-action@0.28.0"
+      ],
+      "nomatch": [
+        "      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0",
+        "      - uses: ./.github/actions/build"
+      ]
+    },
+    {
+      "id": "SC-TRIVY-COMPROMISED",
+      "kind": "regex",
+      "severity": "error",
+      "files": [
+        ".github/workflows/*.yml",
+        ".github/workflows/*.yaml",
+        "**/action.yml",
+        "**/action.yaml",
+        "**/azure-pipelines*.yml",
+        "**/.gitlab-ci.yml",
+        "**/Dockerfile",
+        "**/*.Dockerfile",
+        "**/Containerfile",
+        "**/Dockerfile.*",
+        "**/*.sh",
+        "**/*.yaml",
+        "**/*.yml"
+      ],
+      "pattern": "(?i)trivy[^\\n]{0,40}(?<![\\d.])v?0\\.69\\.4\\b|(?<![\\d.])v?0\\.69\\.4\\b[^\\n]{0,40}trivy",
+      "message": "Trivy v0.69.4 is the malicious release of March 2026 (CVE-2026-33634). It steals CI secrets.",
+      "fix": "Use a current Trivy release, pin it by SHA or digest, verify the checksum, and rotate the secrets of each pipeline that ran v0.69.4.",
+      "match": [
+        "image: aquasec/trivy:0.69.4",
+        "      version: v0.69.4 # trivy"
+      ],
+      "nomatch": [
+        "image: aquasec/trivy:0.74.0@sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      ]
+    },
+    {
+      "id": "SC-NUGETAUDIT-OFF",
+      "kind": "regex",
+      "severity": "error",
+      "files": [
+        "**/*.csproj",
+        "**/*.props",
+        "**/*.targets",
+        "**/nuget.config",
+        "**/NuGet.Config"
+      ],
+      "pattern": "<NuGetAudit>\\s*false\\s*</NuGetAudit>",
+      "message": "NuGetAudit is off. The build no longer reports packages with known vulnerabilities (A03:2025).",
+      "fix": "Remove the line. Suppress one advisory with <NuGetAuditSuppress Include=\"<advisory url>\" /> and a reason.",
+      "match": [
+        "<NuGetAudit>false</NuGetAudit>"
+      ],
+      "nomatch": [
+        "<NuGetAudit>true</NuGetAudit>",
+        "<NuGetAuditMode>all</NuGetAuditMode>"
+      ]
+    },
+    {
+      "id": "SC-NPM-INSTALL-CI",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        ".github/workflows/*.yml",
+        ".github/workflows/*.yaml",
+        "**/action.yml",
+        "**/action.yaml",
+        "**/azure-pipelines*.yml",
+        "**/.gitlab-ci.yml",
+        "**/Dockerfile",
+        "**/*.Dockerfile",
+        "**/Containerfile",
+        "**/Dockerfile.*"
+      ],
+      "pattern": "\\bnpm\\s+(install|i)\\b(?![^\\n]*\\s-g\\b)(?![^\\n]*--global)",
+      "message": "npm install can change the lock file and install versions that nobody reviewed.",
+      "fix": "Use npm ci in CI and in Dockerfiles. It installs exactly the versions of package-lock.json.",
+      "match": [
+        "RUN npm install",
+        "        run: npm i"
+      ],
+      "nomatch": [
+        "RUN npm ci",
+        "        run: npm install -g pnpm@10.18.0"
+      ]
+    },
+    {
+      "id": "SC-K8S-PRIVILEGED",
+      "kind": "regex",
+      "severity": "error",
+      "files": [
+        "**/*.yaml",
+        "**/*.yml"
+      ],
+      "exclude": [
+        ".github/**",
+        "**/docker-compose*.yml",
+        "**/compose*.yaml",
+        "**/compose*.yml",
+        "**/.gitlab-ci.yml",
+        "**/azure-pipelines*.yml",
+        "**/pnpm-lock.yaml",
+        "**/openapi*.yaml",
+        "**/openapi*.yml"
+      ],
+      "pattern": "(?m)^\\s*(privileged|allowPrivilegeEscalation|hostNetwork|hostPID|hostIPC)\\s*:\\s*true\\b",
+      "message": "The Pod gets rights on the node. A compromise of the app becomes a compromise of the node (Pod Security restricted).",
+      "fix": "Set allowPrivilegeEscalation: false, drop all capabilities, runAsNonRoot: true, seccompProfile RuntimeDefault (SEC-21).",
+      "match": [
+        "          privileged: true",
+        "            allowPrivilegeEscalation: true"
+      ],
+      "nomatch": [
+        "            allowPrivilegeEscalation: false",
+        "        runAsNonRoot: true"
+      ]
+    },
+    {
+      "id": "SC-TS-TOKEN-STORAGE",
+      "kind": "regex",
+      "severity": "error",
+      "files": [
+        "**/*.ts",
+        "**/*.js"
+      ],
+      "exclude": [
+        "**/*.spec.ts",
+        "**/*.test.ts",
+        "**/*.min.js",
+        "**/node_modules/**",
+        "e2e/**",
+        "**/e2e/**"
+      ],
+      "pattern": "(?i)\\b(localStorage|sessionStorage)\\.setItem\\s*\\([^)\\n]*(token|jwt|bearer|session|auth|credential|password)",
+      "message": "Each XSS can read localStorage and sessionStorage, and with them the token (OWASP HTML5).",
+      "fix": "Use a BFF with an HttpOnly cookie (SEC-03). If the app must hold a token, keep it in memory only.",
+      "match": [
+        "localStorage.setItem('access_token', token);",
+        "sessionStorage.setItem(AUTH_KEY, JSON.stringify(auth));"
+      ],
+      "nomatch": [
+        "localStorage.setItem('theme', 'dark');",
+        "this.token.set(response.accessToken);"
+      ]
+    },
+    {
+      "id": "SC-TS-BYPASS-TRUST",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.ts",
+        "**/*.js"
+      ],
+      "exclude": [
+        "**/*.spec.ts",
+        "**/*.test.ts",
+        "**/*.min.js",
+        "**/node_modules/**",
+        "e2e/**",
+        "**/e2e/**"
+      ],
+      "pattern": "\\bbypassSecurityTrust(Html|Style|Script|Url|ResourceUrl)\\s*\\(",
+      "message": "bypassSecurityTrust turns off the Angular sanitizer for this value. Untrusted data here is XSS (CWE-79).",
+      "fix": "Bind the value normally and let Angular sanitize it. Use bypassSecurityTrust only for a value that the code built from validated parts.",
+      "match": [
+        "return this.sanitizer.bypassSecurityTrustHtml(comment.body);",
+        "this.url = this.sanitizer.bypassSecurityTrustResourceUrl(input);"
+      ],
+      "nomatch": [
+        "this.safe = this.sanitizer.sanitize(SecurityContext.HTML, value);"
+      ]
+    },
+    {
+      "id": "SC-TS-INNERHTML",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.ts",
+        "**/*.js"
+      ],
+      "exclude": [
+        "**/*.spec.ts",
+        "**/*.test.ts",
+        "**/*.min.js",
+        "**/node_modules/**",
+        "e2e/**",
+        "**/e2e/**"
+      ],
+      "pattern": "\\.(innerHTML|outerHTML)\\s*\\+?=(?!=)",
+      "message": "A direct innerHTML write skips the Angular sanitizer. Untrusted data here is XSS (CWE-79).",
+      "fix": "Use a template binding ({{ }} or [innerHTML], which Angular sanitizes), or textContent for plain text.",
+      "match": [
+        "this.el.nativeElement.innerHTML = message;",
+        "div.innerHTML += row;"
+      ],
+      "nomatch": [
+        "this.el.nativeElement.textContent = message;",
+        "if (div.innerHTML === '') { return; }"
+      ]
+    },
+    {
+      "id": "SC-TS-DOM-WRITE",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.ts",
+        "**/*.js"
+      ],
+      "exclude": [
+        "**/*.spec.ts",
+        "**/*.test.ts",
+        "**/*.min.js",
+        "**/node_modules/**",
+        "e2e/**",
+        "**/e2e/**"
+      ],
+      "pattern": "\\binsertAdjacentHTML\\s*\\(|\\bdocument\\.write(ln)?\\s*\\(",
+      "message": "insertAdjacentHTML and document.write parse a string as HTML without the Angular sanitizer (CWE-79).",
+      "fix": "Use a template binding or create the elements with the Renderer2 API and textContent.",
+      "match": [
+        "el.insertAdjacentHTML('beforeend', html);",
+        "document.write(banner);"
+      ],
+      "nomatch": [
+        "el.insertAdjacentText('beforeend', text);"
+      ]
+    },
+    {
+      "id": "SC-NG1-TRUST-HTML",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.ts",
+        "**/*.js",
+        "**/*.html",
+        "**/*.cshtml"
+      ],
+      "exclude": [
+        "**/*.spec.ts",
+        "**/*.test.ts",
+        "**/*.min.js",
+        "**/node_modules/**",
+        "e2e/**",
+        "**/e2e/**"
+      ],
+      "pattern": "\\$sce\\.trustAs(Html|Js|ResourceUrl|Url|Css)?\\s*\\(|\\$sceProvider\\.enabled\\s*\\(\\s*false\\s*\\)|\\bng-bind-html-unsafe\\b",
+      "message": "AngularJS $sce trust calls and a disabled $sce render the value without sanitizing. Untrusted data here is XSS.",
+      "fix": "Use ng-bind or {{ }} for text. For HTML, load ngSanitize and bind with ng-bind-html without a trust call.",
+      "match": [
+        "$scope.body = $sce.trustAsHtml(comment.body);",
+        "$sceProvider.enabled(false);"
+      ],
+      "nomatch": [
+        "<span ng-bind=\"comment.body\"></span>",
+        "<div ng-bind-html=\"comment.body\"></div>"
+      ]
+    },
+    {
+      "id": "SC-HTML-RAW",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cshtml",
+        "**/*.razor"
+      ],
+      "pattern": "@?Html\\.Raw\\s*\\(|\\(MarkupString\\)",
+      "message": "Html.Raw and MarkupString write the value without HTML encoding. Untrusted data here is XSS (CWE-79).",
+      "fix": "Write @value so that Razor encodes it. Sanitize HTML from users with an allowlist sanitizer before you store it.",
+      "match": [
+        "<div>@Html.Raw(Model.Comment)</div>",
+        "@((MarkupString)comment.Body)"
+      ],
+      "nomatch": [
+        "<div>@Model.Comment</div>"
+      ]
+    },
+    {
+      "id": "SC-DET-SEC-01",
+      "kind": "detect",
+      "decision": "SEC-01",
+      "files": [
+        "**/*.cs",
+        "**/package.json"
+      ],
+      "pattern": "\\.AddKeycloak\\w*\\s*\\(|\\bAddMicrosoftIdentityWebApi\\s*\\(|\\.Add(Default)?Identity(Core)?<|\\\"keycloak-js\\\"",
+      "match": [
+        "builder.Services.AddKeycloakWebApiAuthentication(builder.Configuration);",
+        "builder.Services.AddIdentityCore<AppUser>();"
+      ],
+      "nomatch": [
+        "builder.Services.AddAuthorization();"
+      ],
+      "exclude": [
+        "**/rules.json"
+      ]
+    },
+    {
+      "id": "SC-DET-SEC-02",
+      "kind": "detect",
+      "decision": "SEC-02",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\.AddJwtBearer\\s*\\(|\\.AddOAuth2Introspection\\s*\\(|\\bApiKeyAuthentication\\w*",
+      "match": [
+        ".AddJwtBearer(o => o.Audience = \"api\");"
+      ],
+      "nomatch": [
+        ".AddCookie();"
+      ]
+    },
+    {
+      "id": "SC-DET-SEC-03",
+      "kind": "detect",
+      "decision": "SEC-03",
+      "files": [
+        "**/*.cs",
+        "**/package.json"
+      ],
+      "pattern": "\\.AddOpenIdConnect\\s*\\(|\\\"(oidc-client-ts|angular-oauth2-oidc|angular-auth-oidc-client|keycloak-angular|@azure/msal-angular)\\\"",
+      "match": [
+        ".AddOpenIdConnect(o => o.ResponseType = \"code\");",
+        "\"angular-oauth2-oidc\": \"20.0.0\""
+      ],
+      "nomatch": [
+        "\"@angular/core\": \"22.0.0\""
+      ],
+      "exclude": [
+        "**/rules.json"
+      ]
+    },
+    {
+      "id": "SC-DET-SEC-04",
+      "kind": "detect",
+      "decision": "SEC-04",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\.SetFallbackPolicy\\s*\\(|\\[Authorize\\(\\s*Roles\\s*=|:\\s*AuthorizationHandler<",
+      "match": [
+        ".SetFallbackPolicy(policy)",
+        "[Authorize(Roles = \"Admin\")]"
+      ],
+      "nomatch": [
+        "[Authorize]"
+      ]
+    },
+    {
+      "id": "SC-DET-SEC-05",
+      "kind": "detect",
+      "decision": "SEC-05",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\.HasQueryFilter\\s*\\([^;]*\\bTenantId\\b",
+      "match": [
+        "b.Entity<Shipment>().HasQueryFilter(s => s.TenantId == tenant.TenantId);"
+      ],
+      "nomatch": [
+        "b.Entity<Shipment>().HasQueryFilter(s => !s.IsDeleted);"
+      ]
+    },
+    {
+      "id": "SC-DET-SEC-06",
+      "kind": "detect",
+      "decision": "SEC-06",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\bI?PasswordHasher<|\\bKeyDerivation\\.Pbkdf2\\s*\\(|\\bArgon2\\w*",
+      "match": [
+        "services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();"
+      ],
+      "nomatch": [
+        "var hash = SHA256.HashData(data);"
+      ]
+    },
+    {
+      "id": "SC-DET-SEC-07",
+      "kind": "detect",
+      "decision": "SEC-07",
+      "files": [
+        "**/*.csproj",
+        "**/*.props",
+        "**/*.targets",
+        "**/*.cs"
+      ],
+      "pattern": "<UserSecretsId>|\\.AddAzureKeyVault\\s*\\(|\\bAddParameter\\s*\\([^)]*secret\\s*:\\s*true",
+      "match": [
+        "<UserSecretsId>a1b2c3</UserSecretsId>",
+        "builder.Configuration.AddAzureKeyVault(uri, credential);"
+      ],
+      "nomatch": [
+        "<TargetFramework>net10.0</TargetFramework>"
+      ]
+    },
+    {
+      "id": "SC-DET-SEC-08",
+      "kind": "detect",
+      "decision": "SEC-08",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\.UseHsts\\s*\\(|\\.AddHsts\\s*\\(",
+      "match": [
+        "app.UseHsts();"
+      ],
+      "nomatch": [
+        "app.UseHttpsRedirection();"
+      ]
+    },
+    {
+      "id": "SC-DET-SEC-09",
+      "kind": "detect",
+      "decision": "SEC-09",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\.AddCors\\s*\\(|\\.WithOrigins\\s*\\(",
+      "match": [
+        "builder.Services.AddCors(o => o.AddPolicy(\"p\", b => b.WithOrigins(x)));"
+      ],
+      "nomatch": [
+        "app.UseRouting();"
+      ]
+    },
+    {
+      "id": "SC-DET-SEC-10",
+      "kind": "detect",
+      "decision": "SEC-10",
+      "files": [
+        "**/*.cs",
+        "**/*.conf",
+        "**/package.json",
+        "**/angular.json"
+      ],
+      "pattern": "Content-Security-Policy|\\bContentSecurityPolicy\\b|NetEscapades\\.AspNetCore\\.SecurityHeaders|\\bNWebsec\\b|\\\"autoCsp\\\"",
+      "match": [
+        "headers.ContentSecurityPolicy = \"default-src 'none'\";",
+        "add_header Content-Security-Policy \"default-src 'self'\";"
+      ],
+      "nomatch": [
+        "headers.CacheControl = \"no-store\";"
+      ],
+      "exclude": [
+        "**/rules.json"
+      ]
+    },
+    {
+      "id": "SC-DET-SEC-11",
+      "kind": "detect",
+      "decision": "SEC-11",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\.AddRateLimiter\\s*\\(|\\.RequireRateLimiting\\s*\\(",
+      "match": [
+        "builder.Services.AddRateLimiter(o => { });"
+      ],
+      "nomatch": [
+        "builder.Services.AddOutputCache();"
+      ]
+    },
+    {
+      "id": "SC-DET-SEC-12",
+      "kind": "detect",
+      "decision": "SEC-12",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\bMaxRequestBodySize\\s*=\\s*\\d|\\[RequestSizeLimit\\(|\\bRequestSizeLimitAttribute\\b",
+      "match": [
+        "k.Limits.MaxRequestBodySize = 1_000_000;"
+      ],
+      "nomatch": [
+        "k.AddServerHeader = false;"
+      ]
+    },
+    {
+      "id": "SC-DET-SEC-13",
+      "kind": "detect",
+      "decision": "SEC-13",
+      "files": [
+        "**/*.cs",
+        "**/*.csproj",
+        "**/*.props",
+        "**/*.targets"
+      ],
+      "pattern": "\\bIFormFile(Collection)?\\b|\\bFileSignatures\\b|\\bMultipartReader\\b",
+      "match": [
+        "IFormFile file,",
+        "<PackageReference Include=\"FileSignatures\" Version=\"7.3.0\" />"
+      ],
+      "nomatch": [
+        "Stream body,"
+      ]
+    },
+    {
+      "id": "SC-DET-SEC-14",
+      "kind": "detect",
+      "decision": "SEC-14",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\.EnableRedaction\\s*\\(|\\bDataClassification(Attribute|Set)?\\b|\\.AddRedaction\\s*\\(",
+      "match": [
+        "builder.Logging.EnableRedaction();"
+      ],
+      "nomatch": [
+        "builder.Logging.AddConsole();"
+      ]
+    },
+    {
+      "id": "SC-DET-SEC-15",
+      "kind": "detect",
+      "decision": "SEC-15",
+      "files": [
+        "**/*.csproj",
+        "**/*.props",
+        "**/*.targets",
+        "**/nuget.config",
+        "**/NuGet.Config",
+        "**/.npmrc",
+        "**/dependabot.yml",
+        "**/renovate.json"
+      ],
+      "pattern": "<RestorePackagesWithLockFile>\\s*true|<packageSourceMapping>|\\bmin-release-age\\b|\\bcooldown\\s*:|\\bminimumReleaseAge\\b",
+      "match": [
+        "<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>",
+        "min-release-age=3"
+      ],
+      "nomatch": [
+        "<Nullable>enable</Nullable>"
+      ],
+      "exclude": [
+        "**/rules.json"
+      ]
+    },
+    {
+      "id": "SC-DET-SEC-16",
+      "kind": "detect",
+      "decision": "SEC-16",
+      "files": [
+        "**/*.csproj",
+        "**/*.props",
+        "**/*.targets",
+        ".github/workflows/*.yml",
+        ".github/workflows/*.yaml",
+        "**/action.yml",
+        "**/action.yaml",
+        "**/azure-pipelines*.yml",
+        "**/.gitlab-ci.yml"
+      ],
+      "pattern": "<AnalysisModeSecurity>|\\b(semgrep|opengrep)\\b|github/codeql-action",
+      "match": [
+        "<AnalysisModeSecurity>All</AnalysisModeSecurity>",
+        "        run: semgrep scan --config p/csharp"
+      ],
+      "nomatch": [
+        "<AnalysisLevel>latest</AnalysisLevel>"
+      ]
+    },
+    {
+      "id": "SC-DET-SEC-17",
+      "kind": "detect",
+      "decision": "SEC-17",
+      "files": [
+        ".github/workflows/*.yml",
+        ".github/workflows/*.yaml",
+        "**/action.yml",
+        "**/action.yaml",
+        "**/azure-pipelines*.yml",
+        "**/.gitlab-ci.yml",
+        "**/.pre-commit-config.yaml",
+        "**/.gitleaks.toml"
+      ],
+      "pattern": "(?i)\\b(gitleaks|betterleaks)\\b",
+      "match": [
+        "      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9",
+        "  - id: gitleaks"
+      ],
+      "nomatch": [
+        "      - uses: actions/checkout@v4"
+      ]
+    },
+    {
+      "id": "SC-DET-SEC-18",
+      "kind": "detect",
+      "decision": "SEC-18",
+      "files": [
+        "**/*.md"
+      ],
+      "pattern": "(?i)\\bthreat model\\b|\\bSTRIDE\\b",
+      "match": [
+        "## Threat model",
+        "STRIDE questions"
+      ],
+      "nomatch": [
+        "## Design"
+      ]
+    },
+    {
+      "id": "SC-DET-SEC-20",
+      "kind": "detect",
+      "decision": "SEC-20",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\.PersistKeysTo\\w+\\s*(<[^>\\n]+>)?\\s*\\(|\\.ProtectKeysWith\\w+\\s*\\(",
+      "match": [
+        ".PersistKeysToDbContext<AppDbContext>();",
+        ".ProtectKeysWithCertificate(cert);"
+      ],
+      "nomatch": [
+        ".SetApplicationName(\"api\");"
+      ]
+    },
+    {
+      "id": "SC-DET-SEC-21",
+      "kind": "detect",
+      "decision": "SEC-21",
+      "files": [
+        "**/*.yaml",
+        "**/*.yml"
+      ],
+      "pattern": "pod-security\\.kubernetes\\.io/enforce|^\\s*kind:\\s*NetworkPolicy\\b",
+      "match": [
+        "    pod-security.kubernetes.io/enforce: restricted",
+        "kind: NetworkPolicy"
+      ],
+      "nomatch": [
+        "kind: Deployment"
+      ]
+    },
+    {
+      "id": "SC-DET-SEC-22",
+      "kind": "detect",
+      "decision": "SEC-22",
+      "files": [
+        "**/*.cs",
+        "**/appsettings*.json"
+      ],
+      "pattern": "(?i)\\bclient_credentials\\b|\\bClientCredentials\\w*\\b|AddClientCredentialsTokenManagement",
+      "match": [
+        "GrantType = \"client_credentials\"",
+        "services.AddClientCredentialsTokenManagement();"
+      ],
+      "nomatch": [
+        "GrantType = \"authorization_code\""
+      ],
+      "exclude": [
+        "**/rules.json"
+      ]
+    },
+    {
+      "id": "SC-DET-SEC-23",
+      "kind": "detect",
+      "decision": "SEC-23",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "(?i)\\b\\w*audit(log|trail|entry|event)\\w*\\b",
+      "match": [
+        "public DbSet<AuditEntry> AuditEntries => Set<AuditEntry>();",
+        "await auditLog.WriteAsync(entry, ct);"
+      ],
+      "nomatch": [
+        "logger.LogInformation(\"Saved {Id}\", id);"
+      ]
+    }
+  ]
+}

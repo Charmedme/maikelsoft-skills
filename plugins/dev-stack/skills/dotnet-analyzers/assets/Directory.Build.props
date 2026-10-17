@@ -1,0 +1,34 @@
+<Project>
+  <!--
+    Analyzer baseline of the dev-stack:dotnet-analyzers skill (verified 2026-10-16, .NET SDK 10.0.402).
+    Put this file in the repository root. Merge it into an existing Directory.Build.props.
+    The analyzer packages are in Directory.Packages.props (GlobalPackageReference).
+  -->
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+
+    <!-- 145 CA rules as warnings. Pin "10-recommended" when an SDK update must not add warnings. -->
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <!-- IDE rules with severity warning run in "dotnet build". -->
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <!-- IDE0005 (unused using) runs on build only with a documentation file. CS1591 off: apps do not need XML docs. -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+
+    <!-- Nullable warnings are bugs: they stop each build. All warnings stop the CI build. -->
+    <WarningsAsErrors>$(WarningsAsErrors);nullable</WarningsAsErrors>
+    <TreatWarningsAsErrors Condition="'$(CI)' == 'true'">true</TreatWarningsAsErrors>
+
+    <!-- MSTest analyzers: Info rules become warnings, MSTEST0003 (skipped test) becomes an error.
+         No condition: IsTestProject is not set yet when this file loads. Projects without MSTest ignore it. -->
+    <MSTestAnalysisMode>Recommended</MSTestAnalysisMode>
+
+    <!-- One SARIF 2.1 file per project. obj/ exists when the compiler runs. -->
+    <ErrorLog>$(MSBuildProjectDirectory)/obj/$(MSBuildProjectName).sarif,version=2.1</ErrorLog>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Project API rules for BannedApiAnalyzers (RS0030). -->
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)BannedSymbols.txt" />
+  </ItemGroup>
+</Project>

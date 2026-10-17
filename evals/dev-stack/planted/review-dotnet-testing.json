@@ -1,0 +1,89 @@
+{
+  "skill": "dotnet-testing",
+  "planted": [
+    {
+      "id": "P1",
+      "file": "tests/Orders.Api.Tests/Orders.Api.Tests.csproj",
+      "line": 11,
+      "description": "EF Core InMemory provider added for tests (new package, highly discouraged by Microsoft). Use the real database in Testcontainers.",
+      "severity": "medium"
+    },
+    {
+      "id": "P2",
+      "file": "tests/Orders.Api.Tests/AssemblyFixture.cs",
+      "line": 15,
+      "description": "The FluentAssertions 7 bridge for MSTest 4 was removed (Services.ThrowException). FA failures now show as exceptions, not assertion failures.",
+      "severity": "medium"
+    },
+    {
+      "id": "P3",
+      "file": "tests/Orders.Api.Tests/OrderTests.cs",
+      "line": 14,
+      "description": "Tests use the real clock (DateTimeOffset.UtcNow). Use fixed times or FakeTimeProvider.",
+      "severity": "low"
+    },
+    {
+      "id": "P4",
+      "file": "tests/Orders.Api.Tests/OrderTests.cs",
+      "line": 18,
+      "description": "Assert.AreEqual arguments swapped (expected first). Wrong failure message (MSTEST0017).",
+      "severity": "low"
+    },
+    {
+      "id": "P5",
+      "file": "tests/Orders.Api.Tests/OrderTests.cs",
+      "line": 22,
+      "description": "Test of a constructor and getters. No rule is tested.",
+      "severity": "low"
+    },
+    {
+      "id": "P6",
+      "file": "tests/Orders.Api.Tests/OrderTests.cs",
+      "line": 37,
+      "description": "Thread.Sleep in a test. Slow and flaky; use fixed times or FakeTimeProvider.Advance.",
+      "severity": "medium"
+    },
+    {
+      "id": "P7",
+      "file": "tests/Orders.Api.Tests/OrderTests.cs",
+      "line": 41,
+      "description": "The cancel test asserts only 'does not throw'. It does not check the outcome or the status, so it passes for any cancel result.",
+      "severity": "high"
+    },
+    {
+      "id": "P8",
+      "file": "tests/Orders.Api.Tests/OrderTests.cs",
+      "line": 48,
+      "description": "Loop and if/else in a test body. Use [DataRow] cases; the boundary (exactly 24 hours) is not tested.",
+      "severity": "medium"
+    },
+    {
+      "id": "P9",
+      "file": "tests/Orders.Api.Tests/OrderTests.cs",
+      "line": 64,
+      "description": "[DataTestMethod] is obsolete in MSTest 4 (MSTEST0044). Use [TestMethod].",
+      "severity": "low"
+    },
+    {
+      "id": "P10",
+      "file": "tests/Orders.Api.Tests/OrderQueryTests.cs",
+      "line": 17,
+      "description": "InMemory database for a query test (no real SQL, shared name between tests). The order test does not prove the PostgreSQL behavior.",
+      "severity": "medium"
+    },
+    {
+      "id": "P11",
+      "file": "tests/Orders.Api.Tests/OrderQueryTests.cs",
+      "line": 31,
+      "description": "BeEquivalentTo ignores order. The test about 'newest first' passes for any order. Add WithStrictOrdering().",
+      "severity": "high"
+    },
+    {
+      "id": "P12",
+      "file": "tests/Orders.Api.Tests/OrderPersistenceTests.cs",
+      "line": 21,
+      "description": "Obsolete parameterless Testcontainers builder hidden with #pragma, image 'postgres:latest' (not pinned), fixed port binding 5432, hard-coded localhost connection string, and a second container per class.",
+      "severity": "high"
+    }
+  ]
+}

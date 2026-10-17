@@ -1,0 +1,89 @@
+{
+  "skill": "aspnetcore",
+  "planted": [
+    {
+      "id": "P1",
+      "file": "src/Orders.Api/Orders.Api.csproj",
+      "line": 11,
+      "description": "Swashbuckle added to a .NET 10 API (new package, no approval). Use the built-in Microsoft.AspNetCore.OpenApi (AddOpenApi, MapOpenApi).",
+      "severity": "medium"
+    },
+    {
+      "id": "P2",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 22,
+      "description": "BuildServiceProvider() during registration (ASP0000): second container, options read too early. Use IOptions<T> or a factory overload.",
+      "severity": "high"
+    },
+    {
+      "id": "P3",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 36,
+      "description": "Developer exception page in all environments, and UseExceptionHandler removed. Leaks stack traces; ProblemDetails no longer used for errors.",
+      "severity": "high"
+    },
+    {
+      "id": "P4",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 40,
+      "description": "Swagger UI mapped in production (not only in Development).",
+      "severity": "medium"
+    },
+    {
+      "id": "P5",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 42,
+      "description": "Liveness endpoint runs all checks, including the database. Liveness must have no dependency checks (Predicate = _ => false).",
+      "severity": "medium"
+    },
+    {
+      "id": "P6",
+      "file": "src/Orders.Api/Stock/StockClient.cs",
+      "line": 9,
+      "description": "new HttpClient() per call (socket exhaustion, no DNS refresh). Use a typed client with AddHttpClient<T>.",
+      "severity": "high"
+    },
+    {
+      "id": "P7",
+      "file": "src/Orders.Api/Stock/StockClient.cs",
+      "line": 10,
+      "description": "Raw configuration string with no options class and no validation on start.",
+      "severity": "medium"
+    },
+    {
+      "id": "P8",
+      "file": "src/Orders.Api/Stock/StockClient.cs",
+      "line": 12,
+      "description": "Hand-written retry loop on a POST. Use AddStandardResilienceHandler (Microsoft.Extensions.Http.Resilience), and do not retry unsafe methods blindly.",
+      "severity": "medium"
+    },
+    {
+      "id": "P9",
+      "file": "src/Orders.Api/Jobs/StaleOrderSweeper.cs",
+      "line": 13,
+      "description": "Scoped DbContext resolved from the root provider in a BackgroundService (captive dependency, one context for ever). Create a scope per iteration.",
+      "severity": "high"
+    },
+    {
+      "id": "P10",
+      "file": "src/Orders.Api/Jobs/StaleOrderSweeper.cs",
+      "line": 24,
+      "description": "No try/catch per iteration: one failed sweep stops the whole host. Also Task.Delay instead of PeriodicTimer with TimeProvider.",
+      "severity": "medium"
+    },
+    {
+      "id": "P11",
+      "file": "src/Orders.Api/Orders/OrderEndpoints.cs",
+      "line": 75,
+      "description": "Returns the EF entity, not the DTO, and uses Results/IResult instead of TypedResults (no OpenAPI types, cycles and internals exposed).",
+      "severity": "medium"
+    },
+    {
+      "id": "P12",
+      "file": "src/Orders.Api/Orders/OrderEndpoints.cs",
+      "line": 101,
+      "description": "try/catch in the endpoint returns 500 with the exception message. Use the global exception handler; a missing order (FirstAsync) gives 500 instead of 404, and outcome errors are plain strings, not ProblemDetails.",
+      "severity": "high"
+    }
+  ]
+}
