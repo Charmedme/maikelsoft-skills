@@ -42,8 +42,8 @@ metadata:
 
 Use these sections in this order. Keep the headings, so the agents find them.
 
-1. `# <Title>`: one or two sentences: what the skill covers and the line with the next skill (for example "Language rules only. Host and endpoints: `dev-stack:aspnetcore`.").
-2. `## First`: "Read `references/stack-rules.md`." Then the version gate of this technology: which file shows the version, and which reference to read for which version.
+1. `# <Title>`: one or two sentences. Say what the skill covers, and where the next skill starts. Example: "Language rules only. Host and endpoints: `dev-stack:aspnetcore`."
+2. `## First`: "Read `references/stack-rules.md`." Then the version gate of this technology. Say which file shows the version, and which reference to read for which version.
 3. `## Defaults for new code`: a short table: area, default, decision ID. Existing code keeps its style.
 4. `## Rules`: the rules that change code. Numbered. Each rule has the reason in one sentence. Group by area. Only rules that a senior applies in a review.
 5. `## Never write`: a table: the old, wrong, or invented code that an LLM writes, and the correct code. One line each.
@@ -101,7 +101,11 @@ One block per decision ID, in the order that a project meets them:
 }
 ```
 
-- `kind`: `regex` (a match is a finding), `require` (the file must contain the pattern), `package` (a package reference that matches), `detect` (code that uses a decision; no finding).
+- `kind`: one of these values:
+  - `regex`: a match is a finding.
+  - `require`: the file must contain the pattern.
+  - `package`: a package reference that matches is a finding.
+  - `detect`: code that uses a decision. It gives no finding.
 - Rule IDs: a short prefix of the skill plus a name, uppercase with hyphens.
 - `severity`: `error` only when the rule has almost no false positives. Else `warning`.
 - A rule that an analyzer already enforces does not go in `rules.json`. Name the analyzer rule in the checklist instead.

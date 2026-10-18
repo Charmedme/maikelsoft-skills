@@ -71,8 +71,8 @@ Existing code keeps its style. Ask each open decision when the work first needs 
 
 8. Let `AddJwtBearer` validate issuer, audience, lifetime and signature. Set `Authority`, `Audience`, `ValidAlgorithms` and `MapInboundClaims = false`.
 9. Keep tokens out of the browser. Use a BFF with a `__Host-` cookie: `HttpOnly`, `Secure`, `SameSite=Strict` or `Lax`.
-10. When the app signs users in with a cookie, keep antiforgery on for each state change. `UseAntiforgery` checks POST, PUT and PATCH only, so call `IAntiforgery.ValidateRequestAsync` for DELETE. When the endpoint accepts only a bearer token, an API key, or no sign-in, it is not open to CSRF: a minimal API endpoint that binds `IFormFile` or `[FromForm]` then needs `.DisableAntiforgery()` with the reason on the line, because since .NET 8 such an endpoint requires a token by default.
-10a. When the sign-in decision is open (SEC-01, SEC-02, SEC-04) and nobody answers, keep the sign-in setup that the app has, build the feature, and put the missing sign-in as a blocking open point. Do not add a placeholder authentication scheme that rejects all calls.
+10. When the app signs users in with a cookie, keep antiforgery on for each state change. `UseAntiforgery` checks POST, PUT and PATCH only, so call `IAntiforgery.ValidateRequestAsync` for DELETE. An endpoint that accepts only a bearer token, an API key, or no sign-in is not open to CSRF. Since .NET 8, a minimal API endpoint that binds `IFormFile` or `[FromForm]` requires an antiforgery token by default. So such an endpoint needs `.DisableAntiforgery()`, with the reason on the line.
+10a. The sign-in decision can be open (SEC-01, SEC-02, SEC-04) with nobody to answer. Then keep the sign-in setup that the app has, and build the feature. Put the missing sign-in as a blocking open point. Do not add a placeholder authentication scheme that rejects all calls.
 11. Rate limit sign-in, reset, OTP, export, render, upload and LLM endpoints. Set `RejectionStatusCode = 429`.
 
 ### Injection and parsing (A05, A08, CWE-89, CWE-79, CWE-502)
