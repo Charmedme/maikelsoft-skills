@@ -22,6 +22,10 @@ Packages: <NN title (size), one line each, or "none: the senior builds all">
 
 <the table of decision-sheet.md: ID, question, recommendation, reason. Only the open rows.>
 
+### Assumptions to confirm
+
+<the rows of "Assumptions to confirm" in design.md: question, chosen default, other options. Or "None.">
+
 ### New packages to approve
 
 <name, version, license, reason, "exists: yes" per package, or "None.">
@@ -36,7 +40,7 @@ Answer "ok" to approve all, or name the rows that you change. The full design is
 After the answer:
 
 - Write each answer into `decision-sheet.md` (column Answer, column By = human).
-- An "ok" approves each recommendation in the sheet and each new package.
+- An "ok" approves each recommendation in the sheet, each assumption, and each new package.
 - A change to the design goes back to the senior (`mode: design`) one time. Then show G1 again.
 - Write `G1 | approved by <name> on <date>` in `run.md` and a log row `G1_APPROVED` or `G1_CHANGED`.
 

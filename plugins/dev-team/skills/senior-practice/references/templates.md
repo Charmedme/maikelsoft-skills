@@ -50,6 +50,9 @@ Status: DESIGN_READY
 ## Decisions
 <ID, decision, status (accepted / open). The open rows are in decision-sheet.md.>
 
+## Assumptions to confirm
+<open questions with a safe default: the question, the chosen default, the other options, the reason. The human confirms them at G1. Or "None.">
+
 ## Questions for the human
 <only facts that the human knows. Each with the reason. Or "None.">
 

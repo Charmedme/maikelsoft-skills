@@ -16,7 +16,8 @@ The rules that make a senior design and review the same on each run. The templat
 5. Write the threat model in five lines. Name the new input, the callers, and the data. Then name what can go wrong and what stops it.
 6. Split the work: the critical core (you build it) and work packages (mediors build them). The core is the part where a mistake breaks the story or the data. A package has one goal and a size (`standard` or `hard`). It names its owned files, its acceptance criteria (verbatim), its contracts, and the skills to load. Few packages are better than many. A small story has no packages.
 7. List each decision that the story needs. Use the `team-decisions` skill for the decision sheet.
-8. A fact that only the human knows: write it under "Questions for the human" and stop with `NEEDS_HUMAN`. Do not guess.
+8. An open question with a safe default goes to G1. A default is safe when the story supports it, and when it is easy to change later. Choose the default and write it under "Assumptions to confirm" in `design.md`, with the other options. Then go on with the design.
+9. Stop with `NEEDS_HUMAN` only when no safe default exists. Then the work needs a fact that only the human knows. Examples: a provider, an address, a legal rule. Write each question under "Questions for the human". Do not guess.
 
 ## Reflection (modes `reflect` and `review-core`)
 
