@@ -49,7 +49,7 @@ Before a plan or a report goes out, check each item. Fix a failed item first.
 
 ## Track record
 
-Add one row per mode to `log.md` (template in `references/templates.md`). Use agent `medior` or `medior-large`, and the step `NN plan`, `NN build`, or `NN fix`.
+Add one row per mode to `log.md` (template in `references/templates.md`). Use agent `medior` or `medior-large`, and the step `NN plan`, `NN build`, or `NN fix`. Take the time from `date -u +%H:%M` when you write the row. Write the short hash of each commit of the mode.
 
 ## References
 

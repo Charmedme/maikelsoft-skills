@@ -18,6 +18,7 @@ What it checks:
     DEC-ADR-STATUS  the status in the ADR front matter matches the row.
     DEC-SUPERSEDE   a superseded ADR links the new ADR, and the new ADR links back.
     DEC-USED        code that a detect rule ties to a decision has an accepted or assumed row.
+                    It skips test code, the run files in docs/work, and the 'exclude' paths of the rule.
                     With --changed, only files changed since the merge base are read.
 
 Output: one line per finding, `<file>: <RULE> <message>`, then a summary line.
@@ -39,6 +40,10 @@ VALID = {"accepted", "assumed", "superseded", "rejected"}
 LINK = re.compile(r"\]\(([^)]+)\)|`([^`]+\.md)`|^([\w./-]+\.md)$")
 FRONT = re.compile(r"\A---\n(.*?)\n---", re.DOTALL)
 SKIP_DIRS = {".git", "bin", "obj", "node_modules", "dist", ".angular", "TestResults"}
+# DEC-USED reads only product code. The run files of dev-team (docs/work) and test code do not
+# carry a team decision, so a detect rule that matches them gives a false finding.
+NOT_PRODUCT = ["docs/work/**", "tests/**", "test/**", "**/*Tests/**", "**/*.Tests/**", "**/*Test/**",
+               "**/*.spec.ts", "**/*.test.ts", "**/__tests__/**"]
 
 
 def table(text):
@@ -151,17 +156,18 @@ def check(root, rule_files, changed):
             continue
         for rule in data.get("rules", data if isinstance(data, list) else []):
             if rule.get("kind") == "detect":
-                detect.append((rule["id"], rule["decision"], rule.get("files", ["**/*"]), re.compile(rule["pattern"], re.MULTILINE)))
+                detect.append((rule["id"], rule["decision"], rule.get("files", ["**/*"]), rule.get("exclude", []),
+                               re.compile(rule["pattern"], re.MULTILINE)))
     if detect:
         files = sorted(changed) if changed is not None else list(all_files(root))
         seen = set()
         for rel in files:
             path = root / rel
-            if not path.is_file():
+            if not path.is_file() or matches(rel, NOT_PRODUCT):
                 continue
             text = None
-            for rid, decision, patterns, rx in detect:
-                if decision in active or (decision, rel) in seen or not matches(rel, patterns):
+            for rid, decision, patterns, exclude, rx in detect:
+                if decision in active or (decision, rel) in seen or not matches(rel, patterns) or matches(rel, exclude):
                     continue
                 if text is None:
                     text = path.read_text(encoding="utf-8", errors="ignore")

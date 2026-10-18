@@ -68,10 +68,10 @@ The senior adds three rows per package when it starts the package: `NN plan-feed
 
 One row per step and agent. Rules:
 
-- Time: UTC, `HH:MM`. Agent: `main`, `senior`, `reflector`, `medior`, `medior-large`, or `security-reviewer`.
+- Time: UTC, `HH:MM`, from `date -u +%H:%M` at the moment that you write the row. Do not write the time from memory. Agent: `main`, `senior`, `reflector`, `medior`, `medior-large`, or `security-reviewer`.
 - Step: the step name. Package steps start with the package number: `01 plan`, `01 plan-feedback`, `01 build`, `01 review`, `01 fix`.
 - Status: one status word from the list below.
-- Files: the files that the step wrote. Commit: the short hash, or `-`.
+- Files: the files that the step wrote. Commit: the short hash of each commit of the step (`git log --format=%h`), or `-`. Write the row after the commit, so that the hash exists.
 - Checks: the result of each check that the agent ran in this step, for example `build pass, test pass, format pass`. Write `-` when the step ran no check. A check that you did not run after your last change is "not run".
 - Decisions: decision IDs that the step used or opened. Assumptions: what the step assumed.
 - Reason: one sentence. Why the step ended with this status.

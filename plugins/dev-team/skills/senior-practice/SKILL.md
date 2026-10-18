@@ -65,7 +65,7 @@ Before a design, a feedback, or a review goes out, check each item. Fix a failed
 
 ## Track record
 
-Add one row per mode to `log.md` (template in `references/templates.md`). Use agent `senior`, or `reflector` in the modes `reflect` and `review-core`.
+Add one row per mode to `log.md` (template in `references/templates.md`). Use agent `senior`, or `reflector` in the modes `reflect` and `review-core`. Take the time from `date -u +%H:%M` when you write the row. Write the short hash of each commit of the mode.
 
 ## References
 

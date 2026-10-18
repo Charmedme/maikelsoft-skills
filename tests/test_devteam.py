@@ -128,6 +128,14 @@ class RunCheck(unittest.TestCase):
             write(run / "commands.jsonl", json.dumps({"command": "dotnet test", "agent_type": "dev-team:senior"}) + "\n")
             self.assertEqual(rules(runcheck.check(run, "g2")), ["RUN-EVIDENCE"])
 
+    def test_reflector_row_counts_commands_of_the_senior_agent(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            row = "| 10:40 | reflector | review-core | APPROVED | core-review.md | - | build pass, test pass | - | - | reviewed |\n"
+            run = make_run(pathlib.Path(tmp), extra=row)
+            with open(run / "commands.jsonl", "a", encoding="utf-8") as f:
+                f.write(json.dumps({"command": "python3 checks.py", "agent_type": "dev-team:senior"}) + "\n")
+            self.assertEqual(runcheck.check(run, "g2"), [])
+
     def test_main_exit_codes(self):
         with tempfile.TemporaryDirectory() as tmp:
             run = make_run(pathlib.Path(tmp))
@@ -210,6 +218,19 @@ class DecisionCheck(unittest.TestCase):
         found = decisioncheck.check(root, [str(rf)], None)
         self.assertEqual([(f, r) for f, r, _ in found], [("src/Api/Repo.cs", "DEC-USED")])
         self.assertEqual(decisioncheck.check(root, [str(rf)], {"src/Api/OrdersController.cs"}), [])
+
+    def test_tests_run_files_and_rule_excludes_are_not_product_code(self):
+        root = self.repo([], {"tests/Api.Tests/Interceptor.cs": "class X : SaveChangesInterceptor {}\n",
+                              "docs/work/demo/design.md": "## Threat model\n",
+                              "src/Api/Generated/X.cs": "class Y : SaveChangesInterceptor {}\n",
+                              "src/Api/Audit.cs": "class Z : SaveChangesInterceptor {}\n"})
+        rf = root / "rules.json"
+        rf.write_text(json.dumps({"rules": [
+            {"id": "DET-AUDIT", "kind": "detect", "decision": "DATA-14", "files": ["**/*.cs"],
+             "exclude": ["src/Api/Generated/**"], "pattern": "SaveChangesInterceptor"},
+            {"id": "DET-TM", "kind": "detect", "decision": "SEC-18", "files": ["**/*.md"], "pattern": "(?i)threat model"}]}))
+        found = decisioncheck.check(root, [str(rf)], None)
+        self.assertEqual([(f, r) for f, r, _ in found], [("src/Api/Audit.cs", "DEC-USED")])
 
 
 class Checks(unittest.TestCase):

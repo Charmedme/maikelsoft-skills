@@ -47,6 +47,8 @@ STATUS_LINE = re.compile(r"^\s*(?:\*\*)?(?:Status|Verdict)(?:\*\*)?\s*:\s*(?:\*\
 PACKAGE_FILE = re.compile(r"^(\d{2})-(?!plan|plan-feedback|report|review|checks|fix)[a-z0-9-]+\.md$")
 CHECK_WORDS = re.compile(r"\b(build|test|tests|format|checks?)\b[^|,;]*\bpass", re.IGNORECASE)
 CHECK_COMMAND = re.compile(r"checks\.py|dotnet\s+(build|test|format)|npm\s+(run|test)|npx\s+tsc")
+# A log name that is a mode of another agent: the hook logs the agent type, not the mode.
+AGENT_TYPES = {"reflector": "senior"}
 
 
 def table_rows(text, first_header):
@@ -165,8 +167,9 @@ def check(run, stage):
     for row in log_rows:
         if CHECK_WORDS.search(row.get("checks", "")):
             agent = row.get("agent", "").strip("` ").lower()
+            agent_type = AGENT_TYPES.get(agent, agent)
             ran = [c for c in commands if CHECK_COMMAND.search(c.get("command", ""))
-                   and (not agent or agent in (c.get("agent_type") or "main").lower())]
+                   and (not agent_type or agent_type in (c.get("agent_type") or "main").lower())]
             if not ran:
                 add(run / "log.md", "RUN-EVIDENCE",
                     f"row {row.get('step', '?')!r} says a check passed, but commands.jsonl has no check command by {agent or 'any agent'}")
