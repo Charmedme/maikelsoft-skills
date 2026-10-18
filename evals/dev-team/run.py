@@ -44,6 +44,8 @@ def start(run, ev, arm, cfg, args):
         cmd += ["--plugin-dir", str(ROOT / "plugins" / p)]
     env = {k: v for k, v in os.environ.items() if k not in PARENT_VARS}
     env["CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH"] = "3"
+    # Each run has its own profile, so that runs at the same time do not share earlier answers.
+    env["DEV_TEAM_PROFILE"] = str(run.resolve() / "profile.md")
     env["PATH"] = env.get("PATH", "") + os.pathsep + str(pathlib.Path.home() / ".dotnet")
     with open(run / "stream.jsonl", "w") as out, open(run / "stderr.log", "w") as err:
         code = subprocess.run(cmd, cwd=repo, env=env, stdout=out, stderr=err, timeout=args.timeout).returncode

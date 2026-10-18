@@ -84,7 +84,7 @@ A superseded ADR gets `status: superseded by ADR-NNNN` and, in More Information,
 
 ## Profile
 
-File `~/.claude/dev-team/profile.md`. It is personal: it is not in the repository.
+File `~/.claude/dev-team/profile.md`, or the file in the environment variable `DEV_TEAM_PROFILE` when it is set (for example in a test run). It is personal: it is not in the repository.
 
 ```markdown
 # Dev-team profile

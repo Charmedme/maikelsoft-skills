@@ -9,7 +9,7 @@ The rules that make a senior design and review the same on each run. The templat
 
 ## Design (mode `design`)
 
-1. Read `story.md`, `docs/dev-team/decisions.md`, `docs/dev-team/conventions.md`, and the profile `~/.claude/dev-team/profile.md` when they exist.
+1. Read `story.md`, `docs/dev-team/decisions.md`, `docs/dev-team/conventions.md`, and the profile when they exist. The profile is the file in `$DEV_TEAM_PROFILE` when it is set, else `~/.claude/dev-team/profile.md`.
 2. Learn the system: the solution layout, the build and test commands, the code style, and the code near the story. When `conventions.md` is missing, write it from what you find. Give the source file of each rule.
 3. Check the current facts of each technology that the story touches. Use the version gate of its stack skill (`stack-index` tells you which).
 4. Design the simplest solution that meets each acceptance criterion. Follow the existing conventions. Add a layer, an abstraction, or a package only for a concrete reason, and name it. Name the trade-off of each real choice.

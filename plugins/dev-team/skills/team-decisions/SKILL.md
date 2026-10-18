@@ -14,7 +14,7 @@ A team decision is a choice that the code follows from then on: minimal APIs or 
 | The questions, options, and recommendations | `references/decisions.md` of each dev-stack skill (IDs such as `API-01`) |
 | Detect rules (code that uses a decision) | `rules.json` of each dev-stack skill, rules of the kind `detect` |
 | The answers of this repository | `docs/dev-team/decisions.md` (the index) and one ADR per decision |
-| The earlier answers of this human | `~/.claude/dev-team/profile.md` |
+| The earlier answers of this human | the profile: `$DEV_TEAM_PROFILE` when it is set, else `~/.claude/dev-team/profile.md` |
 | The open decisions of one story | `decision-sheet.md` in the run folder |
 
 ## Flow
