@@ -1,6 +1,6 @@
 Story ORD-41: Cancel an order until the end of the next shop day
 
-As a customer, I want to cancel my order until the end of the day after I ordered, so that I have one full day to change my mind.
+As a customer, I want to cancel my order until the end of the day after I ordered. Then I have one full day to change my mind.
 
 Acceptance criteria:
 1. POST /orders/{id}/cancel cancels a placed order and returns 200 with the order, status Cancelled.
