@@ -62,20 +62,24 @@ def commands(run):
 
 
 def usage(run):
+    """Cost, time, and final message. A run can end its turn more than one time (for example while it
+    waits for a background agent): each end writes a result line. The cost in each line is the total of
+    the session, so take the largest. The time is the sum of the turns."""
     path = run / "stream.jsonl"
-    result = {}
+    results = []
     if path.is_file():
         for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
             if '"type":"result"' in line.replace(" ", ""):
                 try:
-                    result = json.loads(line)
+                    results.append(json.loads(line))
                 except ValueError:
                     pass
+    last = results[-1] if results else {}
     return {
-        "cost_usd": round(result.get("total_cost_usd", 0.0), 2),
-        "minutes": round(result.get("duration_ms", 0) / 60000, 1),
-        "turns": result.get("num_turns"),
-        "final": result.get("result", ""),
+        "cost_usd": round(max((r.get("total_cost_usd", 0.0) for r in results), default=0.0), 2),
+        "minutes": round(sum(r.get("duration_ms", 0) for r in results) / 60000, 1),
+        "turns": sum(r.get("num_turns") or 0 for r in results),
+        "final": last.get("result", ""),
     }
 
 

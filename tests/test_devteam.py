@@ -128,6 +128,14 @@ class RunCheck(unittest.TestCase):
             write(run / "commands.jsonl", json.dumps({"command": "dotnet test", "agent_type": "dev-team:senior"}) + "\n")
             self.assertEqual(rules(runcheck.check(run, "g2")), ["RUN-EVIDENCE"])
 
+    def test_verdict_under_a_heading_counts(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            run = make_run(pathlib.Path(tmp))
+            write(run / "security-review.md", "# Security review\n\n## Verdict\nPASS. No new hole. Critical 0, High 0.\n")
+            self.assertEqual(runcheck.check(run, "g2"), [])
+            write(run / "security-review.md", "# Security review\n\n## Verdict\nGOOD. No new hole.\n")
+            self.assertEqual(rules(runcheck.check(run, "g2")), ["RUN-STATUS"])
+
     def test_reflector_row_counts_commands_of_the_senior_agent(self):
         with tempfile.TemporaryDirectory() as tmp:
             row = "| 10:40 | reflector | review-core | APPROVED | core-review.md | - | build pass, test pass | - | - | reviewed |\n"

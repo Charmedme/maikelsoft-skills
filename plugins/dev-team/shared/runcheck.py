@@ -7,7 +7,8 @@
 
 What it checks:
     RUN-FILE      run.md, story.md, design.md, decision-sheet.md, and log.md exist.
-    RUN-STATUS    each step file has one "Status:" (or "Verdict:") line with a valid word.
+    RUN-STATUS    each step file has one "Status:" (or "Verdict:") line with a valid word, or the word
+                  on the first line under a "## Verdict" heading.
     RUN-COUNTER   each counter in run.md is at or below its limit. At G2, security-review is 1.
     RUN-ROUNDS    each package has at most one plan feedback, one review, and one fix.
     RUN-STEPS     the files of each step exist (plan, feedback, report, review per package).
@@ -70,8 +71,13 @@ def table_rows(text, first_header):
     return rows
 
 
+# The review template of dev-stack:secure-coding puts the word on the first line under "## Verdict".
+VERDICT_HEADING = re.compile(r"^#+\s*Verdict\s*\n+\s*(?:\*\*)?`?([A-Z_]+)\b", re.MULTILINE)
+
+
 def status_of(path):
-    match = STATUS_LINE.search(path.read_text(encoding="utf-8"))
+    text = path.read_text(encoding="utf-8")
+    match = STATUS_LINE.search(text) or VERDICT_HEADING.search(text)
     return match.group(1) if match else None
 
 
