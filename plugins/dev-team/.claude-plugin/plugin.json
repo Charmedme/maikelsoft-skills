@@ -1,7 +1,7 @@
 {
   "name": "dev-team",
   "displayName": "Developer team agents",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A small developer team for one user story: a senior designs and builds the critical core, mediors build the work packages, a security reviewer checks the diff, and the main session leads the team with two human gates. Branch and commit only, with a track record, a command log, and checks. Needs dev-stack. Output in ASD-STE100 Simplified Technical English or Begrijpelijk Nederlands (B1).",
   "author": {
     "name": "Maikel",

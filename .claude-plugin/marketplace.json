@@ -108,6 +108,25 @@
         "dutch",
         "b1"
       ]
+    },
+    {
+      "name": "dev-team",
+      "source": "./plugins/dev-team",
+      "description": "A small developer team for one user story: a senior designs and builds the core, mediors build work packages, a security reviewer checks the diff, and the main session leads with two human gates. Needs dev-stack. Preview.",
+      "category": "development",
+      "tags": [
+        "agents",
+        "subagents",
+        "user-story",
+        "code-review",
+        "security-review",
+        "adr",
+        "dotnet",
+        "asd-ste100",
+        "simplified-technical-english",
+        "dutch",
+        "b1"
+      ]
     }
   ]
 }
