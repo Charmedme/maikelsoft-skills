@@ -1,0 +1,24 @@
+{
+  "name": "dev-stack",
+  "displayName": "Developer stack skills for .NET",
+  "version": "1.0.0",
+  "description": "Stack skills for a .NET 10 team: C#, ASP.NET Core, EF Core, tests with MSTest 4, analyzers, secure coding, and the migration from FluentAssertions to AwesomeAssertions. Each skill gives version-specific rules, a check step with a tool, and one report format. Output in ASD-STE100 Simplified Technical English or Begrijpelijk Nederlands (B1).",
+  "author": {
+    "name": "Maikel",
+    "url": "https://github.com/Charmedme"
+  },
+  "homepage": "https://github.com/Charmedme/maikelsoft-skills/tree/main/plugins/dev-stack",
+  "repository": "https://github.com/Charmedme/maikelsoft-skills",
+  "license": "MIT",
+  "keywords": [
+    "dotnet",
+    "csharp",
+    "aspnetcore",
+    "efcore",
+    "mstest",
+    "roslyn-analyzers",
+    "security",
+    "awesomeassertions",
+    "asd-ste100"
+  ]
+}

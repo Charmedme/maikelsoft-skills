@@ -102,6 +102,7 @@ Existing code keeps its style (stack rule 3). For new code, these are the recomm
 34. Use `TryGetValue`, not `ContainsKey` and then the indexer. Use `FrozenDictionary` or `FrozenSet` for a lookup that does not change. Give each string-keyed collection a `StringComparer`.
 35. Use the current LINQ methods: `CountBy`, `AggregateBy`, `Index` (.NET 9), `LeftJoin`, `RightJoin` (.NET 10). In a measured hot path, use a loop.
 36. Give each parse and format call a culture. Use `CultureInfo.InvariantCulture` for machine data and `StringComparison.Ordinal` for identifiers (CA1304, CA1305, CA1309, CA1310).
+36a. When code reads a map or an enum from configuration, bind `Dictionary<string, string>`. Convert each entry yourself, with an error that names the bad key or value. The reason (tested on .NET 10): the binder gives no error in three cases. It binds no entries for `Guid` keys. It skips a key or a value that it cannot convert. It binds `"7"` to an enum. `ErrorOnUnknownConfiguration` stops only the skipped key or value. Write this reason in the Cause line of the report.
 
 ### Project files
 

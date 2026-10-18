@@ -128,7 +128,7 @@ b.HasIndex(p => p.Name).HasFilter("is_active").IsCreatedConcurrently();
 ```
 
 - `HasFilter` makes a partial index. Write the filter in SQL with the database names (snake_case).
-- `IsCreatedConcurrently()` makes `CREATE INDEX CONCURRENTLY`, which does not block writes. It cannot run in a transaction: `Migrate` and a bundle run that step without one. An idempotent script puts each step in a `DO` block, and PostgreSQL rejects the statement there (SQLSTATE 25001). Run that index from a separate, non-idempotent script. A plain `CREATE INDEX` on a large live table blocks writes for the whole build.
+- `IsCreatedConcurrently()` makes `CREATE INDEX CONCURRENTLY`, which does not block writes. It cannot run in a transaction: `Migrate` and a bundle run that step without one. An idempotent script puts each step in a `DO` block, and PostgreSQL rejects the statement there (SQLSTATE 25001). Run that index from a separate, non-idempotent script, or from a pre-deploy SQL file (SKILL.md rule 32a). A plain `CREATE INDEX` on a large live table blocks writes for the whole build.
 - `IncludeProperties` adds covering columns.
 - Index design (column order, skip scan in PostgreSQL 18, GIN or B-tree) is in `dev-stack:postgresql`.
 

@@ -114,7 +114,7 @@ Idempotent script, when a DBA must review or approve the SQL:
 dotnet ef migrations script --idempotent --project src/App.Data --startup-project src/App.Api -o migrate.sql
 ```
 
-The script checks the history table, so it can run on a database at any migration. It does not use the migration lock and does not run seeding delegates. On PostgreSQL, a concurrent index (`IsCreatedConcurrently()`) fails in the idempotent script, because the script wraps each step in a `DO` block. Use a bundle, or a non-idempotent script for that migration.
+The script checks the history table, so it can run on a database at any migration. It does not use the migration lock and does not run seeding delegates. On PostgreSQL, a concurrent index (`IsCreatedConcurrently()`) fails in the idempotent script, because the script wraps each step in a `DO` block. Use a bundle, or a non-idempotent script for that migration. When the team must keep one idempotent script, use a pre-deploy SQL file for the concurrent index and `CREATE INDEX IF NOT EXISTS` in the migration (SKILL.md rule 32a).
 
 Aspire: use `AddEFMigrations` for local runs and `PublishAsMigrationBundle` or `PublishAsMigrationScript` for publishing (see the `aspire` skill).
 

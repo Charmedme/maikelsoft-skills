@@ -132,6 +132,10 @@ Detail on conventions, converters, interceptors, filters, seed data, and time: `
 30. Run `dotnet ef migrations has-pending-model-changes` in CI. EF 9+ also throws at `Migrate` when the model has changes without a migration.
 31. Deploy migrations with a bundle job or an idempotent script (DATA-18). Do not call `Database.Migrate` at startup without an accepted decision. Do not call `EnsureCreated` outside tests.
 32. On a merge conflict in the model snapshot, remove your migration, merge, and add your migration again. Do not edit the snapshot by hand.
+32a. Some teams deploy with one idempotent script (`migrations script --idempotent`). When a PostgreSQL index must not block writes there, keep that one script. Do not use `IsCreatedConcurrently()`: PostgreSQL rejects `CREATE INDEX CONCURRENTLY` in the `DO` block of the script (SQLSTATE 25001). Do these three steps:
+    - Add a pre-deploy SQL file that the DBA runs with psql before the script, outside a transaction. It drops an INVALID index with the same name, then runs `CREATE INDEX CONCURRENTLY IF NOT EXISTS`.
+    - In the migration, replace the generated `CreateIndex` with `migrationBuilder.Sql("CREATE INDEX IF NOT EXISTS ...")` with the same index name. Keep `HasIndex` in the model, so the snapshot stays correct.
+    - Run the idempotent script after the pre-deploy file, and on a new database. Both runs must end without an error.
 
 Detail on teams, CI, bundles, scripts, seed data, and expand-contract: `references/migrations.md`.
 
