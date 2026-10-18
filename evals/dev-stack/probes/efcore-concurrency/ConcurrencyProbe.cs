@@ -5,6 +5,8 @@ using Orders.Api.Orders;
 namespace Orders.Api.Tests.EvalProbes;
 
 // Eval probe for efcore-trap. Two contexts change the same order. The second save must fail.
+// The probe changes PlacedAt through the change tracker, not through a domain method,
+// because an agent can rename or replace the domain methods (for example MarkShipped).
 [TestClass]
 [DoNotParallelize]
 public sealed class ConcurrencyProbe
@@ -35,9 +37,9 @@ public sealed class ConcurrencyProbe
         var a = await first.Orders.SingleAsync(order => order.Id == id, ct);
         var b = await second.Orders.SingleAsync(order => order.Id == id, ct);
 
-        a.MarkShipped();
+        first.Entry(a).Property(nameof(Order.PlacedAt)).CurrentValue = placedAt.AddMinutes(1);
         await first.SaveChangesAsync(ct);
-        b.Cancel(placedAt.AddHours(1), TimeSpan.FromHours(24));
+        second.Entry(b).Property(nameof(Order.PlacedAt)).CurrentValue = placedAt.AddMinutes(2);
 
         await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => second.SaveChangesAsync(ct));
     }
