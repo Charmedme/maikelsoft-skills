@@ -24,6 +24,13 @@ sys.path.insert(0, str(HERE.parent / "dev-stack"))
 import prepare  # noqa: E402
 
 PLUGINS = {"team": ["dev-team", "dev-stack"], "baseline": ["dev-stack"]}
+# Variables of a parent Claude Code session. A child run that inherits them shares the session id
+# of the parent and sends foreground agents to the background. A real user session has none of them.
+PARENT_VARS = ["CLAUDE_CODE_SESSION_ID", "CLAUDE_CODE_REMOTE_SESSION_ID", "CLAUDE_AUTO_BACKGROUND_TASKS",
+               "CLAUDE_CODE_BG_TASKS_REPORT_RUNNING", "CLAUDE_CODE_MESSAGING_SOCKET", "CLAUDE_CODE_MESSAGING_TOKEN",
+               "CLAUDECODE", "CLAUDE_CODE_CHILD_SESSION", "CLAUDE_CODE_POST_TURN_MEMORY",
+               "CLAUDE_CODE_POST_TURN_MEMORY_CONFIG", "CLAUDE_CODE_TEE_SDK_STDOUT", "CLAUDE_CODE_INCLUDE_PARTIAL_MESSAGES",
+               "CLAUDE_AFTER_LAST_COMPACT"]
 
 
 def start(run, ev, arm, cfg, args):
@@ -35,7 +42,8 @@ def start(run, ev, arm, cfg, args):
            "--output-format", "stream-json", "--verbose", "--max-budget-usd", str(args.budget)]
     for p in PLUGINS[arm]:
         cmd += ["--plugin-dir", str(ROOT / "plugins" / p)]
-    env = dict(os.environ, CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH="3")
+    env = {k: v for k, v in os.environ.items() if k not in PARENT_VARS}
+    env["CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH"] = "3"
     env["PATH"] = env.get("PATH", "") + os.pathsep + str(pathlib.Path.home() / ".dotnet")
     with open(run / "stream.jsonl", "w") as out, open(run / "stderr.log", "w") as err:
         code = subprocess.run(cmd, cwd=repo, env=env, stdout=out, stderr=err, timeout=args.timeout).returncode
