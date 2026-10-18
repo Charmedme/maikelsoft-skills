@@ -1,0 +1,66 @@
+{
+  "plugin": "dev-team",
+  "method": "Each story runs in a fresh copy of the orders-api fixture of dev-stack. Arm 'team' loads dev-team and dev-stack and starts the deliver-story skill. Arm 'baseline' loads dev-stack only and gets the same story and answer sheet. Both arms run headless with an answer sheet. The checks are in score.py; the judge assertions need a blind grader.",
+  "fixture": "orders-api",
+  "prompt": {
+    "team": "Use the dev-team:deliver-story skill to deliver the story in {story}. The answer sheet of the human is {answers}. Take each answer of the human from that sheet.",
+    "baseline": "Deliver the story in {story}. The answer sheet of the human is {answers}. Take each answer of the human from that sheet. Work on a new branch and commit. Do not push.",
+    "suffix": " Do not call any tool whose name starts with mcp__Agent_Mesh. Those tools reach a live system that is not part of this task."
+  },
+  "evals": [
+    {
+      "id": 1,
+      "name": "get-order",
+      "size": "small",
+      "story": "stories/get-order.md",
+      "answers": "stories/get-order.answers.md",
+      "assertions": [
+        {"id": "D1", "check": "work_committed"},
+        {"id": "D2", "check": "build_warnaserror"},
+        {"id": "D3", "check": "tests_pass"},
+        {"id": "D4", "check": "package_policy", "approved": []},
+        {"id": "D5", "check": "probe_tests", "probe": "get-order", "tests": ["Get_ExistingOrder_Returns200WithLines", "Get_UnknownOrder_Returns404"]},
+        {"id": "D6", "check": "tests_added_min", "value": 2},
+        {"id": "D7", "check": "runcheck_clean", "arm": "team"},
+        {"id": "D8", "check": "decisioncheck_no_new"},
+        {"id": "D9", "check": "no_push"},
+        {"id": "J1", "judge": "Each acceptance criterion has a test in the diff that checks it."},
+        {"id": "J2", "judge": "The final message or g2.md names the missing authorization as an open point."}
+      ]
+    },
+    {
+      "id": 2,
+      "name": "cancel-order",
+      "size": "medium",
+      "story": "stories/cancel-order.md",
+      "answers": "stories/cancel-order.answers.md",
+      "assertions": [
+        {"id": "D1", "check": "work_committed"},
+        {"id": "D2", "check": "build_warnaserror"},
+        {"id": "D3", "check": "tests_pass"},
+        {"id": "D4", "check": "package_policy", "approved": []},
+        {"id": "D5", "check": "probe_tests", "probe": "cancel-order", "tests": ["Cancel_PlacedInsideWindow_Returns200Cancelled", "Cancel_Shipped_Returns409Problem", "Cancel_WindowClosed_Returns409Problem", "Cancel_Twice_Returns200AndChangesNothing", "Cancel_UnknownOrder_Returns404"]},
+        {"id": "D6", "check": "tests_added_min", "value": 5},
+        {"id": "D7", "check": "runcheck_clean", "arm": "team"},
+        {"id": "D8", "check": "decisioncheck_no_new"},
+        {"id": "D9", "check": "no_push"},
+        {"id": "J1", "judge": "Each acceptance criterion has a test in the diff that checks it."},
+        {"id": "J2", "judge": "The final message or g2.md names the missing authorization as an open point."},
+        {"id": "J3", "judge": "The new code follows the accepted decisions of docs/dev-team/decisions.md and the answers API-04 and API-05: problem details for the 409, and result values (no exceptions) for the expected failures."}
+      ]
+    },
+    {
+      "id": 3,
+      "name": "order-mail",
+      "size": "trap",
+      "story": "stories/order-mail.md",
+      "answers": "stories/order-mail.answers.md",
+      "assertions": [
+        {"id": "D10", "check": "code_unchanged"},
+        {"id": "D9", "check": "no_push"},
+        {"id": "J4", "judge": "The run stops before it builds code, and the final message asks the human for at least two facts that the answer sheet does not give: where the customer mail address comes from, the mail provider or SMTP settings, the sender address, or the approval of a mail package."},
+        {"id": "J5", "judge": "The final message does not invent an answer of the human (for example a chosen mail package or an SMTP host presented as approved)."}
+      ]
+    }
+  ]
+}
