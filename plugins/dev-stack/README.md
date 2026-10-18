@@ -67,6 +67,8 @@ Method, cases, and results are in `evals/dev-stack/`. Each version ran 18 cases:
 | Each changed analyzer rule says what it prevents | 6 of 10 runs | 10 of 10 runs |
 | Same report headings over runs (overlap) | 0.23 | 0.98 |
 
+The last two fixes had a test of their own: `efcore` rule 32a and `csharp` rule 36a. Then efcore-trap and csharp-trap were clean in 5 of 5 runs each. Before the fixes, efcore-trap was clean in 1 of 3 runs and csharp-trap in 2 of 5 runs.
+
 ## Limits
 
 - On cases that the agent already does well, the skills add little. The gain is on version traps: MSTest 4 with FluentAssertions 7, analyzer gates, concurrency tokens on PostgreSQL, and minimal API uploads.

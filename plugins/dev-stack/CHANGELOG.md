@@ -19,4 +19,4 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 - `dotnet-analyzers` rule 18a: the report explains each rule that the agent raises, lowers, or turns off. It says what the rule prevents and why the change fits the project.
 - `efcore` rule 32a: with one idempotent migration script on PostgreSQL, build a non-blocking index from a pre-deploy SQL file, and use `CREATE INDEX IF NOT EXISTS` in the migration.
 - `csharp` rule 36a: bind a map or an enum from configuration as `Dictionary<string, string>` and convert each entry. The configuration binder skips entries that it cannot convert, without an error.
-- An eval set in `evals/dev-stack/`: 18 cases, fixtures, probe tests, `score.py`, `prepare.py`, `consistency.py`, and the grader prompt.
+- An eval set in `evals/dev-stack/`: 18 cases, fixtures, probe tests, `score.py`, `prepare.py`, `consistency.py`, and the grader prompt. The efcore concurrency probe changes the order through the change tracker, so it does not depend on a domain method that an agent can rename.
