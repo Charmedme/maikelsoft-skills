@@ -1,0 +1,1171 @@
+{
+  "plugin": "dev-stack",
+  "skills": [
+    "csharp",
+    "aspnetcore",
+    "efcore",
+    "dotnet-testing",
+    "dotnet-analyzers",
+    "secure-coding"
+  ],
+  "method": [
+    "One separate agent for each run. 3 runs for each variant. Use the prompt in runner.md.",
+    "Variants: baseline (same request, no skill) and skill (the skill of the case, from plugins/dev-stack/skills/<skill>).",
+    "Each run works on its own copy of the fixture in <run>/repo. Sub-agents are not available in a run.",
+    "Assertions are yes or no. A 'check' assertion is scored by score.py. A 'judge' assertion is scored by one grader agent for each run (grader.md). The grader does not see the variant name.",
+    "human 'absent' means that nobody answers questions. The agent decides, and states each assumption and each open team decision in its final message.",
+    "A review case has an answer sheet in planted/<fixture>.json. Only the grader reads it. The run agent never sees it.",
+    "Standing rules of the human for all cases: MediatR and AutoMapper are not allowed. Each new package needs the approval of the human. For new code, an open team decision is asked (or, with human 'absent', marked as assumed), unless docs/dev-team/decisions.md has an accepted answer.",
+    "A trap case (name ends in '-trap') tests facts that a model trained before mid-2026 often gets wrong. The 'traps' field lists them, and each trap has its own assertion (field 'trap'). selftest.py proves each check on a wrong and a correct solution."
+  ],
+  "inputs": {
+    "fixtures": {
+      "path": "evals/dev-stack/fixtures",
+      "license": "MIT (this repository)"
+    },
+    "environment": ".NET SDK 10.0.402 (export PATH=/root/.dotnet:$PATH), Docker running, image postgres:17.6-alpine cached"
+  },
+  "evals": [
+    {
+      "id": 1,
+      "name": "csharp-pricing",
+      "skill": "csharp",
+      "kind": "write",
+      "fixture": "orders-api",
+      "human": "absent",
+      "request": "Add discounts to orders. Each customer has a tier: Bronze (0%), Silver (5%) or Gold (10%). Until we have a customer service, the tiers come from configuration (section Pricing, a map from customer id to tier). A customer that is not in the map is Bronze. Orders with a subtotal of 500.00 or more get 2% extra. During a promotion (start date and end date in configuration) every order gets 5% extra. The total discount is never more than 15%. Round the discount to cents. The order response shows the subtotal, the discount and the total.",
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "build_warnaserror"
+        },
+        {
+          "id": "C2",
+          "check": "tests_pass"
+        },
+        {
+          "id": "C3",
+          "check": "tests_added_min",
+          "value": 4
+        },
+        {
+          "id": "C4",
+          "check": "package_policy",
+          "approved": []
+        },
+        {
+          "id": "C5",
+          "check": "grep_absent",
+          "value": [
+            "DateTime(Offset)?\\.(Now|UtcNow)",
+            "\\b(double|float)\\b"
+          ],
+          "files": [
+            "src/**/*.cs"
+          ],
+          "exclude": [
+            "**/Migrations/**"
+          ]
+        },
+        {
+          "id": "J1",
+          "judge": "The final message lists the assumptions the agent made for the unclear rules: at least three of these: 500.00 exactly, how the percentages combine (add or multiply), the cap before or after rounding, the rounding mode, the time zone and end-day inclusion of the promotion, and whether the discount is stored or computed on each read."
+        },
+        {
+          "id": "J2",
+          "judge": "The code applies the rules correctly: decimal for all money math, an explicit MidpointRounding mode, the 15% cap, the promotion check uses the injected TimeProvider, and the tier map is an options class with validation (ValidateOnStart)."
+        },
+        {
+          "id": "J3",
+          "judge": "The new code follows the style of the fixture: file-scoped namespaces, sealed classes, records for contracts, TypedResults, and no interface with one 'Impl' class without a real seam."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "csharp-review",
+      "skill": "csharp",
+      "kind": "review",
+      "fixture": "review-csharp",
+      "planted": "planted/review-csharp.json",
+      "human": "absent",
+      "request": "Review this code before we merge it.",
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "files_unchanged"
+        },
+        {
+          "id": "J1",
+          "judge": "The review finds at least 9 of the 12 planted mistakes."
+        },
+        {
+          "id": "J2",
+          "judge": "The review finds every planted mistake with severity 'high'."
+        },
+        {
+          "id": "J3",
+          "judge": "At most 3 findings are false positives. A false positive is a claim that is wrong, or a fix that would break the code or that uses an API that does not exist or is outdated. A real problem that is not on the planted list is not a false positive."
+        },
+        {
+          "id": "J4",
+          "judge": "Each finding gives the file and the line (or quotes the code) and a concrete fix."
+        },
+        {
+          "id": "J5",
+          "judge": "The review separates blocking issues from minor ones and ends with a clear merge verdict."
+        },
+        {
+          "id": "J6",
+          "judge": "The fix for the money math uses decimal and an explicit MidpointRounding mode, and the fix for the clock injects TimeProvider (not a new IClock interface)."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "aspnetcore-get-cancel",
+      "skill": "aspnetcore",
+      "kind": "write",
+      "fixture": "orders-api",
+      "human": "absent",
+      "request": "Add GET /orders/{id} and POST /orders/{id}/cancel. Return errors as ProblemDetails (order not found, cancel not allowed). After a cancel, tell the stock service to release the stock: POST {Stock:BaseUrl}/releases with the order id and the lines. The stock service is sometimes slow or down, and a cancel must not hang. Approved new package for this story: Microsoft.Extensions.Http.Resilience.",
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "build_warnaserror"
+        },
+        {
+          "id": "C2",
+          "check": "tests_pass"
+        },
+        {
+          "id": "C3",
+          "check": "package_policy",
+          "approved": [
+            "Microsoft.Extensions.Http.Resilience"
+          ]
+        },
+        {
+          "id": "C4",
+          "check": "grep_absent",
+          "value": [
+            "new HttpClient\\(",
+            "BuildServiceProvider\\(",
+            "UseDeveloperExceptionPage",
+            "AddSwaggerGen",
+            "ex\\.Message",
+            "Microsoft\\.Extensions\\.Http\\.Polly",
+            "\\.Result\\s*(?:[;),\\]]|\\.)|\\.GetAwaiter\\(\\)\\.GetResult\\(\\)",
+            "\\.Wait\\(\\s*\\)"
+          ],
+          "files": [
+            "src/**/*.cs",
+            "**/*.props",
+            "**/*.csproj"
+          ]
+        },
+        {
+          "id": "C5",
+          "check": "grep_present",
+          "value": "AddStandardResilienceHandler|AddResilienceHandler",
+          "files": [
+            "src/**/*.cs"
+          ]
+        },
+        {
+          "id": "J1",
+          "judge": "The final message names the open team decisions that the work needed and states the assumed answer for each: at least the error contract (API-04) or result values versus exceptions (API-05), and what happens to the cancel when the stock call fails."
+        },
+        {
+          "id": "J2",
+          "judge": "The endpoints use TypedResults with Results<...> and return ProblemDetails with suitable status codes (404 for not found, 409 or 422 for cancel not allowed), and a test checks at least one error response at HTTP level."
+        },
+        {
+          "id": "J3",
+          "judge": "The stock client is a typed client registered with AddHttpClient, its base address comes from an options class with ValidateOnStart, and the retry of the POST is limited or made safe (for example idempotent by order id, or retries off for POST) with a reason."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "aspnetcore-review",
+      "skill": "aspnetcore",
+      "kind": "review",
+      "fixture": "review-aspnetcore",
+      "planted": "planted/review-aspnetcore.json",
+      "human": "absent",
+      "request": "Review this code before we merge it.",
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "files_unchanged"
+        },
+        {
+          "id": "J1",
+          "judge": "The review finds at least 9 of the 12 planted mistakes."
+        },
+        {
+          "id": "J2",
+          "judge": "The review finds every planted mistake with severity 'high'."
+        },
+        {
+          "id": "J3",
+          "judge": "At most 3 findings are false positives. A false positive is a claim that is wrong, or a fix that would break the code or that uses an API that does not exist or is outdated. A real problem that is not on the planted list is not a false positive."
+        },
+        {
+          "id": "J4",
+          "judge": "Each finding gives the file and the line (or quotes the code) and a concrete fix."
+        },
+        {
+          "id": "J5",
+          "judge": "The review separates blocking issues from minor ones and ends with a clear merge verdict."
+        },
+        {
+          "id": "J6",
+          "judge": "The recommended fixes use current .NET 10 APIs: a typed client with AddHttpClient and AddStandardResilienceHandler (not Polly 7 or Microsoft.Extensions.Http.Polly), AddOpenApi/MapOpenApi instead of Swashbuckle, and a new scope for each iteration of the BackgroundService."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "efcore-shipments",
+      "skill": "efcore",
+      "kind": "write",
+      "fixture": "orders-api",
+      "human": "absent",
+      "request": "Add shipments. An order gets at most one shipment, with a carrier, a tracking code, the shipped-at time and a destination address (street, city, postal code, country). POST /orders/{id}/shipment ships a placed order and sets its status to Shipped. GET /customers/{customerId}/shipments lists the shipments of a customer with the order total, newest first, with paging. Two warehouse workers must never ship the same order twice. Add the EF Core migration.",
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "build_warnaserror"
+        },
+        {
+          "id": "C2",
+          "check": "tests_pass"
+        },
+        {
+          "id": "C3",
+          "check": "package_policy",
+          "approved": []
+        },
+        {
+          "id": "C4",
+          "check": "migration_ok"
+        },
+        {
+          "id": "C5",
+          "check": "grep_absent",
+          "value": [
+            "Guid\\.NewGuid\\(",
+            "(FromSqlRaw|ExecuteSqlRaw|SqlQueryRaw)\\(\\s*\\$",
+            "EnsureCreated",
+            "\\.Migrate(Async)?\\(",
+            "DateTime(Offset)?\\.(Now|UtcNow)",
+            "UseInMemoryDatabase",
+            "OwnsOne\\(",
+            "UseXminAsConcurrencyToken"
+          ],
+          "files": [
+            "src/**/*.cs"
+          ],
+          "exclude": [
+            "**/Migrations/**"
+          ]
+        },
+        {
+          "id": "J1",
+          "judge": "Double shipping is prevented in the database: a unique index on the order id of the shipment, or a concurrency token on the order (for example [Timestamp] uint Version or IsRowVersion) with DbUpdateConcurrencyException mapped to 409. A check-then-insert in code alone does not pass."
+        },
+        {
+          "id": "J2",
+          "judge": "The list query projects to a DTO in one database query (no loop of queries, no Include plus mapping in memory), orders by a stable key with a tie-breaker, and limits the page size."
+        },
+        {
+          "id": "J3",
+          "judge": "The final message marks the open team decisions as assumed with the chosen answer: at least two of pagination style (API-12), optimistic concurrency (DATA-15), how migrations are deployed (DATA-18), and the address mapping (complex type or columns)."
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "name": "efcore-review",
+      "skill": "efcore",
+      "kind": "review",
+      "fixture": "review-efcore",
+      "planted": "planted/review-efcore.json",
+      "human": "absent",
+      "request": "Review this code before we merge it.",
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "files_unchanged"
+        },
+        {
+          "id": "J1",
+          "judge": "The review finds at least 9 of the 12 planted mistakes."
+        },
+        {
+          "id": "J2",
+          "judge": "The review finds every planted mistake with severity 'high'."
+        },
+        {
+          "id": "J3",
+          "judge": "At most 3 findings are false positives. A false positive is a claim that is wrong, or a fix that would break the code or that uses an API that does not exist or is outdated. A real problem that is not on the planted list is not a false positive."
+        },
+        {
+          "id": "J4",
+          "judge": "Each finding gives the file and the line (or quotes the code) and a concrete fix."
+        },
+        {
+          "id": "J5",
+          "judge": "The review separates blocking issues from minor ones and ends with a clear merge verdict."
+        },
+        {
+          "id": "J6",
+          "judge": "The review recommends to remove the generic repository and unit of work and use the DbContext directly, and it does not recommend UseXminAsConcurrencyToken (obsolete) or HasJsonConversion (does not exist) as a fix."
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "name": "dotnet-testing-order-rules",
+      "skill": "dotnet-testing",
+      "kind": "write",
+      "fixture": "orders-api",
+      "human": "absent",
+      "request": "The order rules have too few tests. Write the missing tests for Order (cancel, add line, ship), and an integration test that proves that an order with lines is saved to PostgreSQL and read back correctly. Do not change the production code unless a test finds a bug.",
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "build_warnaserror"
+        },
+        {
+          "id": "C2",
+          "check": "tests_pass"
+        },
+        {
+          "id": "C3",
+          "check": "tests_added_min",
+          "value": 6
+        },
+        {
+          "id": "C4",
+          "check": "package_policy",
+          "approved": []
+        },
+        {
+          "id": "C5",
+          "check": "grep_absent",
+          "value": [
+            "ExpectedException",
+            "ThrowsException",
+            "DataTestMethod",
+            "Thread\\.Sleep",
+            "UseInMemoryDatabase",
+            "new PostgreSqlBuilder\\(\\s*\\)",
+            "DateTime(Offset)?\\.(Now|UtcNow)",
+            ":latest\\b",
+            "WithPortBinding\\(\\s*5432"
+          ],
+          "files": [
+            "tests/**/*.cs"
+          ]
+        },
+        {
+          "id": "J1",
+          "judge": "The tests cover the rules and their edges, not getters: cancel at exactly the end of the window, after the window, an already cancelled order, a shipped order, adding a line after cancel, and shipping an order that is not placed."
+        },
+        {
+          "id": "J2",
+          "judge": "Each test checks one behavior, its name states the scenario and the result, the test bodies have no loops or if statements (data cases use [DataRow] or [DynamicData]), and expected values come first in MSTest Assert calls."
+        },
+        {
+          "id": "J3",
+          "judge": "The integration test reuses the one container from AssemblyFixture (no second container, no second [AssemblyInitialize]), keeps its data apart from other tests, and reads the order back in a new DbContext before it checks the lines, the total and the status."
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "name": "dotnet-testing-review",
+      "skill": "dotnet-testing",
+      "kind": "review",
+      "fixture": "review-dotnet-testing",
+      "planted": "planted/review-dotnet-testing.json",
+      "human": "absent",
+      "request": "Review this code before we merge it.",
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "files_unchanged"
+        },
+        {
+          "id": "J1",
+          "judge": "The review finds at least 9 of the 12 planted mistakes."
+        },
+        {
+          "id": "J2",
+          "judge": "The review finds every planted mistake with severity 'high'."
+        },
+        {
+          "id": "J3",
+          "judge": "At most 3 findings are false positives. A false positive is a claim that is wrong, or a fix that would break the code or that uses an API that does not exist or is outdated. A real problem that is not on the planted list is not a false positive."
+        },
+        {
+          "id": "J4",
+          "judge": "Each finding gives the file and the line (or quotes the code) and a concrete fix."
+        },
+        {
+          "id": "J5",
+          "judge": "The review separates blocking issues from minor ones and ends with a clear merge verdict."
+        },
+        {
+          "id": "J6",
+          "judge": "The recommended fixes are valid for MSTest 4 and FluentAssertions 7.2.2: no FluentAssertions 8 API and no advice to upgrade to 8, no Assert.ThrowsException, and a Testcontainers builder with the pinned image in the constructor."
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "name": "dotnet-analyzers-strict",
+      "skill": "dotnet-analyzers",
+      "kind": "write",
+      "fixture": "orders-api",
+      "human": "absent",
+      "request": "Make this repository strict. Turn on more analyzers and fix what they find. DateTime.Now and DateTime.UtcNow must be banned in the production code. The CI build must fail on any warning, but the build and the tests must stay green. Approved new packages for this story: Roslynator.Analyzers and Microsoft.CodeAnalysis.BannedApiAnalyzers.",
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "build_warnaserror"
+        },
+        {
+          "id": "C2",
+          "check": "tests_pass"
+        },
+        {
+          "id": "C3",
+          "check": "package_policy",
+          "approved": [
+            "Roslynator.Analyzers",
+            "Microsoft.CodeAnalysis.BannedApiAnalyzers"
+          ]
+        },
+        {
+          "id": "C4",
+          "check": "banned_api_enforced"
+        },
+        {
+          "id": "C5",
+          "check": "format_clean"
+        },
+        {
+          "id": "C6",
+          "check": "grep_absent",
+          "value": [
+            "CodeAnalysisRuleSet",
+            "category-roslynator\\.severity",
+            "RunAnalyzersDuringBuild>\\s*false",
+            "<NoWarn>[^<]*\\bCS86",
+            "#pragma warning disable\\s*$",
+            "Microsoft\\.CodeAnalysis\\.NetAnalyzers"
+          ],
+          "files": [
+            "**/*.props",
+            "**/*.csproj",
+            "**/.editorconfig",
+            "src/**/*.cs",
+            "tests/**/*.cs"
+          ]
+        },
+        {
+          "id": "J1",
+          "judge": "Each new suppression (#pragma, [SuppressMessage], NoWarn entry, or a rule set to none or suggestion in .editorconfig) has a written reason, and no rule was turned off only to make the build green."
+        },
+        {
+          "id": "J2",
+          "judge": "The final message states the assumptions and the open team decisions, at least the warnings policy (SOL-06) or the code style rules (SOL-07), and it lists any other analyzer package it wants (for example Meziantou.Analyzer) as a proposal for approval, not as added."
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "name": "dotnet-analyzers-review",
+      "skill": "dotnet-analyzers",
+      "kind": "review",
+      "fixture": "review-dotnet-analyzers",
+      "planted": "planted/review-dotnet-analyzers.json",
+      "human": "absent",
+      "request": "Review this code before we merge it.",
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "files_unchanged"
+        },
+        {
+          "id": "J1",
+          "judge": "The review finds at least 9 of the 12 planted mistakes."
+        },
+        {
+          "id": "J2",
+          "judge": "The review finds every planted mistake with severity 'high'."
+        },
+        {
+          "id": "J3",
+          "judge": "At most 3 findings are false positives. A false positive is a claim that is wrong, or a fix that would break the code or that uses an API that does not exist or is outdated. A real problem that is not on the planted list is not a false positive."
+        },
+        {
+          "id": "J4",
+          "judge": "Each finding gives the file and the line (or quotes the code) and a concrete fix."
+        },
+        {
+          "id": "J5",
+          "judge": "The review separates blocking issues from minor ones and ends with a clear merge verdict."
+        },
+        {
+          "id": "J6",
+          "judge": "The proposed configuration is current: severities for single rule IDs in .editorconfig, analyzers from NuGet packages, one SARIF file per project in obj/, and 'dotnet build -warnaserror' (not 'roslynator analyze') as the CI gate."
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "name": "secure-coding-my-orders",
+      "skill": "secure-coding",
+      "kind": "write",
+      "fixture": "orders-api",
+      "human": "absent",
+      "request": "Add sign-in and 'my orders'. Tokens come from our identity provider (authority https://login.example.com, audience orders-api). The customer id is in the claim customer_id. GET /orders/mine returns only the orders of the signed-in customer. A customer can also upload an invoice PDF (at most 10 MB) for one of their own orders, and download it again. Approved new package for this story: Microsoft.AspNetCore.Authentication.JwtBearer.",
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "build_warnaserror"
+        },
+        {
+          "id": "C2",
+          "check": "tests_pass"
+        },
+        {
+          "id": "C3",
+          "check": "tests_added_min",
+          "value": 2
+        },
+        {
+          "id": "C4",
+          "check": "package_policy",
+          "approved": [
+            "Microsoft.AspNetCore.Authentication.JwtBearer"
+          ]
+        },
+        {
+          "id": "C5",
+          "check": "grep_absent",
+          "value": [
+            "Validate(Issuer|Audience|Lifetime|IssuerSigningKey)\\s*=\\s*false",
+            "RequireSignedTokens\\s*=\\s*false",
+            "AllowAnyOrigin",
+            "SetIsOriginAllowed",
+            "(FromSqlRaw|ExecuteSqlRaw|SqlQueryRaw)\\(\\s*\\$",
+            "Path\\.Combine\\([^;]*\\.FileName",
+            "ex\\.(Message|ToString\\(\\))",
+            "SigningKey\"?\\s*[:=]\\s*\"[^\"]{16,}",
+            "Password=[^;\"]+",
+            "ClientSecret\"?\\s*[:=]\\s*\"[^\"]+"
+          ],
+          "files": [
+            "src/**/*.cs",
+            "src/**/appsettings*.json"
+          ]
+        },
+        {
+          "id": "J1",
+          "judge": "GET /orders/mine takes the customer id from the customer_id claim of the token, never from the request, and a test proves that another customer cannot read those orders (403 or 404) and that a call without a token gets 401. The existing GET /orders?customerId= endpoint gets an owner check or is removed, or the final message flags it as an open hole."
+        },
+        {
+          "id": "J2",
+          "judge": "The invoice upload checks that the order belongs to the caller, enforces the 10 MB limit on the server, checks the PDF signature (%PDF-) and not only the Content-Type, stores the file under a server-generated name outside wwwroot, and the download checks the owner too."
+        },
+        {
+          "id": "J3",
+          "judge": "The final message states the assumptions and marks the open team decisions as assumed: at least the authorization model (SEC-04) or the upload storage policy (SEC-13)."
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "name": "secure-coding-review",
+      "skill": "secure-coding",
+      "kind": "review",
+      "fixture": "review-secure-coding",
+      "planted": "planted/review-secure-coding.json",
+      "human": "absent",
+      "request": "Review this code before we merge it.",
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "files_unchanged"
+        },
+        {
+          "id": "J1",
+          "judge": "The review finds at least 9 of the 12 planted mistakes."
+        },
+        {
+          "id": "J2",
+          "judge": "The review finds every planted mistake with severity 'high'."
+        },
+        {
+          "id": "J3",
+          "judge": "At most 3 findings are false positives. A false positive is a claim that is wrong, or a fix that would break the code or that uses an API that does not exist or is outdated. A real problem that is not on the planted list is not a false positive."
+        },
+        {
+          "id": "J4",
+          "judge": "Each finding gives the file and the line (or quotes the code) and a concrete fix."
+        },
+        {
+          "id": "J5",
+          "judge": "The review separates blocking issues from minor ones and ends with a clear merge verdict."
+        },
+        {
+          "id": "J6",
+          "judge": "The review tells the human what to do outside the code: rotate the leaked database password and JWT signing key, and remove them from the git history or treat them as compromised."
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "name": "csharp-trap",
+      "skill": "csharp",
+      "kind": "write",
+      "fixture": "orders-api",
+      "human": "absent",
+      "request": "Show the customer tier on each new order. Until we have a customer service, the tiers come from configuration: section Pricing, key CustomerTiers, a map from customer id to tier name (Bronze, Silver, Gold). A customer that is not in the map is Bronze. Silver gets 5% discount and Gold 10%. The POST /orders response gets two new fields: tier (the tier name as text) and discount (the discount amount, rounded to cents). A typo in this configuration must not go unnoticed in production.",
+      "traps": [
+        "The configuration binder skips Dictionary<Guid, T> keys without an error, so every customer becomes Bronze.",
+        "The binder also skips a dictionary value that is not a known enum name ('Gld'), and a key that is not a Guid. ValidateDataAnnotations does not see it."
+      ],
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "build_warnaserror"
+        },
+        {
+          "id": "C2",
+          "check": "tests_pass"
+        },
+        {
+          "id": "C3",
+          "check": "package_policy",
+          "approved": []
+        },
+        {
+          "id": "C4",
+          "check": "probe_tests",
+          "probe": "csharp-tiers",
+          "tests": [
+            "GoldCustomerInConfiguration_GetsGoldTier",
+            "CustomerNotInConfiguration_IsBronze"
+          ],
+          "trap": "Guid keys in the tier map bind (binder skips Dictionary<Guid, T> keys)."
+        },
+        {
+          "id": "C5",
+          "check": "probe_tests",
+          "probe": "csharp-tiers",
+          "tests": [
+            "UnknownTierName_StopsTheApp"
+          ],
+          "trap": "A tier name with a typo stops the app at start (binder skips unknown enum values in a dictionary)."
+        },
+        {
+          "id": "C6",
+          "check": "probe_tests",
+          "probe": "csharp-tiers",
+          "tests": [
+            "CustomerIdThatIsNotAGuid_StopsTheApp"
+          ],
+          "trap": "A customer id that is not a Guid stops the app at start."
+        },
+        {
+          "id": "C7",
+          "check": "grep_absent",
+          "value": [
+            "DateTime(Offset)?\\.(Now|UtcNow)",
+            "\\b(double|float)\\b"
+          ],
+          "files": [
+            "src/**/*.cs"
+          ],
+          "exclude": [
+            "**/Migrations/**"
+          ]
+        },
+        {
+          "id": "J1",
+          "judge": "The final message explains why the tier map is not bound directly to Dictionary<Guid, CustomerTier> (or why it is safe when it is): the configuration binder skips keys and values that it cannot convert without an error."
+        },
+        {
+          "id": "J2",
+          "judge": "The tier configuration is an options class that is validated on start (ValidateOnStart with an IValidateOptions, Validate(...) or equivalent), and a test proves that a bad tier name or a bad customer id fails at start, not at the first request."
+        },
+        {
+          "id": "J3",
+          "judge": "The new code follows the style of the fixture (file-scoped namespaces, sealed classes, records for contracts, TypedResults) and money math uses decimal with an explicit MidpointRounding mode."
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "name": "aspnetcore-trap",
+      "skill": "aspnetcore",
+      "kind": "write",
+      "fixture": "aspnetcore-trap",
+      "human": "absent",
+      "request": "Add POST /orders/{id}/cancel. After a cancel, tell the stock service to release the stock: POST {Stock:BaseUrl}/releases with the order id. The stock service is slow: give each call to it at most 2 seconds. Also add a global handler that maps domain rule errors (InvalidOperationException from Order) to a 409 ProblemDetails, and keep the current ProblemDetails for all other errors. Approved packages: the ones that are already in the repository.",
+      "traps": [
+        "ConfigureHttpClientDefaults already adds the standard handler (decision HTTP-01). A second AddStandardResilienceHandler on the typed client stacks the pipelines: 16 attempts instead of 4. RemoveAllResilienceHandlers() first.",
+        "Only TotalRequestTimeout = 2 s fails options validation (the attempt timeout stays at 10 s).",
+        "In .NET 10 an IExceptionHandler that returns true suppresses the error log of the middleware. Unexpected errors are no longer logged unless SuppressDiagnosticsCallback is set or the handler logs."
+      ],
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "build_warnaserror"
+        },
+        {
+          "id": "C2",
+          "check": "tests_pass"
+        },
+        {
+          "id": "C3",
+          "check": "package_policy",
+          "approved": []
+        },
+        {
+          "id": "C4",
+          "check": "probe_tests",
+          "probe": "aspnetcore-stock",
+          "tests": [
+            "StockDown_AppTriesAtMostFourTimes"
+          ],
+          "trap": "Stacked resilience handlers (16 attempts instead of 4)."
+        },
+        {
+          "id": "C5",
+          "check": "probe_tests",
+          "probe": "aspnetcore-stock",
+          "tests": [
+            "StockHangs_OneTryStopsAfterAboutTwoSeconds"
+          ],
+          "trap": "The 2 second limit applies to each call (attempt timeout), and the options are valid."
+        },
+        {
+          "id": "C6",
+          "check": "probe_tests",
+          "probe": "aspnetcore-stock",
+          "tests": [
+            "UnexpectedError_IsLoggedAndNotShown"
+          ],
+          "trap": "IExceptionHandler that returns true no longer logs in .NET 10."
+        },
+        {
+          "id": "C7",
+          "check": "grep_absent",
+          "value": [
+            "new HttpClient\\(",
+            "BuildServiceProvider\\(",
+            "ex\\.Message",
+            "Microsoft\\.Extensions\\.Http\\.Polly",
+            "\\.Result\\s*(?:[;),\\]]|\\.)|\\.GetAwaiter\\(\\)\\.GetResult\\(\\)",
+            "\\.Wait\\(\\s*\\)"
+          ],
+          "files": [
+            "src/**/*.cs"
+          ]
+        },
+        {
+          "id": "J1",
+          "judge": "The final message explains the interaction with the defaults of decision HTTP-01: the stock client replaces the default pipeline (RemoveAllResilienceHandlers) or configures it, and does not add a second one. It names the EXTEXP0001 suppression with a reason if it uses the experimental API."
+        },
+        {
+          "id": "J2",
+          "judge": "The stock call cannot duplicate a release or hang the cancel: the retry of the POST is limited or made safe (idempotent by order id, or retries off for POST) with a reason, and the final message states what happens to the cancel when the stock call fails."
+        },
+        {
+          "id": "J3",
+          "judge": "The final message or a code comment states that an IExceptionHandler that returns true suppresses the exception log in .NET 10, and the code keeps a log for unexpected errors (SuppressDiagnosticsCallback, or the handler logs, or the handler returns false for them)."
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "name": "efcore-trap",
+      "skill": "efcore",
+      "kind": "write",
+      "fixture": "orders-api",
+      "human": "absent",
+      "request": "Two clerks can change the same order at the same time: one ships it while the other cancels it. The last save must not win silently. The API must answer 409 Conflict to the clerk who loses. Also add an index to search order lines by SKU. In production the order_lines table is big and gets writes all day, so building the index must not block writes. Our DBA deploys each release with the idempotent script from 'dotnet ef migrations script --idempotent' and runs it with psql. Add the EF Core migration.",
+      "traps": [
+        "A [Timestamp] byte[] row version (the SQL Server pattern) never changes on PostgreSQL: the second save wins silently. Use a uint mapped to xmin.",
+        "UseXminAsConcurrencyToken does not exist in EFCore.PG 10 (CS1061).",
+        "IsCreatedConcurrently() in a migration puts CREATE INDEX CONCURRENTLY in a DO block in the idempotent script. PostgreSQL refuses it: 'cannot be executed from a function'. Also with migrationBuilder.Sql(..., suppressTransaction: true).",
+        "The model snapshot must match the model (has-pending-model-changes in CI)."
+      ],
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "build_warnaserror"
+        },
+        {
+          "id": "C2",
+          "check": "tests_pass"
+        },
+        {
+          "id": "C3",
+          "check": "package_policy",
+          "approved": []
+        },
+        {
+          "id": "C4",
+          "check": "migration_ok",
+          "trap": "Snapshot matches the model (has-pending-model-changes)."
+        },
+        {
+          "id": "C5",
+          "check": "probe_tests",
+          "probe": "efcore-concurrency",
+          "tests": [
+            "TwoClerksChangeSameOrder_SecondSaveFails"
+          ],
+          "trap": "byte[] [Timestamp] row version does not work on PostgreSQL."
+        },
+        {
+          "id": "C6",
+          "check": "idempotent_script",
+          "trap": "CREATE INDEX CONCURRENTLY inside the DO block of the idempotent script."
+        },
+        {
+          "id": "C7",
+          "check": "grep_absent",
+          "value": [
+            "UseXminAsConcurrencyToken",
+            "OwnsOne\\(",
+            "EnsureCreated",
+            "\\.Migrate(Async)?\\(",
+            "(FromSqlRaw|ExecuteSqlRaw)\\(\\s*\\$"
+          ],
+          "files": [
+            "src/**/*.cs"
+          ],
+          "exclude": [
+            "**/Migrations/**"
+          ],
+          "trap": "Obsolete xmin API."
+        },
+        {
+          "id": "J1",
+          "judge": "The index is still built without blocking writes (CREATE INDEX CONCURRENTLY outside a transaction and outside the DO blocks, for example a separate SQL step for the DBA), and the final message explains why the idempotent script cannot contain it."
+        },
+        {
+          "id": "J2",
+          "judge": "The concurrency token uses the PostgreSQL xmin system column (uint with [Timestamp] or IsRowVersion), DbUpdateConcurrencyException is mapped to 409 ProblemDetails, and a test proves the 409 at HTTP level or at DbContext level."
+        },
+        {
+          "id": "J3",
+          "judge": "The final message marks the open team decisions as assumed: at least optimistic concurrency (DATA-15) or how migrations are deployed (DATA-18), and it tells the DBA the order of the deploy steps."
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "name": "dotnet-testing-trap",
+      "skill": "dotnet-testing",
+      "kind": "write",
+      "fixture": "dotnet-testing-trap",
+      "human": "absent",
+      "request": "The CI build fails since the last NuGet audit update, and our test stack is old. Move the test project to MSTest 4.5.1 and Testcontainers 4.16.0. Keep FluentAssertions 7.2.2 (decision TEST-02). Then add an integration test that proves that an order with its lines is saved to PostgreSQL and read back correctly. Do not change the production code unless a test finds a bug.",
+      "traps": [
+        "FluentAssertions 7.2.2 does not detect MSTest 4 (assembly rename). Without Services.ThrowException in [AssemblyInitialize], a failed FA assertion shows as 'threw exception: AssertionFailedException'.",
+        "Order now inherits Entity, which overrides Equals (same id). FA 7 compares such a type by value: BeEquivalentTo passes for any two orders with the same id, and Excluding() has no effect. Use ComparingByMembers<Order>().",
+        "MSTest 4 removed [ExpectedException] and Assert.ThrowsException, and [DataTestMethod] is obsolete (MSTEST0044).",
+        "Testcontainers 4.10+ marks the parameterless builder obsolete: pass the image to the constructor."
+      ],
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "build_warnaserror"
+        },
+        {
+          "id": "C2",
+          "check": "tests_pass"
+        },
+        {
+          "id": "C3",
+          "check": "package_policy",
+          "approved": [
+            "MSTest.Sdk",
+            "Testcontainers.PostgreSql"
+          ]
+        },
+        {
+          "id": "C4",
+          "check": "probe_tests",
+          "probe": "testing-fa-bridge",
+          "tests": [
+            {
+              "test": "FluentAssertionFails",
+              "outcome": "Failed",
+              "message_absent": "threw exception"
+            }
+          ],
+          "trap": "FA 7 + MSTest 4: a failed assertion is reported as an assertion failure, not as an exception."
+        },
+        {
+          "id": "C5",
+          "check": "mutant_killed",
+          "mutation": {
+            "file": "src/Orders.Api/Data/OrderConfiguration.cs",
+            "after": "        builder.Ignore(line => line.LineTotal);\n",
+            "insert": "        builder.Property(line => line.UnitPrice).HasConversion(value => value, value => value + 1m);\n"
+          },
+          "trap": "The read-back test must see wrong data. BeEquivalentTo on a type that overrides Equals passes by id only."
+        },
+        {
+          "id": "C6",
+          "check": "grep_absent",
+          "scope": "all",
+          "value": [
+            "ExpectedException",
+            "Assert\\.ThrowsException",
+            "DataTestMethod",
+            "new PostgreSqlBuilder\\(\\s*\\)",
+            "WithImage\\(",
+            "DateTime(Offset)?\\.(Now|UtcNow)",
+            "Thread\\.Sleep"
+          ],
+          "files": [
+            "tests/**/*.cs"
+          ],
+          "trap": "Removed MSTest 3 APIs and the obsolete Testcontainers builder."
+        },
+        {
+          "id": "C7",
+          "check": "grep_absent",
+          "value": [
+            "FluentAssertions\" Version=\"[89]",
+            "AwesomeAssertions"
+          ],
+          "files": [
+            "**/*.props",
+            "**/*.csproj"
+          ]
+        },
+        {
+          "id": "J1",
+          "judge": "The final message explains the FluentAssertions 7 and MSTest 4 problem (failures reported as exceptions) and the fix in the one [AssemblyInitialize], and it does not propose FluentAssertions 8."
+        },
+        {
+          "id": "J2",
+          "judge": "The integration test reuses the one container from AssemblyFixture, reads the order back in a new DbContext, and compares the order and its lines by members (ComparingByMembers, or explicit property checks), not by Order.Equals."
+        },
+        {
+          "id": "J3",
+          "judge": "The final message lists the MSTest 3 to 4 changes that it made (ExpectedException, ThrowsException, DataTestMethod, builder image) and states its assumptions."
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "name": "dotnet-analyzers-trap",
+      "skill": "dotnet-analyzers",
+      "kind": "write",
+      "fixture": "dotnet-analyzers-trap",
+      "human": "absent",
+      "request": "We added Meziantou.Analyzer and Roslynator.Analyzers (decision QUAL-02), and the Roslynator CLI is a local tool. Make the analyzers count. Write ci/check.sh: the CI gate that must fail on any analyzer warning in any project, and that also reports unused usings and unused private code. Show every Roslynator finding that matters as a warning. Fix what the analyzers find. The build and the tests must stay green.",
+      "traps": [
+        "roslynator analyze (CLI 1.0.1, Roslyn 5.0) skips Meziantou 3.0.303 (roslyn5.9 build) without an error: a false clean result. Gate on dotnet build -warnaserror.",
+        "'roslynator find-unused' does not exist. Use find-symbol --unused, or IDE0051/IDE0052 in the build.",
+        "dotnet_analyzer_diagnostic.category-roslynator.severity = warning also raises Hidden rules (RCS1124 and others): noise.",
+        "IDE0005 does not run on build without GenerateDocumentationFile=true."
+      ],
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "build_warnaserror"
+        },
+        {
+          "id": "C2",
+          "check": "tests_pass"
+        },
+        {
+          "id": "C3",
+          "check": "package_policy",
+          "approved": []
+        },
+        {
+          "id": "C4",
+          "check": "ci_gate",
+          "script": "ci/check.sh",
+          "expect": "pass",
+          "trap": "The gate runs on the clean repository ('roslynator find-unused' does not exist)."
+        },
+        {
+          "id": "C5",
+          "check": "ci_gate",
+          "script": "ci/check.sh",
+          "probe": "analyzers-meziantou",
+          "expect": "fail",
+          "diagnostic": "MA0006",
+          "trap": "The gate sees a Meziantou warning (roslynator analyze gives a false clean result)."
+        },
+        {
+          "id": "C6",
+          "check": "build_probe",
+          "probe": "analyzers-unused-using",
+          "diagnostic": "IDE0005",
+          "trap": "IDE0005 needs GenerateDocumentationFile to run on build."
+        },
+        {
+          "id": "C7",
+          "check": "build_probe",
+          "probe": "analyzers-hidden",
+          "diagnostic": "RCS1124",
+          "expect": "clean",
+          "trap": "Raising the whole Roslynator category raises Hidden rules."
+        },
+        {
+          "id": "C8",
+          "check": "grep_absent",
+          "value": [
+            "roslynator\\s+find-unused",
+            "category-roslynator\\.severity",
+            "<CodeAnalysisRuleSet>",
+            "RunAnalyzersDuringBuild>\\s*false",
+            "#pragma warning disable\\s*$"
+          ],
+          "files": [
+            "ci/**",
+            "**/*.props",
+            "**/*.csproj",
+            "**/.editorconfig",
+            "src/**/*.cs",
+            "tests/**/*.cs",
+            "**/*.yml"
+          ]
+        },
+        {
+          "id": "J1",
+          "judge": "The final message says why 'roslynator analyze' is not the gate (it can skip newer analyzers such as Meziantou without an error) or shows that it checked this, and the gate is 'dotnet build -warnaserror'."
+        },
+        {
+          "id": "J2",
+          "judge": "Each rule that is turned off or lowered has a written reason, the Roslynator rules are raised one by one (not the whole category), and unused private code is caught by IDE0051/IDE0052 or by 'roslynator find-symbol --unused'."
+        },
+        {
+          "id": "J3",
+          "judge": "The final message states the assumptions and the open team decisions, at least the warnings policy (SOL-06) or the code style rules (SOL-07), and lists any other analyzer package (for example SonarAnalyzer.CSharp, with its license problem) as a proposal, not as added."
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "name": "secure-coding-trap",
+      "skill": "secure-coding",
+      "kind": "write",
+      "fixture": "secure-coding-trap",
+      "human": "absent",
+      "request": "Customers upload documents for an order: POST /orders/{id}/documents with a form field 'file' (PDF, PNG or JPEG, at most 10 MB) and a form field 'email'. Check the real file type with the FileSignatures package (approved for this story), store the file under Documents:RootPath, and mail a confirmation to the email address through our SMTP relay (settings in section Smtp, port 587, with user name and password). The app runs behind our load balancer in 10.0.0.0/8, so read the client IP and scheme from the forwarded headers. Since the last NuGet audit update, the CI build fails. Fix that too.",
+      "traps": [
+        "new FileFormatInspector() with all formats also detects exe, ELF and WASM. Register only the allowed formats.",
+        "MailKit 4.15.0 depends on MimeKit 4.15.0, which has CVE-2026-30227 (fixed in 4.15.1). It also pulls System.Security.Cryptography.Pkcs 10.0.0 (known vulnerabilities). Upgrade and pin, do not NoWarn NU1902.",
+        "SecureSocketOptions.Auto (and StartTlsWhenAvailable) on port 587 sends AUTH in plain text when the relay does not offer STARTTLS. Use StartTls.",
+        "ForwardedHeadersOptions.KnownNetworks and HttpOverrides.IPNetwork are obsolete in .NET 10 (ASPDEPR005). Use KnownIPNetworks and System.Net.IPNetwork."
+      ],
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "build_warnaserror"
+        },
+        {
+          "id": "C2",
+          "check": "tests_pass"
+        },
+        {
+          "id": "C3",
+          "check": "package_policy",
+          "approved": [
+            "FileSignatures",
+            "MailKit",
+            "MimeKit",
+            "System.Security.Cryptography.Pkcs"
+          ]
+        },
+        {
+          "id": "C4",
+          "check": "probe_tests",
+          "probe": "secure-upload-mail",
+          "tests": [
+            "ExecutableFiles_AreRejected",
+            "PdfFile_IsNotRejected"
+          ],
+          "trap": "Default FileFormatInspector accepts exe, ELF and WASM."
+        },
+        {
+          "id": "C5",
+          "check": "probe_tests",
+          "probe": "secure-upload-mail",
+          "tests": [
+            "RelayWithoutStartTls_GetsNoPasswordAndNoMail"
+          ],
+          "trap": "SecureSocketOptions.Auto sends the password in plain text on port 587."
+        },
+        {
+          "id": "C6",
+          "check": "resolved_min",
+          "value": {
+            "MimeKit": "4.15.1"
+          },
+          "trap": "MimeKit CVE-2026-30227 (below 4.15.1)."
+        },
+        {
+          "id": "C7",
+          "check": "no_vulnerable_packages",
+          "trap": "Fix the audit warnings, including the transitive Pkcs package."
+        },
+        {
+          "id": "C8",
+          "check": "grep_absent",
+          "scope": "all",
+          "value": [
+            "NU190[0-9]",
+            "NuGetAudit>\\s*false",
+            "\\.KnownNetworks\\b",
+            "HttpOverrides\\.IPNetwork",
+            "ASPDEPR005",
+            "SecureSocketOptions\\.(Auto|StartTlsWhenAvailable|None)",
+            "ServerCertificateValidationCallback",
+            "Path\\.Combine\\([^;]*\\.FileName",
+            "\"Password\"\\s*:\\s*\"[^\"]+\""
+          ],
+          "files": [
+            "src/**/*.cs",
+            "src/**/appsettings*.json",
+            "**/*.props",
+            "**/*.csproj"
+          ],
+          "trap": "Obsolete KnownNetworks (ASPDEPR005), NoWarn for audit warnings, TLS opt-outs."
+        },
+        {
+          "id": "J1",
+          "judge": "The final message names the vulnerable packages and the fix (MimeKit and MailKit 4.15.1 or later, and a pin for the transitive System.Security.Cryptography.Pkcs), and does not hide NU1902/NU1903 with NoWarn or NuGetAudit=false."
+        },
+        {
+          "id": "J2",
+          "judge": "The upload limits the size on the server, accepts only PDF, PNG and JPEG by signature (an allowlist, not 'any known format'), stores the file under a server-generated name outside wwwroot, and checks that the email value is a single valid address before it builds the mail."
+        },
+        {
+          "id": "J3",
+          "judge": "The final message states the assumptions and marks the open team decisions as assumed: at least the upload storage policy (SEC-13) or who may upload for an order (SEC-04), and it says that the SMTP password must come from secrets (decision MAIL-01)."
+        }
+      ]
+    }
+  ]
+}

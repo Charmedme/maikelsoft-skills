@@ -1,0 +1,89 @@
+{
+  "skill": "csharp",
+  "planted": [
+    {
+      "id": "P1",
+      "file": "src/Orders.Api/Orders.Api.csproj",
+      "line": 5,
+      "description": "LangVersion set to preview in a net10.0 project. Remove it; C# 14 is the default and preview features are not allowed without a decision.",
+      "severity": "medium"
+    },
+    {
+      "id": "P2",
+      "file": "src/Orders.Api/Pricing/IPriceCalculator.cs",
+      "line": 7,
+      "description": "Sync twin of an async method on the interface. Offer only the async method.",
+      "severity": "medium"
+    },
+    {
+      "id": "P3",
+      "file": "src/Orders.Api/Pricing/PriceCalculatorImpl.cs",
+      "line": 3,
+      "description": "Interface plus 'Impl' class for one implementation with no real seam. Use a concrete class (and the 'Impl' suffix breaks the naming rules).",
+      "severity": "low"
+    },
+    {
+      "id": "P4",
+      "file": "src/Orders.Api/Pricing/PriceCalculatorImpl.cs",
+      "line": 9,
+      "description": "The CancellationToken parameter is not passed on; CancellationToken.None is used instead.",
+      "severity": "medium"
+    },
+    {
+      "id": "P5",
+      "file": "src/Orders.Api/Pricing/PriceCalculatorImpl.cs",
+      "line": 14,
+      "description": "Null-forgiving operator hides a real null: a customer without a tier gives a NullReferenceException.",
+      "severity": "high"
+    },
+    {
+      "id": "P6",
+      "file": "src/Orders.Api/Pricing/PriceCalculatorImpl.cs",
+      "line": 15,
+      "description": "String interpolation in a log call. Use a message template with named placeholders.",
+      "severity": "low"
+    },
+    {
+      "id": "P7",
+      "file": "src/Orders.Api/Pricing/PriceCalculatorImpl.cs",
+      "line": 18,
+      "description": "Catch-all that swallows every exception and silently returns the undiscounted subtotal.",
+      "severity": "high"
+    },
+    {
+      "id": "P8",
+      "file": "src/Orders.Api/Pricing/PriceCalculatorImpl.cs",
+      "line": 25,
+      "description": "Sync over async with .Result (thread pool starvation, deadlock risk). The endpoint calls this sync method.",
+      "severity": "high"
+    },
+    {
+      "id": "P9",
+      "file": "src/Orders.Api/Pricing/PriceCalculatorImpl.cs",
+      "line": 27,
+      "description": "async void method. An exception crashes the process. Return Task.",
+      "severity": "high"
+    },
+    {
+      "id": "P10",
+      "file": "src/Orders.Api/Pricing/PriceCalculatorImpl.cs",
+      "line": 34,
+      "description": "Money is computed in double. Use decimal for all money math to avoid rounding errors.",
+      "severity": "high"
+    },
+    {
+      "id": "P11",
+      "file": "src/Orders.Api/Pricing/PriceCalculatorImpl.cs",
+      "line": 40,
+      "description": "DateTime.Now in domain logic (local time, not testable). Inject TimeProvider like the rest of the code.",
+      "severity": "medium"
+    },
+    {
+      "id": "P12",
+      "file": "src/Orders.Api/Pricing/PriceCalculatorImpl.cs",
+      "line": 46,
+      "description": "Math.Round without MidpointRounding uses banker's rounding (2.345 becomes 2.34). The rounding rule is not explicit.",
+      "severity": "medium"
+    }
+  ]
+}

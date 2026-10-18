@@ -24,6 +24,7 @@ claude plugin install <plugin>@maikelsoft-skills
 | [dev-flow](plugins/dev-flow/README.md) | 1.0.0 | Plans and builds a change from an idea to working code: research, questions, plan, specs, tickets, a prototype to validate, and then the build. |
 | [dev-build](plugins/dev-build/README.md) | 1.1.0 | Builds agent skills and agents: research, concept, test, and build. Two skills, `build-skill` and `build-agent`, for Claude Code, the Agent SDK, Managed Agents, and OpenClaw. |
 | [product-flow](plugins/product-flow/README.md) | 1.2.0 | Takes a product idea to an approved backlog in the ticket system, for product owners and business analysts. Seven skills: research, questions, prototype, spec, items, and push. |
+| [dev-stack](plugins/dev-stack/README.md) | 1.0.0 | Stack skills for a .NET 10 team: C#, ASP.NET Core, EF Core, MSTest 4, analyzers, secure coding, and the move to AwesomeAssertions. Each skill has version-specific rules, a check step with a tool, and one report format. |
 
 ## Language rules
 

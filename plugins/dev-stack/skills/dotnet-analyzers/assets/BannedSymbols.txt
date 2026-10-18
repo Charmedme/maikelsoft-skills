@@ -1,0 +1,8 @@
+// BannedApiAnalyzers (RS0030). Format: <documentation comment ID>;<message>
+// Add an entry only after a real review finding.
+P:System.DateTime.Now;Use TimeProvider.GetLocalNow(), so that tests can control the time.
+P:System.DateTime.UtcNow;Use TimeProvider.GetUtcNow(), so that tests can control the time.
+P:System.DateTimeOffset.Now;Use TimeProvider.GetLocalNow(), so that tests can control the time.
+P:System.DateTimeOffset.UtcNow;Use TimeProvider.GetUtcNow(), so that tests can control the time.
+M:System.Threading.Thread.Sleep(System.Int32);Use await Task.Delay(delay, timeProvider, cancellationToken).
+M:System.Threading.Thread.Sleep(System.TimeSpan);Use await Task.Delay(delay, timeProvider, cancellationToken).

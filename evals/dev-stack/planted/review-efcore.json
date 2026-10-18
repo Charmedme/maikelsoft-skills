@@ -1,0 +1,89 @@
+{
+  "skill": "efcore",
+  "planted": [
+    {
+      "id": "P1",
+      "file": "src/Orders.Api/Data/IRepository.cs",
+      "line": 6,
+      "description": "Generic repository and unit of work over DbContext. Over-engineering: DbContext already is both.",
+      "severity": "medium"
+    },
+    {
+      "id": "P2",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 20,
+      "description": "EnableSensitiveDataLogging in all environments. Only in Development.",
+      "severity": "medium"
+    },
+    {
+      "id": "P3",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 21,
+      "description": "Global NoTracking: the shipment endpoint loads the order through the repository, changes it, and SaveChanges does not save the status change.",
+      "severity": "high"
+    },
+    {
+      "id": "P4",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 34,
+      "description": "EnsureCreated before Migrate at startup: EnsureCreated makes the schema without the migrations history, then Migrate fails. Migrations at startup need a team decision (DATA-18).",
+      "severity": "high"
+    },
+    {
+      "id": "P5",
+      "file": "src/Orders.Api/Shipments/Shipment.cs",
+      "line": 5,
+      "description": "Guid.NewGuid() for the key. Decision DATA-07 says the provider generates the key (UUIDv7).",
+      "severity": "medium"
+    },
+    {
+      "id": "P6",
+      "file": "src/Orders.Api/Shipments/Shipment.cs",
+      "line": 15,
+      "description": "DateTime for an instant (and DateTime.Now is written to it). Use DateTimeOffset like Order; local DateTime fails on timestamptz in Npgsql.",
+      "severity": "high"
+    },
+    {
+      "id": "P7",
+      "file": "src/Orders.Api/Data/ShipmentConfiguration.cs",
+      "line": 13,
+      "description": "OwnsOne for a value object. In EF Core 10 use ComplexProperty.",
+      "severity": "low"
+    },
+    {
+      "id": "P8",
+      "file": "src/Orders.Api/Data/ShipmentConfiguration.cs",
+      "line": 12,
+      "description": "No concurrency token on the shipment (and order status changes have none). Add [Timestamp] uint Version (xmin) and handle DbUpdateConcurrencyException.",
+      "severity": "medium"
+    },
+    {
+      "id": "P9",
+      "file": "src/Orders.Api/Shipments/ShipmentEndpoints.cs",
+      "line": 28,
+      "description": "DateTime.Now (local time) written to PostgreSQL. Use TimeProvider.GetUtcNow().",
+      "severity": "high"
+    },
+    {
+      "id": "P10",
+      "file": "src/Orders.Api/Shipments/ShipmentEndpoints.cs",
+      "line": 37,
+      "description": "SQL injection: interpolated string in FromSqlRaw (EF1002). Use FromSql or LINQ.",
+      "severity": "high"
+    },
+    {
+      "id": "P11",
+      "file": "src/Orders.Api/Shipments/ShipmentEndpoints.cs",
+      "line": 50,
+      "description": "N+1 queries: one query per order in a loop. Use one query with a join or Contains.",
+      "severity": "medium"
+    },
+    {
+      "id": "P12",
+      "file": "src/Orders.Api/Shipments/ShipmentEndpoints.cs",
+      "line": 53,
+      "description": "Case-insensitive search with ToLower() (no index use). Use EF.Functions.ILike or a collation.",
+      "severity": "low"
+    }
+  ]
+}

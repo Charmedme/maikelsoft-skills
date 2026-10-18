@@ -1,0 +1,99 @@
+{
+  "csharp-trap": {
+    "naive": {
+      "C4": false,
+      "C5": false,
+      "C6": false
+    },
+    "good": {
+      "C4": true,
+      "C5": true,
+      "C6": true
+    }
+  },
+  "aspnetcore-trap": {
+    "naive": {
+      "C4": false,
+      "C5": true,
+      "C6": false
+    },
+    "good": {
+      "C4": true,
+      "C5": true,
+      "C6": true
+    }
+  },
+  "efcore-trap": {
+    "naive": {
+      "C4": true,
+      "C5": false,
+      "C6": false
+    },
+    "good": {
+      "C4": true,
+      "C5": true,
+      "C6": true
+    }
+  },
+  "dotnet-testing-trap": {
+    "naive": {
+      "C1": true,
+      "C2": true,
+      "C4": false,
+      "C5": false,
+      "C6": true
+    },
+    "good": {
+      "C1": true,
+      "C2": true,
+      "C4": true,
+      "C5": true,
+      "C6": true
+    },
+    "fixture": {
+      "C1": false,
+      "C6": false
+    }
+  },
+  "dotnet-analyzers-trap": {
+    "naive": {
+      "C4": false,
+      "C5": false,
+      "C6": false,
+      "C7": false
+    },
+    "good": {
+      "C1": true,
+      "C4": true,
+      "C5": true,
+      "C6": true,
+      "C7": true
+    },
+    "analyze-gate": {
+      "C4": true,
+      "C5": false
+    }
+  },
+  "secure-coding-trap": {
+    "fixture": {
+      "C1": false,
+      "C7": false
+    },
+    "naive": {
+      "C1": true,
+      "C4": false,
+      "C5": false,
+      "C6": false,
+      "C7": false,
+      "C8": false
+    },
+    "good": {
+      "C1": true,
+      "C4": true,
+      "C5": true,
+      "C6": true,
+      "C7": true,
+      "C8": true
+    }
+  }
+}

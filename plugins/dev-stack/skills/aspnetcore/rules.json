@@ -1,0 +1,767 @@
+{
+  "skill": "aspnetcore",
+  "rules": [
+    {
+      "id": "ASP-NEW-HTTPCLIENT",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**"
+      ],
+      "pattern": "\\bnew\\s+HttpClient\\s*\\((?!\\s*new\\s+SocketsHttpHandler)|\\bHttpClient\\s+\\w+\\s*=\\s*new\\s*\\(\\s*\\)",
+      "message": "A new HttpClient per call exhausts sockets, and a long-lived one does not see DNS changes.",
+      "fix": "Use a typed client from AddHttpClient<T>(), or IHttpClientFactory in a singleton.",
+      "match": [
+        "using var client = new HttpClient();",
+        "var http = new HttpClient(handler) { BaseAddress = uri };",
+        "HttpClient client = new();"
+      ],
+      "nomatch": [
+        "builder.Services.AddHttpClient<PaymentClient>();",
+        "public static readonly HttpClient Client = new HttpClient(new SocketsHttpHandler { PooledConnectionLifetime = TimeSpan.FromMinutes(2) });",
+        "var client = factory.CreateClient(\"rates\");"
+      ]
+    },
+    {
+      "id": "ASP-BUILD-PROVIDER",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**"
+      ],
+      "pattern": "\\.BuildServiceProvider\\s*\\(",
+      "message": "BuildServiceProvider during registration makes a second container with its own singletons. ASP0000 sees it only in some places.",
+      "fix": "Use the (sp, ...) => factory overloads or IOptions<T>.",
+      "match": [
+        "using var sp = services.BuildServiceProvider();",
+        "var options = builder.Services.BuildServiceProvider().GetRequiredService<IOptions<MailOptions>>();"
+      ],
+      "nomatch": [
+        "services.AddSingleton(sp => new MailSender(sp.GetRequiredService<IOptions<MailOptions>>()));",
+        "var app = builder.Build();"
+      ]
+    },
+    {
+      "id": "ASP-WITH-OPENAPI",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\.WithOpenApi\\s*\\(",
+      "message": "WithOpenApi is deprecated (ASPDEPR002 on net10.0) and does not feed the built-in generator.",
+      "fix": "Remove it. Use WithSummary, XML comments, or AddOpenApiOperationTransformer.",
+      "match": [
+        "group.MapGet(\"/{id}\", GetById).WithOpenApi();",
+        "    .WithOpenApi(op => { op.Summary = \"Get\"; return op; });"
+      ],
+      "nomatch": [
+        "group.MapGet(\"/{id}\", GetById).WithName(\"GetOrder\").WithSummary(\"Get an order\");",
+        "builder.Services.AddOpenApi();"
+      ]
+    },
+    {
+      "id": "ASP-WEBHOST",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\bWebHost\\.CreateDefaultBuilder\\s*\\(|\\bnew\\s+WebHostBuilder\\s*\\(",
+      "message": "WebHost and WebHostBuilder are obsolete in .NET 10 (ASPDEPR008).",
+      "fix": "Use WebApplication.CreateBuilder(args) in Program.cs.",
+      "match": [
+        "WebHost.CreateDefaultBuilder(args).UseStartup<Startup>();",
+        "var host = new WebHostBuilder().UseKestrel().Build();"
+      ],
+      "nomatch": [
+        "var builder = WebApplication.CreateBuilder(args);",
+        "builder.WebHost.UseKestrel();"
+      ]
+    },
+    {
+      "id": "ASP-STARTUP-CLASS",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\bvoid\\s+ConfigureServices\\s*\\(\\s*IServiceCollection\\b",
+      "message": "Startup classes are the old hosting model. New code registers services in Program.cs and AddX extension methods.",
+      "fix": "Move the registrations to builder.Services in Program.cs or to an AddX(this IServiceCollection) method.",
+      "match": [
+        "public void ConfigureServices(IServiceCollection services)"
+      ],
+      "nomatch": [
+        "public static IServiceCollection AddOrders(this IServiceCollection services)",
+        "builder.Services.AddOrders();"
+      ]
+    },
+    {
+      "id": "ASP-DEV-EXCEPTION-PAGE",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\.UseDeveloperExceptionPage\\s*\\(",
+      "message": "WebApplication turns on the developer exception page in Development. An explicit call can leak stack traces in other environments.",
+      "fix": "Remove the call. Use UseExceptionHandler() and AddProblemDetails().",
+      "match": [
+        "app.UseDeveloperExceptionPage();"
+      ],
+      "nomatch": [
+        "app.UseExceptionHandler();",
+        "app.UseStatusCodePages();"
+      ]
+    },
+    {
+      "id": "ASP-EXCEPTION-MESSAGE",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**"
+      ],
+      "pattern": "(\\bDetail\\s*=|\\bdetail:|\\bStatusCode\\s*\\(\\s*500\\s*,|\\bProblem\\s*\\()\\s*(ex|exception|e|error)\\.Message\\b",
+      "message": "An exception message in a response can leak internal details.",
+      "fix": "Write a fixed title and a stable code. Log the exception.",
+      "match": [
+        "Detail = exception.Message,",
+        "return StatusCode(500, ex.Message);",
+        "return TypedResults.Problem(ex.Message);",
+        "return Results.Problem(detail: e.Message);"
+      ],
+      "nomatch": [
+        "Title = \"The resource was changed by another request.\",",
+        "LogConflict(exception, httpContext.Request.Path);"
+      ]
+    },
+    {
+      "id": "ASP-RESULTS-UNTYPED",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**"
+      ],
+      "pattern": "(?<![\\w.])Results\\.(Ok|Created|CreatedAtRoute|Accepted|NoContent|NotFound|BadRequest|Conflict|Unauthorized|Forbid|UnprocessableEntity|Problem|ValidationProblem)\\s*\\(",
+      "message": "Results.X returns IResult. The endpoint then has no response type for OpenAPI and tests.",
+      "fix": "Return TypedResults.X with a Results<T1, T2> return type.",
+      "match": [
+        "return Results.Ok(order);",
+        "app.MapGet(\"/\", () => Results.NotFound());"
+      ],
+      "nomatch": [
+        "return TypedResults.Ok(order);",
+        "private static async Task<Results<Ok<OrderResponse>, NotFound>> GetById(",
+        "return TypedResults.Problem(statusCode: 409);"
+      ]
+    },
+    {
+      "id": "ASP-OPTIONS-NO-VALIDATE",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**"
+      ],
+      "pattern": "\\.AddOptions<[^>]+>\\(\\)(?:(?!ValidateOnStart)[^;])*;",
+      "message": "Options without ValidateOnStart fail at the first use, not at the start.",
+      "fix": "Add .ValidateDataAnnotations().ValidateOnStart(), or use AddOptionsWithValidateOnStart<T>().",
+      "match": [
+        "services.AddOptions<MailOptions>().BindConfiguration(\"Mail\");",
+        "builder.Services.AddOptions<PaymentOptions>().BindConfiguration(PaymentOptions.SectionName).ValidateDataAnnotations();"
+      ],
+      "nomatch": [
+        "builder.Services.AddOptions<PaymentOptions>().BindConfiguration(PaymentOptions.SectionName).ValidateDataAnnotations().ValidateOnStart();",
+        "services.AddOptionsWithValidateOnStart<MailOptions>().BindConfiguration(\"Mail\");"
+      ]
+    },
+    {
+      "id": "ASP-OPTIONS-CONFIGURE-SECTION",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**"
+      ],
+      "pattern": "\\.Configure<[^>]+>\\(\\s*[\\w.]*\\.GetSection\\s*\\(",
+      "message": "Configure<T>(section) binds without validation and without ValidateOnStart.",
+      "fix": "Use AddOptions<T>().BindConfiguration(section).ValidateDataAnnotations().ValidateOnStart().",
+      "match": [
+        "builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection(\"Smtp\"));",
+        "services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));"
+      ],
+      "nomatch": [
+        "builder.Services.Configure<ForwardedHeadersOptions>(options =>",
+        "builder.Services.Configure<HostOptions>(options => options.ShutdownTimeout = TimeSpan.FromSeconds(25));"
+      ]
+    },
+    {
+      "id": "ASP-ORDER-CORS",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**"
+      ],
+      "pattern": "\\.UseAuthorization\\s*\\(\\s*\\)[\\s\\S]*?\\.UseCors\\s*\\(",
+      "message": "UseCors after UseAuthorization makes preflight requests fail.",
+      "fix": "Call UseCors before UseAuthentication and UseAuthorization.",
+      "match": [
+        "app.UseAuthorization(); app.UseCors(\"web\");"
+      ],
+      "nomatch": [
+        "app.UseCors(\"web\"); app.UseAuthentication(); app.UseAuthorization();"
+      ]
+    },
+    {
+      "id": "ASP-ORDER-AUTH",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**"
+      ],
+      "pattern": "\\.UseAuthorization\\s*\\(\\s*\\)[\\s\\S]*?\\.UseAuthentication\\s*\\(\\s*\\)",
+      "message": "UseAuthorization before UseAuthentication sees no user.",
+      "fix": "Call UseAuthentication, then UseAuthorization.",
+      "match": [
+        "app.UseAuthorization(); app.UseAuthentication();"
+      ],
+      "nomatch": [
+        "app.UseAuthentication(); app.UseAuthorization();"
+      ]
+    },
+    {
+      "id": "ASP-ORDER-FORWARDED",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**"
+      ],
+      "pattern": "\\.Use(HttpsRedirection|Hsts|Cors|Authentication|Authorization|RateLimiter)\\s*\\([\\s\\S]*?\\.UseForwardedHeaders\\s*\\(",
+      "message": "Forwarded headers come too late: the middleware before it sees the proxy address and scheme.",
+      "fix": "Call UseForwardedHeaders before the other middleware.",
+      "match": [
+        "app.UseHttpsRedirection(); app.UseForwardedHeaders();",
+        "app.UseRateLimiter(); app.UseForwardedHeaders();"
+      ],
+      "nomatch": [
+        "app.UseForwardedHeaders(); app.UseExceptionHandler(); app.UseHttpsRedirection();"
+      ]
+    },
+    {
+      "id": "ASP-POLLY-POLICY",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\.Add(TransientHttpErrorPolicy|PolicyHandler|PolicyHandlerFromRegistry)\\s*\\(",
+      "message": "These Polly 7 policies come from Microsoft.Extensions.Http.Polly, which is legacy.",
+      "fix": "Use AddStandardResilienceHandler() from Microsoft.Extensions.Http.Resilience.",
+      "match": [
+        ".AddTransientHttpErrorPolicy(p => p.WaitAndRetryAsync(3, i => TimeSpan.FromSeconds(i)));",
+        ".AddPolicyHandler(GetRetryPolicy());"
+      ],
+      "nomatch": [
+        ".AddStandardResilienceHandler();",
+        ".AddResilienceHandler(\"custom\", pipeline => pipeline.AddTimeout(TimeSpan.FromSeconds(5)));"
+      ]
+    },
+    {
+      "id": "ASP-FV-AUTOVALIDATION",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\.AddFluentValidation(AutoValidation|ClientsideAdapters)?\\s*\\(",
+      "message": "The FluentValidation.AspNetCore integration is deprecated, MVC only, and runs rules synchronously.",
+      "fix": "Call ValidateAsync in the handler or in a small endpoint filter. See dev-stack:fluentvalidation.",
+      "match": [
+        "builder.Services.AddFluentValidationAutoValidation();",
+        "services.AddMvc().AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<Startup>());"
+      ],
+      "nomatch": [
+        "builder.Services.AddValidatorsFromAssemblyContaining<CreateOrderValidator>();",
+        ".AddEndpointFilter<ValidationFilter<CreateOrder>>();"
+      ]
+    },
+    {
+      "id": "ASP-PKG-FV-ASPNETCORE",
+      "kind": "package",
+      "ecosystem": "nuget",
+      "package": "FluentValidation.AspNetCore",
+      "versions": "*",
+      "severity": "warning",
+      "message": "FluentValidation.AspNetCore is deprecated and no longer maintained.",
+      "fix": "Reference FluentValidation and FluentValidation.DependencyInjectionExtensions, and validate explicitly."
+    },
+    {
+      "id": "ASP-PKG-HTTP-POLLY",
+      "kind": "package",
+      "ecosystem": "nuget",
+      "package": "Microsoft.Extensions.Http.Polly",
+      "versions": "*",
+      "severity": "warning",
+      "message": "Microsoft.Extensions.Http.Polly pins Polly 7. New code uses Microsoft.Extensions.Http.Resilience (Polly 8).",
+      "fix": "Replace the policies with AddStandardResilienceHandler()."
+    },
+    {
+      "id": "ASP-PKG-MEDIATR",
+      "kind": "package",
+      "ecosystem": "nuget",
+      "package": "MediatR*",
+      "versions": "*",
+      "severity": "error",
+      "message": "MediatR is not allowed (team decision, license change since version 13).",
+      "fix": "Inject a handler class into the endpoint (decision API-06)."
+    },
+    {
+      "id": "ASP-PKG-AUTOMAPPER",
+      "kind": "package",
+      "ecosystem": "nuget",
+      "package": "AutoMapper*",
+      "versions": "*",
+      "severity": "error",
+      "message": "AutoMapper is not allowed (team decision, license change since version 15).",
+      "fix": "Map by hand, or use Mapperly for large mappings (decision API-07)."
+    },
+    {
+      "id": "ASP-DET-API-01",
+      "kind": "detect",
+      "decision": "API-01",
+      "files": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**"
+      ],
+      "pattern": ":\\s*(Controller|ControllerBase)\\b|\\[ApiController\\]",
+      "match": [
+        "public sealed class InvoicesController(InvoiceHandler invoices) : ControllerBase",
+        "[ApiController]"
+      ],
+      "nomatch": [
+        "public static class OrderEndpoints",
+        "var group = app.MapGroup(\"/api/orders\");"
+      ]
+    },
+    {
+      "id": "ASP-DET-API-02",
+      "kind": "detect",
+      "decision": "API-02",
+      "files": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**"
+      ],
+      "pattern": "\\.MapGroup\\s*\\(|:\\s*(ICarterModule|Endpoint(WithoutRequest)?<)",
+      "match": [
+        "var group = app.MapGroup(\"/api/orders\").WithTags(\"Orders\");",
+        "public sealed class GetOrder : Endpoint<GetOrderRequest, OrderResponse>"
+      ],
+      "nomatch": [
+        "app.MapGet(\"/\", () => \"ok\");"
+      ]
+    },
+    {
+      "id": "ASP-DET-API-04",
+      "kind": "detect",
+      "decision": "API-04",
+      "files": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**"
+      ],
+      "pattern": "\\.AddProblemDetails\\s*\\(",
+      "match": [
+        "builder.Services.AddProblemDetails();"
+      ],
+      "nomatch": [
+        "app.UseExceptionHandler();"
+      ]
+    },
+    {
+      "id": "ASP-DET-API-05",
+      "kind": "detect",
+      "decision": "API-05",
+      "files": [
+        "**/*.cs",
+        "**/*.csproj",
+        "**/*.props"
+      ],
+      "pattern": "Include=\"(ErrorOr|FluentResults|OneOf|Ardalis\\.Result)[\\w.]*\"|^\\s*using\\s+(ErrorOr|FluentResults|OneOf|Ardalis\\.Result)\\s*;",
+      "match": [
+        "<PackageVersion Include=\"ErrorOr\" Version=\"2.1.1\" />",
+        "<PackageReference Include=\"FluentResults\" />",
+        "using OneOf;"
+      ],
+      "nomatch": [
+        "<PackageVersion Include=\"Microsoft.AspNetCore.OpenApi\" Version=\"10.0.13\" />",
+        "using Microsoft.AspNetCore.Http.HttpResults;"
+      ]
+    },
+    {
+      "id": "ASP-DET-API-06",
+      "kind": "detect",
+      "decision": "API-06",
+      "files": [
+        "**/*.cs",
+        "**/*.csproj",
+        "**/*.props"
+      ],
+      "pattern": "Include=\"(MediatR|Mediator\\.Abstractions|Mediator\\.SourceGenerator|WolverineFx)[\\w.]*\"|\\b(ISender|IMediator)\\b",
+      "match": [
+        "<PackageVersion Include=\"Mediator.SourceGenerator\" Version=\"3.0.2\" />",
+        "public static Task<IResult> Create(CreateOrder command, ISender sender)"
+      ],
+      "nomatch": [
+        "private static async Task<Created<OrderResponse>> Create(CreateOrderRequest request, OrderHandler orders, CancellationToken cancellationToken)"
+      ]
+    },
+    {
+      "id": "ASP-DET-API-07",
+      "kind": "detect",
+      "decision": "API-07",
+      "files": [
+        "**/*.cs",
+        "**/*.csproj",
+        "**/*.props"
+      ],
+      "pattern": "Include=\"(Riok\\.Mapperly|AutoMapper|Mapster)[\\w.]*\"|^\\s*\\[Mapper\\b",
+      "match": [
+        "<PackageVersion Include=\"Riok.Mapperly\" Version=\"4.3.1\" />",
+        "[Mapper]"
+      ],
+      "nomatch": [
+        "public static OrderResponse ToResponse(this Order order) =>"
+      ]
+    },
+    {
+      "id": "ASP-DET-API-08",
+      "kind": "detect",
+      "decision": "API-08",
+      "files": [
+        "**/*.cs",
+        "**/*.csproj",
+        "**/*.props"
+      ],
+      "pattern": "Include=\"FluentValidation[\\w.]*\"|\\.AddValidation\\s*\\(|:\\s*AbstractValidator<",
+      "match": [
+        "builder.Services.AddValidation();",
+        "public sealed class CreateOrderValidator : AbstractValidator<CreateOrder>",
+        "<PackageVersion Include=\"FluentValidation\" Version=\"12.2.0\" />"
+      ],
+      "nomatch": [
+        "builder.Services.AddProblemDetails();"
+      ]
+    },
+    {
+      "id": "ASP-DET-API-09",
+      "kind": "detect",
+      "decision": "API-09",
+      "files": [
+        "**/*.cs",
+        "**/*.csproj",
+        "**/*.props"
+      ],
+      "pattern": "Include=\"Swashbuckle\\.AspNetCore[\\w.]*\"|\\.AddSwaggerGen\\s*\\(",
+      "match": [
+        "<PackageReference Include=\"Swashbuckle.AspNetCore\" Version=\"10.3.0\" />",
+        "builder.Services.AddSwaggerGen();"
+      ],
+      "nomatch": [
+        "builder.Services.AddOpenApi();",
+        "<PackageVersion Include=\"Scalar.AspNetCore\" Version=\"2.18.0\" />"
+      ]
+    },
+    {
+      "id": "ASP-DET-API-11",
+      "kind": "detect",
+      "decision": "API-11",
+      "files": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**"
+      ],
+      "pattern": "\\bConfigureHttpJsonOptions\\s*\\(|\\.AddJsonOptions\\s*\\(",
+      "match": [
+        "builder.Services.ConfigureHttpJsonOptions(options =>",
+        "builder.Services.AddControllers().AddJsonOptions(options =>"
+      ],
+      "nomatch": [
+        "builder.Services.AddControllers();"
+      ]
+    },
+    {
+      "id": "ASP-DET-API-14",
+      "kind": "detect",
+      "decision": "API-14",
+      "files": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**"
+      ],
+      "pattern": "\\.AddRateLimiter\\s*\\(",
+      "match": [
+        "builder.Services.AddRateLimiter(options =>"
+      ],
+      "nomatch": [
+        "app.UseRouting();"
+      ]
+    },
+    {
+      "id": "ASP-DET-API-15",
+      "kind": "detect",
+      "decision": "API-15",
+      "files": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**"
+      ],
+      "pattern": "\\.AddCors\\s*\\(",
+      "match": [
+        "builder.Services.AddCors(options =>"
+      ],
+      "nomatch": [
+        "app.UseHttpsRedirection();"
+      ]
+    },
+    {
+      "id": "ASP-DET-API-16",
+      "kind": "detect",
+      "decision": "API-16",
+      "files": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**"
+      ],
+      "pattern": "\\.MapHealthChecks\\s*\\(",
+      "match": [
+        "app.MapHealthChecks(\"/healthz/live\", new() { Predicate = _ => false });"
+      ],
+      "nomatch": [
+        "builder.Services.AddHealthChecks();"
+      ]
+    },
+    {
+      "id": "ASP-DET-CFG-01",
+      "kind": "detect",
+      "decision": "CFG-01",
+      "files": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**"
+      ],
+      "pattern": "\\.AddOptions(WithValidateOnStart)?<",
+      "match": [
+        "builder.Services.AddOptions<PaymentOptions>()",
+        "services.AddOptionsWithValidateOnStart<MailOptions>();"
+      ],
+      "nomatch": [
+        "var value = configuration[\"Payment:BaseUrl\"];"
+      ]
+    },
+    {
+      "id": "ASP-DET-CFG-03",
+      "kind": "detect",
+      "decision": "CFG-03",
+      "files": [
+        "**/*.csproj",
+        "**/*.props"
+      ],
+      "pattern": "Include=\"(Microsoft\\.FeatureManagement|OpenFeature)[\\w.]*\"",
+      "match": [
+        "<PackageVersion Include=\"Microsoft.FeatureManagement.AspNetCore\" Version=\"4.8.0\" />",
+        "<PackageReference Include=\"OpenFeature\" />"
+      ],
+      "nomatch": [
+        "<PackageVersion Include=\"Microsoft.Extensions.Options\" Version=\"10.0.13\" />"
+      ]
+    },
+    {
+      "id": "ASP-DET-CFG-05",
+      "kind": "detect",
+      "decision": "CFG-05",
+      "files": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**"
+      ],
+      "pattern": "\\.AddHttpClient\\s*[<(]|\\.AddRefitClient\\s*<",
+      "match": [
+        "builder.Services.AddHttpClient<PaymentClient>();",
+        "services.AddRefitClient<IGitHubApi>();"
+      ],
+      "nomatch": [
+        "var client = factory.CreateClient(\"rates\");"
+      ]
+    },
+    {
+      "id": "ASP-DET-CFG-06",
+      "kind": "detect",
+      "decision": "CFG-06",
+      "files": [
+        "**/*.cs",
+        "**/*.csproj",
+        "**/*.props"
+      ],
+      "pattern": "\\.Add(Standard)?ResilienceHandler\\s*\\(|Include=\"Microsoft\\.Extensions\\.Http\\.Polly\"",
+      "match": [
+        "builder.Services.ConfigureHttpClientDefaults(http => http.AddStandardResilienceHandler());",
+        "<PackageReference Include=\"Microsoft.Extensions.Http.Polly\" Version=\"10.0.13\" />"
+      ],
+      "nomatch": [
+        "builder.Services.AddHttpClient<PaymentClient>();"
+      ]
+    },
+    {
+      "id": "ASP-DET-CFG-07",
+      "kind": "detect",
+      "decision": "CFG-07",
+      "files": [
+        "**/*.cs",
+        "**/*.csproj",
+        "**/*.props"
+      ],
+      "pattern": ":\\s*BackgroundService\\b|Include=\"(Hangfire|Quartz|TickerQ)[\\w.]*\"",
+      "match": [
+        "public sealed class OutboxPublisher(IServiceScopeFactory scopes) : BackgroundService",
+        "<PackageVersion Include=\"Hangfire.Core\" Version=\"1.8.25\" />"
+      ],
+      "nomatch": [
+        "builder.Services.AddHostedService<OutboxPublisher>();"
+      ]
+    },
+    {
+      "id": "ASP-DET-CFG-08",
+      "kind": "detect",
+      "decision": "CFG-08",
+      "files": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**"
+      ],
+      "pattern": "\\.AddAuthentication\\s*\\(|\\.AddJwtBearer\\s*\\(|\\.AddMicrosoftIdentityWebApi\\s*\\(",
+      "match": [
+        "builder.Services.AddAuthentication().AddJwtBearer();"
+      ],
+      "nomatch": [
+        "app.UseAuthentication();"
+      ]
+    },
+    {
+      "id": "ASP-DET-CFG-09",
+      "kind": "detect",
+      "decision": "CFG-09",
+      "files": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**"
+      ],
+      "pattern": "\\.SetFallbackPolicy\\s*\\(|\\bFallbackPolicy\\s*=",
+      "match": [
+        "    .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build())",
+        "options.FallbackPolicy = policy;"
+      ],
+      "nomatch": [
+        "group.RequireAuthorization(\"orders:write\");"
+      ]
+    }
+  ]
+}

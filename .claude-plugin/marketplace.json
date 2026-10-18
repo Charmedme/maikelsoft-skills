@@ -88,6 +88,26 @@
         "dutch",
         "b1"
       ]
+    },
+    {
+      "name": "dev-stack",
+      "source": "./plugins/dev-stack",
+      "description": "Stack skills for a .NET 10 team: C#, ASP.NET Core, EF Core, MSTest 4, analyzers, secure coding, and the move to AwesomeAssertions. Version-specific rules, a check step with a tool, and one report format.",
+      "category": "development",
+      "tags": [
+        "dotnet",
+        "csharp",
+        "aspnetcore",
+        "efcore",
+        "mstest",
+        "roslyn-analyzers",
+        "security",
+        "awesomeassertions",
+        "asd-ste100",
+        "simplified-technical-english",
+        "dutch",
+        "b1"
+      ]
     }
   ]
 }

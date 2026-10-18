@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RuleSet Name="Orders rules" Description="Code analysis rules for the Orders API." ToolsVersion="17.0">
+  <Rules AnalyzerId="Microsoft.CodeAnalysis.NetAnalyzers" RuleNamespace="Microsoft.CodeAnalysis.NetAnalyzers">
+    <Rule Id="CA1305" Action="None" />
+    <Rule Id="CA1848" Action="None" />
+    <Rule Id="CA2016" Action="None" />
+  </Rules>
+</RuleSet>

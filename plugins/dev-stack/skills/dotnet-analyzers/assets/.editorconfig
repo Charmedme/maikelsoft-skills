@@ -1,0 +1,117 @@
+# Analyzer baseline of the dev-stack:dotnet-analyzers skill (verified 2026-10-16, .NET SDK 10.0.402).
+# Put this file in the repository root. Write each comment on its own line:
+# EditorConfig does not define comments after a value.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{csproj,props,targets,json,yml,yaml,xml,slnx}]
+indent_size = 2
+
+[*.cs]
+# Code style. The build reports these because EnforceCodeStyleInBuild = true.
+csharp_style_namespace_declarations = file_scoped:warning
+csharp_prefer_braces = true:warning
+csharp_style_var_when_type_is_apparent = true:suggestion
+dotnet_sort_system_directives_first = true
+
+# Unused code and one shape for all files.
+dotnet_diagnostic.IDE0005.severity = warning
+dotnet_diagnostic.IDE0011.severity = warning
+dotnet_diagnostic.IDE0051.severity = warning
+dotnet_diagnostic.IDE0052.severity = warning
+dotnet_diagnostic.IDE0059.severity = warning
+dotnet_diagnostic.IDE0060.severity = warning
+dotnet_diagnostic.IDE0161.severity = warning
+
+# Naming. IDE1006 reports a name that breaks a rule.
+dotnet_diagnostic.IDE1006.severity = warning
+
+# Interfaces start with I.
+dotnet_naming_rule.interfaces_begin_with_i.symbols = interfaces
+dotnet_naming_rule.interfaces_begin_with_i.style = prefix_i
+dotnet_naming_rule.interfaces_begin_with_i.severity = warning
+dotnet_naming_symbols.interfaces.applicable_kinds = interface
+dotnet_naming_style.prefix_i.required_prefix = I
+dotnet_naming_style.prefix_i.capitalization = pascal_case
+
+# Types, members, and constants use PascalCase.
+dotnet_naming_rule.types_and_members_pascal.symbols = types_and_members
+dotnet_naming_rule.types_and_members_pascal.style = pascal
+dotnet_naming_rule.types_and_members_pascal.severity = warning
+dotnet_naming_symbols.types_and_members.applicable_kinds = namespace, class, struct, enum, delegate, method, property, event
+dotnet_naming_style.pascal.capitalization = pascal_case
+
+dotnet_naming_rule.constants_pascal.symbols = constants
+dotnet_naming_rule.constants_pascal.style = pascal
+dotnet_naming_rule.constants_pascal.severity = warning
+dotnet_naming_symbols.constants.applicable_kinds = field, local
+dotnet_naming_symbols.constants.required_modifiers = const
+
+# Private and internal fields use _camelCase. Static fields too (one style, no s_ prefix).
+dotnet_naming_rule.private_fields_underscore.symbols = private_fields
+dotnet_naming_rule.private_fields_underscore.style = underscore_camel
+dotnet_naming_rule.private_fields_underscore.severity = warning
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private, internal, private_protected
+dotnet_naming_style.underscore_camel.required_prefix = _
+dotnet_naming_style.underscore_camel.capitalization = camel_case
+
+# Parameters and locals use camelCase.
+dotnet_naming_rule.parameters_and_locals_camel.symbols = parameters_and_locals
+dotnet_naming_rule.parameters_and_locals_camel.style = camel
+dotnet_naming_rule.parameters_and_locals_camel.severity = warning
+dotnet_naming_symbols.parameters_and_locals.applicable_kinds = parameter, local
+dotnet_naming_style.camel.capitalization = camel_case
+
+# .NET analyzers (latest-recommended). Off: low value in apps.
+# CA1848 asks for LoggerMessage delegates everywhere. CA2254 (constant template) stays on.
+dotnet_diagnostic.CA1848.severity = none
+# CA1716 flags namespace names such as Shared or Global.
+dotnet_diagnostic.CA1716.severity = none
+# CA1873 flags property access in log arguments on the .NET 10 SDK. The .NET 11 SDK fixes the noise:
+# remove this line when global.json uses SDK 11. CA1873 stays visible as a note in the SARIF file.
+dotnet_diagnostic.CA1873.severity = suggestion
+
+# Roslynator. Keep the defaults (Info). Raise only the correctness rules to warning.
+# RCS1044 (throw ex) is a duplicate of CA2200.
+# Do not use dotnet_analyzer_diagnostic.category-roslynator.severity: it also raises Hidden rules.
+dotnet_diagnostic.RCS1059.severity = warning
+dotnet_diagnostic.RCS1075.severity = warning
+dotnet_diagnostic.RCS1155.severity = warning
+dotnet_diagnostic.RCS1169.severity = warning
+dotnet_diagnostic.RCS1202.severity = warning
+dotnet_diagnostic.RCS1210.severity = warning
+dotnet_diagnostic.RCS1215.severity = warning
+dotnet_diagnostic.RCS1229.severity = warning
+# RCS1251 conflicts with the common record style.
+dotnet_diagnostic.RCS1251.severity = none
+dotnet_diagnostic.RCS1044.severity = none
+
+# Meziantou. Off: duplicates of other rules, so that one problem gives one finding.
+# MA0001 = CA1307 to CA1310, MA0004 = CA2007, MA0011 = CA1304/CA1305, MA0027 = CA2200,
+# MA0038 = CA1822, MA0134 = VSTHRD110. MA0006 flags each string ==, which is already ordinal.
+dotnet_diagnostic.MA0001.severity = none
+dotnet_diagnostic.MA0004.severity = none
+dotnet_diagnostic.MA0006.severity = none
+dotnet_diagnostic.MA0011.severity = none
+dotnet_diagnostic.MA0027.severity = none
+dotnet_diagnostic.MA0038.severity = none
+dotnet_diagnostic.MA0134.severity = none
+# MA0026: a TODO belongs in the backlog, not in the build log.
+dotnet_diagnostic.MA0026.severity = none
+
+# VS Threading analyzers. VSTHRD100 (async void) and VSTHRD110 (unobserved task) stay on.
+# VSTHRD200 (Async suffix) and VSTHRD111 (ConfigureAwait) are noise in ASP.NET Core apps.
+dotnet_diagnostic.VSTHRD200.severity = none
+dotnet_diagnostic.VSTHRD111.severity = none
+
+[tests/**.cs]
+# Test names such as Method_State_Result.
+dotnet_diagnostic.CA1707.severity = none

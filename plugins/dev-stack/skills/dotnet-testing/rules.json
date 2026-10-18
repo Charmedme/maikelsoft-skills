@@ -1,0 +1,509 @@
+{
+  "skill": "dotnet-testing",
+  "rules": [
+    {
+      "id": "TST-PKG-FA8",
+      "kind": "package",
+      "ecosystem": "nuget",
+      "package": "FluentAssertions",
+      "versions": ">=8.0.0",
+      "severity": "error",
+      "message": "FluentAssertions 8 and later need a paid Xceed license for commercial use. It is not allowed.",
+      "fix": "Pin FluentAssertions to [7.2.2,8.0.0), or migrate to AwesomeAssertions 9 with dev-stack:migrate-fluentassertions (human approval first)."
+    },
+    {
+      "id": "TST-PKG-FA7-BRIDGE",
+      "kind": "package",
+      "ecosystem": "nuget",
+      "package": "FluentAssertions",
+      "versions": ">=7.0.0,<8.0.0",
+      "severity": "info",
+      "message": "FluentAssertions 7 does not detect MSTest 4. With MSTest 4, one [AssemblyInitialize] in this test project must set Services.ThrowException.",
+      "fix": "Add: Services.ThrowException = message => throw new AssertFailedException(message); (namespace FluentAssertions.Common)."
+    },
+    {
+      "id": "TST-PKG-MOQ-SPONSORLINK",
+      "kind": "package",
+      "ecosystem": "nuget",
+      "package": "Moq",
+      "versions": ">=4.20.0,<4.20.2",
+      "severity": "error",
+      "message": "Moq 4.20.0 and 4.20.1 contain SponsorLink.",
+      "fix": "Use Moq 4.20.2 or later in an existing repo. Use NSubstitute in a new repo (TEST-03)."
+    },
+    {
+      "id": "TST-PKG-EF-INMEMORY",
+      "kind": "package",
+      "ecosystem": "nuget",
+      "package": "Microsoft.EntityFrameworkCore.InMemory",
+      "versions": "*",
+      "severity": "warning",
+      "message": "The EF Core in-memory provider is not a test database. It has no transactions, no raw SQL, and other query behavior.",
+      "fix": "Use Testcontainers with the production engine and a Respawn reset (TEST-07, DATA-20)."
+    },
+    {
+      "id": "TST-EXPECTED-EXCEPTION",
+      "kind": "regex",
+      "severity": "error",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "[\\[,]\\s*ExpectedException(Attribute)?\\s*\\(",
+      "message": "MSTest 4 removed [ExpectedException].",
+      "fix": "Assert on a delegate: Assert.ThrowsExactly<T>(() => ...), or act.Should().ThrowExactly<T>().",
+      "match": [
+        "[ExpectedException(typeof(ArgumentException))]",
+        "[TestMethod, ExpectedException(typeof(InvalidOperationException))]"
+      ],
+      "nomatch": [
+        "Assert.ThrowsExactly<ArgumentException>(() => sut.Run());",
+        "act.Should().ThrowExactly<ArgumentException>();",
+        "// This test replaced ExpectedException(typeof(X))."
+      ]
+    },
+    {
+      "id": "TST-THROWS-EXCEPTION",
+      "kind": "regex",
+      "severity": "error",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\bAssert\\.ThrowsException(Async)?\\s*<",
+      "message": "MSTest 4 removed Assert.ThrowsException and Assert.ThrowsExceptionAsync.",
+      "fix": "Use Assert.ThrowsExactly<T>, Assert.Throws<T>, Assert.ThrowsExactlyAsync<T>, or Assert.ThrowsAsync<T>.",
+      "match": [
+        "Assert.ThrowsException<ArgumentException>(() => sut.Run());",
+        "await Assert.ThrowsExceptionAsync<InvalidOperationException>(act);"
+      ],
+      "nomatch": [
+        "Assert.ThrowsExactly<ArgumentException>(() => sut.Run());",
+        "await Assert.ThrowsExactlyAsync<InvalidOperationException>(act);"
+      ]
+    },
+    {
+      "id": "TST-THREAD-SLEEP",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "tests/**/*.cs",
+        "test/**/*.cs",
+        "**/*Tests*/**/*.cs",
+        "**/*Test/**/*.cs",
+        "**/*Tests.cs",
+        "**/*Test.cs"
+      ],
+      "pattern": "\\bThread\\.Sleep\\s*\\(",
+      "message": "A sleep makes the test slow and flaky.",
+      "fix": "Advance a FakeTimeProvider, or wait for a real signal (a wait strategy, a TaskCompletionSource).",
+      "match": [
+        "Thread.Sleep(500);",
+        "System.Threading.Thread.Sleep(TimeSpan.FromSeconds(1));"
+      ],
+      "nomatch": [
+        "_time.Advance(TimeSpan.FromMinutes(15));",
+        "await signal.Task.WaitAsync(TestContext.CancellationToken);"
+      ]
+    },
+    {
+      "id": "TST-TASK-DELAY",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "tests/**/*.cs",
+        "test/**/*.cs",
+        "**/*Tests*/**/*.cs",
+        "**/*Test/**/*.cs",
+        "**/*Tests.cs",
+        "**/*Test.cs"
+      ],
+      "pattern": "\\bTask\\.Delay\\s*\\(",
+      "message": "A real delay in a test makes it slow and flaky.",
+      "fix": "Advance a FakeTimeProvider, or await the event that the test waits for.",
+      "match": [
+        "await Task.Delay(1000);",
+        "await Task.Delay(TimeSpan.FromSeconds(2), TestContext.CancellationToken);"
+      ],
+      "nomatch": [
+        "_time.Advance(TimeSpan.FromSeconds(2));",
+        "await Task.Yield();"
+      ]
+    },
+    {
+      "id": "TST-TC-NO-IMAGE",
+      "kind": "regex",
+      "severity": "error",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "new\\s+(PostgreSql|MsSql|MySql|MariaDb|Redis|RabbitMq|MongoDb|Elasticsearch|OpenSearch|Kafka|Azurite|LocalStack|Keycloak|Mailpit|Nats|Oracle|CosmosDb|ServiceBus|EventHubs|Pulsar|Redpanda|ClickHouse|CockroachDb|Neo4j|Seq)Builder\\(\\s*\\)|new\\s+ContainerBuilder\\(\\s*\\)(?=\\s*\\.WithImage\\()",
+      "message": "Testcontainers 4.10 and later need the image in the builder constructor. The parameterless constructor is obsolete.",
+      "fix": "Pass a pinned image: new PostgreSqlBuilder(\"postgres:17.6-alpine\").",
+      "match": [
+        "var db = new PostgreSqlBuilder().Build();",
+        "var sql = new MsSqlBuilder().WithPassword(\"x\").Build();",
+        "var web = new ContainerBuilder().WithImage(\"nginx:1.29\").Build();"
+      ],
+      "nomatch": [
+        "var db = new PostgreSqlBuilder(\"postgres:17.6-alpine\").Build();",
+        "var builder = new ContainerBuilder();",
+        "var text = new StringBuilder();"
+      ]
+    },
+    {
+      "id": "TST-TC-LATEST",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "tests/**/*.cs",
+        "test/**/*.cs",
+        "**/*Tests*/**/*.cs",
+        "**/*Test/**/*.cs",
+        "**/*Tests.cs",
+        "**/*Test.cs",
+        "**/*Fixture.cs"
+      ],
+      "pattern": "\"[\\w./-]+:latest\"",
+      "message": "The latest tag changes without notice, so a test run is not reproducible.",
+      "fix": "Pin the tag that production uses, for example \"postgres:17.6-alpine\".",
+      "match": [
+        "new PostgreSqlBuilder(\"postgres:latest\")",
+        "new MsSqlBuilder(\"mcr.microsoft.com/mssql/server:latest\")"
+      ],
+      "nomatch": [
+        "new PostgreSqlBuilder(\"postgres:17.6-alpine\")",
+        "var latest = orders.Last();"
+      ]
+    },
+    {
+      "id": "TST-TC-REUSE",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\.WithReuse\\(\\s*true\\s*\\)",
+      "message": "Container reuse is experimental and turns off the Resource Reaper, so containers stay after the run.",
+      "fix": "Remove WithReuse(true). Start one container per test assembly in [AssemblyInitialize].",
+      "match": [
+        "new PostgreSqlBuilder(\"postgres:17.6-alpine\").WithReuse(true).Build();"
+      ],
+      "nomatch": [
+        "new PostgreSqlBuilder(\"postgres:17.6-alpine\").Build();"
+      ]
+    },
+    {
+      "id": "TST-TC-FIXED-PORT",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\.WithPortBinding\\(\\s*\\d+\\s*,\\s*\\d+\\s*\\)",
+      "message": "A fixed host port collides when two test runs share one machine.",
+      "fix": "Use WithPortBinding(port, assignRandomHostPort: true) and GetMappedPublicPort(port), or GetConnectionString().",
+      "match": [
+        ".WithPortBinding(5432, 5432)"
+      ],
+      "nomatch": [
+        ".WithPortBinding(6379, assignRandomHostPort: true)",
+        ".WithPortBinding(6379, true)"
+      ]
+    },
+    {
+      "id": "TST-GLOBALJSON-MTP",
+      "kind": "require",
+      "severity": "warning",
+      "files": [
+        "global.json"
+      ],
+      "pattern": "\"runner\"\\s*:\\s*\"Microsoft\\.Testing\\.Platform\"",
+      "message": "global.json does not select Microsoft.Testing.Platform for dotnet test. On the .NET 10 SDK, MSTest 4 test projects (MTP v2) fail on the old VSTest path.",
+      "fix": "When the test projects use MSTest.Sdk or EnableMSTestRunner, add \"test\": { \"runner\": \"Microsoft.Testing.Platform\" } to global.json. A VSTest-only repo keeps its setup."
+    },
+    {
+      "id": "TST-DET-TEST-01",
+      "kind": "detect",
+      "decision": "TEST-01",
+      "files": [
+        "**/*.csproj",
+        "**/global.json"
+      ],
+      "pattern": "Sdk=\"MSTest\\.Sdk|\"MSTest\\.Sdk\"\\s*:|Include=\"(MSTest|xunit\\.v3|xunit|NUnit)\"",
+      "match": [
+        "<Project Sdk=\"MSTest.Sdk\">",
+        "\"MSTest.Sdk\": \"4.5.1\"",
+        "<PackageReference Include=\"xunit.v3\" Version=\"4.0.2\" />"
+      ],
+      "nomatch": [
+        "<Project Sdk=\"Microsoft.NET.Sdk\">"
+      ]
+    },
+    {
+      "id": "TST-DET-TEST-02",
+      "kind": "detect",
+      "decision": "TEST-02",
+      "files": [
+        "**/*.cs",
+        "**/*.csproj",
+        "**/*.props"
+      ],
+      "pattern": "^\\s*(global\\s+)?using\\s+(FluentAssertions|AwesomeAssertions|Shouldly)\\s*;|Include=\"(FluentAssertions|AwesomeAssertions|Shouldly)\"",
+      "match": [
+        "using AwesomeAssertions;",
+        "global using FluentAssertions;",
+        "<PackageReference Include=\"FluentAssertions\" Version=\"7.2.2\" />"
+      ],
+      "nomatch": [
+        "using FluentAssertions.Execution;",
+        "using Microsoft.VisualStudio.TestTools.UnitTesting;"
+      ]
+    },
+    {
+      "id": "TST-DET-TEST-03",
+      "kind": "detect",
+      "decision": "TEST-03",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\bSubstitute\\.For<|\\bnew\\s+Mock<|\\bA\\.Fake<",
+      "match": [
+        "var store = Substitute.For<IOrderStore>();",
+        "var store = new Mock<IOrderStore>();",
+        "var store = A.Fake<IOrderStore>();"
+      ],
+      "nomatch": [
+        "var store = new FakeOrderStore();"
+      ]
+    },
+    {
+      "id": "TST-DET-TEST-04",
+      "kind": "detect",
+      "decision": "TEST-04",
+      "files": [
+        "**/*.csproj"
+      ],
+      "pattern": "Sdk=\"MSTest\\.Sdk\"|<IsTestProject>true</IsTestProject>",
+      "match": [
+        "<Project Sdk=\"MSTest.Sdk\">",
+        "<IsTestProject>true</IsTestProject>"
+      ],
+      "nomatch": [
+        "<Project Sdk=\"Microsoft.NET.Sdk.Web\">"
+      ]
+    },
+    {
+      "id": "TST-DET-TEST-05",
+      "kind": "detect",
+      "decision": "TEST-05",
+      "files": [
+        "**/*Tests.cs",
+        "**/*Test.cs"
+      ],
+      "pattern": "public\\s+(async\\s+Task|void)\\s+[A-Z]\\w*_\\w+_\\w+\\s*\\(",
+      "match": [
+        "public void Add_SingleNumber_ReturnsSameNumber()",
+        "public async Task CloseAsync_OpenOrder_SetsClosedAtToNow()"
+      ],
+      "nomatch": [
+        "public void ShouldAddNumbers()",
+        "public void TestAdd()"
+      ]
+    },
+    {
+      "id": "TST-DET-TEST-06",
+      "kind": "detect",
+      "decision": "TEST-06",
+      "files": [
+        "**/*.cs",
+        "**/*.csproj"
+      ],
+      "pattern": "\\bnew\\s+Faker<|\\bnew\\s+Fixture\\(\\)|Include=\"(Bogus|AutoFixture)\"|\\bclass\\s+\\w+Builder\\b",
+      "match": [
+        "var faker = new Faker<Customer>();",
+        "var fixture = new Fixture();",
+        "internal sealed class OrderBuilder"
+      ],
+      "nomatch": [
+        "var order = new Order(7, 10m, null, []);"
+      ]
+    },
+    {
+      "id": "TST-DET-TEST-07",
+      "kind": "detect",
+      "decision": "TEST-07",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\bWebApplicationFactory<",
+      "match": [
+        "public sealed class ApiFactory : WebApplicationFactory<Program>"
+      ],
+      "nomatch": [
+        "var app = WebApplication.CreateBuilder(args).Build();"
+      ]
+    },
+    {
+      "id": "TST-DET-TEST-08",
+      "kind": "detect",
+      "decision": "TEST-08",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\bRespawner\\.CreateAsync\\b|\\bTransactionScope\\b|\\bBeginTransaction(Async)?\\(",
+      "match": [
+        "s_respawner = await Respawner.CreateAsync(connection, options);",
+        "using var scope = new TransactionScope();"
+      ],
+      "nomatch": [
+        "await s_respawner!.ResetAsync(connection);"
+      ]
+    },
+    {
+      "id": "TST-DET-TEST-09",
+      "kind": "detect",
+      "decision": "TEST-09",
+      "files": [
+        "**/*.cs",
+        "**/*.csproj"
+      ],
+      "pattern": "Include=\"(Verify\\.\\w+|Snapshooter\\.\\w+)\"|\\bawait\\s+Verify\\(|\\bMatchSnapshot\\(",
+      "match": [
+        "<PackageReference Include=\"Verify.MSTest\" Version=\"32.0.1\" />",
+        "await Verify(result);",
+        "result.MatchSnapshot();"
+      ],
+      "nomatch": [
+        "result.Should().BeEquivalentTo(expected);"
+      ]
+    },
+    {
+      "id": "TST-DET-TEST-10",
+      "kind": "detect",
+      "decision": "TEST-10",
+      "files": [
+        "**/*.cs",
+        "**/*.csproj"
+      ],
+      "pattern": "Include=\"(TngTech\\.ArchUnitNET[\\w.]*|NetArchTest\\.Rules)\"|\\bArchRuleDefinition\\b|\\bTypes\\.InAssembly\\(",
+      "match": [
+        "<PackageReference Include=\"TngTech.ArchUnitNET.MSTestV2\" Version=\"0.13.4\" />",
+        "var result = Types.InAssembly(typeof(Order).Assembly);"
+      ],
+      "nomatch": [
+        "<ProjectReference Include=\"../Shop/Shop.csproj\" />"
+      ]
+    },
+    {
+      "id": "TST-DET-TEST-11",
+      "kind": "detect",
+      "decision": "TEST-11",
+      "files": [
+        "**/*.yml",
+        "**/*.yaml",
+        "**/*.csproj",
+        "**/*.props"
+      ],
+      "pattern": "--coverage\\b|Include=\"(coverlet\\.[\\w.]+|Microsoft\\.Testing\\.Extensions\\.CodeCoverage)\"",
+      "match": [
+        "run: dotnet test --coverage --coverage-output-format cobertura",
+        "<PackageReference Include=\"coverlet.MTP\" Version=\"10.1.0\" />"
+      ],
+      "nomatch": [
+        "run: dotnet test"
+      ]
+    },
+    {
+      "id": "TST-DET-TEST-12",
+      "kind": "detect",
+      "decision": "TEST-12",
+      "files": [
+        "**/stryker-config.json",
+        "**/*.yml",
+        "**/*.yaml",
+        "**/dotnet-tools.json"
+      ],
+      "pattern": "dotnet[- ]stryker|\"stryker-config\"",
+      "match": [
+        "run: dotnet stryker --project Shop.csproj",
+        "\"dotnet-stryker\": {"
+      ],
+      "nomatch": [
+        "run: dotnet test"
+      ]
+    },
+    {
+      "id": "TST-DET-TEST-13",
+      "kind": "detect",
+      "decision": "TEST-13",
+      "files": [
+        "**/*.yml",
+        "**/*.yaml",
+        "**/*.csproj"
+      ],
+      "pattern": "\\boasdiff\\b|Include=\"PactNet[\\w.]*\"",
+      "match": [
+        "run: oasdiff breaking base.json openapi.json",
+        "<PackageReference Include=\"PactNet\" Version=\"5.0.1\" />"
+      ],
+      "nomatch": [
+        "run: dotnet build"
+      ]
+    },
+    {
+      "id": "TST-DET-TEST-17",
+      "kind": "detect",
+      "decision": "TEST-17",
+      "files": [
+        "**/*.cs",
+        "**/*.csproj",
+        "**/*.props"
+      ],
+      "pattern": "\\[assembly:\\s*(Parallelize|DoNotParallelize)\\b|<MSTestParallelizeScope>",
+      "match": [
+        "[assembly: Parallelize(Scope = ExecutionScope.MethodLevel)]",
+        "[assembly: DoNotParallelize]",
+        "<MSTestParallelizeScope>MethodLevel</MSTestParallelizeScope>"
+      ],
+      "nomatch": [
+        "[DoNotParallelize]"
+      ]
+    },
+    {
+      "id": "TST-DET-TEST-18",
+      "kind": "detect",
+      "decision": "TEST-18",
+      "files": [
+        "**/*.cs",
+        "**/*.csproj",
+        "**/*.yml",
+        "**/*.yaml"
+      ],
+      "pattern": "Include=\"Microsoft\\.Testing\\.Extensions\\.Retry\"|--retry-failed-tests\\b|\\[Ignore\\(\"",
+      "match": [
+        "<PackageReference Include=\"Microsoft.Testing.Extensions.Retry\" Version=\"2.0.0\" />",
+        "[Ignore(\"Flaky, see issue 412\")]"
+      ],
+      "nomatch": [
+        "[TestMethod]"
+      ]
+    },
+    {
+      "id": "TST-DET-DATA-20",
+      "kind": "detect",
+      "decision": "DATA-20",
+      "files": [
+        "**/*.cs",
+        "**/*.csproj"
+      ],
+      "pattern": "Include=\"Testcontainers\\.\\w+\"|\\bUseInMemoryDatabase\\(|\\bUseSqlite\\(\"(Data Source|DataSource)=:memory:",
+      "match": [
+        "<PackageReference Include=\"Testcontainers.PostgreSql\" Version=\"4.16.0\" />",
+        "options.UseInMemoryDatabase(\"test\");",
+        "options.UseSqlite(\"DataSource=:memory:\");"
+      ],
+      "nomatch": [
+        "options.UseNpgsql(connectionString);"
+      ]
+    }
+  ]
+}
