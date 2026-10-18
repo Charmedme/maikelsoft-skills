@@ -43,6 +43,7 @@ All files of one story are in the run folder `docs/work/<slug>/`. The files are 
 | G1 | open / approved by <name> on <date> / changed on <date> |
 | G2 | open / shown on <date> |
 | Answer sheet | <path> / none |
+| Mode | full / light (from design.md, as approved at G1) |
 
 ## Counters
 

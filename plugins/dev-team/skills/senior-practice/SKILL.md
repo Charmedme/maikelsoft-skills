@@ -17,7 +17,8 @@ The rules that make a senior design and review the same on each run. The templat
 6. Split the work: the critical core (you build it) and work packages (mediors build them). The core is the part where a mistake breaks the story or the data. A package has one goal and a size (`standard` or `hard`). It names its owned files, its acceptance criteria (verbatim), its contracts, and the skills to load. Few packages are better than many. A small story has no packages.
 7. List each decision that the story needs. Use the `team-decisions` skill for the decision sheet.
 8. An open question with a safe default goes to G1. A default is safe when the story supports it, and when it is easy to change later. Choose the default and write it under "Assumptions to confirm" in `design.md`, with the other options. Then go on with the design.
-9. Stop with `NEEDS_HUMAN` only when no safe default exists. Then the work needs a fact that only the human knows. Examples: a provider, an address, a legal rule. Write each question under "Questions for the human". Do not guess.
+9. Stop with `NEEDS_HUMAN` only when no safe default exists. Then the work needs a fact that only the human knows.
+10. Choose the run mode. `light` when all of these are true: no new package, no schema change, and no work packages. Also no change to sign-in, authorization, secrets, file upload, or an outbound call. Else `full`. Write the mode and the reason in `design.md`. A light run has no reflection and no separate security review. Examples: a provider, an address, a legal rule. Write each question under "Questions for the human". Do not guess.
 
 ## Reflection (modes `reflect` and `review-core`)
 
@@ -47,6 +48,7 @@ Follow the Google code review guide: approve when the change makes the code heal
 - Blocking only for correctness, security, an unmet criterion, a broken check, or a break of an accepted decision.
 - Report a finding only at confidence 80 or more. Each comment says what, why, and a concrete suggestion.
 - Status: `APPROVED`, `APPROVED_WITH_COMMENTS`, or `CHANGES_REQUIRED` (one or more blocking comments).
+- In a light run, the core review also does the security review: check the diff against the review checklist of `dev-stack:secure-coding`. Write the result in a section "Security" of `core-review.md`.
 
 ## Build (modes `build-core` and `fix`)
 

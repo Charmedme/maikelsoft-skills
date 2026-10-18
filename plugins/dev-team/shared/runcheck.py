@@ -10,6 +10,7 @@ What it checks:
     RUN-STATUS    each step file has one "Status:" (or "Verdict:") line with a valid word, or the word
                   on the first line under a "## Verdict" heading.
     RUN-COUNTER   each counter in run.md is at or below its limit. At G2, security-review is 1.
+                  A light run (run.md field Mode: light) has no reflection and no security review.
     RUN-ROUNDS    each package has at most one plan feedback, one review, and one fix.
     RUN-STEPS     the files of each step exist (plan, feedback, report, review per package).
     RUN-FIX       a review with CHANGES_REQUIRED has a fix row in log.md.
@@ -75,6 +76,17 @@ def table_rows(text, first_header):
 VERDICT_HEADING = re.compile(r"^#+\s*Verdict\s*\n+\s*(?:\*\*)?`?([A-Z_]+)\b", re.MULTILINE)
 
 
+def run_mode(run):
+    """The Mode field of run.md: 'light' or 'full' (the default)."""
+    path = run / "run.md"
+    if not path.is_file():
+        return "full"
+    for cells in table_rows(path.read_text(encoding="utf-8"), "field")[1:]:
+        if len(cells) >= 2 and cells[0].lower() == "mode":
+            return "light" if cells[1].strip("` ").lower().startswith("light") else "full"
+    return "full"
+
+
 def status_of(path):
     text = path.read_text(encoding="utf-8")
     match = STATUS_LINE.search(text) or VERDICT_HEADING.search(text)
@@ -91,7 +103,8 @@ def check(run, stage):
     for name in must:
         if not (run / name).is_file():
             add(run / name, "RUN-FILE", "file is missing")
-    if stage == "g1":
+    light = run_mode(run) == "light"
+    if stage == "g1" or light:
         must_after = []
     else:
         must_after = ["reflection.md", "security-review.md"]
@@ -118,7 +131,7 @@ def check(run, stage):
         for name, (limit, value) in counters.items():
             if value > limit:
                 add(run / "run.md", "RUN-COUNTER", f"{name} is {value}, the limit is {limit}")
-        if stage != "g1" and counters.get("security-review", (1, 0))[1] != 1:
+        if stage != "g1" and not light and counters.get("security-review", (1, 0))[1] != 1:
             add(run / "run.md", "RUN-COUNTER", "security-review must be 1 before G2")
 
     log_rows = []

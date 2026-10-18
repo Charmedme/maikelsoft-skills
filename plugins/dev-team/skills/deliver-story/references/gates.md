@@ -17,6 +17,7 @@ Show one message. Keep it short: the human reads the full files only when needed
 Design: <3 to 5 lines from the summary of design.md>
 Core (senior): <one line>
 Packages: <NN title (size), one line each, or "none: the senior builds all">
+Mode: <light or full, with the reason. Light: no reflection and no separate security review.>
 
 ### Decisions to approve
 
@@ -42,6 +43,8 @@ After the answer:
 - Write each answer into `decision-sheet.md` (column Answer, column By = human).
 - An "ok" approves each recommendation in the sheet, each assumption, and each new package.
 - A change to the design goes back to the senior (`mode: design`) one time. Then show G1 again.
+- "full" for a light run: write `Mode: full` in `run.md`, run the reflection (step 4), then show G1 again.
+- Write the mode of `design.md` in the field Mode of `run.md`.
 - Write `G1 | approved by <name> on <date>` in `run.md` and a log row `G1_APPROVED` or `G1_CHANGED`.
 
 With an answer sheet: take each answer from the sheet. A row that the sheet does not answer stops the run at G1.

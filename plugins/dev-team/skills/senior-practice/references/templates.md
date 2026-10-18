@@ -46,6 +46,7 @@ Status: DESIGN_READY
 ## Work split
 - Core (senior): <files and reason>
 - Packages: <NN title, size, one line each, or "None.">
+- Mode: light | full. <reason>
 
 ## Decisions
 <ID, decision, status (accepted / open). The open rows are in decision-sheet.md.>
@@ -162,6 +163,9 @@ Status: APPROVED | APPROVED_WITH_COMMENTS | CHANGES_REQUIRED
 
 ## Checks
 <the result of checks.py that you ran>
+
+## Security
+<light run only: the result of the secure-coding review checklist on the diff. Full run: "Security review by the security reviewer.">
 
 ## Comments
 | # | Label | Location | What | Why | Suggestion |

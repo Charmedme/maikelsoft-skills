@@ -128,6 +128,16 @@ class RunCheck(unittest.TestCase):
             write(run / "commands.jsonl", json.dumps({"command": "dotnet test", "agent_type": "dev-team:senior"}) + "\n")
             self.assertEqual(rules(runcheck.check(run, "g2")), ["RUN-EVIDENCE"])
 
+    def test_light_run_needs_no_reflection_or_security_review(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            run = make_run(pathlib.Path(tmp), security=0)
+            (run / "reflection.md").unlink()
+            (run / "security-review.md").unlink()
+            self.assertIn("RUN-FILE", rules(runcheck.check(run, "g2")))
+            text = (run / "run.md").read_text().replace("| Status | G2 |", "| Status | G2 |\n| Mode | light |")
+            write(run / "run.md", text)
+            self.assertEqual(runcheck.check(run, "g2"), [])
+
     def test_verdict_under_a_heading_counts(self):
         with tempfile.TemporaryDirectory() as tmp:
             run = make_run(pathlib.Path(tmp))
