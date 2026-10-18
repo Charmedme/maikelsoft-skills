@@ -64,6 +64,7 @@ The baseline files are in `assets/`: `Directory.Build.props`, `Directory.Package
 16. Fix the code. Suppress only a false positive, and only on the smallest scope: `#pragma warning disable <ID> // <reason>` and `#pragma warning restore <ID>` around the lines, or `[SuppressMessage(..., Justification = "<reason>")]`.
 17. Do not add a rule ID to `NoWarn` to make a build pass, and do not set `RunAnalyzers` to false. A `NoWarn` entry hides the rule in the whole project and leaves no trace in SARIF. A `#pragma` stays visible in SARIF as a suppressed result.
 18. Do not lower a severity in `.editorconfig` to make a build pass. Change a severity only as a team decision, with the reason in a comment line.
+18a. For each rule that you raise, lower or turn off, write in the report what the rule prevents (read its documentation page, not only its title) and why the change fits this project. The short rule message often does not show what the rule protects.
 
 ### Agent loop
 

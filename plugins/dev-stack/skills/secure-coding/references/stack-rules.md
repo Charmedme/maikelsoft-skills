@@ -71,6 +71,8 @@ Run the tools before you judge the code yourself:
 
 Fix each error. For a warning, fix it or give the reason to keep it. Suppress a finding only with a reason on the line: `// stackcheck: ignore <RULE-ID> <reason>`.
 
+Run the checks again after your last change to a file. The Checks table of the report shows the results of that last run only. A check that you did not run after the last change gets the result "not run after the last change".
+
 ## 7. Output language
 
 Code, identifiers, and code comments are in English. Write all other output in the rules of `references/language.md`: ASD-STE100 for English, Begrijpelijk Nederlands (B1) for Dutch.
@@ -79,7 +81,7 @@ Code, identifiers, and code comments are in English. Write all other output in t
 
 End each task with one report in the template below. Use the headings as written, in this order, also when a section is empty ("None."). The same headings on each run let the human and the next agent find each fact in the same place. A skill or an agent that gives its own report template (for example the security reviewer) replaces this one.
 
-Keep the report under 900 words. Tables count. Do not repeat the request, the diff, or the skill text. Put each fact in one section only.
+Keep the report under 700 words. Tables count. Do not repeat the request, the diff, or the skill text. Put each fact in one section only.
 
 ### Report after a change
 
@@ -126,7 +128,7 @@ For a vulnerable package: name, advisory ID, the fixed version, and how you fixe
 ## Findings
 | # | Severity | Location | Problem | Fix |
 |---|----------|----------|---------|-----|
-<Severity: blocking, major, or minor. Location: path:line. One row per problem. Sort by severity. Fix: the correct current API or change, in one line.>
+<Severity: blocking, major, or minor. Location: path:line. One row per problem. Sort by severity. Fix: what to change, how, and why it solves the problem, in one or two sentences.>
 
 ## Decisions
 | ID | Question | Answer | Status |
@@ -138,5 +140,7 @@ For a vulnerable package: name, advisory ID, the fixed version, and how you fixe
 ## Open points
 <None. Or one line each.>
 ```
+
+Each recommendation in a report says what to change, how to change it, and why it solves the problem. This applies to a fix, a setting, a package and a design change.
 
 Use "blocking" for a bug, a security hole, a broken build or test, or a break of an accepted decision. Use "major" for a wrong or outdated API, a missing test of core behavior, or a design that costs the team later. Use "minor" for style and naming. When you are not sure, take the lower level.

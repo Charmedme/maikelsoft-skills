@@ -71,7 +71,8 @@ Existing code keeps its style. Ask each open decision when the work first needs 
 
 8. Let `AddJwtBearer` validate issuer, audience, lifetime and signature. Set `Authority`, `Audience`, `ValidAlgorithms` and `MapInboundClaims = false`.
 9. Keep tokens out of the browser. Use a BFF with a `__Host-` cookie: `HttpOnly`, `Secure`, `SameSite=Strict` or `Lax`.
-10. Keep antiforgery on for each cookie-authenticated state change. `UseAntiforgery` checks POST, PUT and PATCH only, so call `IAntiforgery.ValidateRequestAsync` for DELETE.
+10. When the app signs users in with a cookie, keep antiforgery on for each state change. `UseAntiforgery` checks POST, PUT and PATCH only, so call `IAntiforgery.ValidateRequestAsync` for DELETE. When the endpoint accepts only a bearer token, an API key, or no sign-in, it is not open to CSRF: a minimal API endpoint that binds `IFormFile` or `[FromForm]` then needs `.DisableAntiforgery()` with the reason on the line, because since .NET 8 such an endpoint requires a token by default.
+10a. When the sign-in decision is open (SEC-01, SEC-02, SEC-04) and nobody answers, keep the sign-in setup that the app has, build the feature, and put the missing sign-in as a blocking open point. Do not add a placeholder authentication scheme that rejects all calls.
 11. Rate limit sign-in, reset, OTP, export, render, upload and LLM endpoints. Set `RejectionStatusCode = 429`.
 
 ### Injection and parsing (A05, A08, CWE-89, CWE-79, CWE-502)
@@ -122,7 +123,8 @@ Existing code keeps its style. Ask each open decision when the work first needs 
 | `new Random()` for a code or token | `RandomNumberGenerator.GetInt32` or `GetBytes` |
 | `catch (Exception ex) { return BadRequest(ex.Message); }` | ProblemDetails plus a server-side log |
 | `logger.LogInformation($"User {name}")` | `logger.LogInformation("User {UserName}", name)` |
-| `.DisableAntiforgery()` because a form test fails | Send the token in the test |
+| `.DisableAntiforgery()` on a cookie-authenticated endpoint because a form test fails | Send the token in the test |
+| Antiforgery on a form endpoint of an API without cookies | `.DisableAntiforgery()` with the reason: no cookie, so no CSRF |
 | `bypassSecurityTrustHtml(userHtml)` to stop stripping | Bind with `[innerHTML]` and let Angular sanitize |
 | `localStorage.setItem('token', ...)` | BFF cookie, or a token in memory |
 | `--no-sandbox` "for Docker" | Non-root user with the sandbox on |
