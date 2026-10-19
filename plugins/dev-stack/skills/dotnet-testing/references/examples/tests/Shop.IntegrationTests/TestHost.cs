@@ -21,7 +21,7 @@ public sealed class ApiFactory(string connectionString) : WebApplicationFactory<
 public static class TestHost
 {
     // Pin the tag that production uses.
-    private const string PostgresImage = "postgres:17.6-alpine";
+    private const string PostgresImage = "postgres:18.6-alpine";
     private static PostgreSqlContainer? s_database;
     private static Respawner? s_respawner;
 

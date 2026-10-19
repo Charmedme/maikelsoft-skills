@@ -19,7 +19,7 @@ public static class AssemblyFixture
         // FluentAssertions 7 does not detect MSTest 4. Report its failures as MSTest assertion failures.
         Services.ThrowException = message => throw new AssertFailedException(message);
 
-        s_postgres = new PostgreSqlBuilder("postgres:17.6-alpine").Build();
+        s_postgres = new PostgreSqlBuilder("postgres:18.6-alpine").Build();
         await s_postgres.StartAsync(context.CancellationToken);
     }
 

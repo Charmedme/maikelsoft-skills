@@ -14,6 +14,7 @@ eval and variant, and writes <run>/checks.json and <runs>/scores.json.
 The second form scores one folder and prints the JSON result. With --only, it scores only the
 named assertions (for example the grep checks, which do not build and do not change the folder).
 grep_absent skips comment lines, unless the assertion has "comments": true.
+file_exists needs "files", and takes "exclude" and a "contains" regex.
 The 'judge' assertions need a grader agent (grader.md).
 
 Needs Python 3 (standard library only), the dotnet CLI (SDK 10.0.402), and Docker for
@@ -37,7 +38,7 @@ from collections import defaultdict
 HERE = pathlib.Path(__file__).resolve().parent
 FIXTURES = HERE / "fixtures"
 PROBES = HERE / "probes"
-PG_IMAGE = "postgres:17.6-alpine"
+PG_IMAGE = "postgres:18.6-alpine"
 NO_WARN_AS_ERROR = ["-p:TreatWarningsAsErrors=false", "-p:WarningsAsErrors=", "-p:MSBuildTreatWarningsAsErrors=false"]
 SKIP_DIRS = {".git", "bin", "obj", "TestResults", "node_modules", ".vs", ".idea"}
 DENIED = [
@@ -515,6 +516,13 @@ def check_resolved_min(repo, a):
     return not problems, {"resolved": {k: sorted(v) for k, v in seen.items()}, "problems": problems}
 
 
+def check_file_exists(repo, a):
+    """A file that matches 'files' (and not 'exclude') exists, and holds the regex 'contains' when it is given."""
+    rx = re.compile(a["contains"]) if a.get("contains") else None
+    found = [f for f in select(repo, a["files"], a.get("exclude", [])) if rx is None or rx.search(read(repo / f))]
+    return bool(found), found[:5]
+
+
 def check_no_vulnerable(repo, a):
     data = package_list(repo, vulnerable=True)
     if "error" in data:
@@ -573,6 +581,8 @@ def score_run(ev, repo, variant=None, only=None):
             ok, got = check_resolved_min(repo, a)
         elif kind == "no_vulnerable_packages":
             ok, got = check_no_vulnerable(repo, a)
+        elif kind == "file_exists":
+            ok, got = check_file_exists(repo, a)
         else:
             raise SystemExit(f"Unknown check: {kind}")
         results.append({"id": a.get("id"), "check": kind, "ok": bool(ok), "got": got})

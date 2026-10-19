@@ -108,7 +108,7 @@ Existing code keeps its style (stack rule 3). For new code, these are the recomm
 ### Integration tests
 
 26. Start one container per test assembly in `[AssemblyInitialize]` and dispose it in `[AssemblyCleanup]`. A container start costs seconds. MSTest has no class fixture like xUnit.
-27. Give each builder a pinned image: `new PostgreSqlBuilder("postgres:17.6-alpine")`. Use the tag that production uses. Testcontainers 4.10 and later made the constructor without an image obsolete.
+27. Give each builder a pinned image: `new PostgreSqlBuilder("postgres:18.6-alpine")`. Use the tag that production uses. Testcontainers 4.10 and later made the constructor without an image obsolete.
 28. Reset the data with Respawn in `[TestInitialize]` and mark the database test classes `[DoNotParallelize]`. A reset takes milliseconds. A new container takes seconds.
 29. Read the address from the container: `GetConnectionString()`, `Hostname`, `GetMappedPublicPort()`. Fixed ports, `localhost`, and fixed container names collide on CI agents.
 30. Override the connection string in `ConfigureWebHost` with `builder.UseSetting("ConnectionStrings:Orders", connectionString)`. `Program.cs` reads configuration before `ConfigureAppConfiguration` runs.
@@ -131,7 +131,7 @@ Existing code keeps its style (stack rule 3). For new code, these are the recomm
 | FA 7: `options.ExcludingMembersNamed("Id")` | `options.Excluding((IMemberInfo m) => m.Name == "Id")` |
 | FA 7: `PreferringRuntimeMemberTypes()` | `RespectingRuntimeTypes()` |
 | AwesomeAssertions: `response.Should().HaveStatusCode(...)` | `response.StatusCode.Should().Be(HttpStatusCode.OK);` |
-| `new PostgreSqlBuilder().WithImage("postgres:15")` | `new PostgreSqlBuilder("postgres:17.6-alpine")` |
+| `new PostgreSqlBuilder().WithImage("postgres:15")` | `new PostgreSqlBuilder("postgres:18.6-alpine")` |
 | `WithPortBinding(5432, 5432)` and `Host=localhost` | `container.GetConnectionString()` |
 | One container per test or per class | One per assembly, Respawn reset per test |
 | `UseInMemoryDatabase("test")` in `WebApplicationFactory` | Real database in a container |

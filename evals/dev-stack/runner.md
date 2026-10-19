@@ -13,7 +13,7 @@ Do not give the agent `evals.json`, `planted/`, `probes/`, `selftest/`, `grader.
 
 ## Common part
 
-You work in the git repository `<repo>`. It is a .NET 10 solution. The .NET SDK is in `/root/.dotnet`. Run `export PATH=/root/.dotnet:$PATH` before you use `dotnet`. Docker runs on this machine, and the image `postgres:17.6-alpine` is in the local cache.
+You work in the git repository `<repo>`. It is a .NET 10 solution. The .NET SDK is in `/root/.dotnet`. Run `export PATH=/root/.dotnet:$PATH` before you use `dotnet`. Docker runs on this machine, and the image `postgres:18.6-alpine` is in the local cache.
 
 The human wants this:
 

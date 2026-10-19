@@ -10,7 +10,7 @@ dotnet build -warnaserror
 dotnet test
 ```
 
-The integration tests start PostgreSQL 17.6 in Docker with Testcontainers. Docker must run.
+The integration tests start PostgreSQL 18.6 in Docker with Testcontainers. Docker must run.
 
 ## Migrations
 
