@@ -1,0 +1,61 @@
+{
+  "skill": "rabbitmq",
+  "planted": [
+    {
+      "id": "P1",
+      "file": "src/Billing.Worker/Topology.cs",
+      "line": 17,
+      "description": "x-queue-mode lazy: RabbitMQ 4.x removed the argument and rejects the declaration. The queue is also a classic queue. Declare it with x-queue-type quorum.",
+      "severity": "high"
+    },
+    {
+      "id": "P2",
+      "file": "src/Billing.Worker/OrderPlacedConsumer.cs",
+      "line": 38,
+      "description": "autoAck: true acks each message on delivery. A crash or an exception after the delivery loses the message. Use autoAck: false and BasicAckAsync after the work. The BasicNackAsync in the catch block then also fails (unknown delivery tag).",
+      "severity": "high"
+    },
+    {
+      "id": "P3",
+      "file": "src/Billing.Worker/OrderPlacedConsumer.cs",
+      "line": 21,
+      "description": "BasicQosAsync with global: true. Quorum queues do not support global QoS, and RabbitMQ 4.3 denies it by default. Use global: false (prefetch per consumer).",
+      "severity": "high"
+    },
+    {
+      "id": "P4",
+      "file": "src/Billing.Worker/OrderPlacedConsumer.cs",
+      "line": 34,
+      "description": "Catch-all with requeue: true and no dead-letter exchange: a permanent error (bad JSON, negative total) loops at once, and the delivery limit then drops the message. Classify: requeue: false to a DLX for permanent errors, delayed retry for transient errors.",
+      "severity": "medium"
+    },
+    {
+      "id": "P5",
+      "file": "src/Billing.Worker/OrderPlacedConsumer.cs",
+      "line": 26,
+      "description": "ea.Body is kept in a list and read later. The client reuses that memory after the handler returns, so a later parse can read another message. Deserialize or copy the body inside ReceivedAsync. The shared list is also not thread-safe.",
+      "severity": "medium"
+    },
+    {
+      "id": "P6",
+      "file": "src/Orders.Api/Messaging/EventPublisher.cs",
+      "line": 16,
+      "description": "One IChannel singleton for all requests (Program.cs line 25), no publisher confirms, and the ValueTask of BasicPublishAsync is discarded (CA2012). Concurrent publishes on one channel mix frames, and a failed publish is lost without an error. The app also does not start when RabbitMQ is down (connection in Program.cs).",
+      "severity": "medium"
+    },
+    {
+      "id": "P7",
+      "file": "src/Orders.Api/Orders/OrderEndpoints.cs",
+      "line": 45,
+      "description": "Publish after SaveChangesAsync without an outbox: when the broker is down or the process stops, the order exists and the event is lost. Write an outbox row in the same SaveChangesAsync and publish from a background service with confirms.",
+      "severity": "medium"
+    },
+    {
+      "id": "P8",
+      "file": "tests/Billing.Worker.Tests/ConsumerTests.cs",
+      "line": 22,
+      "description": "new RabbitMqBuilder() is obsolete (CS0618) and starts rabbitmq:3.11, not the production major version. await Task.Delay(3000) (lines 30 and 37) makes the test slow and flaky. Pin rabbitmq:4.3-management and wait with a TaskCompletionSource and a timeout.",
+      "severity": "low"
+    }
+  ]
+}
