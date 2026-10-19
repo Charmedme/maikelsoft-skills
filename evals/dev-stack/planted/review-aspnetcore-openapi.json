@@ -1,0 +1,61 @@
+{
+  "skill": "aspnetcore-openapi",
+  "planted": [
+    {
+      "id": "P1",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 57,
+      "description": "MapOpenApi and MapScalarApiReference outside the environment check: the document and the UI show every route in Production. Map them inside if (app.Environment.IsDevelopment()), or add RequireAuthorization when a public document is a decision.",
+      "severity": "medium"
+    },
+    {
+      "id": "P2",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 29,
+      "description": "One hand-written AddOpenApi(\"v1\") and AddOpenApi(\"v2\") with ShouldInclude by group name. Use AddApiVersioning(...).AddApiExplorer(...).AddOpenApi(...) and MapOpenApi().WithDocumentPerVersion(), so a new version gets its document without code (analyzers AV0029 and AV0030 warn).",
+      "severity": "medium"
+    },
+    {
+      "id": "P3",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 19,
+      "description": "URL segment reader with AssumeDefaultVersionWhenUnspecified = true: the setting has no effect for a URL segment, so /api/orders/{id} gives 404, and the comment is wrong. SubstituteApiVersionInUrl is not set, so the document shows /api/v{version}/orders/{id} with a version parameter.",
+      "severity": "medium"
+    },
+    {
+      "id": "P4",
+      "file": "src/Orders.Api/Orders/OrdersApiEndpoints.cs",
+      "line": 41,
+      "description": "v2 returns TypedResults.Problem(statusCode: 404) in a Results<Ok<...>, ProblemHttpResult> union without .ProducesProblem(404). The v2 document shows only 200, so the generated client does not know the 404.",
+      "severity": "medium"
+    },
+    {
+      "id": "P5",
+      "file": "src/Orders.Api/Orders/OrderContracts.cs",
+      "line": 18,
+      "description": "v1, v2 and the unversioned endpoints share one OrderResponse, and the change renames PlacedAt to CreatedAt for v2. This breaks every v1 client and the existing POST /orders contract. A rename needs a new major version with its own response record; v1 keeps PlacedAt.",
+      "severity": "high"
+    },
+    {
+      "id": "P6",
+      "file": "src/Orders.Api/OpenApi/BearerSecurityTransformer.cs",
+      "line": 2,
+      "description": "using Microsoft.OpenApi.Models and schema.Nullable = true are Microsoft.OpenApi 1.x APIs. .NET 10 uses Microsoft.OpenApi 2.x: the project does not compile (CS0234). Use using Microsoft.OpenApi;, initialize SecuritySchemes with IOpenApiSecurityScheme, and JsonSchemaType.Null flags.",
+      "severity": "high"
+    },
+    {
+      "id": "P7",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 22,
+      "description": "v1 is deprecated with a sunset date in the past (2026-03-31). Clients get no deprecation window. The date must be at least 6 months after the deprecation (12 months for partners, decision API-18).",
+      "severity": "low"
+    },
+    {
+      "id": "P8",
+      "file": "src/Orders.Api/Orders/OrdersApiEndpoints.cs",
+      "line": 16,
+      "description": "The v1 endpoint is a lambda without WithName, so it has no operationId, and the XML comment on the lambda does not reach the document. Use a named handler method with a comment and WithName(\"GetOrderV1\").",
+      "severity": "low"
+    }
+  ]
+}

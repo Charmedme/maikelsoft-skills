@@ -1,0 +1,61 @@
+{
+  "skill": "fluentvalidation",
+  "planted": [
+    {
+      "id": "P1",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 14,
+      "description": "FluentValidation.AspNetCore 11.3.1 (Directory.Packages.props line 8, Orders.Api.csproj line 10) and AddFluentValidationAutoValidation(). The package is deprecated, works for MVC only (it does nothing for minimal APIs), and runs async rules synchronously. Remove both; the endpoint filter already calls the validator.",
+      "severity": "medium"
+    },
+    {
+      "id": "P2",
+      "file": "src/Orders.Api/Orders/ValidationFilter.cs",
+      "line": 11,
+      "description": "Sync validator.Validate(...) on a validator with MustAsync rules (order status, postal code lookup). FluentValidation throws AsyncValidatorInvokedSynchronouslyException, so each PUT gives 500. Use await validator.ValidateAsync(request, context.HttpContext.RequestAborted).",
+      "severity": "high"
+    },
+    {
+      "id": "P3",
+      "file": "src/Orders.Api/Orders/ValidationFilter.cs",
+      "line": 10,
+      "description": "No null check before the call. In Production, minimal APIs run the filter with a JSON null body, and ValidateAsync(null) throws InvalidOperationException: a 500. Return a 400 ProblemDetails when the argument is null.",
+      "severity": "medium"
+    },
+    {
+      "id": "P4",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 15,
+      "description": "AddValidatorsFromAssemblyContaining<AddressValidator>(ServiceLifetime.Singleton), while AddressValidator takes the scoped OrdersDbContext: a captive dependency (one DbContext for all requests, not thread safe), or a scope validation error. Use the default (scoped) lifetime.",
+      "severity": "high"
+    },
+    {
+      "id": "P5",
+      "file": "src/Orders.Api/Orders/AddressValidator.cs",
+      "line": 12,
+      "description": "A state rule (only a placed order can change its address) as a MustAsync database check in the validator, with OrderId copied into the body next to the route id. It runs only on this path, races with a ship or cancel between the check and the save, and checks the body id, not the route id. Keep the rule in Order.ChangeShippingAddress and return 409; validate input shape only.",
+      "severity": "medium"
+    },
+    {
+      "id": "P6",
+      "file": "src/Orders.Api/Orders/AddressValidator.cs",
+      "line": 7,
+      "description": "internal sealed class AddressValidator: assembly scanning skips internal validators unless includeInternalTypes: true. IValidator<ChangeAddressRequest> is not registered, so the filter cannot be created and each real PUT gives 500. The endpoint test hides it with a substitute validator.",
+      "severity": "high"
+    },
+    {
+      "id": "P7",
+      "file": "src/Orders.Api/Orders/AddressValidator.cs",
+      "line": 27,
+      "description": "NotEmpty() then Matches(...) without RuleLevelCascadeMode = CascadeMode.Stop (or .Cascade(CascadeMode.Stop)): an empty postal code gives two errors and two codes.",
+      "severity": "low"
+    },
+    {
+      "id": "P8",
+      "file": "tests/Orders.Api.Tests/AddressValidatorTests.cs",
+      "line": 60,
+      "description": "The endpoint test replaces the validator with Substitute.For<IValidator<ChangeAddressRequest>>() and configures the sync Validate call. It hides P2 and P6 and tests nothing of the validation. Use the real validator in the endpoint test, and InlineValidator<T> when a test needs a failing validator.",
+      "severity": "low"
+    }
+  ]
+}
