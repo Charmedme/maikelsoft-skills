@@ -205,6 +205,10 @@ def check(root, files, rules, detect):
                 for name, version, line in refs:
                     if not fnmatch.fnmatchcase(name.lower(), rule["package"].lower()):
                         continue
+                    if not version and rule.get("versions", "*") not in ("", "*"):
+                        # A reference without a version under central package management: the
+                        # PackageVersion in Directory.Packages.props carries the version, and it is checked there.
+                        continue
                     if version_matches(parse_version(version), rule.get("versions", "*")):
                         lines = text.splitlines()
                         if suppressed(lines, line - 1, rule["id"]):

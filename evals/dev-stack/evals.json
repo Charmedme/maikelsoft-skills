@@ -1,12 +1,23 @@
 {
   "plugin": "dev-stack",
   "skills": [
-    "csharp",
     "aspnetcore",
-    "efcore",
-    "dotnet-testing",
+    "aspnetcore-openapi",
+    "csharp",
     "dotnet-analyzers",
-    "secure-coding"
+    "dotnet-observability",
+    "dotnet-testing",
+    "efcore",
+    "elasticsearch",
+    "fluentvalidation",
+    "mailkit",
+    "postgresql",
+    "puppeteersharp",
+    "rabbitmq",
+    "redis",
+    "secure-coding",
+    "sqlserver",
+    "wolverine"
   ],
   "method": [
     "One separate agent for each run. 3 runs for each variant. Use the prompt in runner.md.",
@@ -1164,6 +1175,1611 @@
         {
           "id": "J3",
           "judge": "The final message states the assumptions and marks the open team decisions as assumed: at least the upload storage policy (SEC-13) or who may upload for an order (SEC-04), and it says that the SMTP password must come from secrets (decision MAIL-01)."
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "name": "postgresql-trap",
+      "skill": "postgresql",
+      "kind": "write",
+      "fixture": "orders-api",
+      "human": "absent",
+      "request": "Warehouse workers pick orders. Add POST /picking/next. The worker sends its id in the header X-Worker-Id (text, at most 32 characters). The endpoint gives the worker the oldest placed order that no other worker has: it sets the status to Picking, stores the worker id and the start time, and returns 200 with the order in the same JSON shape as POST /orders. When no order is free, it returns 204. Twenty workers call it at the same time. A worker must never wait for another worker, and must never get an order that another worker has. Also add GET /reports/daily-sales?from=2026-07-01&to=2026-07-31. It returns one row per day in Amsterdam time, with the number of orders and the revenue (the sum of the line totals) of the orders that are not cancelled, as a JSON array: [{\"day\": \"2026-07-02\", \"orders\": 3, \"revenue\": 12.50}]. The orders table is big and gets writes all day. Add the EF Core migration.",
+      "traps": [
+        "A read with LINQ, then an update, without a row lock: two workers get the same order. FOR UPDATE SKIP LOCKED outside a transaction has the same result, because the lock ends with the statement.",
+        "Raw SQL with unquoted PascalCase names (WHERE Status = 'Placed') fails with 42703: the fixture has no snake_case convention.",
+        "SqlQuery over 'UPDATE ... RETURNING' composed with SingleOrDefaultAsync: EF wraps the SQL in a subquery and PostgreSQL rejects it. FromSql with 'SELECT *' on an entity with an xmin token fails with 42703.",
+        "SERIALIZABLE or REPEATABLE READ without a retry: 40001 under load.",
+        "Days in the session time zone (UTC), not in Amsterdam time: an order at 22:30Z on 2026-07-01 belongs to 2026-07-02.",
+        "A plain CREATE INDEX on the big live table blocks writes (DATA-25)."
+      ],
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "build_warnaserror"
+        },
+        {
+          "id": "C2",
+          "check": "tests_pass"
+        },
+        {
+          "id": "C3",
+          "check": "package_policy",
+          "approved": []
+        },
+        {
+          "id": "C4",
+          "check": "migration_ok",
+          "trap": "Snapshot matches the model (has-pending-model-changes)."
+        },
+        {
+          "id": "C5",
+          "check": "probe_tests",
+          "probe": "pg-picking",
+          "tests": [
+            "TwentyWorkers_TenOrders_EachOrderOnce",
+            "OneWorker_GetsOldestPlacedOrderFirst",
+            "DailySales_OrderAt2230Utc_CountsOnNextAmsterdamDay"
+          ],
+          "trap": "Double claim, unquoted names, composed RETURNING, 40001 without retry, UTC days."
+        },
+        {
+          "id": "C6",
+          "check": "grep_absent",
+          "value": [
+            "DateTime(Offset)?\\.(Now|UtcNow)",
+            "(FromSqlRaw|ExecuteSqlRaw|SqlQueryRaw)\\s*(<[^>]+>)?\\(\\s*\\$",
+            "EnableLegacyTimestampBehavior",
+            "UseXminAsConcurrencyToken"
+          ],
+          "files": [
+            "src/**/*.cs"
+          ],
+          "exclude": [
+            "**/Migrations/**"
+          ]
+        },
+        {
+          "id": "J1",
+          "judge": "The claim is atomic and never waits: a row lock with FOR UPDATE SKIP LOCKED inside one UPDATE statement or inside one explicit transaction, or an equivalent atomic conditional UPDATE. It does not use SERIALIZABLE or REPEATABLE READ without a retry, and it does not use a lock that makes a worker wait for another worker (FOR UPDATE without SKIP LOCKED, an advisory lock, a C# lock)."
+        },
+        {
+          "id": "J2",
+          "judge": "The daily report groups by the calendar day in Europe/Amsterdam (AT TIME ZONE 'Europe/Amsterdam' in SQL, or TimeZoneInfo in code), and filters on the bare PlacedAt column with the UTC bounds of the local days (no function or cast on the column in the WHERE clause)."
+        },
+        {
+          "id": "J3",
+          "judge": "The migration adds an index for the claim query (a partial index on placed orders, or an index that starts with the status, with PlacedAt), and the index is built without blocking writes (IsCreatedConcurrently, CREATE INDEX CONCURRENTLY, or a separate step for the DBA). The final message names DDL on live tables (DATA-25) as an assumed decision or explains the lock risk."
+        },
+        {
+          "id": "J4",
+          "judge": "The final message states the assumptions with the chosen answers: at least the time zone name, the status value for picking, and how the migration is deployed or how the index is built."
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "name": "postgresql-review",
+      "skill": "postgresql",
+      "kind": "review",
+      "fixture": "review-postgresql",
+      "planted": "planted/review-postgresql.json",
+      "human": "absent",
+      "request": "Review this code before we merge it. It adds the nightly stock import, two reports with Dapper, and the SQL script for the new tables.",
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "files_unchanged"
+        },
+        {
+          "id": "J1",
+          "judge": "The review finds at least 6 of the 9 planted mistakes."
+        },
+        {
+          "id": "J2",
+          "judge": "The review finds every planted mistake with severity 'high'."
+        },
+        {
+          "id": "J3",
+          "judge": "At most 2 findings are false positives. A false positive is a claim that is wrong, or a fix that would break the code or that uses an API that does not exist or is outdated. A real problem that is not on the planted list is not a false positive."
+        },
+        {
+          "id": "J4",
+          "judge": "Each finding gives the file and the line (or quotes the code) and a concrete fix."
+        },
+        {
+          "id": "J5",
+          "judge": "The review separates blocking issues from minor ones and ends with a clear merge verdict."
+        },
+        {
+          "id": "J6",
+          "judge": "The fixes are correct for Npgsql 10 and Dapper: '= ANY(@orderIds)' for the id list (not 'IN @orderIds' and not string building), 'await writer.CompleteAsync(ct)' before the writer is disposed, a UTC value (DateTimeOffset or DateTime with Kind Utc, for example from TimeProvider) for imported_at, and NOT EXISTS (or a NOT NULL column) for the discontinued check. The review does not recommend citext, money, or 'Npgsql.EnableLegacyTimestampBehavior'."
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "name": "sqlserver-trap",
+      "skill": "sqlserver",
+      "kind": "write",
+      "fixture": "orders-api-sqlserver",
+      "human": "absent",
+      "request": "Add stock. Add a table StockLevels (Sku varchar(32) primary key, Available int). POST /orders reserves the stock for each line: Available goes down and never below zero. When a line has not enough stock, POST /orders returns 409 and reserves nothing. Add PUT /stock/{sku} with the body {\"available\": 25}. The warehouse calls it to create or replace the level of a SKU, often twice at the same time for one SKU. Also add GET /reports/daily-sales?from=2026-07-01&to=2026-07-31. It returns one row per day in Amsterdam time, with the number of orders and the revenue (the sum of the line totals) of the orders that are not cancelled, as a JSON array: [{\"day\": \"2026-07-02\", \"orders\": 3, \"revenue\": 12.50}]. The report runs during the day and must not block order placement. Add the EF Core migration.",
+      "traps": [
+        "Read the stock, check it in C#, then write: oversell under parallel orders. Use one conditional UPDATE (or ExecuteUpdateAsync) per line and check the row count.",
+        "Check-then-insert, or MERGE without HOLDLOCK, for the upsert: error 2627 when two calls insert the same new SKU.",
+        "AT TIME ZONE 'Europe/Amsterdam': SQL Server takes only Windows zone names (error 9820). Use 'W. Europe Standard Time'.",
+        "NOLOCK or READ UNCOMMITTED in the report to avoid blocking. The fix is RCSI on the database (DATA-26).",
+        "The fixture turns on EnableRetryOnFailure: an explicit transaction outside the execution strategy throws InvalidOperationException.",
+        "Raw SQL with an interpolated string on the varchar(32) key sends nvarchar(4000): the index cannot seek."
+      ],
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "build_warnaserror"
+        },
+        {
+          "id": "C2",
+          "check": "tests_pass"
+        },
+        {
+          "id": "C3",
+          "check": "package_policy",
+          "approved": []
+        },
+        {
+          "id": "C4",
+          "check": "migration_ok",
+          "trap": "Snapshot matches the model (has-pending-model-changes)."
+        },
+        {
+          "id": "C5",
+          "check": "probe_tests",
+          "probe": "mssql-stock",
+          "tests": [
+            "FiftyParallelReservations_NeverBelowZero",
+            "TwoLines_SecondShort_NothingReserved",
+            "ParallelPutSameSku_NoServerError",
+            "DailySales_OrderAt2230Utc_CountsOnNextAmsterdamDay"
+          ],
+          "trap": "Oversell, 2627 on a parallel upsert, IANA zone name, transaction outside the execution strategy."
+        },
+        {
+          "id": "C6",
+          "check": "grep_absent",
+          "value": [
+            "(?i)\\bNOLOCK\\b",
+            "(?i)\\bREADUNCOMMITTED\\b",
+            "(?i)\\bREAD\\s+UNCOMMITTED\\b",
+            "IsolationLevel\\.ReadUncommitted"
+          ],
+          "files": [
+            "src/**/*.cs",
+            "src/**/*.sql"
+          ],
+          "trap": "NOLOCK or READ UNCOMMITTED in the report."
+        },
+        {
+          "id": "J1",
+          "judge": "The final message proposes READ_COMMITTED_SNAPSHOT (RCSI, DATA-26) for the report instead of a lock hint, and marks it as an assumed decision or an open point for the DBA. A migration that turns RCSI on also passes when it runs outside a transaction (suppressTransaction) and the message names the effect."
+        },
+        {
+          "id": "J2",
+          "judge": "The reservation is one atomic statement per SKU (UPDATE ... WHERE Sku = @sku AND Available >= @q, or ExecuteUpdateAsync with the same Where) with a check of the row count, inside one transaction that runs inside the execution strategy (CreateExecutionStrategy().ExecuteAsync). A tracked read, a check in C#, and SaveChanges does not pass, also not with a rowversion token and no retry."
+        },
+        {
+          "id": "J3",
+          "judge": "Raw SQL that filters on Sku uses LINQ, a SqlParameter with SqlDbType.VarChar and size 32, or explains the nvarchar conversion. An interpolated C# string in SqlQuery or ExecuteSql on the Sku column without this does not pass."
+        },
+        {
+          "id": "J4",
+          "judge": "The final message states the assumptions with the chosen answers: at least the time zone name, the RCSI or isolation choice, and how the migration is deployed."
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "name": "sqlserver-review",
+      "skill": "sqlserver",
+      "kind": "review",
+      "fixture": "review-sqlserver",
+      "planted": "planted/review-sqlserver.json",
+      "human": "absent",
+      "request": "Review this code before we merge it. It connects the orders service to the stock in the SQL Server database of the warehouse team: a Dapper repository and the procedures and schema script for that database.",
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "files_unchanged"
+        },
+        {
+          "id": "J1",
+          "judge": "The review finds at least 6 of the 8 planted mistakes."
+        },
+        {
+          "id": "J2",
+          "judge": "The review finds every planted mistake with severity 'high'."
+        },
+        {
+          "id": "J3",
+          "judge": "At most 2 findings are false positives. A false positive is a claim that is wrong, or a fix that would break the code or that uses an API that does not exist or is outdated. A real problem that is not on the planted list is not a false positive."
+        },
+        {
+          "id": "J4",
+          "judge": "Each finding gives the file and the line (or quotes the code) and a concrete fix."
+        },
+        {
+          "id": "J5",
+          "judge": "The review separates blocking issues from minor ones and ends with a clear merge verdict."
+        },
+        {
+          "id": "J6",
+          "judge": "The fixes are correct for SQL Server 2025: 'W. Europe Standard Time' (a Windows zone name) for AT TIME ZONE, MERGE WITH (HOLDLOCK) or UPDLOCK plus HOLDLOCK for the upsert, sp_executesql with parameters and QUOTENAME for the dynamic sort, RCSI instead of NOLOCK, and a VarChar parameter with size 32 instead of AddWithValue. The review respects DATA-29 (the warehouse procedures are accepted) and does not ask to move them into C#."
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "name": "redis-trap",
+      "skill": "redis",
+      "kind": "write",
+      "fixture": "orders-api",
+      "human": "absent",
+      "request": "GET /orders/{id} will be our hottest endpoint. Add it and cache it. We run three instances behind a load balancer, with Valkey as the shared cache (connection string ConnectionStrings:Cache). Also add POST /orders/{id}/cancel. After a cancel, every instance must return the new status at once: support staff reload the page on another instance and must not see Placed. Add tests. Approved packages: Microsoft.Extensions.Caching.Hybrid 10.11.0, Microsoft.Extensions.Caching.StackExchangeRedis 10.0.13, StackExchange.Redis 3.4.5, Testcontainers.Redis 4.16.0.",
+      "traps": [
+        "HybridCache has no backplane in 10.11.0. After RemoveAsync (or RemoveByTagAsync) on node A, node B serves its L1 copy until LocalCacheExpiration. Data that must be fresh on all nodes needs HybridCacheEntryFlags.DisableLocalCache (or a backplane, for example FusionCache).",
+        "Microsoft.Extensions.Caching.StackExchangeRedis 10.0.13 declares StackExchange.Redis >= 2.7.27. Without a direct reference (or a PackageVersion with transitive pinning) the app runs on StackExchange.Redis 2.7.27 from 2023.",
+        "Order is an EF entity with private setters and a public constructor. A JSON round trip through L1 or L2 gives Id = Guid.Empty, status Placed and no lines, with no error. Cache a DTO.",
+        "Invented APIs: GetOrSetAsync, AddRedisCache, AddHybridCache().AddRedis(...) do not exist.",
+        "The write path must save first and then remove the key. Writing the new value into the cache can store an older value last.",
+        "Sync over async on Redis calls (.Result) starves the thread pool. StackExchange.Redis 3 reports it as SER307."
+      ],
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "build_warnaserror"
+        },
+        {
+          "id": "C2",
+          "check": "tests_pass"
+        },
+        {
+          "id": "C3",
+          "check": "package_policy",
+          "approved": [
+            "Microsoft.Extensions.Caching.Hybrid",
+            "Microsoft.Extensions.Caching.StackExchangeRedis",
+            "StackExchange.Redis",
+            "Testcontainers.Redis"
+          ]
+        },
+        {
+          "id": "C4",
+          "check": "probe_tests",
+          "probe": "redis-two-nodes",
+          "tests": [
+            "CancelOnNodeA_NodeBShowsCancelled"
+          ],
+          "trap": "HybridCache L1 has no backplane: node B serves its old copy after a cancel on node A."
+        },
+        {
+          "id": "C5",
+          "check": "resolved_min",
+          "value": {
+            "StackExchange.Redis": "3.0.0"
+          },
+          "trap": "The cache package alone resolves StackExchange.Redis 2.7.27."
+        },
+        {
+          "id": "C6",
+          "check": "probe_tests",
+          "probe": "redis-two-nodes",
+          "tests": [
+            "GetTwice_SameNode_ReturnsLinesAndId"
+          ],
+          "trap": "The cached EF entity loses its Id and lines in the JSON round trip."
+        },
+        {
+          "id": "C7",
+          "check": "grep_absent",
+          "value": [
+            "\\bGetOrSetAsync\\b",
+            "\\bAddRedisCache\\s*\\(",
+            "\\.AddRedis\\s*\\(",
+            "\\.Result\\s*(?:[;),\\]]|\\.)|\\.GetAwaiter\\(\\)\\.GetResult\\(\\)",
+            "\\.Wait\\(\\s*\\)",
+            "ThreadPool\\.SetMinThreads",
+            "\\bAddDistributedMemoryCache\\s*\\(",
+            "\\bKeys(Async)?\\s*\\(\\s*(pattern\\s*:)?",
+            "ConnectionMultiplexer\\.Connect\\s*\\("
+          ],
+          "files": [
+            "src/**/*.cs"
+          ],
+          "trap": "Invented cache APIs, sync over async, KEYS, a memory cache as the shared L2, and a blocking connect."
+        },
+        {
+          "id": "C8",
+          "check": "grep_present",
+          "value": "AddStackExchangeRedisCache|IConnectionMultiplexer|ConnectionMultiplexer\\.ConnectAsync",
+          "files": [
+            "src/**/*.cs"
+          ]
+        },
+        {
+          "id": "C9",
+          "check": "tests_added_min",
+          "value": 2
+        },
+        {
+          "id": "J1",
+          "judge": "The cancel path saves to the database first and then removes the cache key (RemoveAsync or a tag removal). It does not write the new value into the cache with SetAsync, before or after the save."
+        },
+        {
+          "id": "J2",
+          "judge": "The cached value is a DTO (for example OrderResponse), not the EF entity Order, and the final message or a code comment says why."
+        },
+        {
+          "id": "J3",
+          "judge": "The final message marks the open team decisions as assumed: at least the key format (CACHE-03), the TTLs (CACHE-04), and how all instances see a change at once (CACHE-07, for example DisableLocalCache or a backplane). It names the direct StackExchange.Redis 3.x reference and the reason."
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "name": "redis-review",
+      "skill": "redis",
+      "kind": "review",
+      "fixture": "review-redis",
+      "planted": "planted/review-redis.json",
+      "human": "absent",
+      "request": "Review this code before we merge it. The service runs on three instances.",
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "files_unchanged"
+        },
+        {
+          "id": "J1",
+          "judge": "The review finds at least 6 of the 8 planted mistakes."
+        },
+        {
+          "id": "J2",
+          "judge": "The review finds every planted mistake with severity 'high'."
+        },
+        {
+          "id": "J3",
+          "judge": "At most 2 findings are false positives. A false positive is a claim that is wrong, or a fix that would break the code or that uses an API that does not exist or is outdated (for example GetOrSetAsync, RemoveByPrefixAsync, or a HybridCache backplane option). A real problem that is not on the planted list is not a false positive."
+        },
+        {
+          "id": "J4",
+          "judge": "Each finding gives the file and the line (or quotes the code) and a concrete fix."
+        },
+        {
+          "id": "J5",
+          "judge": "The review separates blocking issues from minor ones and ends with a clear merge verdict."
+        },
+        {
+          "id": "J6",
+          "judge": "The review explains that HybridCache has no backplane, so the L1 copy on other instances stays stale after a change, and it recommends a short LocalCacheExpiration or DisableLocalCache. It recommends LockReleaseAsync with the token for the export lock."
+        }
+      ]
+    },
+    {
+      "id": 25,
+      "name": "elasticsearch-trap",
+      "skill": "elasticsearch",
+      "kind": "write",
+      "fixture": "orders-api",
+      "human": "absent",
+      "request": "Support staff need an order search: free text over the SKUs of an order with typo tolerance, filters on status and placed date, newest first, 20 per page. Finance needs GET /orders/export that streams all matching orders as CSV; there can be two million. We already run Elasticsearch 9.5 (ConnectionStrings:Search, API key in Search:ApiKey). Search results may lag the database by at most 5 seconds, and the index must stay correct when one order changes twice within a second. Add tests. Approved packages: Elastic.Clients.Elasticsearch 9.5.3, Testcontainers.Elasticsearch 4.16.0 (use the image elasticsearch:9.5.5).",
+      "traps": [
+        "NEST (7.x) and Elastic.Clients.Elasticsearch 8.x code does not compile against client 9.x (IsValid, ElasticClient, Query.MatchAll, s.Index on a search is obsolete).",
+        "The client does not throw by default. After a bulk call one failed item sets Errors and IsValidResponse = false on a 200 response; ThrowExceptions() does not throw for it. A blanket throw also throws on stale 409 items that the sync must skip.",
+        "Without VersionType.External and a monotonic version, an older update that comes late overwrites a newer one.",
+        "from + size stops at 10,000 hits (index.max_result_window). A large export needs a point in time with search_after, and the PIT must be closed.",
+        "A second write to Elasticsearch in the request (dual write) leaves the index wrong when it fails; use an outbox and a worker.",
+        "Dynamic mapping locks in wrong field types on the first document; create the index with an explicit strict mapping.",
+        "Refresh.True on each write makes many small segments.",
+        "xmin as the external version wraps around after 2^32 transactions."
+      ],
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "build_warnaserror",
+          "trap": "NEST and 8.x APIs do not compile against client 9.x."
+        },
+        {
+          "id": "C2",
+          "check": "tests_pass"
+        },
+        {
+          "id": "C3",
+          "check": "package_policy",
+          "approved": [
+            "Elastic.Clients.Elasticsearch",
+            "Testcontainers.Elasticsearch"
+          ]
+        },
+        {
+          "id": "C4",
+          "check": "probe_tests",
+          "probe": "es-sync",
+          "tests": [
+            "StaleItem_IsSkipped_AndTheRestIsIndexed"
+          ],
+          "trap": "A stale (409) item must not throw or block the sync."
+        },
+        {
+          "id": "C5",
+          "check": "probe_tests",
+          "probe": "es-sync",
+          "tests": [
+            "Index_UsesExternalVersion"
+          ],
+          "trap": "Out-of-order updates need an external version."
+        },
+        {
+          "id": "C6",
+          "check": "grep_present",
+          "value": "DynamicMapping\\.Strict|\"dynamic\"\\s*:\\s*\"strict\"",
+          "files": [
+            "src/**/*.cs",
+            "src/**/*.json"
+          ],
+          "trap": "Dynamic mapping instead of an explicit strict mapping."
+        },
+        {
+          "id": "C7",
+          "check": "grep_absent",
+          "value": [
+            "Refresh\\.True\\b",
+            "[?&]refresh=true\\b"
+          ],
+          "files": [
+            "src/**/*.cs"
+          ],
+          "trap": "Refresh.True in production code."
+        },
+        {
+          "id": "C8",
+          "check": "grep_present",
+          "value": "OpenPointInTime(Async)?\\s*\\(",
+          "files": [
+            "src/**/*.cs"
+          ],
+          "trap": "The export uses from and size, which stop at 10,000 hits."
+        },
+        {
+          "id": "C9",
+          "check": "grep_absent",
+          "value": [
+            "^\\s*using\\s+(Nest|Elasticsearch\\.Net)\\s*;",
+            "\\bMaxResultWindow\\s*\\(|max_result_window\"?\\s*[:=]\\s*\\d",
+            "\\.\\s*QueryString\\s*\\(|\\bnew\\s+QueryStringQuery\\b",
+            "CertificateValidations\\s*\\.\\s*AllowAll|ServerCertificateValidationCallback\\s*\\(\\s*\\([^)]*\\)\\s*=>\\s*true"
+          ],
+          "files": [
+            "src/**/*.cs"
+          ]
+        },
+        {
+          "id": "C10",
+          "check": "tests_added_min",
+          "value": 2
+        },
+        {
+          "id": "J1",
+          "judge": "The export pages with a point in time and search_after, closes the point in time in a finally block (or equivalent), and streams the CSV without loading all hits into memory."
+        },
+        {
+          "id": "J2",
+          "judge": "The request path writes only to the database (with an outbox row in the same transaction). A background worker reads the outbox and indexes. There is no second write to Elasticsearch in the request."
+        },
+        {
+          "id": "J3",
+          "judge": "The external version is a monotonic 64-bit number per order (for example a long Version column that each save increments, or the outbox sequence), or the final message states why xmin is not safe as the external version."
+        },
+        {
+          "id": "J4",
+          "judge": "The search puts status and date in bool.filter (not scored), uses match with fuzziness (or simple_query_string) for the free text, keeps from + size at or below 10,000, and sorts by placed date with a tie-breaker."
+        },
+        {
+          "id": "J5",
+          "judge": "The final message marks the open team decisions as assumed: at least the sync model (SEARCH-02, an outbox, and that MSG-09 has no accepted answer), the index name and alias (SEARCH-03), and the error handling of the client (SEARCH-05)."
+        }
+      ]
+    },
+    {
+      "id": 26,
+      "name": "elasticsearch-review",
+      "skill": "elasticsearch",
+      "kind": "review",
+      "fixture": "review-elasticsearch",
+      "planted": "planted/review-elasticsearch.json",
+      "human": "absent",
+      "request": "Review this code before we merge it. The cluster runs Elasticsearch 9.5.",
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "files_unchanged"
+        },
+        {
+          "id": "J1",
+          "judge": "The review finds at least 6 of the 8 planted mistakes."
+        },
+        {
+          "id": "J2",
+          "judge": "The review finds every planted mistake with severity 'high'."
+        },
+        {
+          "id": "J3",
+          "judge": "At most 2 findings are false positives. A false positive is a claim that is wrong, or a fix that would break the code or that uses an API that does not exist or is outdated (for example NEST APIs, IsValid, Query.MatchAll, TryGet, or raising max_result_window). A real problem that is not on the planted list is not a false positive."
+        },
+        {
+          "id": "J4",
+          "judge": "Each finding gives the file and the line (or quotes the code) and a concrete fix."
+        },
+        {
+          "id": "J5",
+          "judge": "The review separates blocking issues from minor ones and ends with a clear merge verdict."
+        },
+        {
+          "id": "J6",
+          "judge": "For the sync, the review recommends an outbox (or another retryable path) with VersionType.External and a monotonic version, not only a try/catch around IndexAsync. For the export, it recommends a point in time with search_after, not a larger max_result_window or scroll as the first choice."
+        }
+      ]
+    },
+    {
+      "id": 27,
+      "name": "rabbitmq-interop-trap",
+      "skill": "rabbitmq",
+      "kind": "write",
+      "fixture": "rabbitmq-trap",
+      "human": "absent",
+      "request": "Our warehouse system is written in Go. It must get an event for each new order on RabbitMQ: exchange orders.events (topic), routing key order.placed.v1, JSON with orderId, customerId, total and placedAt. No event may be lost, also when RabbitMQ is down for a minute, and the API must still accept orders then. Also declare the queue warehouse.order-placed, bound to that routing key. It must survive the loss of one broker node. The broker address is the connection string RabbitMq (an amqp:// URI). We do not use Wolverine in this service. Approved packages: RabbitMQ.Client and Testcontainers.RabbitMq.",
+      "traps": [
+        "Publish inline after SaveChangesAsync: when the broker is down, the request fails with a 500, or the event is lost. Use an outbox row in the same SaveChangesAsync and a background publisher.",
+        "Publisher confirms are off by default in RabbitMQ.Client 7. Without them, a publish during a connection failure is lost without an error.",
+        "A queue without x-queue-type is a classic queue. Classic queues are not replicated, so the queue does not survive the loss of a node. Use a quorum queue.",
+        "The Go consumer needs the AMQP type, message_id and persistent delivery mode, and a camelCase body.",
+        "new RabbitMqBuilder() is obsolete (CS0618) and starts rabbitmq:3.11. Pin the production major version."
+      ],
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "build_warnaserror"
+        },
+        {
+          "id": "C2",
+          "check": "tests_pass"
+        },
+        {
+          "id": "C3",
+          "check": "package_policy",
+          "approved": [
+            "RabbitMQ.Client",
+            "Testcontainers.RabbitMq"
+          ]
+        },
+        {
+          "id": "C4",
+          "check": "probe_tests",
+          "probe": "rabbitmq-interop",
+          "tests": [
+            "BrokerDown_OrderAccepted_EventArrivesLater"
+          ],
+          "trap": "Inline publish after SaveChangesAsync loses the event or fails the request when the broker is down."
+        },
+        {
+          "id": "C5",
+          "check": "probe_tests",
+          "probe": "rabbitmq-interop",
+          "tests": [
+            "WarehouseQueue_IsQuorum"
+          ],
+          "trap": "Classic queue by default: not replicated."
+        },
+        {
+          "id": "C6",
+          "check": "probe_tests",
+          "probe": "rabbitmq-interop",
+          "tests": [
+            "Event_HasTypeMessageIdAndCamelCaseBody"
+          ],
+          "trap": "Missing AMQP type, message_id, persistent mode, or camelCase body."
+        },
+        {
+          "id": "C7",
+          "check": "grep_present",
+          "value": "publisherConfirmationTrackingEnabled:\\s*true|CreateChannelOptions\\(\\s*true\\s*,\\s*true",
+          "files": [
+            "src/**/*.cs"
+          ],
+          "trap": "Publisher confirms are off by default."
+        },
+        {
+          "id": "C8",
+          "check": "grep_absent",
+          "value": [
+            "RabbitMqBuilder\\(\\s*\\)",
+            "rabbitmq:3",
+            "Task\\.Delay\\(\\s*(\\d{4,}|TimeSpan\\.FromSeconds)"
+          ],
+          "files": [
+            "tests/**/*.cs"
+          ],
+          "trap": "Obsolete Testcontainers constructor (rabbitmq:3.11) and fixed waits in tests."
+        },
+        {
+          "id": "J1",
+          "judge": "The final message marks MSG-06 (names), MSG-08 (dead letters) and MSG-09 (outbox) as assumed, and says who owns the dead-letter queue of warehouse.order-placed."
+        },
+        {
+          "id": "J2",
+          "judge": "An outbox row is marked sent only after the broker confirms the publish. A PublishException or a lost connection is not swallowed: the row stays unsent and the publisher tries again. Each publisher uses its own channel, not one shared channel for all requests."
+        }
+      ]
+    },
+    {
+      "id": 28,
+      "name": "rabbitmq-review",
+      "skill": "rabbitmq",
+      "kind": "review",
+      "fixture": "review-rabbitmq",
+      "planted": "planted/review-rabbitmq.json",
+      "human": "absent",
+      "request": "Review this code before we merge it. It adds a billing worker that consumes OrderPlaced, and the publisher in the API.",
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "files_unchanged"
+        },
+        {
+          "id": "J1",
+          "judge": "The review finds at least 6 of the 8 planted mistakes."
+        },
+        {
+          "id": "J2",
+          "judge": "The review finds every planted mistake with severity 'high'."
+        },
+        {
+          "id": "J3",
+          "judge": "At most 2 findings are false positives. A false positive is a claim that is wrong, or a fix that would break the code or that uses an API that does not exist or is outdated (for example IModel, CreateModel, EventingBasicConsumer, ConfirmSelect, or ha-mode policies). A real problem that is not on the planted list is not a false positive."
+        },
+        {
+          "id": "J4",
+          "judge": "Each finding gives the file and the line (or quotes the code) and a concrete fix."
+        },
+        {
+          "id": "J5",
+          "judge": "The review separates blocking issues from minor ones and ends with a clear merge verdict."
+        },
+        {
+          "id": "J6",
+          "judge": "The review recommends an outbox (a row in the same SaveChangesAsync and a background publisher with publisher confirms) for the API event, and a quorum queue with a dead-letter exchange for the billing queue."
+        }
+      ]
+    },
+    {
+      "id": 29,
+      "name": "wolverine-outbox-trap",
+      "skill": "wolverine",
+      "kind": "write",
+      "fixture": "wolverine-trap",
+      "human": "absent",
+      "request": "When an order is placed, the billing service must get an OrderPlaced message on RabbitMQ (exchange orders.events). An order and its message must never get out of step: no message for an order that was not saved, and no saved order without a message, also when RabbitMQ is down. Billing sends a CancelOrder command back on the queue orders-api.cancel-order. Cancel the order when billing asks. A cancel of a shipped order is a business error and must not be retried. Use the contracts in src/Orders.Api/Contracts/BillingMessages.cs. The broker address is the connection string RabbitMq (an amqp:// URI). Approved packages: WolverineFx, WolverineFx.RabbitMQ, WolverineFx.EntityFrameworkCore, WolverineFx.Postgresql, WolverineFx.RuntimeCompilation and Testcontainers.RabbitMq.",
+      "traps": [
+        "A plain AddDbContext<T> throws InvalidServiceLocationException on the first message in Wolverine 6. Use AddDbContextWithWolverineIntegration or optionsLifetime: Singleton.",
+        "POST /orders is a minimal API endpoint. AutoApplyTransactions does nothing there. SaveChangesAsync and then PublishAsync is not atomic. Use IDbContextOutbox<T> or InvokeAsync to a handler.",
+        "Without the durable outbox, a message waits only in memory while the broker is down, and a restart loses it.",
+        "The RabbitMQ transport declares classic queues and turns publisher confirms off by default.",
+        "Without an error policy, Wolverine retries each exception. A business error must go to the error queue at once, or not throw.",
+        "An app that ends with RunJasperFxCommands(args) needs JasperFxEnvironment.AutoStartHost = true under WebApplicationFactory."
+      ],
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "build_warnaserror"
+        },
+        {
+          "id": "C2",
+          "check": "tests_pass"
+        },
+        {
+          "id": "C3",
+          "check": "package_policy",
+          "approved": [
+            "WolverineFx",
+            "WolverineFx.RabbitMQ",
+            "WolverineFx.EntityFrameworkCore",
+            "WolverineFx.Postgresql",
+            "WolverineFx.RuntimeCompilation",
+            "Testcontainers.RabbitMq"
+          ]
+        },
+        {
+          "id": "C4",
+          "check": "probe_tests",
+          "probe": "wolverine-outbox",
+          "tests": [
+            "CancelOrder_IsHandled"
+          ],
+          "trap": "Plain AddDbContext throws InvalidServiceLocationException on the first message."
+        },
+        {
+          "id": "C5",
+          "check": "probe_tests",
+          "probe": "wolverine-outbox",
+          "tests": [
+            "BrokerDown_OrderSaved_MessageSentLater"
+          ],
+          "trap": "Without the durable outbox, a restart while the broker is down loses the message."
+        },
+        {
+          "id": "C6",
+          "check": "probe_tests",
+          "probe": "wolverine-outbox",
+          "tests": [
+            "CancelQueue_IsQuorum"
+          ],
+          "trap": "The RabbitMQ transport declares classic queues by default."
+        },
+        {
+          "id": "C7",
+          "check": "probe_tests",
+          "probe": "wolverine-outbox",
+          "tests": [
+            "CancelShippedOrder_IsNotRetried"
+          ],
+          "trap": "Without an explicit policy, the business error is retried."
+        },
+        {
+          "id": "C8",
+          "check": "grep_present",
+          "value": "PublisherConfirmationTrackingEnabled\\s*=\\s*true",
+          "files": [
+            "src/**/*.cs"
+          ],
+          "trap": "Publisher confirms are off by default on the Wolverine RabbitMQ transport."
+        },
+        {
+          "id": "C9",
+          "check": "grep_absent",
+          "value": [
+            "RestoreV5Defaults\\s*\\(",
+            "Production\\s*\\.\\s*GeneratedCodeMode\\s*=\\s*TypeLoadMode\\.(Dynamic|Auto)",
+            "UseNewtonsoftForSerialization"
+          ],
+          "files": [
+            "src/**/*.cs"
+          ],
+          "trap": "RestoreV5Defaults hides the registration problem. Dynamic code generation in production."
+        },
+        {
+          "id": "C10",
+          "check": "grep_absent",
+          "value": [
+            "RabbitMqBuilder\\(\\s*\\)",
+            "rabbitmq:3",
+            "Task\\.Delay\\(\\s*(\\d{4,}|TimeSpan\\.FromSeconds)"
+          ],
+          "files": [
+            "tests/**/*.cs"
+          ],
+          "trap": "Fixed waits instead of tracked sessions, and the obsolete Testcontainers constructor."
+        },
+        {
+          "id": "J1",
+          "judge": "POST /orders saves the order and the message in one transaction: IDbContextOutbox<T> with SaveChangesAndFlushMessagesAsync, or InvokeAsync to a Wolverine handler with AutoApplyTransactions. It does not call SaveChangesAsync and then IMessageBus.PublishAsync."
+        },
+        {
+          "id": "J2",
+          "judge": "The final message marks MSG-09 (outbox), MSG-08 (retries), MSG-06 (names, dead-letter queue) and MSG-13 (code generation) as assumed, and says that production needs 'codegen write' (or another plan for the generated code)."
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "name": "wolverine-review",
+      "skill": "wolverine",
+      "kind": "review",
+      "fixture": "review-wolverine",
+      "planted": "planted/review-wolverine.json",
+      "human": "absent",
+      "request": "Review this code before we merge it. It adds Wolverine to the orders API: a ShipOrder handler, the RabbitMQ transport and the EF Core outbox.",
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "files_unchanged"
+        },
+        {
+          "id": "J1",
+          "judge": "The review finds at least 6 of the 8 planted mistakes."
+        },
+        {
+          "id": "J2",
+          "judge": "The review finds every planted mistake with severity 'high'."
+        },
+        {
+          "id": "J3",
+          "judge": "At most 2 findings are false positives. A false positive is a claim that is wrong, or a fix that would break the code or that uses an API that does not exist or is outdated (for example RestoreV5Defaults as the fix, UseNativeAck, MassTransit or MediatR interfaces). A real problem that is not on the planted list is not a false positive."
+        },
+        {
+          "id": "J4",
+          "judge": "Each finding gives the file and the line (or quotes the code) and a concrete fix."
+        },
+        {
+          "id": "J5",
+          "judge": "The review separates blocking issues from minor ones and ends with a clear merge verdict."
+        },
+        {
+          "id": "J6",
+          "judge": "The review recommends IDbContextOutbox<T> (or InvokeAsync to a handler) for the endpoint, AddDbContextWithWolverineIntegration (or optionsLifetime Singleton) for the DbContext, and does not recommend RestoreV5Defaults."
+        }
+      ]
+    },
+    {
+      "id": 31,
+      "name": "mailkit-confirmation-trap",
+      "skill": "mailkit",
+      "kind": "write",
+      "fixture": "orders-api",
+      "human": "absent",
+      "request": "Send an order confirmation mail when an order is placed. CreateOrderRequest gets two new fields: customerName and email. The mail goes to that address, with the subject 'Order received', a text body and an HTML body with the customer name and the order lines. Use our relay. The settings are in section Smtp: Host, Port (587), Security (the name of a MailKit SecureSocketOptions value), UserName, Password and From. The password comes from the environment. The integration tests may use Security None with a local test relay. The relay is sometimes down for some minutes. The order must still be accepted then, and the mail must go out within one minute after the relay is back. A mail must never go out for an order that was not saved. Do not add a message broker (MSG-01: in process). Approved packages: MailKit and Testcontainers.Mailpit.",
+      "traps": [
+        "MailKit 4.18.1 depends on MimeKit 4.18.1, which pulls System.Security.Cryptography.Pkcs 10.0.0 (NU1902, NU1903). The build fails with -warnaserror. Pin Pkcs 10.0.13 with transitive pinning, do not NoWarn the audit.",
+        "A send inline after SaveChangesAsync loses the mail when the relay is down (or fails the request). Write an outbox row in the same SaveChangesAsync and send from a BackgroundService with retries.",
+        "SecureSocketOptions.Auto (and StartTlsWhenAvailable) on port 587 sends AUTH and the mail in plain text when the relay does not offer STARTTLS. Use StartTls.",
+        "An interpolated HTML body puts the customer name in the mail without encoding (HTML injection). Use a Razor component with HtmlRenderer, or HtmlEncoder.",
+        "The parameterless MailpitBuilder constructor is obsolete. Pin the Mailpit image tag. MailHog is not maintained."
+      ],
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "build_warnaserror",
+          "trap": "MimeKit 4.18.1 pulls Pkcs 10.0.0: NU1902 and NU1903 fail the build with -warnaserror."
+        },
+        {
+          "id": "C2",
+          "check": "tests_pass"
+        },
+        {
+          "id": "C3",
+          "check": "package_policy",
+          "approved": [
+            "MailKit",
+            "MimeKit",
+            "Testcontainers.Mailpit",
+            "System.Security.Cryptography.Pkcs"
+          ]
+        },
+        {
+          "id": "C4",
+          "check": "no_vulnerable_packages",
+          "trap": "The transitive Pkcs 10.0.0 has known vulnerabilities."
+        },
+        {
+          "id": "C5",
+          "check": "grep_absent",
+          "scope": "all",
+          "value": [
+            "NU190[0-9]",
+            "NuGetAudit>\\s*false",
+            "SecureSocketOptions\\.(Auto|StartTlsWhenAvailable)\\b",
+            "\"Security\"\\s*:\\s*\"(Auto|StartTlsWhenAvailable|None)\"",
+            "ServerCertificateValidationCallback",
+            "\\bAdd(Singleton|Scoped|Transient)\\s*<\\s*(MailKit\\.Net\\.Smtp\\.)?I?SmtpClient\\s*[,>]",
+            "System\\.Net\\.Mail"
+          ],
+          "files": [
+            "src/**/*.cs",
+            "src/**/appsettings.json",
+            "**/*.props",
+            "**/*.csproj"
+          ],
+          "trap": "TLS downgrade with Auto, audit warnings hidden, a shared SmtpClient, System.Net.Mail."
+        },
+        {
+          "id": "C6",
+          "check": "grep_absent",
+          "value": [
+            "(?i)mailhog"
+          ],
+          "files": [
+            "**/*.cs",
+            "**/*.yml",
+            "**/*.yaml",
+            "**/*.json"
+          ],
+          "trap": "MailHog is not maintained. Use Mailpit."
+        },
+        {
+          "id": "C7",
+          "check": "probe_tests",
+          "probe": "mailkit-outbox",
+          "tests": [
+            "RelayDown_OrderAccepted_MailSentWhenRelayUp"
+          ],
+          "trap": "A send inline after SaveChangesAsync loses the mail while the relay is down."
+        },
+        {
+          "id": "C8",
+          "check": "probe_tests",
+          "probe": "mailkit-outbox",
+          "tests": [
+            "RelayWithoutStartTls_GetsNoPassword"
+          ],
+          "trap": "SecureSocketOptions.Auto sends the password in plain text on port 587."
+        },
+        {
+          "id": "C9",
+          "check": "probe_tests",
+          "probe": "mailkit-outbox",
+          "tests": [
+            "CustomerName_IsHtmlEncoded"
+          ],
+          "trap": "The customer name goes into the HTML body without encoding."
+        },
+        {
+          "id": "C10",
+          "check": "probe_tests",
+          "probe": "mailkit-outbox",
+          "tests": [
+            "Email_WithCrLf_IsRejected"
+          ]
+        },
+        {
+          "id": "C11",
+          "check": "probe_tests",
+          "probe": "mailkit-outbox",
+          "tests": [
+            "OrderPlaced_SendsConfirmationMail"
+          ]
+        },
+        {
+          "id": "C12",
+          "check": "file_exists",
+          "files": [
+            "tests/**/*.cs"
+          ],
+          "contains": "new\\s+MailpitBuilder\\s*\\(\\s*\"axllent/mailpit:v?\\d",
+          "trap": "No test against a real SMTP server, or the obsolete parameterless MailpitBuilder without a pinned tag."
+        },
+        {
+          "id": "J1",
+          "judge": "The final message names System.Security.Cryptography.Pkcs as a new direct package version (a pin with transitive pinning) and gives the reason: MimeKit pulls a vulnerable 10.0.0 (NU1902, NU1903). It does not hide the warnings with NoWarn or NuGetAudit=false."
+        },
+        {
+          "id": "J2",
+          "judge": "A test sends a mail through Mailpit (Testcontainers.Mailpit) and asserts on the captured mail (for example the subject, the recipient, or the encoded customer name) through the Mailpit API."
+        },
+        {
+          "id": "J3",
+          "judge": "The sender creates one SmtpClient for each batch or each send (not a singleton), sets a timeout, passes the CancellationToken, and calls DisconnectAsync(true, ...). It treats a 5xx SmtpCommandException as permanent and retries the connection failures."
+        },
+        {
+          "id": "J4",
+          "judge": "The final message marks the open team decisions as assumed: at least the send path (MAIL-02) and the mail template (MAIL-03)."
+        }
+      ]
+    },
+    {
+      "id": 32,
+      "name": "mailkit-review",
+      "skill": "mailkit",
+      "kind": "review",
+      "fixture": "review-mailkit",
+      "planted": "planted/review-mailkit.json",
+      "human": "absent",
+      "request": "Review this code before we merge it.",
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "files_unchanged"
+        },
+        {
+          "id": "J1",
+          "judge": "The review finds at least 6 of the 8 planted mistakes."
+        },
+        {
+          "id": "J2",
+          "judge": "The review finds every planted mistake with severity 'high'."
+        },
+        {
+          "id": "J3",
+          "judge": "At most 2 findings are false positives. A false positive is a claim that is wrong, or a fix that would break the code or that uses an API that does not exist or is outdated (for example 'await using var client' or 'SendResult' from MailKit 5, which is not released). A real problem that is not on the planted list is not a false positive."
+        },
+        {
+          "id": "J4",
+          "judge": "Each finding gives the file and the line (or quotes the code) and a concrete fix."
+        },
+        {
+          "id": "J5",
+          "judge": "The review separates blocking issues from minor ones and ends with a clear merge verdict."
+        },
+        {
+          "id": "J6",
+          "judge": "The review recommends a direct pin of System.Security.Cryptography.Pkcs 10.0.13 or later (with transitive pinning) instead of the NoWarn, and StartTls on port 587 (or SslOnConnect on 465) instead of Auto. It does not recommend System.Net.Mail.SmtpClient or MailHog."
+        }
+      ]
+    },
+    {
+      "id": 33,
+      "name": "aspnetcore-openapi-trap",
+      "skill": "aspnetcore-openapi",
+      "kind": "write",
+      "fixture": "orders-api",
+      "human": "absent",
+      "request": "Add OpenAPI documentation and a UI for our developers. An external webshop will generate a client from the document, so every response must be in it. Also add GET /orders/{id}. The document must be in the repository, so that we see contract changes in pull requests. Approved packages: Microsoft.AspNetCore.OpenApi, Scalar.AspNetCore, Microsoft.Extensions.ApiDescription.Server.",
+      "traps": [
+        "A TypedResults.Problem(404) in a Results<...> union does not document its status. The 404 needs .ProducesProblem(404), so the client generator knows the problem+json body.",
+        "Microsoft.Extensions.ApiDescription.Server writes the build-time document to obj/ by default, which git ignores. OpenApiDocumentsDirectory must point to a tracked folder.",
+        "MapOpenApi and MapScalarApiReference outside the environment check publish every route in Production.",
+        "An endpoint without WithName has no operationId, so the generator invents method names. The existing endpoints have no names.",
+        "An external consumer meets decision API-10 (versioning from the first endpoint) and API-11 (with the web defaults, int is [\"integer\",\"string\"] in the schema). Neither decision is accepted in the fixture."
+      ],
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "build_warnaserror"
+        },
+        {
+          "id": "C2",
+          "check": "tests_pass"
+        },
+        {
+          "id": "C3",
+          "check": "package_policy",
+          "approved": [
+            "Microsoft.AspNetCore.OpenApi",
+            "Scalar.AspNetCore",
+            "Microsoft.Extensions.ApiDescription.Server"
+          ]
+        },
+        {
+          "id": "C4",
+          "check": "probe_tests",
+          "probe": "openapi-document",
+          "tests": [
+            "OpenApi_GetOrder_Documents404AsProblemJson",
+            "GetOrder_UnknownId_Returns404Problem"
+          ],
+          "trap": "TypedResults.Problem(404) in a Results union is not in the document."
+        },
+        {
+          "id": "C5",
+          "check": "file_exists",
+          "files": [
+            "**/*.json"
+          ],
+          "contains": "\"openapi\"\\s*:\\s*\"3\\.1",
+          "trap": "The build-time document goes to obj/ by default."
+        },
+        {
+          "id": "C6",
+          "check": "grep_present",
+          "value": "<OpenApiDocumentsDirectory>",
+          "files": [
+            "**/*.csproj",
+            "**/*.props",
+            "**/*.targets"
+          ],
+          "trap": "The build-time document goes to obj/ by default."
+        },
+        {
+          "id": "C7",
+          "check": "probe_tests",
+          "probe": "openapi-document",
+          "tests": [
+            "OpenApi_InProduction_IsNotPublic"
+          ],
+          "trap": "Document and UI mapped in all environments."
+        },
+        {
+          "id": "C8",
+          "check": "grep_absent",
+          "value": [
+            "^app\\s*\\.\\s*(MapOpenApi|MapScalarApiReference|UseSwaggerUI|UseSwagger|UseReDoc)\\s*\\((?![^;\\n]*RequireAuthorization)"
+          ],
+          "files": [
+            "src/**/*.cs"
+          ],
+          "trap": "Document and UI mapped in all environments (rule OAS-UI-UNGUARDED)."
+        },
+        {
+          "id": "C9",
+          "check": "probe_tests",
+          "probe": "openapi-document",
+          "tests": [
+            "OpenApi_EveryOperation_HasOperationId"
+          ],
+          "trap": "Endpoints without WithName have no operationId."
+        },
+        {
+          "id": "C10",
+          "check": "grep_absent",
+          "value": [
+            "\\.WithOpenApi\\s*\\(",
+            "\\bAddSwaggerGen\\s*\\(",
+            "^\\s*using\\s+Microsoft\\.OpenApi\\.(Models|Any)\\s*;"
+          ],
+          "files": [
+            "src/**/*.cs"
+          ],
+          "trap": "Swashbuckle, the deprecated WithOpenApi, or the Microsoft.OpenApi 1.x namespaces."
+        },
+        {
+          "id": "J1",
+          "judge": "The final message asks decision API-10 (versioning for an external consumer) and decision API-11 (JSON number and enum settings, which change the schema) with a recommendation, or marks both as assumed. The code follows the answer that the message states."
+        },
+        {
+          "id": "J2",
+          "judge": "The final message says where the build writes the document, that the document must be committed after each contract change, and how a pull request or CI shows a breaking change (a diff of the committed file, or oasdiff with decision API-19 assumed)."
+        },
+        {
+          "id": "J3",
+          "judge": "The document and the UI are only in Development, or behind an authorization policy, and the final message states this choice."
+        }
+      ]
+    },
+    {
+      "id": 34,
+      "name": "aspnetcore-openapi-review",
+      "skill": "aspnetcore-openapi",
+      "kind": "review",
+      "fixture": "review-aspnetcore-openapi",
+      "planted": "planted/review-aspnetcore-openapi.json",
+      "human": "absent",
+      "request": "Review this code before we merge it.",
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "files_unchanged"
+        },
+        {
+          "id": "J1",
+          "judge": "The review finds at least 6 of the 8 planted mistakes."
+        },
+        {
+          "id": "J2",
+          "judge": "The review finds every planted mistake with severity 'high'."
+        },
+        {
+          "id": "J3",
+          "judge": "At most 3 findings are false positives. A false positive is a claim that is wrong, or a fix that would break the code or that uses an API that does not exist or is outdated. A real problem that is not on the planted list is not a false positive."
+        },
+        {
+          "id": "J4",
+          "judge": "Each finding gives the file and the line (or quotes the code) and a concrete fix."
+        },
+        {
+          "id": "J5",
+          "judge": "The review separates blocking issues from minor ones and ends with a clear merge verdict."
+        },
+        {
+          "id": "J6",
+          "judge": "The fixes use the current APIs: `using Microsoft.OpenApi;` with `JsonSchemaType` flags (not `Microsoft.OpenApi.Models` or `Nullable`), one `AddOpenApi()` after `AddApiExplorer` with `MapOpenApi().WithDocumentPerVersion()` (not one hand-written document per version), and no `WithOpenApi` or Swashbuckle."
+        }
+      ]
+    },
+    {
+      "id": 35,
+      "name": "fluentvalidation-trap",
+      "skill": "fluentvalidation",
+      "kind": "write",
+      "fixture": "orders-api",
+      "human": "absent",
+      "request": "We move request validation to FluentValidation (approved: FluentValidation 12.2.0 and FluentValidation.DependencyInjectionExtensions 12.2.0). Start with POST /orders: move the rules of CreateOrderRequest into a validator and add these rules: each SKU must be a known product (add an async IProductCatalog with an in-memory implementation for now), the same SKU must not appear twice, and an order has at most 20 lines. The webshop acts on error codes, so each rule needs a stable code.",
+      "traps": [
+        "The fixture calls AddValidation and keeps DataAnnotations on the request. The built-in filter answers first with its own 400, so the validator never runs for those fields and the client gets no code.",
+        "The SKU rule is async (MustAsync). A sync Validate on that validator throws AsyncValidatorInvokedSynchronouslyException: a 500.",
+        "ValidationResult.ToDictionary() carries the messages only. The error codes must go into the response as an extension.",
+        "In Production, minimal APIs run the endpoint filters with a JSON null body, so a validation filter gets null, and ValidateAsync(null) throws: a 500. (In Development, ThrowOnBadRequest throws earlier.)",
+        "'At most 20 lines' conflicts with Orders:MaxLinesPerOrder = 50 in the options and the check in the handler."
+      ],
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "build_warnaserror"
+        },
+        {
+          "id": "C2",
+          "check": "tests_pass"
+        },
+        {
+          "id": "C3",
+          "check": "package_policy",
+          "approved": [
+            "FluentValidation",
+            "FluentValidation.DependencyInjectionExtensions"
+          ]
+        },
+        {
+          "id": "C4",
+          "check": "probe_tests",
+          "probe": "fluentvalidation-orders",
+          "tests": [
+            "CreateOrder_EmptySku_ReturnsValidatorCode"
+          ],
+          "trap": "The built-in AddValidation filter answers before the validator."
+        },
+        {
+          "id": "C5",
+          "check": "probe_tests",
+          "probe": "fluentvalidation-orders",
+          "tests": [
+            "CreateOrder_UnknownSku_Returns400NotServerError"
+          ],
+          "trap": "Sync Validate on a validator with MustAsync gives a 500."
+        },
+        {
+          "id": "C6",
+          "check": "probe_tests",
+          "probe": "fluentvalidation-orders",
+          "tests": [
+            "CreateOrder_DuplicateSku_ResponseCarriesCode"
+          ],
+          "trap": "ToDictionary() drops the error codes."
+        },
+        {
+          "id": "C7",
+          "check": "probe_tests",
+          "probe": "fluentvalidation-orders",
+          "tests": [
+            "CreateOrder_NullBodyInProduction_Returns400"
+          ],
+          "trap": "In Production a validation filter gets a JSON null body as null, and ValidateAsync(null) throws."
+        },
+        {
+          "id": "C8",
+          "check": "grep_absent",
+          "value": [
+            "\\bAddFluentValidation",
+            "\\b_?\\w*[vV]alidator\\s*\\.\\s*Validate\\s*\\("
+          ],
+          "files": [
+            "src/**/*.cs"
+          ],
+          "trap": "The deprecated ASP.NET Core integration, or a sync Validate call (rule FV-SYNC-VALIDATE)."
+        },
+        {
+          "id": "J1",
+          "judge": "The final message names the conflict between the requested 20 lines and the MaxLinesPerOrder option (50), and the code checks one limit from one source (the option, with its value changed or a stated assumption). It does not check two different limits."
+        },
+        {
+          "id": "J2",
+          "judge": "One library validates CreateOrderRequest: the DataAnnotations are removed from the request records, or the endpoint calls DisableValidation, and the final message explains why the built-in filter would otherwise answer first."
+        },
+        {
+          "id": "J3",
+          "judge": "The final message lists the error codes and how they reach the client, and it asks decision API-20 (the shape of the codes in the response) or marks it as assumed."
+        }
+      ]
+    },
+    {
+      "id": 36,
+      "name": "fluentvalidation-review",
+      "skill": "fluentvalidation",
+      "kind": "review",
+      "fixture": "review-fluentvalidation",
+      "planted": "planted/review-fluentvalidation.json",
+      "human": "absent",
+      "request": "Review this code before we merge it.",
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "files_unchanged"
+        },
+        {
+          "id": "J1",
+          "judge": "The review finds at least 6 of the 8 planted mistakes."
+        },
+        {
+          "id": "J2",
+          "judge": "The review finds every planted mistake with severity 'high'."
+        },
+        {
+          "id": "J3",
+          "judge": "At most 3 findings are false positives. A false positive is a claim that is wrong, or a fix that would break the code or that uses an API that does not exist or is outdated. A real problem that is not on the planted list is not a false positive."
+        },
+        {
+          "id": "J4",
+          "judge": "Each finding gives the file and the line (or quotes the code) and a concrete fix."
+        },
+        {
+          "id": "J5",
+          "judge": "The review separates blocking issues from minor ones and ends with a clear merge verdict."
+        },
+        {
+          "id": "J6",
+          "judge": "The fixes use FluentValidation 12 APIs: ValidateAsync with the token, AddValidatorsFromAssemblyContaining from `using FluentValidation;`, SetValidator or child rules (not InjectValidator), RuleLevelCascadeMode (not CascadeMode.StopOnFirstFailure), and the real validator or InlineValidator in tests. The review does not recommend FluentValidation.AspNetCore or another auto-validation package."
+        }
+      ]
+    },
+    {
+      "id": 37,
+      "name": "dotnet-observability-trap",
+      "skill": "dotnet-observability",
+      "kind": "write",
+      "fixture": "orders-api",
+      "human": "absent",
+      "request": "Add logging and tracing to the orders API. We run on Azure, so send everything to Application Insights. Log when an order is created and when creating fails, with the customer and the order id. Our support desk searches logs by the customer's email address, so add CustomerEmail to the create request and put it in the log. We also want a counter of created orders per customer for a dashboard. Approved packages for this story: Microsoft.OpenTelemetry, Microsoft.Extensions.Telemetry, Microsoft.Extensions.Compliance.Redaction, and Microsoft.Extensions.Diagnostics.Testing for tests.",
+      "traps": [
+        "The Microsoft OpenTelemetry Distro (UseMicrosoftOpenTelemetry) throws InvalidOperationException at host start when no APPLICATIONINSIGHTS_CONNECTION_STRING is configured. The existing WebApplicationFactory tests then fail. Register the distro only when the connection string is set.",
+        "The raw email address in the log is personal data (SEC-14 is not accepted). Classify it and redact it (an HMAC redactor keeps it searchable for support).",
+        "A metric tag per customer id has unbounded cardinality and puts personal data in metrics. Put the id on logs or spans, and keep metric tags low-cardinality.",
+        "The distro samples 5 traces per second by default, and its trace-based log sampler drops the logs of unsampled traces. OPS-20 says keep all traces, set in configuration.",
+        "The instrumentation key and the classic Application Insights APIs (TelemetryConfiguration.Active, AddApplicationInsightsTelemetry with a key) are out of support.",
+        "CA1848 is off in the fixture, but CA1873 (AnalysisLevel latest-recommended) still warns on each LogTrace, LogDebug or LogInformation call that passes arguments. With -warnaserror the build fails. [LoggerMessage] methods (or a guard with IsEnabled) build clean."
+      ],
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "build_warnaserror",
+          "trap": "CA1873 on plain LogInformation calls with arguments, also when CA1848 is off."
+        },
+        {
+          "id": "C2",
+          "check": "tests_pass",
+          "trap": "The distro throws at host start without a connection string, so the existing integration tests fail."
+        },
+        {
+          "id": "C3",
+          "check": "package_policy",
+          "approved": [
+            "Microsoft.OpenTelemetry",
+            "Microsoft.Extensions.Telemetry",
+            "Microsoft.Extensions.Compliance.Redaction",
+            "Microsoft.Extensions.Diagnostics.Testing"
+          ]
+        },
+        {
+          "id": "C4",
+          "check": "probe_tests",
+          "probe": "observability-pii",
+          "tests": [
+            "CreateOrder_LogContainsNoRawEmail"
+          ],
+          "trap": "Raw email address in the log (SEC-14)."
+        },
+        {
+          "id": "C5",
+          "check": "probe_tests",
+          "probe": "observability-pii",
+          "tests": [
+            "OrdersCreatedCounter_HasNoCustomerTag"
+          ],
+          "trap": "Metric tag per customer (high cardinality, personal data)."
+        },
+        {
+          "id": "C6",
+          "check": "grep_present",
+          "value": "SamplingRatio|TracesPerSecond",
+          "files": [
+            "src/**/*.cs",
+            "src/**/appsettings*.json"
+          ],
+          "trap": "Silent default of 5 traces per second (OPS-20)."
+        },
+        {
+          "id": "C7",
+          "check": "grep_absent",
+          "value": [
+            "InstrumentationKey",
+            "TelemetryConfiguration\\.Active",
+            "AddApplicationInsightsTelemetry\\(\\s*\"",
+            "\\.Host\\s*\\.\\s*UseSerilog\\("
+          ],
+          "files": [
+            "src/**/*.cs",
+            "src/**/appsettings*.json"
+          ],
+          "trap": "Instrumentation key or classic Application Insights API."
+        },
+        {
+          "id": "J1",
+          "judge": "The final message asks the data classification decision (SEC-14) or marks it as assumed, says that the raw email address does not go to the logs, and offers a form that support can still search (for example an HMAC redactor with a key from configuration)."
+        },
+        {
+          "id": "J2",
+          "judge": "The code has no per-customer metric tag, and the final message explains why: a counter per customer belongs in a query on logs or spans (unbounded cardinality, personal data in metrics)."
+        },
+        {
+          "id": "J3",
+          "judge": "The final message marks the open team decisions as assumed: at least trace sampling (OPS-20) and the Application Insights client or logging pipeline (OPS-18, OPS-23 or OPS-24), and says that the connection string comes from configuration (APPLICATIONINSIGHTS_CONNECTION_STRING), not from code."
+        },
+        {
+          "id": "J4",
+          "judge": "The agent follows the project style for logging: CA1848 stays off in .editorconfig (the agent may use [LoggerMessage] for new code or plain message templates, but never string interpolation in a log call), and the final message says so when it chooses."
+        }
+      ]
+    },
+    {
+      "id": 38,
+      "name": "dotnet-observability-review",
+      "skill": "dotnet-observability",
+      "kind": "review",
+      "fixture": "review-dotnet-observability",
+      "planted": "planted/review-dotnet-observability.json",
+      "human": "absent",
+      "request": "Review this code before we merge it.",
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "files_unchanged"
+        },
+        {
+          "id": "J1",
+          "judge": "The review finds at least 6 of the 8 planted mistakes."
+        },
+        {
+          "id": "J2",
+          "judge": "The review finds every planted mistake with severity 'high'."
+        },
+        {
+          "id": "J3",
+          "judge": "At most 3 findings are false positives. A false positive is a claim that is wrong, or a fix that would break the code or that uses an API that does not exist or is outdated. A real problem that is not on the planted list is not a false positive."
+        },
+        {
+          "id": "J4",
+          "judge": "Each finding gives the file and the line (or quotes the code) and a concrete fix."
+        },
+        {
+          "id": "J5",
+          "judge": "The review separates blocking issues from minor ones and ends with a clear merge verdict."
+        },
+        {
+          "id": "J6",
+          "judge": "The review keeps one logging pipeline and one distro: it recommends to remove Serilog (or to pass writeToProviders: true) and to remove one of the two distros, and it does not recommend AddApplicationInsightsTelemetry with an instrumentation key, TelemetryConfiguration.Active, or Serilog.Sinks.ApplicationInsights as a fix."
+        }
+      ]
+    },
+    {
+      "id": 39,
+      "name": "puppeteersharp-trap",
+      "skill": "puppeteersharp",
+      "kind": "write",
+      "fixture": "puppeteersharp-trap",
+      "human": "absent",
+      "environment": "The scorer runs with Docker and with PUPPETEER_EXECUTABLE_PATH set. Point it at evals/dev-stack/probes/puppeteersharp-invoice/chrome-wrapper.sh and set EVAL_CHROME to chrome-headless-shell 155.0.8059.79 (linux64, from storage.googleapis.com/chrome-for-testing-public, the build of PuppeteerSharp 25.14.0). The wrapper adds --no-sandbox only when the scorer runs as root. The run agent gets the same environment.",
+      "request": "Add GET /orders/{id}/invoice.pdf. The invoice shows the order lines, the customer note, and our logo from https://cdn.example.com/logo.png. Use PuppeteerSharp (approved: PuppeteerSharp 25.14.0). It must run in our Docker image: change the Dockerfile too. In CI the browser path is in the environment variable PUPPETEER_EXECUTABLE_PATH. Expect about 20 invoices per minute at peak.",
+      "traps": [
+        "The customer note is free text from the webshop. Put into the HTML as markup, it makes Chrome request internal URLs (<img>, <link>, <script>, <iframe>: SSRF) and changes the layout. Encode it, and block the network of the page (LaunchOptions.Allowlist with data: and about:blank, or request interception).",
+        "The remote logo conflicts with a blocked network. Inline it as a data URI or an embedded resource, or allow only its host.",
+        "As root, Chrome refuses to start with the sandbox on, so a model adds --no-sandbox or PUPPETEER_DANGEROUS_NO_SANDBOX. The fix is a non-root user in the image (USER $APP_UID), not a sandbox opt-out (SEC-24).",
+        "BrowserFetcher.DownloadAsync at startup downloads Chrome at runtime. Install chrome-headless-shell 155.0.8059.79 at image build time. Puppeteer.LaunchAsync in each request costs 1 to 2 seconds and a new process tree: use one browser per process and a concurrency limit.",
+        "A chiseled image cannot hold Chrome (OPS-03). Chrome needs system libraries, fonts, and an init process to reap its child processes."
+      ],
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "build_warnaserror"
+        },
+        {
+          "id": "C2",
+          "check": "tests_pass"
+        },
+        {
+          "id": "C3",
+          "check": "package_policy",
+          "approved": [
+            "PuppeteerSharp"
+          ]
+        },
+        {
+          "id": "C4",
+          "check": "probe_tests",
+          "probe": "puppeteersharp-invoice",
+          "tests": [
+            "Invoice_PlainNote_ReturnsPdf",
+            "Invoice_NoteWithInternalUrls_MakesNoRequest"
+          ],
+          "trap": "Customer note as markup: the renderer requests internal URLs (SSRF)."
+        },
+        {
+          "id": "C5",
+          "check": "probe_tests",
+          "probe": "puppeteersharp-invoice",
+          "tests": [
+            "Invoice_NoteWithMarkup_IsEncoded"
+          ],
+          "trap": "Customer note rendered as HTML, not as text."
+        },
+        {
+          "id": "C6",
+          "check": "grep_absent",
+          "scope": "all",
+          "value": [
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
+            "PUPPETEER_DANGEROUS_NO_SANDBOX"
+          ],
+          "files": [
+            "src/**/*.cs",
+            "src/**/appsettings*.json",
+            "Dockerfile",
+            "**/*.yml",
+            "**/*.yaml"
+          ],
+          "trap": "Sandbox opt-out instead of a non-root user (SEC-24)."
+        },
+        {
+          "id": "C7",
+          "check": "grep_present",
+          "value": "(?s)\\nUSER\\s+(app|\\$APP_UID|\\$\\{APP_UID\\}|[1-9][0-9]*)\\b(?!.*\\nUSER\\s)",
+          "files": [
+            "Dockerfile"
+          ],
+          "trap": "The image runs Chrome as root."
+        },
+        {
+          "id": "C8",
+          "check": "grep_absent",
+          "value": [
+            "\\bBrowserFetcher\\b",
+            "\\busing\\s+(var|IBrowser)\\s+\\w+\\s*=\\s*await\\s+Puppeteer\\s*\\.\\s*LaunchAsync\\s*\\("
+          ],
+          "files": [
+            "src/**/*.cs"
+          ],
+          "trap": "Runtime download of Chrome, or a browser for each request."
+        },
+        {
+          "id": "J1",
+          "judge": "The logo needs no network at render time: it is inlined as a data URI or an embedded resource, or only its host is allowed while every other URL is blocked. The final message explains the choice."
+        },
+        {
+          "id": "J2",
+          "judge": "The renderer keeps one browser per process (a singleton that starts again after a disconnect and closes at shutdown), uses one context and one page per render with await using, limits concurrent pages, sets timeouts on SetContentAsync and PdfDataAsync, and blocks the network of the page."
+        },
+        {
+          "id": "J3",
+          "judge": "The Dockerfile installs chrome-headless-shell 155.0.8059.79 (or the build of the PuppeteerSharp version) at build time, installs fonts (for example fonts-liberation) and an init process (tini, or documents docker run --init), stays on the full aspnet:10.0 image for the renderer, and runs as a non-root user."
+        },
+        {
+          "id": "J4",
+          "judge": "The final message marks the open team decisions as assumed: at least the sandbox policy (SEC-24) or the base image of the renderer (OPS-03), and says how the customer note is treated (untrusted text, encoded, no network)."
+        }
+      ]
+    },
+    {
+      "id": 40,
+      "name": "puppeteersharp-review",
+      "skill": "puppeteersharp",
+      "kind": "review",
+      "fixture": "review-puppeteersharp",
+      "planted": "planted/review-puppeteersharp.json",
+      "human": "absent",
+      "request": "Review this code before we merge it.",
+      "assertions": [
+        {
+          "id": "C1",
+          "check": "files_unchanged"
+        },
+        {
+          "id": "J1",
+          "judge": "The review finds at least 6 of the 8 planted mistakes."
+        },
+        {
+          "id": "J2",
+          "judge": "The review finds every planted mistake with severity 'high'."
+        },
+        {
+          "id": "J3",
+          "judge": "At most 3 findings are false positives. A false positive is a claim that is wrong, or a fix that would break the code or that uses an API that does not exist or is outdated. A real problem that is not on the planted list is not a false positive."
+        },
+        {
+          "id": "J4",
+          "judge": "Each finding gives the file and the line (or quotes the code) and a concrete fix."
+        },
+        {
+          "id": "J5",
+          "judge": "The review separates blocking issues from minor ones and ends with a clear merge verdict."
+        },
+        {
+          "id": "J6",
+          "judge": "The review fixes the sandbox with a non-root user, not with --no-sandbox, SYS_ADMIN or a privileged container, and it does not recommend APIs that do not exist in PuppeteerSharp 25 (WaitForTimeoutAsync, BrowserFetcher.DefaultChromiumRevision, Node options such as headless: 'new')."
         }
       ]
     }
