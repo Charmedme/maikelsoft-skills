@@ -1,0 +1,20 @@
+@* Razor encodes each value. Do not use MarkupString for user data. *@
+<html>
+<body>
+    <p>Dear @Model.CustomerName,</p>
+    <p>We received your order @Model.OrderId.</p>
+    <table>
+        <tr><th>SKU</th><th>Quantity</th><th>Price</th></tr>
+        @foreach (var line in Model.Lines)
+        {
+            <tr><td>@line.Sku</td><td>@line.Quantity</td><td>@line.LineTotal.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)</td></tr>
+        }
+    </table>
+    <p>Total: @Model.Total.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)</p>
+</body>
+</html>
+
+@code {
+    [Parameter, EditorRequired]
+    public OrderConfirmationModel Model { get; set; } = null!;
+}
