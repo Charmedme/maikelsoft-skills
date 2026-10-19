@@ -1,0 +1,18 @@
+{
+  "description": "dev-team: log each Bash command of an active story run to its commands.jsonl (Q30).",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/log-command.py"],
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
