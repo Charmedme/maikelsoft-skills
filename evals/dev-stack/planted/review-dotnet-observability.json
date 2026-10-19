@@ -1,0 +1,61 @@
+{
+  "skill": "dotnet-observability",
+  "planted": [
+    {
+      "id": "P1",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 16,
+      "description": "AddSerilog without writeToProviders: true replaces the ILoggerFactory. The OpenTelemetry logger provider of the Azure Monitor distro gets no log, so no log reaches Application Insights. Keep one pipeline: remove Serilog (MEL plus OpenTelemetry, OPS-23), or pass writeToProviders: true.",
+      "severity": "high"
+    },
+    {
+      "id": "P2",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 32,
+      "description": "Two distros: UseAzureMonitor() (Azure.Monitor.OpenTelemetry.AspNetCore) and UseMicrosoftOpenTelemetry(...). The host does not start: NotSupportedException 'Multiple calls to UseAzureMonitorExporter on the same IServiceCollection are not supported'. Use one: the Microsoft OpenTelemetry Distro for a new app (OPS-24), and remove the Azure.Monitor package.",
+      "severity": "high"
+    },
+    {
+      "id": "P3",
+      "file": "src/Orders.Api/appsettings.json",
+      "line": 10,
+      "description": "Instrumentation key in appsettings.json. Key ingestion is out of support since 2025-03-31, and the value is a secret in the repository. Use a connection string from APPLICATIONINSIGHTS_CONNECTION_STRING (environment or secret store).",
+      "severity": "medium"
+    },
+    {
+      "id": "P4",
+      "file": "src/Orders.Api/Payments/PaymentService.cs",
+      "line": 29,
+      "description": "String interpolation in a log call (CA2254, CA1873) with the raw customer email: no structured values, and personal data in the log. Use a message template or [LoggerMessage] with the email classified as personal data, or leave the email out.",
+      "severity": "medium"
+    },
+    {
+      "id": "P5",
+      "file": "src/Orders.Api/Payments/PaymentService.cs",
+      "line": 34,
+      "description": "LogError(\"Failed: \" + ex.Message) without the exception object (no stack trace, CA2254), then rethrow, and the endpoint logs the same failure again (PaymentEndpoints.cs line 38). Log a failure once, at the boundary that handles it, and pass the exception as the exception parameter.",
+      "severity": "low"
+    },
+    {
+      "id": "P6",
+      "file": "src/Orders.Api/Payments/PaymentMetrics.cs",
+      "line": 20,
+      "description": "Metric tag customer.email: unbounded cardinality and personal data in metrics. Also the Meter is created with new (line 9) instead of IMeterFactory (CA1001 shows that nobody disposes it). Create the meter through IMeterFactory and keep tags low-cardinality (status, kind).",
+      "severity": "medium"
+    },
+    {
+      "id": "P7",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 29,
+      "description": "AddConsoleExporter in all environments: every span goes to stdout in production. Remove it, or add it only in Development.",
+      "severity": "low"
+    },
+    {
+      "id": "P8",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 22,
+      "description": "EnableRedaction with Serilog as the logger factory: the redaction of Microsoft.Extensions.Telemetry works only in the MEL logger factory, so nothing is redacted, and the comment on line 21 ('Email addresses are redacted') is wrong. The email is also never classified. Remove Serilog, classify the email with a data classification attribute, and test with FakeLogger.",
+      "severity": "medium"
+    }
+  ]
+}

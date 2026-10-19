@@ -1,0 +1,124 @@
+{
+  "skill": "dotnet-observability",
+  "rules": [
+    {"id": "OBS-IKEY", "kind": "regex", "severity": "warning",
+     "files": ["**/*.cs", "**/appsettings*.json"],
+     "exclude": ["tests/**", "test/**", "**/*Tests/**", "**/*Tests.cs"],
+     "pattern": "\\bInstrumentationKey\\s*=|\"InstrumentationKey\"\\s*:|\\bAddApplicationInsightsTelemetry\\s*\\(\\s*\"",
+     "message": "An instrumentation key (or a literal connection string) is in the code. Key ingestion is out of support since 2025-03-31, and the value does not belong in the repository.",
+     "fix": "Read the connection string from APPLICATIONINSIGHTS_CONNECTION_STRING (environment or secret store). Use UseMicrosoftOpenTelemetry for a new app.",
+     "match": [
+       "options.InstrumentationKey = \"1b2c\";",
+       "services.AddApplicationInsightsTelemetry(\"1b2c\");",
+       "\"InstrumentationKey\": \"6f1c2a40-7d3e-4b8a-9c11-2f5e8d0a4b17\"",
+       "o.ConnectionString = \"InstrumentationKey=00000000-0000-0000-0000-000000000000;IngestionEndpoint=https://x\";"
+     ],
+     "nomatch": [
+       "builder.UseMicrosoftOpenTelemetry(o => o.Exporters = ExportTarget.AzureMonitor);",
+       "// connection string from APPLICATIONINSIGHTS_CONNECTION_STRING",
+       "builder.Services.AddApplicationInsightsTelemetry();"
+     ]},
+    {"id": "OBS-AI-CLASSIC", "kind": "regex", "severity": "warning",
+     "files": ["**/*.cs"],
+     "pattern": "\\bTelemetryConfiguration\\s*\\.\\s*Active\\b|\\.WriteTo\\s*\\.\\s*ApplicationInsights\\s*\\(|\\bAddApplicationInsights\\s*\\(",
+     "message": "Classic Application Insights API: TelemetryConfiguration.Active is gone in SDK 3.x (CS0117), and the ApplicationInsights logger provider and Serilog sink need SDK 2.x.",
+     "fix": "Let the distro collect ILogger logs. Inject TelemetryClient from DI (SDK 3.x), or use an ActivitySource and a Meter.",
+     "match": [
+       "var client = new TelemetryClient(TelemetryConfiguration.Active);",
+       "builder.Logging.AddApplicationInsights();",
+       ".WriteTo.ApplicationInsights(TelemetryConfiguration.Active, TelemetryConverter.Traces)"
+     ],
+     "nomatch": [
+       "var config = TelemetryConfiguration.CreateDefault();",
+       "builder.Services.AddApplicationInsightsTelemetry();"
+     ]},
+    {"id": "OBS-TWO-DISTROS", "kind": "regex", "severity": "warning",
+     "files": ["**/*.cs"],
+     "pattern": "(?s)\\.UseAzureMonitor\\s*\\(.*\\bUseMicrosoftOpenTelemetry\\s*\\(|\\bUseMicrosoftOpenTelemetry\\s*\\(.*\\.UseAzureMonitor\\s*\\(",
+     "message": "Two Azure Monitor distros in one file. The host does not start: NotSupportedException 'Multiple calls to UseAzureMonitorExporter'.",
+     "fix": "Use one distro: UseMicrosoftOpenTelemetry for a new app, or keep the existing UseAzureMonitor.",
+     "match": [
+       "builder.Services.AddOpenTelemetry().UseAzureMonitor(); builder.UseMicrosoftOpenTelemetry(o => o.Exporters = ExportTarget.AzureMonitor);"
+     ],
+     "nomatch": [
+       "builder.UseMicrosoftOpenTelemetry(o => o.Exporters = ExportTarget.AzureMonitor);",
+       "builder.Services.AddOpenTelemetry().UseAzureMonitor();"
+     ]},
+    {"id": "OBS-USE-SERILOG", "kind": "regex", "severity": "warning",
+     "files": ["**/*.cs"],
+     "pattern": "\\.Host\\s*\\.\\s*UseSerilog\\s*\\(",
+     "message": "Host.UseSerilog replaces the logger factory: other providers (also the distro) get no logs, and compliance redaction stops (decision OPS-23).",
+     "fix": "Keep MEL plus OpenTelemetry. Where Serilog must stay, use builder.Services.AddSerilog(..., writeToProviders: true).",
+     "match": [
+       "builder.Host.UseSerilog((ctx, lc) => lc.ReadFrom.Configuration(ctx.Configuration));",
+       "builder.Host .UseSerilog();"
+     ],
+     "nomatch": [
+       "builder.Services.AddSerilog((services, lc) => lc.ReadFrom.Configuration(builder.Configuration), writeToProviders: true);",
+       "app.UseSerilogRequestLogging();"
+     ]},
+    {"id": "OBS-NEW-METER", "kind": "regex", "severity": "warning",
+     "files": ["**/*.cs"],
+     "exclude": ["tests/**", "test/**", "**/*Tests/**", "**/*Tests.cs"],
+     "pattern": "\\bnew\\s+Meter\\s*\\(|\\bMeter\\s+_?\\w+\\s*=\\s*new\\s*\\(",
+     "message": "A Meter created with new: nobody disposes it (CA1001), DI cannot scope it, and tests cannot collect its measurements.",
+     "fix": "Inject IMeterFactory and call meterFactory.Create(name). Register the name with AddMeter.",
+     "match": [
+       "private readonly Meter _meter = new Meter(\"Orders.Api\");",
+       "var m = new Meter(\"Orders\", \"1.0\");",
+       "private readonly Meter _meter = new(MeterName);"
+     ],
+     "nomatch": [
+       "var meter = meterFactory.Create(\"Orders.Api\");",
+       "public static readonly ActivitySource Source = new(\"Orders.Api\");"
+     ]},
+    {"id": "OBS-CONSOLE-EXPORTER", "kind": "regex", "severity": "warning",
+     "files": ["**/*.cs"],
+     "exclude": ["tests/**", "test/**", "**/*Tests/**", "**/*Tests.cs"],
+     "pattern": "\\.AddConsoleExporter\\s*\\(",
+     "message": "The OpenTelemetry console exporter writes each span and metric to stdout. Use it only in development.",
+     "fix": "Remove it, or add it inside an IsDevelopment() check. Export with UseOtlpExporter or the distro.",
+     "match": [
+       ".WithTracing(t => t.AddSource(\"Orders\").AddConsoleExporter())",
+       "m.AddConsoleExporter();"
+     ],
+     "nomatch": [
+       ".UseOtlpExporter();",
+       "builder.Logging.AddConsole();"
+     ]},
+    {"id": "OBS-PKG-SERILOG-AI-SINK", "kind": "package", "ecosystem": "nuget",
+     "package": "Serilog.Sinks.ApplicationInsights", "versions": "*", "severity": "warning",
+     "message": "Serilog.Sinks.ApplicationInsights 5.0.1 needs Microsoft.ApplicationInsights below 3.0. Use AddSerilog(..., writeToProviders: true) with the distro, or MEL only."},
+    {"id": "OBS-PKG-MEL-AI", "kind": "package", "ecosystem": "nuget",
+     "package": "Microsoft.Extensions.Logging.ApplicationInsights", "versions": "*", "severity": "warning",
+     "message": "Microsoft.Extensions.Logging.ApplicationInsights has no 3.x. The distros collect ILogger logs. Remove it."},
+    {"id": "OBS-PKG-AI-2X", "kind": "package", "ecosystem": "nuget",
+     "package": "Microsoft.ApplicationInsights*", "versions": "<3.0.0", "severity": "warning",
+     "message": "Application Insights SDK 2.x. Use the Microsoft OpenTelemetry Distro for a new app (OPS-24), or SDK 3.x where TelemetryClient stays."},
+    {"id": "OBS-DET-OPS-18", "kind": "detect", "decision": "OPS-18",
+     "files": ["**/*.cs"],
+     "pattern": "\\bUseAzureMonitor\\s*\\(|\\bUseMicrosoftOpenTelemetry\\s*\\(|\\bAddApplicationInsightsTelemetry\\s*\\(|\\bUseOtlpExporter\\s*\\(|\\bAddOtlpExporter\\s*\\(",
+     "match": ["builder.UseMicrosoftOpenTelemetry(o => o.Exporters = ExportTarget.AzureMonitor);", "    .UseOtlpExporter();"],
+     "nomatch": ["builder.Logging.AddConsole();", "services.AddHealthChecks();"]},
+    {"id": "OBS-DET-OPS-19", "kind": "detect", "decision": "OPS-19",
+     "files": ["**/*.cs", "**/appsettings*.json"],
+     "pattern": "\\bAddJsonConsole\\s*\\(|\"FormatterName\"\\s*:|\\bWithLogging\\s*\\(",
+     "match": ["builder.Logging.AddJsonConsole();", "\"FormatterName\": \"Json\""],
+     "nomatch": ["builder.Logging.AddConsole();", "\"LogLevel\": { \"Default\": \"Information\" }"]},
+    {"id": "OBS-DET-OPS-20", "kind": "detect", "decision": "OPS-20",
+     "files": ["**/*.cs", "**/appsettings*.json"],
+     "pattern": "\\bSamplingRatio\\b|\\bTracesPerSecond\\b|\\bSetSampler\\s*\\(|OTEL_TRACES_SAMPLER",
+     "match": ["options.AzureMonitor.SamplingRatio = 1.0F;", "tracing.SetSampler(new ParentBasedSampler(new TraceIdRatioBasedSampler(0.25)));"],
+     "nomatch": ["tracing.AddSource(Telemetry.Name);", "\"Default\": \"Information\""]},
+    {"id": "OBS-DET-OPS-23", "kind": "detect", "decision": "OPS-23",
+     "files": ["**/*.cs"],
+     "pattern": "\\bAddSerilog\\s*\\(|\\bUseSerilog\\s*\\(|\\[LoggerMessage\\b",
+     "match": ["[LoggerMessage(EventId = 1001, Level = LogLevel.Information, Message = \"Order {OrderId} created\")]", "builder.Services.AddSerilog((services, lc) => lc.WriteTo.Console());"],
+     "nomatch": ["logger.LogInformation(\"Order {OrderId} created\", orderId);", "app.UseSerilogRequestLogging();"]},
+    {"id": "OBS-DET-OPS-24", "kind": "detect", "decision": "OPS-24",
+     "files": ["**/*.cs"],
+     "pattern": "\\bUseMicrosoftOpenTelemetry\\s*\\(|\\bUseAzureMonitor\\s*\\(|\\bAddApplicationInsightsTelemetry\\s*\\(",
+     "match": ["builder.Services.AddOpenTelemetry().UseAzureMonitor();", "builder.UseMicrosoftOpenTelemetry();"],
+     "nomatch": ["builder.Services.AddOpenTelemetry().UseOtlpExporter();", "builder.Logging.EnableRedaction();"]}
+  ]
+}

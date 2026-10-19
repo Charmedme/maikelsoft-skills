@@ -1,0 +1,73 @@
+{
+  "skill": "puppeteersharp",
+  "rules": [
+    {"id": "PPTR-NO-SANDBOX", "kind": "regex", "severity": "warning",
+     "files": ["**/*.cs", "**/Dockerfile", "**/Dockerfile.*", "**/*.yml", "**/*.yaml", "**/*.env", "**/appsettings*.json"],
+     "pattern": "--no-sandbox|--disable-setuid-sandbox|PUPPETEER_DANGEROUS_NO_SANDBOX",
+     "message": "Chrome without its sandbox: a renderer exploit then runs code in the container (decision SEC-24).",
+     "fix": "Run Chrome as a non-root user (USER $APP_UID) with the sandbox on, and give the container a seccomp profile that allows clone, clone3 and unshare. An opt-out needs an ADR and trusted templates only.",
+     "match": [
+       "Args = [\"--no-sandbox\", \"--disable-setuid-sandbox\"],",
+       "ENV PUPPETEER_DANGEROUS_NO_SANDBOX=true",
+       "      - PUPPETEER_DANGEROUS_NO_SANDBOX=true"
+     ],
+     "nomatch": [
+       "HeadlessMode = HeadlessMode.Shell,",
+       "ENV PUPPETEER_EXECUTABLE_PATH=/opt/chrome-headless-shell/chrome-headless-shell"
+     ]},
+    {"id": "PPTR-RUNTIME-DOWNLOAD", "kind": "regex", "severity": "warning",
+     "files": ["**/*.cs"],
+     "exclude": ["tests/**", "test/**", "**/*Tests/**", "**/*Tests.cs"],
+     "pattern": "\\bBrowserFetcher\\b[^;\\n]*\\.\\s*DownloadAsync\\s*\\(|\\bfetcher\\s*\\.\\s*DownloadAsync\\s*\\(",
+     "message": "Chrome is downloaded at runtime: each container downloads it over the network, the start is slow, and the build is not pinned.",
+     "fix": "Install chrome-headless-shell at image build time, pinned to Chrome.DefaultBuildId, and set ExecutablePath or PUPPETEER_EXECUTABLE_PATH.",
+     "match": [
+       "await new BrowserFetcher().DownloadAsync();",
+       "var installed = await fetcher.DownloadAsync();",
+       "await new BrowserFetcher(new BrowserFetcherOptions { Browser = SupportedBrowser.Chrome }).DownloadAsync();"
+     ],
+     "nomatch": [
+       "ExecutablePath = options.ExecutablePath,",
+       "var path = Environment.GetEnvironmentVariable(\"PUPPETEER_EXECUTABLE_PATH\");"
+     ]},
+    {"id": "PPTR-HEADFUL", "kind": "regex", "severity": "warning",
+     "files": ["**/*.cs", "**/appsettings*.json"],
+     "pattern": "\\bHeadless\\s*=\\s*false\\b|\\bHeadlessMode\\s*=\\s*HeadlessMode\\.False\\b|\\bDevtools\\s*=\\s*true\\b",
+     "message": "A visible browser or DevTools: this works only on a developer machine and opens a debug port.",
+     "fix": "Use HeadlessMode = HeadlessMode.Shell (or True) outside a developer machine, and no Devtools.",
+     "match": ["Headless = false,", "Devtools = true,", "HeadlessMode = HeadlessMode.False,"],
+     "nomatch": ["HeadlessMode = HeadlessMode.Shell,", "Headless = true,"]},
+    {"id": "PPTR-BROWSER-PER-CALL", "kind": "regex", "severity": "warning",
+     "files": ["**/*.cs"],
+     "exclude": ["tests/**", "test/**", "**/*Tests/**", "**/*Tests.cs"],
+     "pattern": "\\busing\\s+(var|IBrowser)\\s+\\w+\\s*=\\s*await\\s+Puppeteer\\s*\\.\\s*LaunchAsync\\s*\\(",
+     "message": "A new browser for each call: a launch costs 1 to 2 seconds and a process tree, and parallel calls can exhaust memory.",
+     "fix": "Keep one browser per process in a singleton, a context and a page per render, and a SemaphoreSlim limit.",
+     "match": [
+       "await using var browser = await Puppeteer.LaunchAsync(options);",
+       "using var browser = await Puppeteer.LaunchAsync(new LaunchOptions { Headless = true });"
+     ],
+     "nomatch": [
+       "_browser = await Puppeteer.LaunchAsync(options);",
+       "await using var page = await context.NewPageAsync();"
+     ]},
+    {"id": "PPTR-PDF-FILE", "kind": "regex", "severity": "warning",
+     "files": ["**/*.cs"],
+     "pattern": "\\.PdfAsync\\s*\\(",
+     "message": "PdfAsync writes a file: extra disk I/O, and a file stays behind when the process stops.",
+     "fix": "Use PdfDataAsync or PdfStreamAsync.",
+     "match": [
+       "await page.PdfAsync(\"invoice.pdf\");",
+       "await page.PdfAsync(tempPath, new PdfOptions { Format = PaperFormat.A4 });"
+     ],
+     "nomatch": [
+       "var bytes = await page.PdfDataAsync(options);",
+       "await using var stream = await page.PdfStreamAsync(options);"
+     ]},
+    {"id": "PPTR-DET-SEC-24", "kind": "detect", "decision": "SEC-24",
+     "files": ["**/*.cs"],
+     "pattern": "\\bPuppeteer\\s*\\.\\s*LaunchAsync\\s*\\(|\\bnew\\s+LaunchOptions\\b",
+     "match": ["_browser = await Puppeteer.LaunchAsync(options);", "var options = new LaunchOptions { HeadlessMode = HeadlessMode.Shell };"],
+     "nomatch": ["await using var page = await context.NewPageAsync();", "var bytes = await page.PdfDataAsync(options);"]}
+  ]
+}

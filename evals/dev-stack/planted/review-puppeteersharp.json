@@ -1,0 +1,61 @@
+{
+  "skill": "puppeteersharp",
+  "planted": [
+    {
+      "id": "P1",
+      "file": "Dockerfile",
+      "line": 11,
+      "description": "The image runs as root (no USER) and turns the Chrome sandbox off with PUPPETEER_DANGEROUS_NO_SANDBOX. A renderer exploit then runs code in the container. Run as a non-root user (USER $APP_UID) with the sandbox on. Docker's default seccomp profile blocks the sandbox: allow clone, clone3 and unshare in a seccomp profile, not --no-sandbox or SYS_ADMIN (SEC-24).",
+      "severity": "high"
+    },
+    {
+      "id": "P2",
+      "file": "src/Orders.Api/Invoices/InvoiceRenderer.cs",
+      "line": 50,
+      "description": "BrowserFetcher().DownloadAsync() when the singleton is created: each container downloads Chrome at runtime (network, disk, no pinned build, slow start). Install chrome-headless-shell at image build time, pinned to Chrome.DefaultBuildId, and set ExecutablePath or PUPPETEER_EXECUTABLE_PATH.",
+      "severity": "medium"
+    },
+    {
+      "id": "P3",
+      "file": "src/Orders.Api/Invoices/InvoiceRenderer.cs",
+      "line": 12,
+      "description": "A new browser for each render (await using var browser = await Puppeteer.LaunchAsync) and no limit on concurrent renders. Each launch costs 1 to 2 seconds and a process tree; parallel requests can exhaust memory. Keep one browser per process, a context and a page per render, and a SemaphoreSlim limit.",
+      "severity": "medium"
+    },
+    {
+      "id": "P4",
+      "file": "src/Orders.Api/Invoices/InvoiceTemplate.cs",
+      "line": 21,
+      "description": "The customer note (free text from the webshop) is concatenated into the HTML without encoding. With JavaScript on and the network open, an <img>, <link>, <script> or <iframe> in the note makes the server request internal URLs (SSRF) and can change the invoice. Encode the note, inline the logo and CSS, block the network (LaunchOptions.Allowlist or request interception), and turn JavaScript off.",
+      "severity": "high"
+    },
+    {
+      "id": "P5",
+      "file": "src/Orders.Api/Invoices/InvoiceEndpoints.cs",
+      "line": 34,
+      "description": "GET /invoices/render?url= passes any URL to GoToAsync: a caller can render internal services, the cloud metadata endpoint, or file:// paths into a PDF (SSRF and file read). Remove the endpoint, or allow only a fixed list of hosts over https and require authorization.",
+      "severity": "high"
+    },
+    {
+      "id": "P6",
+      "file": "src/Orders.Api/Invoices/InvoiceRenderer.cs",
+      "line": 39,
+      "description": "PdfAsync to a temp file, then ReadAllBytesAsync and Delete: extra disk I/O and a file left behind when the process stops. Use PdfDataAsync (or PdfStreamAsync).",
+      "severity": "low"
+    },
+    {
+      "id": "P7",
+      "file": "src/Orders.Api/Invoices/InvoiceRenderer.cs",
+      "line": 18,
+      "description": "SetContentAsync with NavigationOptions and Networkidle0 is obsolete (CS0618: networkidle never worked reliably with SetContent), so the build with -warnaserror fails. There is no timeout and the CancellationToken is ignored. Use SetContentAsync(html, new SetContentOptions { Timeout = ... }) and set PdfOptions.Timeout.",
+      "severity": "medium"
+    },
+    {
+      "id": "P8",
+      "file": "Dockerfile",
+      "line": 8,
+      "description": "No fonts (fonts-liberation, fonts-noto-core) and no init process (tini or docker run --init): text renders with fallback glyphs or boxes, and Chrome child processes become zombies.",
+      "severity": "low"
+    }
+  ]
+}

@@ -1,0 +1,150 @@
+[
+  {
+    "id": 0,
+    "name": "puppeteersharp-trap",
+    "skill": "puppeteersharp",
+    "kind": "write",
+    "fixture": "puppeteersharp-trap",
+    "human": "absent",
+    "environment": "The scorer runs with Docker and with PUPPETEER_EXECUTABLE_PATH set. Point it at evals/dev-stack/probes/puppeteersharp-invoice/chrome-wrapper.sh and set EVAL_CHROME to chrome-headless-shell 155.0.8059.79 (linux64, from storage.googleapis.com/chrome-for-testing-public, the build of PuppeteerSharp 25.14.0). The wrapper adds --no-sandbox only when the scorer runs as root. The run agent gets the same environment.",
+    "request": "Add GET /orders/{id}/invoice.pdf. The invoice shows the order lines, the customer note, and our logo from https://cdn.example.com/logo.png. Use PuppeteerSharp (approved: PuppeteerSharp 25.14.0). It must run in our Docker image: change the Dockerfile too. In CI the browser path is in the environment variable PUPPETEER_EXECUTABLE_PATH. Expect about 20 invoices per minute at peak.",
+    "traps": [
+      "The customer note is free text from the webshop. Put into the HTML as markup, it makes Chrome request internal URLs (<img>, <link>, <script>, <iframe>: SSRF) and changes the layout. Encode it, and block the network of the page (LaunchOptions.Allowlist with data: and about:blank, or request interception).",
+      "The remote logo conflicts with a blocked network. Inline it as a data URI or an embedded resource, or allow only its host.",
+      "As root, Chrome refuses to start with the sandbox on, so a model adds --no-sandbox or PUPPETEER_DANGEROUS_NO_SANDBOX. The fix is a non-root user in the image (USER $APP_UID), not a sandbox opt-out (SEC-24).",
+      "BrowserFetcher.DownloadAsync at startup downloads Chrome at runtime. Install chrome-headless-shell 155.0.8059.79 at image build time. Puppeteer.LaunchAsync in each request costs 1 to 2 seconds and a new process tree: use one browser per process and a concurrency limit.",
+      "A chiseled image cannot hold Chrome (OPS-03). Chrome needs system libraries, fonts, and an init process to reap its child processes."
+    ],
+    "assertions": [
+      {
+        "id": "C1",
+        "check": "build_warnaserror"
+      },
+      {
+        "id": "C2",
+        "check": "tests_pass"
+      },
+      {
+        "id": "C3",
+        "check": "package_policy",
+        "approved": [
+          "PuppeteerSharp"
+        ]
+      },
+      {
+        "id": "C4",
+        "check": "probe_tests",
+        "probe": "puppeteersharp-invoice",
+        "tests": [
+          "Invoice_PlainNote_ReturnsPdf",
+          "Invoice_NoteWithInternalUrls_MakesNoRequest"
+        ],
+        "trap": "Customer note as markup: the renderer requests internal URLs (SSRF)."
+      },
+      {
+        "id": "C5",
+        "check": "probe_tests",
+        "probe": "puppeteersharp-invoice",
+        "tests": [
+          "Invoice_NoteWithMarkup_IsEncoded"
+        ],
+        "trap": "Customer note rendered as HTML, not as text."
+      },
+      {
+        "id": "C6",
+        "check": "grep_absent",
+        "scope": "all",
+        "value": [
+          "--no-sandbox",
+          "--disable-setuid-sandbox",
+          "PUPPETEER_DANGEROUS_NO_SANDBOX"
+        ],
+        "files": [
+          "src/**/*.cs",
+          "src/**/appsettings*.json",
+          "Dockerfile",
+          "**/*.yml",
+          "**/*.yaml"
+        ],
+        "trap": "Sandbox opt-out instead of a non-root user (SEC-24)."
+      },
+      {
+        "id": "C7",
+        "check": "grep_present",
+        "value": "(?s)\\nUSER\\s+(app|\\$APP_UID|\\$\\{APP_UID\\}|[1-9][0-9]*)\\b(?!.*\\nUSER\\s)",
+        "files": [
+          "Dockerfile"
+        ],
+        "trap": "The image runs Chrome as root."
+      },
+      {
+        "id": "C8",
+        "check": "grep_absent",
+        "value": [
+          "\\bBrowserFetcher\\b",
+          "\\busing\\s+(var|IBrowser)\\s+\\w+\\s*=\\s*await\\s+Puppeteer\\s*\\.\\s*LaunchAsync\\s*\\("
+        ],
+        "files": [
+          "src/**/*.cs"
+        ],
+        "trap": "Runtime download of Chrome, or a browser for each request."
+      },
+      {
+        "id": "J1",
+        "judge": "The logo needs no network at render time: it is inlined as a data URI or an embedded resource, or only its host is allowed while every other URL is blocked. The final message explains the choice."
+      },
+      {
+        "id": "J2",
+        "judge": "The renderer keeps one browser per process (a singleton that starts again after a disconnect and closes at shutdown), uses one context and one page per render with await using, limits concurrent pages, sets timeouts on SetContentAsync and PdfDataAsync, and blocks the network of the page."
+      },
+      {
+        "id": "J3",
+        "judge": "The Dockerfile installs chrome-headless-shell 155.0.8059.79 (or the build of the PuppeteerSharp version) at build time, installs fonts (for example fonts-liberation) and an init process (tini, or documents docker run --init), stays on the full aspnet:10.0 image for the renderer, and runs as a non-root user."
+      },
+      {
+        "id": "J4",
+        "judge": "The final message marks the open team decisions as assumed: at least the sandbox policy (SEC-24) or the base image of the renderer (OPS-03), and says how the customer note is treated (untrusted text, encoded, no network)."
+      }
+    ]
+  },
+  {
+    "id": 0,
+    "name": "puppeteersharp-review",
+    "skill": "puppeteersharp",
+    "kind": "review",
+    "fixture": "review-puppeteersharp",
+    "planted": "planted/review-puppeteersharp.json",
+    "human": "absent",
+    "request": "Review this code before we merge it.",
+    "assertions": [
+      {
+        "id": "C1",
+        "check": "files_unchanged"
+      },
+      {
+        "id": "J1",
+        "judge": "The review finds at least 6 of the 8 planted mistakes."
+      },
+      {
+        "id": "J2",
+        "judge": "The review finds every planted mistake with severity 'high'."
+      },
+      {
+        "id": "J3",
+        "judge": "At most 3 findings are false positives. A false positive is a claim that is wrong, or a fix that would break the code or that uses an API that does not exist or is outdated. A real problem that is not on the planted list is not a false positive."
+      },
+      {
+        "id": "J4",
+        "judge": "Each finding gives the file and the line (or quotes the code) and a concrete fix."
+      },
+      {
+        "id": "J5",
+        "judge": "The review separates blocking issues from minor ones and ends with a clear merge verdict."
+      },
+      {
+        "id": "J6",
+        "judge": "The review fixes the sandbox with a non-root user, not with --no-sandbox, SYS_ADMIN or a privileged container, and it does not recommend APIs that do not exist in PuppeteerSharp 25 (WaitForTimeoutAsync, BrowserFetcher.DefaultChromiumRevision, Node options such as headless: 'new')."
+      }
+    ]
+  }
+]
