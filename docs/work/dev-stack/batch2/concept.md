@@ -1,6 +1,8 @@
 # Concept: dev-stack batch 2
 
-Date: 2026-10-19. Status: step 2 (concept and questions). Batch 2 has 11 stack skills. Four agents checked the research of 2026-10-16 again, and compiled or ran each claim that decides a rule. Docker was down, so no real broker, SQL Server, Valkey, or Elasticsearch server ran. A local PostgreSQL 16 and fake SMTP, cache, and search servers stood in.
+Date: 2026-10-19. Status: approved on 2026-10-19. The owner accepted each recommendation of the decision sheet, except B2-01: build all 11 skills in one batch. The 3 extra stack skills are `aspire`, `keycloak`, and `dapper` (a later batch).
+
+Batch 2 has 11 stack skills. Four agents checked the research of 2026-10-16 again, and compiled or ran each claim that decides a rule. Docker was down, so no real broker, SQL Server, Valkey, or Elasticsearch server ran. A local PostgreSQL 16 and fake SMTP, cache, and search servers stood in.
 
 ## Contents
 
