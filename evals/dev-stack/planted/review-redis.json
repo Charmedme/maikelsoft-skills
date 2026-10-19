@@ -1,0 +1,61 @@
+{
+  "skill": "redis",
+  "planted": [
+    {
+      "id": "P1",
+      "file": "src/Orders.Api/Caching/PriceCache.cs",
+      "line": 15,
+      "description": "ConnectionMultiplexer.Connect in the constructor of a scoped service: a new connection for each request (sockets used up, slow), and a blocking connect. Inject the singleton IConnectionMultiplexer that Program.cs already registers.",
+      "severity": "high"
+    },
+    {
+      "id": "P2",
+      "file": "src/Orders.Api/Caching/PriceCache.cs",
+      "line": 21,
+      "description": "GetPrice blocks on StringGetAsync(...).Result (sync over async). Under load it starves the thread pool that must process the Redis reply, and requests time out. Make it async and await it (SER307 in StackExchange.Redis 3).",
+      "severity": "high"
+    },
+    {
+      "id": "P3",
+      "file": "src/Orders.Api/Products/ProductEndpoints.cs",
+      "line": 62,
+      "description": "The new price goes into the cache before SaveChangesAsync. When the save fails, the cache has a price that the database does not have; two writers can also store the older value last. Save first, then remove the key (do not write the new value).",
+      "severity": "high"
+    },
+    {
+      "id": "P4",
+      "file": "src/Orders.Api/Caching/PriceCache.cs",
+      "line": 33,
+      "description": "Clears all prices with server.Keys(pattern) and one delete per key: reads the whole key space, is not atomic, and works on one endpoint only. Use a new version segment in the key, tags (HybridCache), or a set of member keys.",
+      "severity": "medium"
+    },
+    {
+      "id": "P5",
+      "file": "src/Orders.Api/Jobs/ExportJob.cs",
+      "line": 45,
+      "description": "The lock is released with KeyDeleteAsync. When the export runs longer than the 5 minute lock, this deletes the lock of another instance. Use LockReleaseAsync(LockKey, token).",
+      "severity": "medium"
+    },
+    {
+      "id": "P6",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 42,
+      "description": "LocalCacheExpiration 30 minutes is longer than Expiration 5 minutes. HybridCache has no backplane, so other instances serve old search results (with prices) for up to 30 minutes after a change. Keep L1 short (1 minute) or use DisableLocalCache for price data.",
+      "severity": "medium"
+    },
+    {
+      "id": "P7",
+      "file": "src/Orders.Api/Caching/SearchCache.cs",
+      "line": 14,
+      "description": "The cache key is the raw search text: unbounded keys from user input (cache flooding), no version segment, and case or spacing variants make new keys. Normalize, cap, and hash the query, or do not cache free text search.",
+      "severity": "medium"
+    },
+    {
+      "id": "P8",
+      "file": "src/Orders.Api/Orders.Api.csproj",
+      "line": 11,
+      "description": "Microsoft.Extensions.Caching.StackExchangeRedis without a direct StackExchange.Redis 3.x reference resolves StackExchange.Redis 2.7.27 (2023). Add a PackageVersion 3.4.5 (transitive pinning is on). With 3.x the SER307 analyzer also finds P2.",
+      "severity": "medium"
+    }
+  ]
+}

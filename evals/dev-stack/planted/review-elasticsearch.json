@@ -1,0 +1,61 @@
+{
+  "skill": "elasticsearch",
+  "planted": [
+    {
+      "id": "P1",
+      "file": "src/Orders.Api/Search/SearchSetup.cs",
+      "line": 13,
+      "description": "ServerCertificateValidationCallback(CertificateValidations.AllowAll) turns TLS validation off: anyone on the network path can read the API key and the order data. Trust the cluster CA with CertificateFingerprint or CertificateValidations.AuthorityIsRoot.",
+      "severity": "high"
+    },
+    {
+      "id": "P2",
+      "file": "src/Orders.Api/Orders/OrderEndpoints.cs",
+      "line": 45,
+      "description": "Dual write: IndexAsync right after SaveChangesAsync in the request, and the result is not checked (the client does not throw). When the call fails, the index misses the order and nothing retries; two updates can also arrive out of order (no external version). Use an outbox row in the same transaction and a worker that indexes with VersionType.External.",
+      "severity": "high"
+    },
+    {
+      "id": "P3",
+      "file": "src/Orders.Api/Search/OrderSearch.cs",
+      "line": 13,
+      "description": "new ElasticsearchClient(settings) in a scoped service: a new client for each request loses the connection pool and the metadata cache. Register one client as a singleton.",
+      "severity": "medium"
+    },
+    {
+      "id": "P4",
+      "file": "src/Orders.Api/Search/OrderSearch.cs",
+      "line": 43,
+      "description": "response.Documents is returned without a check of IsValidResponse. A failed search (400, cluster down) looks like 'no hits' to the user. Check the response or use an EnsureValid helper.",
+      "severity": "medium"
+    },
+    {
+      "id": "P5",
+      "file": "src/Orders.Api/Search/OrderExport.cs",
+      "line": 20,
+      "description": "The export pages with From(page * 1000). After 10,000 hits (index.max_result_window) Elasticsearch answers 400 and the export of two million orders fails. Use a point in time with search_after, and close it in finally.",
+      "severity": "medium"
+    },
+    {
+      "id": "P6",
+      "file": "src/Orders.Api/Search/OrderIndex.cs",
+      "line": 14,
+      "description": "The index is created without a mapping (dynamic mapping) and without a versioned name and alias. Id and Status become text (with a keyword sub-field), so the term query on status finds nothing, and a later type change needs a new index. Create orders_v1 with an explicit strict mapping (keyword for id and status) and an alias.",
+      "severity": "medium"
+    },
+    {
+      "id": "P7",
+      "file": "src/Orders.Api/Search/OrderSearch.cs",
+      "line": 29,
+      "description": "QueryStringQuery with the raw search box text: users can search any field, run expensive wildcard or regex queries, and a typo gives a 400. Use match with fuzziness, or simple_query_string with a list of fields.",
+      "severity": "medium"
+    },
+    {
+      "id": "P8",
+      "file": "src/Orders.Api/Search/OrderSearch.cs",
+      "line": 30,
+      "description": "The status and date clauses are in must, so they score and are not cached. Move them to bool.filter.",
+      "severity": "low"
+    }
+  ]
+}

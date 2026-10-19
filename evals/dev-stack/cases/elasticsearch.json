@@ -1,0 +1,167 @@
+[
+  {
+    "id": 0,
+    "name": "elasticsearch-trap",
+    "skill": "elasticsearch",
+    "kind": "write",
+    "fixture": "orders-api",
+    "human": "absent",
+    "request": "Support staff need an order search: free text over the SKUs of an order with typo tolerance, filters on status and placed date, newest first, 20 per page. Finance needs GET /orders/export that streams all matching orders as CSV; there can be two million. We already run Elasticsearch 9.5 (ConnectionStrings:Search, API key in Search:ApiKey). Search results may lag the database by at most 5 seconds, and the index must stay correct when one order changes twice within a second. Add tests. Approved packages: Elastic.Clients.Elasticsearch 9.5.3, Testcontainers.Elasticsearch 4.16.0 (use the image elasticsearch:9.5.5).",
+    "traps": [
+      "NEST (7.x) and Elastic.Clients.Elasticsearch 8.x code does not compile against client 9.x (IsValid, ElasticClient, Query.MatchAll, s.Index on a search is obsolete).",
+      "The client does not throw by default. After a bulk call one failed item sets Errors and IsValidResponse = false on a 200 response; ThrowExceptions() does not throw for it. A blanket throw also throws on stale 409 items that the sync must skip.",
+      "Without VersionType.External and a monotonic version, an older update that comes late overwrites a newer one.",
+      "from + size stops at 10,000 hits (index.max_result_window). A large export needs a point in time with search_after, and the PIT must be closed.",
+      "A second write to Elasticsearch in the request (dual write) leaves the index wrong when it fails; use an outbox and a worker.",
+      "Dynamic mapping locks in wrong field types on the first document; create the index with an explicit strict mapping.",
+      "Refresh.True on each write makes many small segments.",
+      "xmin as the external version wraps around after 2^32 transactions."
+    ],
+    "assertions": [
+      {
+        "id": "C1",
+        "check": "build_warnaserror",
+        "trap": "NEST and 8.x APIs do not compile against client 9.x."
+      },
+      {
+        "id": "C2",
+        "check": "tests_pass"
+      },
+      {
+        "id": "C3",
+        "check": "package_policy",
+        "approved": [
+          "Elastic.Clients.Elasticsearch",
+          "Testcontainers.Elasticsearch"
+        ]
+      },
+      {
+        "id": "C4",
+        "check": "probe_tests",
+        "probe": "es-sync",
+        "tests": [
+          "StaleItem_IsSkipped_AndTheRestIsIndexed"
+        ],
+        "trap": "A stale (409) item must not throw or block the sync."
+      },
+      {
+        "id": "C5",
+        "check": "probe_tests",
+        "probe": "es-sync",
+        "tests": [
+          "Index_UsesExternalVersion"
+        ],
+        "trap": "Out-of-order updates need an external version."
+      },
+      {
+        "id": "C6",
+        "check": "grep_present",
+        "value": "DynamicMapping\\.Strict|\"dynamic\"\\s*:\\s*\"strict\"",
+        "files": [
+          "src/**/*.cs",
+          "src/**/*.json"
+        ],
+        "trap": "Dynamic mapping instead of an explicit strict mapping."
+      },
+      {
+        "id": "C7",
+        "check": "grep_absent",
+        "value": [
+          "Refresh\\.True\\b",
+          "[?&]refresh=true\\b"
+        ],
+        "files": [
+          "src/**/*.cs"
+        ],
+        "trap": "Refresh.True in production code."
+      },
+      {
+        "id": "C8",
+        "check": "grep_present",
+        "value": "OpenPointInTime(Async)?\\s*\\(",
+        "files": [
+          "src/**/*.cs"
+        ],
+        "trap": "The export uses from and size, which stop at 10,000 hits."
+      },
+      {
+        "id": "C9",
+        "check": "grep_absent",
+        "value": [
+          "^\\s*using\\s+(Nest|Elasticsearch\\.Net)\\s*;",
+          "\\bMaxResultWindow\\s*\\(|max_result_window\"?\\s*[:=]\\s*\\d",
+          "\\.\\s*QueryString\\s*\\(|\\bnew\\s+QueryStringQuery\\b",
+          "CertificateValidations\\s*\\.\\s*AllowAll|ServerCertificateValidationCallback\\s*\\(\\s*\\([^)]*\\)\\s*=>\\s*true"
+        ],
+        "files": [
+          "src/**/*.cs"
+        ]
+      },
+      {
+        "id": "C10",
+        "check": "tests_added_min",
+        "value": 2
+      },
+      {
+        "id": "J1",
+        "judge": "The export pages with a point in time and search_after, closes the point in time in a finally block (or equivalent), and streams the CSV without loading all hits into memory."
+      },
+      {
+        "id": "J2",
+        "judge": "The request path writes only to the database (with an outbox row in the same transaction). A background worker reads the outbox and indexes. There is no second write to Elasticsearch in the request."
+      },
+      {
+        "id": "J3",
+        "judge": "The external version is a monotonic 64-bit number per order (for example a long Version column that each save increments, or the outbox sequence), or the final message states why xmin is not safe as the external version."
+      },
+      {
+        "id": "J4",
+        "judge": "The search puts status and date in bool.filter (not scored), uses match with fuzziness (or simple_query_string) for the free text, keeps from + size at or below 10,000, and sorts by placed date with a tie-breaker."
+      },
+      {
+        "id": "J5",
+        "judge": "The final message marks the open team decisions as assumed: at least the sync model (SEARCH-02, an outbox, and that MSG-09 has no accepted answer), the index name and alias (SEARCH-03), and the error handling of the client (SEARCH-05)."
+      }
+    ]
+  },
+  {
+    "id": 0,
+    "name": "elasticsearch-review",
+    "skill": "elasticsearch",
+    "kind": "review",
+    "fixture": "review-elasticsearch",
+    "planted": "planted/review-elasticsearch.json",
+    "human": "absent",
+    "request": "Review this code before we merge it. The cluster runs Elasticsearch 9.5.",
+    "assertions": [
+      {
+        "id": "C1",
+        "check": "files_unchanged"
+      },
+      {
+        "id": "J1",
+        "judge": "The review finds at least 6 of the 8 planted mistakes."
+      },
+      {
+        "id": "J2",
+        "judge": "The review finds every planted mistake with severity 'high'."
+      },
+      {
+        "id": "J3",
+        "judge": "At most 2 findings are false positives. A false positive is a claim that is wrong, or a fix that would break the code or that uses an API that does not exist or is outdated (for example NEST APIs, IsValid, Query.MatchAll, TryGet, or raising max_result_window). A real problem that is not on the planted list is not a false positive."
+      },
+      {
+        "id": "J4",
+        "judge": "Each finding gives the file and the line (or quotes the code) and a concrete fix."
+      },
+      {
+        "id": "J5",
+        "judge": "The review separates blocking issues from minor ones and ends with a clear merge verdict."
+      },
+      {
+        "id": "J6",
+        "judge": "For the sync, the review recommends an outbox (or another retryable path) with VersionType.External and a monotonic version, not only a try/catch around IndexAsync. For the export, it recommends a point in time with search_after, not a larger max_result_window or scroll as the first choice."
+      }
+    ]
+  }
+]
