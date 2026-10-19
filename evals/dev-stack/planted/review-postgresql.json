@@ -1,0 +1,68 @@
+{
+  "skill": "postgresql",
+  "planted": [
+    {
+      "id": "P1",
+      "file": "src/Orders.Api/Reports/SalesReport.cs",
+      "line": 21,
+      "description": "Dapper 'IN @orderIds' on Npgsql. Dapper sends the list as one array parameter on Npgsql, so PostgreSQL fails with 42601 (syntax error at $1). Use 'o.\"Id\" = ANY(@orderIds)'.",
+      "severity": "high"
+    },
+    {
+      "id": "P2",
+      "file": "src/Orders.Api/Import/StockImport.cs",
+      "line": 18,
+      "description": "Binary COPY without 'await writer.CompleteAsync(ct)'. At dispose Npgsql cancels the COPY. In this transaction the next command then fails with 25P02, so each import fails and the stock is never loaded (outside a transaction the rows are lost without an error).",
+      "severity": "high"
+    },
+    {
+      "id": "P3",
+      "file": "src/Orders.Api/Import/StockImport.cs",
+      "line": 34,
+      "description": "DateTime.Now as a Dapper parameter for the timestamptz column imported_at. Npgsql sends a local DateTime as 'timestamp', and PostgreSQL converts it with the session TimeZone without an error (12:00 became 16:00Z with America/New_York). Use the UTC time from TimeProvider (DateTimeOffset with offset 0).",
+      "severity": "high"
+    },
+    {
+      "id": "P4",
+      "file": "src/Orders.Api/Reports/SalesReport.cs",
+      "line": 16,
+      "description": "'o.\"PlacedAt\"::date' gives the day in the session time zone (normally UTC), not in Amsterdam time as the summary says. 2026-07-01 22:30Z is 2026-07-02 in Amsterdam. Use '(o.\"PlacedAt\" AT TIME ZONE ''Europe/Amsterdam'')::date' in the SELECT and the GROUP BY.",
+      "severity": "medium"
+    },
+    {
+      "id": "P5",
+      "file": "src/Orders.Api/Reports/DiscontinuedReport.cs",
+      "line": 17,
+      "description": "'NOT IN (SELECT d.sku ...)' on a nullable column (discontinued_skus.sku has no NOT NULL). One NULL row makes NOT IN return no rows, so the report is empty. Use 'NOT EXISTS (SELECT 1 FROM discontinued_skus d WHERE d.sku = s.sku)', and make the column NOT NULL.",
+      "severity": "medium"
+    },
+    {
+      "id": "P6",
+      "file": "db/0003_stock.sql",
+      "line": 24,
+      "description": "DDL on the big live table order_lines: ADD COLUMN with the volatile default gen_random_uuid() rewrites the table under an ACCESS EXCLUSIVE lock, and the plain CREATE INDEX (line 25) blocks writes for the whole build. No lock_timeout. Set lock_timeout, add the column without a default (then backfill in batches), and use CREATE INDEX CONCURRENTLY outside a transaction (DATA-25).",
+      "severity": "medium"
+    },
+    {
+      "id": "P7",
+      "file": "db/0003_stock.sql",
+      "line": 7,
+      "description": "updated_at is 'timestamp' (without time zone) with DEFAULT now() for an instant. now() is converted to the session time zone and the zone is lost. Use timestamptz.",
+      "severity": "medium"
+    },
+    {
+      "id": "P8",
+      "file": "src/Orders.Api/Reports/ReportConnection.cs",
+      "line": 9,
+      "description": "A new NpgsqlConnection from the connection string in each call, next to the EF context. Register one NpgsqlDataSource (AddNpgsqlDataSource) and open connections from it, so the pool, the type mappings and the settings are in one place (DATA-23).",
+      "severity": "low"
+    },
+    {
+      "id": "P9",
+      "file": "db/0003_stock.sql",
+      "line": 4,
+      "description": "'id serial' for a new table. Use 'bigint GENERATED ALWAYS AS IDENTITY', or sku as the primary key (it is unique).",
+      "severity": "low"
+    }
+  ]
+}
