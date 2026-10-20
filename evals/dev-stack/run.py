@@ -34,6 +34,8 @@ PARENT_VARS = ["CLAUDE_CODE_SESSION_ID", "CLAUDE_CODE_REMOTE_SESSION_ID", "CLAUD
                "CLAUDECODE", "CLAUDE_CODE_CHILD_SESSION", "CLAUDE_CODE_POST_TURN_MEMORY",
                "CLAUDE_CODE_POST_TURN_MEMORY_CONFIG", "CLAUDE_CODE_TEE_SDK_STDOUT", "CLAUDE_CODE_INCLUDE_PARTIAL_MESSAGES",
                "CLAUDE_AFTER_LAST_COMPACT"]
+KEEP_IMAGES = {"postgres", "mcr.microsoft.com/mssql/server", "valkey/valkey", "elasticsearch", "rabbitmq",
+               "axllent/mailpit", "testcontainers/ryuk", "mcr.microsoft.com/dotnet/aspnet", "mcr.microsoft.com/dotnet/sdk"}
 SUFFIX = ("\n\nDo not call any tool whose name starts with mcp__Agent_Mesh. "
           "Those tools reach a live system that is not part of this task.")
 
@@ -71,6 +73,12 @@ def clean(repo):
             if folder.is_dir():
                 subprocess.run(["rm", "-rf", str(folder)])
     subprocess.run(["docker", "volume", "prune", "-f"], capture_output=True)
+    # A run can build its own images (for example from a Dockerfile). Keep only the images of the cases.
+    out = subprocess.run(["docker", "images", "--format", "{{.Repository}}:{{.Tag}}"], capture_output=True, text=True).stdout
+    for image in out.split():
+        if image.split(":")[0] not in KEEP_IMAGES:
+            subprocess.run(["docker", "rmi", image], capture_output=True)
+    subprocess.run(["docker", "builder", "prune", "-af"], capture_output=True)
 
 
 def start(run, ev, variant, args):
