@@ -35,9 +35,14 @@ public sealed class RabbitMqInteropProbe
         using var client = factory.CreateClient();
         await MigrateAsync(factory, TestContext.CancellationToken);
 
-        // An app may declare its topology at start or before its first publish. Both are valid, so place one order first.
-        await PlaceOrderAsync(client, TimeSpan.FromSeconds(30), TestContext.CancellationToken);
-        var queue = await broker.WaitForQueueAsync(Queue, TimeSpan.FromSeconds(60), TestContext.CancellationToken);
+        // An app may declare its topology at start or before its first publish. Both are valid:
+        // when the queue is not there after the start, place one order and look again.
+        var queue = await broker.WaitForQueueAsync(Queue, TimeSpan.FromSeconds(20), TestContext.CancellationToken);
+        if (queue is null)
+        {
+            await PlaceOrderAsync(client, TimeSpan.FromSeconds(30), TestContext.CancellationToken);
+            queue = await broker.WaitForQueueAsync(Queue, TimeSpan.FromSeconds(60), TestContext.CancellationToken);
+        }
 
         Assert.IsNotNull(queue, $"The app did not declare the queue {Queue} within 60 seconds after the first order.");
         Assert.AreEqual("quorum", queue.Value.GetProperty("type").GetString(), $"The queue {Queue} is not a quorum queue: {queue}");
