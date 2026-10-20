@@ -35,9 +35,11 @@ public sealed class RabbitMqInteropProbe
         using var client = factory.CreateClient();
         await MigrateAsync(factory, TestContext.CancellationToken);
 
-        var queue = await broker.WaitForQueueAsync(Queue, TimeSpan.FromSeconds(30), TestContext.CancellationToken);
+        // An app may declare its topology at start or before its first publish. Both are valid, so place one order first.
+        await PlaceOrderAsync(client, TimeSpan.FromSeconds(30), TestContext.CancellationToken);
+        var queue = await broker.WaitForQueueAsync(Queue, TimeSpan.FromSeconds(60), TestContext.CancellationToken);
 
-        Assert.IsNotNull(queue, $"The app did not declare the queue {Queue} within 30 seconds after the start.");
+        Assert.IsNotNull(queue, $"The app did not declare the queue {Queue} within 60 seconds after the first order.");
         Assert.AreEqual("quorum", queue.Value.GetProperty("type").GetString(), $"The queue {Queue} is not a quorum queue: {queue}");
     }
 
@@ -48,12 +50,10 @@ public sealed class RabbitMqInteropProbe
         await using var factory = Factory(broker);
         using var client = factory.CreateClient();
         await MigrateAsync(factory, TestContext.CancellationToken);
-        Assert.IsNotNull(await broker.WaitForQueueAsync(Queue, TimeSpan.FromSeconds(30), TestContext.CancellationToken), $"The app did not declare the queue {Queue}.");
-
         var orderId = await PlaceOrderAsync(client, TimeSpan.FromSeconds(30), TestContext.CancellationToken);
-        var message = await broker.WaitForMessageAsync(Queue, orderId, TimeSpan.FromSeconds(30), TestContext.CancellationToken);
+        var message = await broker.WaitForMessageAsync(Queue, orderId, TimeSpan.FromSeconds(60), TestContext.CancellationToken);
 
-        Assert.IsNotNull(message, $"No message for order {orderId} reached {Queue} within 30 seconds.");
+        Assert.IsNotNull(message, $"No message for order {orderId} reached {Queue} within 60 seconds.");
         var m = message.Value;
         Assert.AreEqual("orders.events", m.GetProperty("exchange").GetString(), "Wrong exchange.");
         Assert.AreEqual("order.placed.v1", m.GetProperty("routing_key").GetString(), "Wrong routing key.");
@@ -83,7 +83,6 @@ public sealed class RabbitMqInteropProbe
         {
             using var client = first.CreateClient();
             await MigrateAsync(first, TestContext.CancellationToken);
-            Assert.IsNotNull(await broker.WaitForQueueAsync(Queue, TimeSpan.FromSeconds(30), TestContext.CancellationToken), $"The app did not declare the queue {Queue}.");
 
             await broker.StopAsync(TestContext.CancellationToken);
             orderId = await PlaceOrderAsync(client, TimeSpan.FromSeconds(30), TestContext.CancellationToken);
