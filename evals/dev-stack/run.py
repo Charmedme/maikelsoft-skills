@@ -64,6 +64,15 @@ def final_message(stream):
     return final
 
 
+def clean(repo):
+    """Free disk space after a run: the scorer builds again, and Docker keeps volumes of stopped containers."""
+    for name in ("bin", "obj", "TestResults"):
+        for folder in list(repo.rglob(name)):
+            if folder.is_dir():
+                subprocess.run(["rm", "-rf", str(folder)])
+    subprocess.run(["docker", "volume", "prune", "-f"], capture_output=True)
+
+
 def start(run, ev, variant, args):
     repo = run / "repo"
     if not repo.exists():
@@ -79,6 +88,7 @@ def start(run, ev, variant, args):
         except subprocess.TimeoutExpired:
             code = "timeout"
     (run / "final.md").write_text(final_message(run / "stream.jsonl"), encoding="utf-8")
+    clean(repo)
     return f"{run.relative_to(args.runs)} exit {code}"
 
 
