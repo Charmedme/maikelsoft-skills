@@ -1,0 +1,61 @@
+{
+  "skill": "mailkit",
+  "planted": [
+    {
+      "id": "P1",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 24,
+      "description": "The MailKit SmtpClient is registered as a singleton and shared by all requests and the invoice job. The client is not thread-safe and keeps one connection open with no reconnect, timeout or QUIT. Create one SmtpClient for each send or batch inside the sender, with DisconnectAsync(true, ct).",
+      "severity": "high"
+    },
+    {
+      "id": "P2",
+      "file": "src/Orders.Api/Mail/SmtpOptions.cs",
+      "line": 16,
+      "description": "Default SecureSocketOptions.Auto on port 587. Auto maps to StartTlsWhenAvailable and sends AUTH and the mail in plain text when the relay does not offer STARTTLS. Use StartTls (587) or SslOnConnect (465).",
+      "severity": "high"
+    },
+    {
+      "id": "P3",
+      "file": "src/Orders.Api/Mail/MailSender.cs",
+      "line": 17,
+      "description": "Accept-all ServerCertificateValidationCallback (CA5359 suppressed). Anyone on the path can read the SMTP password and the mails. Trust the internal CA in the image (ca-certificates) or check that CA in the callback.",
+      "severity": "high"
+    },
+    {
+      "id": "P4",
+      "file": "Directory.Packages.props",
+      "line": 6,
+      "description": "NoWarn NU1902;NU1903 hides the vulnerable System.Security.Cryptography.Pkcs 10.0.0 that MimeKit 4.18.1 pulls. Pin Pkcs 10.0.13 or later with a PackageVersion (transitive pinning is on) and remove the NoWarn.",
+      "severity": "medium"
+    },
+    {
+      "id": "P5",
+      "file": "src/Orders.Api/Orders/ShippingEndpoints.cs",
+      "line": 39,
+      "description": "Fire-and-forget Task.Run after SaveChangesAsync: an exception is lost, the mail is lost when the relay is down or the process stops, and the shared client is used from a second thread. Write an outbox row in the same SaveChangesAsync and send from a BackgroundService.",
+      "severity": "medium"
+    },
+    {
+      "id": "P6",
+      "file": "src/Orders.Api/Mail/ContactMail.cs",
+      "line": 22,
+      "description": "From is the address from the contact form: the app sends mail as any address (spoofing relay, SPF/DKIM/DMARC fail). Send From an own address and put the user address in ReplyTo.",
+      "severity": "medium"
+    },
+    {
+      "id": "P7",
+      "file": "src/Orders.Api/Mail/InvoiceMail.cs",
+      "line": 16,
+      "description": "The customer name goes into the HTML body without encoding (HTML injection). Use a Razor component with HtmlRenderer or HtmlEncoder.Default.Encode.",
+      "severity": "medium"
+    },
+    {
+      "id": "P8",
+      "file": "src/Orders.Api/Mail/InvoiceJob.cs",
+      "line": 27,
+      "description": "One message with all customers in To: each customer sees all other addresses, one rejected recipient (SmtpCommandException RecipientNotAccepted) stops the mail for everyone, and every customer gets the body of the first customer. Send one message for each customer.",
+      "severity": "medium"
+    }
+  ]
+}

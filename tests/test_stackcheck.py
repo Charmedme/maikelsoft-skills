@@ -91,6 +91,16 @@ class StackcheckTest(unittest.TestCase):
         self.assertIn("Directory.Packages.props:3 PKG-MEDIATR error", out)
         self.assertNotIn("tests/T.csproj", out)
 
+    def test_versionless_reference_under_cpm_is_checked_at_the_package_version(self):
+        self.write("Directory.Build.props", "<Project><PropertyGroup><Nullable>enable</Nullable></PropertyGroup></Project>")
+        self.write("Directory.Packages.props",
+                   '<Project><ItemGroup>\n<PackageVersion Include="FluentAssertions" Version="7.2.2" />\n</ItemGroup></Project>')
+        self.write("tests/T.csproj", '<Project><ItemGroup><PackageReference Include="FluentAssertions" />\n'
+                   '<PackageReference Include="MediatR" /></ItemGroup></Project>')
+        code, out = self.run_check()
+        self.assertNotIn("PKG-FA8", out)
+        self.assertIn("tests/T.csproj:2 PKG-MEDIATR error", out)
+
     def test_npm_package_rule(self):
         self.write("Directory.Build.props", "<Project><PropertyGroup><Nullable>enable</Nullable></PropertyGroup></Project>")
         self.write("web/package.json", json.dumps({"dependencies": {"moment": "^2.30.1"}}, indent=2))

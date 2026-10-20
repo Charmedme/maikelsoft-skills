@@ -56,6 +56,8 @@ Before you add a package (NuGet, npm, container image, tool):
 
 These packages are not allowed: MediatR, AutoMapper. Use direct handler classes and manual mapping. For large mappings, use Mapperly.
 
+One pin has standing approval. SqlClient 6.1 and 7.1 and MimeKit 4.18 pull a vulnerable `System.Security.Cryptography.Pkcs`. Then add a direct `PackageVersion` for Pkcs 10.0.x with `CentralPackageTransitivePinningEnabled`. Name the pin and the reason in the report. Do not ask again.
+
 ## 6. Check with tools first
 
 Run the tools before you judge the code yourself:

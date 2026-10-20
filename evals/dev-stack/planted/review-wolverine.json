@@ -1,0 +1,61 @@
+{
+  "skill": "wolverine",
+  "planted": [
+    {
+      "id": "P1",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 25,
+      "description": "Plain AddDbContext<OrdersDbContext> while Wolverine handlers inject the context. Wolverine 6 forbids service location by default, so the first ShipOrder throws InvalidServiceLocationException. Use opts.Services.AddDbContextWithWolverineIntegration<OrdersDbContext>(...) or optionsLifetime: ServiceLifetime.Singleton.",
+      "severity": "high"
+    },
+    {
+      "id": "P2",
+      "file": "src/Orders.Api/Orders/OrderEndpoints.cs",
+      "line": 59,
+      "description": "SaveChangesAsync, then bus.PublishAsync in a minimal API endpoint. AutoApplyTransactions does not apply outside a handler, so the order and the message are two transactions: a crash between them loses the message. Use IDbContextOutbox<OrdersDbContext> (PublishAsync, then SaveChangesAndFlushMessagesAsync) or InvokeAsync to a handler.",
+      "severity": "high"
+    },
+    {
+      "id": "P3",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 39,
+      "description": "UseRabbitMq(...).AutoProvision() without UseQuorumQueues() and without publisher confirms. The transport declares classic queues and turns confirms off by default, so the durable outbox can delete a message that the broker refused. Add UseQuorumQueues() and ConfigureChannelCreation with both confirm flags.",
+      "severity": "medium"
+    },
+    {
+      "id": "P4",
+      "file": "src/Orders.Api/Shipping/ShipOrderHandler.cs",
+      "line": 21,
+      "description": "try/catch that logs and returns. Wolverine sees a success and acks the message, so a failed ship is lost and never retried or moved to the error queue. Let the exception reach the error policy.",
+      "severity": "medium"
+    },
+    {
+      "id": "P5",
+      "file": "src/Orders.Api/Stock/CheckStockHandler.cs",
+      "line": 9,
+      "description": "A handler that returns bool is not a handler in Wolverine 6 (primitive return type). InvokeAsync<bool> in OrderEndpoints.cs line 41 throws IndeterminateRoutesException. Return a record, for example StockResult(bool InStock), or call a plain service.",
+      "severity": "medium"
+    },
+    {
+      "id": "P6",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 44,
+      "description": "OnException<Exception>().RetryWithCooldown(...) retries each exception, also validation and business errors, and has no scheduled retry or error queue step. Write a policy for each exception type: transient errors with cooldown, then ScheduleRetry with jitter, then the error queue; business errors to the error queue at once (MSG-08).",
+      "severity": "medium"
+    },
+    {
+      "id": "P7",
+      "file": "src/Orders.Api/Shipping/ShippingService.cs",
+      "line": 7,
+      "description": "IMessageBus injected into a domain service. Return OrderShipped as a cascading message from the handler instead, so that the handler stays a pure function and the message goes out with the transaction.",
+      "severity": "low"
+    },
+    {
+      "id": "P8",
+      "file": "tests/Orders.Api.Tests/ShippingTests.cs",
+      "line": 36,
+      "description": "await Task.Delay(2000) to wait for the handler: slow and flaky. Use a tracked session: host.TrackActivity().Timeout(...).ExecuteAndWaitAsync(...) or InvokeMessageAndWaitAsync.",
+      "severity": "low"
+    }
+  ]
+}

@@ -95,5 +95,246 @@
       "C7": true,
       "C8": true
     }
+  },
+  "postgresql-trap": {
+    "naive": {
+      "C1": true,
+      "C4": true,
+      "C5": false,
+      "C6": true
+    },
+    "good": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": true,
+      "C6": true
+    }
+  },
+  "sqlserver-trap": {
+    "naive": {
+      "C1": true,
+      "C4": true,
+      "C5": false,
+      "C6": false
+    },
+    "good": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": true,
+      "C6": true
+    }
+  },
+  "redis-trap": {
+    "naive": {
+      "C1": true,
+      "C3": true,
+      "C4": false,
+      "C5": false,
+      "C6": false,
+      "C8": true
+    },
+    "good": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": true,
+      "C6": true,
+      "C7": true,
+      "C8": true,
+      "C9": true
+    }
+  },
+  "elasticsearch-trap": {
+    "naive": {
+      "C1": true,
+      "C3": true,
+      "C4": false,
+      "C5": false,
+      "C6": false,
+      "C7": false,
+      "C8": false
+    },
+    "good": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": true,
+      "C6": true,
+      "C7": true,
+      "C8": true,
+      "C9": true,
+      "C10": true
+    }
+  },
+  "rabbitmq-interop-trap": {
+    "naive": {
+      "C1": false,
+      "C4": false,
+      "C5": false,
+      "C6": false,
+      "C7": false,
+      "C8": false
+    },
+    "good": {
+      "C1": true,
+      "C2": true,
+      "C4": true,
+      "C5": true,
+      "C6": true,
+      "C7": true,
+      "C8": true
+    }
+  },
+  "wolverine-outbox-trap": {
+    "naive": {
+      "C4": false,
+      "C5": false,
+      "C6": false,
+      "C7": false,
+      "C8": false,
+      "C9": false,
+      "C10": false
+    },
+    "good": {
+      "C1": true,
+      "C2": true,
+      "C4": true,
+      "C5": true,
+      "C6": true,
+      "C7": true,
+      "C8": true,
+      "C9": true,
+      "C10": true
+    }
+  },
+  "mailkit-confirmation-trap": {
+    "naive": {
+      "C1": false,
+      "C2": true,
+      "C3": true,
+      "C4": false,
+      "C5": false,
+      "C6": true,
+      "C7": false,
+      "C8": false,
+      "C9": false,
+      "C10": true,
+      "C11": true,
+      "C12": false
+    },
+    "good": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": true,
+      "C6": true,
+      "C7": true,
+      "C8": true,
+      "C9": true,
+      "C10": true,
+      "C11": true,
+      "C12": true
+    }
+  },
+  "aspnetcore-openapi-trap": {
+    "naive": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": false,
+      "C5": false,
+      "C6": false,
+      "C7": false,
+      "C8": false,
+      "C9": false,
+      "C10": true
+    },
+    "good": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": true,
+      "C6": true,
+      "C7": true,
+      "C8": true,
+      "C9": true,
+      "C10": true
+    }
+  },
+  "fluentvalidation-trap": {
+    "naive": {
+      "C1": true,
+      "C2": false,
+      "C3": true,
+      "C4": false,
+      "C5": false,
+      "C6": false,
+      "C7": false,
+      "C8": false
+    },
+    "good": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": true,
+      "C6": true,
+      "C7": true,
+      "C8": true
+    }
+  },
+  "dotnet-observability-trap": {
+    "naive": {
+      "C1": false,
+      "C2": false,
+      "C3": true,
+      "C4": false,
+      "C5": false,
+      "C6": false,
+      "C7": false
+    },
+    "good": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": true,
+      "C6": true,
+      "C7": true
+    }
+  },
+  "puppeteersharp-trap": {
+    "naive": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": false,
+      "C5": false,
+      "C6": false,
+      "C7": false,
+      "C8": false
+    },
+    "good": {
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "C5": true,
+      "C6": true,
+      "C7": true,
+      "C8": true
+    },
+    "network-only": {
+      "C4": true,
+      "C5": false
+    }
   }
 }

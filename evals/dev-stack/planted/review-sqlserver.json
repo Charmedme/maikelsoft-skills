@@ -1,0 +1,61 @@
+{
+  "skill": "sqlserver",
+  "planted": [
+    {
+      "id": "P1",
+      "file": "src/Orders.Api/Warehouse/Sql/UpsertStock.sql",
+      "line": 9,
+      "description": "MERGE without HOLDLOCK for an upsert that two imports run at the same time. Both sessions can see no row and both insert: error 2627. Use 'MERGE dbo.StockLevels WITH (HOLDLOCK) AS t', or UPDATE WITH (UPDLOCK, HOLDLOCK) then INSERT in one transaction.",
+      "severity": "high"
+    },
+    {
+      "id": "P2",
+      "file": "src/Orders.Api/Warehouse/Sql/DailyPicks.sql",
+      "line": 10,
+      "description": "AT TIME ZONE 'Europe/Amsterdam'. SQL Server takes only Windows zone names (sys.time_zone_info): each call fails with error 9820. Use 'W. Europe Standard Time'. Also ChangedAt is datetime without offset, so convert it from UTC first (AT TIME ZONE 'UTC' AT TIME ZONE 'W. Europe Standard Time').",
+      "severity": "high"
+    },
+    {
+      "id": "P3",
+      "file": "src/Orders.Api/Warehouse/Sql/SearchStock.sql",
+      "line": 10,
+      "description": "Dynamic SQL built by concatenation with @SkuPrefix and @SortColumn and run with EXEC: SQL injection. Use sp_executesql with @SkuPrefix as a parameter, and QUOTENAME on a sort column from an allow list.",
+      "severity": "high"
+    },
+    {
+      "id": "P4",
+      "file": "src/Orders.Api/Warehouse/StockRepository.cs",
+      "line": 37,
+      "description": "Reservation reads Available, checks it in C#, then writes 'Available = @available'. Two orders read the same value and both write: lost update and oversell. There is also no transaction, so a failure leaves some lines reserved. Use one conditional UPDATE per line ('SET Available = Available - @q WHERE Sku = @sku AND Available >= @q') in one transaction, check the row count, roll back on 0.",
+      "severity": "high"
+    },
+    {
+      "id": "P5",
+      "file": "src/Orders.Api/Warehouse/StockRepository.cs",
+      "line": 17,
+      "description": "AddWithValue sends the string as nvarchar. Against the varchar(32) key with the default SQL_ collation, SQL Server converts the column (CONVERT_IMPLICIT) and scans the index. Use Parameters.Add(\"@sku\", SqlDbType.VarChar, 32) or Dapper DbString { IsAnsi = true, Length = 32 }.",
+      "severity": "medium"
+    },
+    {
+      "id": "P6",
+      "file": "src/Orders.Api/Warehouse/Sql/DailyPicks.sql",
+      "line": 13,
+      "description": "WITH (NOLOCK) to avoid blocking: dirty reads, rows read twice or missed during page splits. Turn on READ_COMMITTED_SNAPSHOT for the database (DATA-26) and remove the hint.",
+      "severity": "medium"
+    },
+    {
+      "id": "P7",
+      "file": "src/Orders.Api/Warehouse/Sql/PickStock.sql",
+      "line": 9,
+      "description": "BEGIN TRANSACTION without SET XACT_ABORT ON. When the client times out between the UPDATE and the COMMIT, the transaction stays open with its locks on the pooled connection. Add SET XACT_ABORT ON next to SET NOCOUNT ON (and TRY/CATCH with THROW).",
+      "severity": "medium"
+    },
+    {
+      "id": "P8",
+      "file": "src/Orders.Api/Warehouse/Sql/Schema.sql",
+      "line": 10,
+      "description": "Clustered primary key on uniqueidentifier DEFAULT NEWID(): random inserts, page splits and fragmentation. Use NEWSEQUENTIALID() or a bigint IDENTITY. ChangedAt (line 14) is datetime with GETDATE() (server local time): use datetimeoffset or datetime2 with SYSUTCDATETIME().",
+      "severity": "low"
+    }
+  ]
+}

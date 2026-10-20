@@ -88,4 +88,4 @@ Use dev-team when a wrong guess costs more than the extra time and money, or whe
 
 - The senior starts the mediors as nested agents. This needs `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` of 2 or more (default 3).
 - Plugin agents do not use hooks, MCP servers, or a permission mode of their own.
-- The stack skills cover .NET in dev-stack 1.0.0. Other stacks use the official docs until their skills exist.
+- The stack skills cover .NET in dev-stack 1.1.0: 18 skills. Angular, TypeScript, Docker, and Kubernetes use the official docs until their skills exist.

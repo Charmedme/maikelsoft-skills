@@ -1,0 +1,117 @@
+{
+  "skill": "aspnetcore-openapi",
+  "rules": [
+    {
+      "id": "OAS-UI-UNGUARDED",
+      "kind": "regex",
+      "severity": "warning",
+      "files": ["**/*.cs"],
+      "exclude": ["tests/**", "test/**", "**/*Tests/**", "**/*Test/**"],
+      "pattern": "^app\\s*\\.\\s*(MapOpenApi|MapScalarApiReference|UseSwaggerUI|UseSwagger|UseReDoc)\\s*\\((?![^;\\n]*RequireAuthorization)",
+      "message": "The OpenAPI document or UI is mapped at the top level of Program.cs, so it is public in each environment. It shows each route to an attacker.",
+      "fix": "Map it inside if (app.Environment.IsDevelopment()), or add .RequireAuthorization(\"<policy>\") when a public document is a decision (API-09).",
+      "match": [
+        "app.MapOpenApi();",
+        "app.MapScalarApiReference(options => options.Title = \"Orders\");",
+        "app.UseSwaggerUI();"
+      ],
+      "nomatch": [
+        "    app.MapOpenApi();",
+        "app.MapOpenApi().RequireAuthorization(\"ApiDocs\");",
+        "builder.Services.AddOpenApi();"
+      ]
+    },
+    {
+      "id": "OAS-VERSIONING-OLD",
+      "kind": "regex",
+      "severity": "warning",
+      "files": ["**/*.cs"],
+      "pattern": "\\bAddVersionedApiExplorer\\s*\\(|^\\s*using\\s+Microsoft\\.AspNetCore\\.Mvc\\.Versioning\\b",
+      "message": "This is the old Microsoft.AspNetCore.Mvc.Versioning API. The library moved to Asp.Versioning.",
+      "fix": "Use the Asp.Versioning.Http package, using Asp.Versioning;, and AddApiVersioning(...).AddApiExplorer(...).",
+      "match": [
+        "services.AddVersionedApiExplorer(o => o.GroupNameFormat = \"'v'VVV\");",
+        "using Microsoft.AspNetCore.Mvc.Versioning;"
+      ],
+      "nomatch": [
+        "builder.Services.AddApiVersioning().AddApiExplorer(o => o.GroupNameFormat = \"'v'VVV\");",
+        "using Asp.Versioning;"
+      ]
+    },
+    {
+      "id": "OAS-PKG-VERSIONING-OLD",
+      "kind": "package",
+      "ecosystem": "nuget",
+      "package": "Microsoft.AspNetCore.Mvc.Versioning*",
+      "versions": "*",
+      "severity": "warning",
+      "message": "Microsoft.AspNetCore.Mvc.Versioning is the old package name. New releases ship as Asp.Versioning.*.",
+      "fix": "Use Asp.Versioning.Http (minimal APIs) or Asp.Versioning.Mvc (controllers), and Asp.Versioning.OpenApi for the document."
+    },
+    {
+      "id": "OAS-URL-ASSUME-DEFAULT",
+      "kind": "regex",
+      "severity": "warning",
+      "files": ["**/*.cs"],
+      "pattern": "(?s)UrlSegmentApiVersionReader\\b.*AssumeDefaultVersionWhenUnspecified\\s*=\\s*true|AssumeDefaultVersionWhenUnspecified\\s*=\\s*true.*UrlSegmentApiVersionReader\\b",
+      "message": "AssumeDefaultVersionWhenUnspecified has no effect with the URL segment reader. A path without a version gives 404, not the default version.",
+      "fix": "Remove the setting and put a version in each URL. Keep an unversioned route only as a separate group on purpose. Set SubstituteApiVersionInUrl = true on AddApiExplorer.",
+      "match": [
+        "o.AssumeDefaultVersionWhenUnspecified = true; o.ApiVersionReader = new UrlSegmentApiVersionReader();",
+        "o.ApiVersionReader = new UrlSegmentApiVersionReader();\no.AssumeDefaultVersionWhenUnspecified = true;"
+      ],
+      "nomatch": [
+        "o.ApiVersionReader = new UrlSegmentApiVersionReader();",
+        "o.AssumeDefaultVersionWhenUnspecified = true; o.ApiVersionReader = new QueryStringApiVersionReader();"
+      ]
+    },
+    {
+      "id": "OAS-OPENAPI-MODELS-NS",
+      "kind": "regex",
+      "severity": "warning",
+      "files": ["**/*.cs"],
+      "pattern": "^\\s*using\\s+Microsoft\\.OpenApi\\.(Models|Any)\\s*;",
+      "message": "Microsoft.OpenApi.Models and Microsoft.OpenApi.Any are 1.x namespaces. .NET 10 and Swashbuckle 10 use Microsoft.OpenApi 2.x, where they do not exist (CS0234).",
+      "fix": "Use using Microsoft.OpenApi;, JsonSchemaType flags for null, and JsonNode values for examples.",
+      "match": [
+        "using Microsoft.OpenApi.Models;",
+        "using Microsoft.OpenApi.Any;"
+      ],
+      "nomatch": [
+        "using Microsoft.OpenApi;",
+        "using Microsoft.AspNetCore.OpenApi;"
+      ]
+    },
+    {
+      "id": "DET-API-09",
+      "kind": "detect",
+      "decision": "API-09",
+      "files": ["**/*.cs"],
+      "pattern": "\\bAddOpenApi\\s*\\(|\\bAddSwaggerGen\\s*\\(|\\bAddOpenApiDocument\\s*\\(",
+      "match": [
+        "builder.Services.AddOpenApi();",
+        "services.AddSwaggerGen(c => c.SwaggerDoc(\"v1\", info));"
+      ],
+      "nomatch": [
+        "app.MapGet(\"/orders\", ListAsync);",
+        "builder.Services.AddProblemDetails();"
+      ]
+    },
+    {
+      "id": "DET-API-10",
+      "kind": "detect",
+      "decision": "API-10",
+      "files": ["**/*.cs"],
+      "pattern": "\\bAddApiVersioning\\s*\\(|\\bNewVersionedApi\\s*\\(|\\[ApiVersion\\s*\\(",
+      "match": [
+        "builder.Services.AddApiVersioning(o => o.ReportApiVersions = true)",
+        "var orders = app.NewVersionedApi(\"Orders\");",
+        "[ApiVersion(2.0)]"
+      ],
+      "nomatch": [
+        "var group = app.MapGroup(\"/orders\");",
+        "builder.Services.AddOpenApi();"
+      ]
+    }
+  ]
+}

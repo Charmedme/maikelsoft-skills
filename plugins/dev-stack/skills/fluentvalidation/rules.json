@@ -1,0 +1,118 @@
+{
+  "skill": "fluentvalidation",
+  "rules": [
+    {
+      "id": "FV-PKG-ASPNETCORE",
+      "kind": "package",
+      "ecosystem": "nuget",
+      "package": "FluentValidation.AspNetCore",
+      "versions": "*",
+      "severity": "warning",
+      "message": "FluentValidation.AspNetCore is deprecated (NuGet reason: Legacy), works for MVC only, and runs async rules synchronously.",
+      "fix": "Reference FluentValidation and FluentValidation.DependencyInjectionExtensions 12.x, and call ValidateAsync in an endpoint filter or the action."
+    },
+    {
+      "id": "FV-AUTOVALIDATION",
+      "kind": "regex",
+      "severity": "warning",
+      "files": ["**/*.cs"],
+      "pattern": "\\.AddFluentValidation(AutoValidation|ClientsideAdapters)?\\s*\\(",
+      "message": "The FluentValidation.AspNetCore integration is deprecated, does nothing for minimal APIs, and runs async rules synchronously.",
+      "fix": "Register with AddValidatorsFromAssemblyContaining<T>() and call ValidateAsync in a generic endpoint filter (references/call-sites.md).",
+      "match": [
+        "builder.Services.AddFluentValidationAutoValidation();",
+        "services.AddMvc().AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<Startup>());"
+      ],
+      "nomatch": [
+        "builder.Services.AddValidatorsFromAssemblyContaining<CreateOrderValidator>();",
+        ".AddEndpointFilter<ValidationFilter<CreateOrder>>();"
+      ]
+    },
+    {
+      "id": "FV-SYNC-VALIDATE",
+      "kind": "regex",
+      "severity": "warning",
+      "files": ["**/*.cs"],
+      "exclude": ["tests/**", "test/**", "**/*Tests/**", "**/*Test/**"],
+      "pattern": "\\b_?\\w*[vV]alidator\\s*\\.\\s*Validate\\s*\\(",
+      "message": "A sync Validate call throws AsyncValidatorInvokedSynchronouslyException as soon as the validator has an async rule.",
+      "fix": "Use await validator.ValidateAsync(model, ct) with the cancellation token.",
+      "match": [
+        "var result = validator.Validate(request);",
+        "if (!_validator.Validate(command).IsValid)",
+        "var r = createOrderValidator.Validate(cmd);"
+      ],
+      "nomatch": [
+        "var result = await validator.ValidateAsync(request, ct);",
+        "var result = _validator.TestValidate(model);",
+        "Validator.TryValidateObject(model, context, results, true);"
+      ]
+    },
+    {
+      "id": "FV-SINGLETON",
+      "kind": "regex",
+      "severity": "warning",
+      "files": ["**/*.cs"],
+      "pattern": "\\bAddValidatorsFrom\\w+\\s*(<[^>\\n]+>)?\\s*\\([^;]*ServiceLifetime\\.Singleton",
+      "message": "Singleton validators keep each dependency for the life of the app. A scoped dependency (DbContext) becomes a captive dependency.",
+      "fix": "Keep the default (scoped) lifetime.",
+      "match": [
+        "services.AddValidatorsFromAssemblyContaining<CreateOrderValidator>(ServiceLifetime.Singleton);",
+        "services.AddValidatorsFromAssembly(typeof(Program).Assembly, ServiceLifetime.Singleton);"
+      ],
+      "nomatch": [
+        "services.AddValidatorsFromAssemblyContaining<CreateOrderValidator>();",
+        "services.AddValidatorsFromAssemblyContaining<CreateOrderValidator>(includeInternalTypes: true);"
+      ]
+    },
+    {
+      "id": "FV-MANUAL-DICTIONARY",
+      "kind": "regex",
+      "severity": "warning",
+      "files": ["**/*.cs"],
+      "pattern": "\\.Errors\\s*\\.\\s*GroupBy\\s*\\([^;]*PropertyName[^;]*\\)\\s*\\.\\s*ToDictionary\\s*\\([^;]*\\.ErrorMessage\\b",
+      "message": "This rebuilds ValidationResult.ToDictionary() by hand.",
+      "fix": "Use result.ToDictionary() for the messages, and add the error codes as an extension (decision API-20).",
+      "match": [
+        "result.Errors.GroupBy(e => e.PropertyName).ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray())",
+        "result.Errors\n    .GroupBy(e => e.PropertyName)\n    .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray())"
+      ],
+      "nomatch": [
+        "result.Errors.GroupBy(e => e.PropertyName).ToDictionary(g => g.Key, g => g.Select(e => e.ErrorCode).ToArray())",
+        "TypedResults.ValidationProblem(result.ToDictionary())"
+      ]
+    },
+    {
+      "id": "FV-MOCK-VALIDATOR",
+      "kind": "regex",
+      "severity": "warning",
+      "files": ["**/*.cs"],
+      "pattern": "(Mock|Substitute\\.For)\\s*<\\s*IValidator\\s*<",
+      "message": "A mocked validator hides a missing registration, a sync call, and the error shape.",
+      "fix": "Test the real validator with TestValidateAsync. Use InlineValidator<T> when a consumer test needs a failing validator.",
+      "match": [
+        "var validator = new Mock<IValidator<CreateOrder>>();",
+        "var validator = Substitute.For<IValidator<CreateOrder>>();"
+      ],
+      "nomatch": [
+        "var validator = new InlineValidator<CreateOrder>();",
+        "var validator = new CreateOrderValidator();"
+      ]
+    },
+    {
+      "id": "DET-API-08",
+      "kind": "detect",
+      "decision": "API-08",
+      "files": ["**/*.cs"],
+      "pattern": ":\\s*AbstractValidator\\s*<",
+      "match": [
+        "public sealed class CreateOrderValidator : AbstractValidator<CreateOrderRequest>",
+        "class V : AbstractValidator<A>"
+      ],
+      "nomatch": [
+        "public sealed record CreateOrderRequest(Guid CustomerId);",
+        "services.AddValidation();"
+      ]
+    }
+  ]
+}

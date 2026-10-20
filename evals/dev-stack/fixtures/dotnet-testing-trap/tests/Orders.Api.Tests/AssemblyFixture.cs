@@ -15,7 +15,7 @@ public static class AssemblyFixture
     [AssemblyInitialize]
     public static async Task InitializeAsync(TestContext context)
     {
-        s_postgres = new PostgreSqlBuilder().WithImage("postgres:17.6-alpine").Build();
+        s_postgres = new PostgreSqlBuilder().WithImage("postgres:18.6-alpine").Build();
         await s_postgres.StartAsync(context.CancellationToken);
     }
 

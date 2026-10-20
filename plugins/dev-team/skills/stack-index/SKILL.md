@@ -14,13 +14,24 @@ Find the stack skill for each technology that the work touches. Load it with the
 3. Always load `dev-stack:secure-coding` for code that takes input, handles a secret, or adds a package.
 4. A skill that is not installed: write one line in your report, for example "No stack skill for X. I used the official docs of version Y." Check the current facts with a look-up. Do not stop the run for it.
 
-## Available skills (dev-stack 1.0.0)
+## Available skills (dev-stack 1.1.0)
 
 | Signal | Skill |
 |--------|-------|
 | `*.cs`, `*.csproj`, `Directory.Build.props`, `.editorconfig`, configuration binding | `dev-stack:csharp` |
 | `Program.cs`, endpoints, controllers, middleware, DI, options, `HttpClient`, health checks, `BackgroundService` | `dev-stack:aspnetcore` |
+| `Microsoft.AspNetCore.OpenApi`, `Swashbuckle*`, `Scalar*`, `Asp.Versioning*`, an OpenAPI document | `dev-stack:aspnetcore-openapi` |
+| `FluentValidation*`, `AbstractValidator`, `RuleFor` | `dev-stack:fluentvalidation` |
 | `Microsoft.EntityFrameworkCore*`, `DbContext`, `Migrations/`, `Npgsql.EntityFrameworkCore.PostgreSQL` | `dev-stack:efcore` |
+| `*.sql` for SQL Server, `Microsoft.Data.SqlClient`, Dapper on SQL Server, raw SQL in EF Core on SQL Server | `dev-stack:sqlserver` |
+| `*.sql` for PostgreSQL, `Npgsql`, Dapper on PostgreSQL, raw SQL in EF Core on PostgreSQL | `dev-stack:postgresql` |
+| `ILogger`, `LoggerMessage`, `Serilog*`, `OpenTelemetry*`, `Azure.Monitor.OpenTelemetry*`, `ApplicationInsights*`, `Meter`, `ActivitySource` | `dev-stack:dotnet-observability` |
+| `HybridCache`, `IDistributedCache`, `StackExchange.Redis`, Valkey | `dev-stack:redis` |
+| `Elastic.Clients.Elasticsearch`, `NEST` | `dev-stack:elasticsearch` |
+| `RabbitMQ.Client`, `EasyNetQ`, an outbox table with a broker | `dev-stack:rabbitmq` |
+| `WolverineFx*` | `dev-stack:wolverine` |
+| `MailKit`, `MimeKit`, SMTP | `dev-stack:mailkit` |
+| `PuppeteerSharp`, HTML to PDF, headless Chrome | `dev-stack:puppeteersharp` |
 | Test projects, `MSTest*`, `AwesomeAssertions`, `Testcontainers*`, `WebApplicationFactory` | `dev-stack:dotnet-testing` |
 | `FluentAssertions` in a test project | `dev-stack:migrate-fluentassertions` |
 | Analyzer settings, `.globalconfig`, `Roslynator*`, `Meziantou.Analyzer`, `BannedSymbols.txt`, build warnings | `dev-stack:dotnet-analyzers` |
@@ -30,17 +41,6 @@ Find the stack skill for each technology that the work touches. Load it with the
 
 | Signal | Skill |
 |--------|-------|
-| `Microsoft.AspNetCore.OpenApi`, `Swashbuckle*`, `Scalar*`, `Asp.Versioning*` | `aspnetcore-openapi` |
-| `FluentValidation*` | `fluentvalidation` |
-| `ILogger`, `Serilog*`, `OpenTelemetry*`, `ApplicationInsights*` | `dotnet-observability` |
-| `*.sql` for SQL Server, `Microsoft.Data.SqlClient` | `sqlserver` |
-| `*.sql` for PostgreSQL, `Npgsql` | `postgresql` |
-| `HybridCache`, `StackExchange.Redis` | `redis` |
-| `Elastic.Clients.Elasticsearch` | `elasticsearch` |
-| `RabbitMQ.Client`, `EasyNetQ` | `rabbitmq` |
-| `WolverineFx*` | `wolverine` |
-| `MailKit`, `MimeKit` | `mailkit` |
-| `PuppeteerSharp` | `puppeteersharp` |
 | `@angular/*`, `*.component.ts` | `angular` |
 | `angular` 1.x, `*.module.js` of AngularJS | `angularjs` |
 | `*.ts`, `*.js`, `tsconfig*.json`, `eslint.config.*` | `typescript` |

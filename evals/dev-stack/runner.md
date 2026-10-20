@@ -13,7 +13,7 @@ Do not give the agent `evals.json`, `planted/`, `probes/`, `selftest/`, `grader.
 
 ## Common part
 
-You work in the git repository `<repo>`. It is a .NET 10 solution. The .NET SDK is in `/root/.dotnet`. Run `export PATH=/root/.dotnet:$PATH` before you use `dotnet`. Docker runs on this machine, and the image `postgres:17.6-alpine` is in the local cache.
+You work in the git repository `<repo>`. It is a .NET 10 solution. The .NET SDK is in `/root/.dotnet`. Run `export PATH=/root/.dotnet:$PATH` before you use `dotnet`. Docker runs on this machine, and the container images of the case are in the local cache.
 
 The human wants this:
 
@@ -49,6 +49,8 @@ The cases that end in `-trap` test facts that a model trained before mid-2026 of
 
 - A write case starts from the folder in its `fixture` field. `prepare.py` copies that folder to `main`.
 - Some checks add probe files from `probes/<name>/` to a copy of the run and run them. The run folder does not change.
+- Some cases need more than PostgreSQL. Pull these images before the runs: `postgres:18.6-alpine`, `mcr.microsoft.com/mssql/server:2025-CU9-ubuntu-24.04` (sqlserver), `valkey/valkey:9.1` (redis), `elasticsearch:9.5.5` (elasticsearch), `rabbitmq:4.3-management-alpine` (rabbitmq, wolverine), and `axllent/mailpit:v1.31.6` (mailkit).
+- A case with an `environment` field needs that setup for the run agent and for the scorer. Today only `puppeteersharp-trap` has one: set `EVAL_CHROME` to chrome-headless-shell 155.0.8059.79 and `PUPPETEER_EXECUTABLE_PATH` to `evals/dev-stack/probes/puppeteersharp-invoice/chrome-wrapper.sh`.
 - Run `python3 evals/dev-stack/selftest.py` after you change a check or a fixture. It applies a wrong (`naive`) and a correct (`good`) solution to the fixture and compares each check result with `selftest/expected.json`. It needs Docker.
 
 ## After the runs

@@ -137,14 +137,14 @@
       ],
       "pattern": "new\\s+(PostgreSql|MsSql|MySql|MariaDb|Redis|RabbitMq|MongoDb|Elasticsearch|OpenSearch|Kafka|Azurite|LocalStack|Keycloak|Mailpit|Nats|Oracle|CosmosDb|ServiceBus|EventHubs|Pulsar|Redpanda|ClickHouse|CockroachDb|Neo4j|Seq)Builder\\(\\s*\\)|new\\s+ContainerBuilder\\(\\s*\\)(?=\\s*\\.WithImage\\()",
       "message": "Testcontainers 4.10 and later need the image in the builder constructor. The parameterless constructor is obsolete.",
-      "fix": "Pass a pinned image: new PostgreSqlBuilder(\"postgres:17.6-alpine\").",
+      "fix": "Pass a pinned image: new PostgreSqlBuilder(\"postgres:18.6-alpine\").",
       "match": [
         "var db = new PostgreSqlBuilder().Build();",
         "var sql = new MsSqlBuilder().WithPassword(\"x\").Build();",
         "var web = new ContainerBuilder().WithImage(\"nginx:1.29\").Build();"
       ],
       "nomatch": [
-        "var db = new PostgreSqlBuilder(\"postgres:17.6-alpine\").Build();",
+        "var db = new PostgreSqlBuilder(\"postgres:18.6-alpine\").Build();",
         "var builder = new ContainerBuilder();",
         "var text = new StringBuilder();"
       ]
@@ -164,13 +164,13 @@
       ],
       "pattern": "\"[\\w./-]+:latest\"",
       "message": "The latest tag changes without notice, so a test run is not reproducible.",
-      "fix": "Pin the tag that production uses, for example \"postgres:17.6-alpine\".",
+      "fix": "Pin the tag that production uses, for example \"postgres:18.6-alpine\".",
       "match": [
         "new PostgreSqlBuilder(\"postgres:latest\")",
         "new MsSqlBuilder(\"mcr.microsoft.com/mssql/server:latest\")"
       ],
       "nomatch": [
-        "new PostgreSqlBuilder(\"postgres:17.6-alpine\")",
+        "new PostgreSqlBuilder(\"postgres:18.6-alpine\")",
         "var latest = orders.Last();"
       ]
     },
@@ -185,10 +185,10 @@
       "message": "Container reuse is experimental and turns off the Resource Reaper, so containers stay after the run.",
       "fix": "Remove WithReuse(true). Start one container per test assembly in [AssemblyInitialize].",
       "match": [
-        "new PostgreSqlBuilder(\"postgres:17.6-alpine\").WithReuse(true).Build();"
+        "new PostgreSqlBuilder(\"postgres:18.6-alpine\").WithReuse(true).Build();"
       ],
       "nomatch": [
-        "new PostgreSqlBuilder(\"postgres:17.6-alpine\").Build();"
+        "new PostgreSqlBuilder(\"postgres:18.6-alpine\").Build();"
       ]
     },
     {

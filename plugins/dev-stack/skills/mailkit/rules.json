@@ -1,0 +1,113 @@
+{
+  "skill": "mailkit",
+  "rules": [
+    {"id": "MAIL-TLS-DOWNGRADE", "kind": "regex", "severity": "error",
+     "files": ["**/*.cs", "**/appsettings*.json"],
+     "exclude": ["**/rules.json"],
+     "pattern": "\\bSecureSocketOptions\\.(Auto|StartTlsWhenAvailable)\\b|\"(Security|SecureSocketOptions|SslMode)\"\\s*:\\s*\"(Auto|StartTlsWhenAvailable)\"",
+     "message": "Auto and StartTlsWhenAvailable continue in plain text when the relay does not offer STARTTLS. The password and the mail then travel unencrypted (decision MAIL-01).",
+     "fix": "Use SecureSocketOptions.StartTls on port 587 or SslOnConnect on port 465. Use None only for a local test relay.",
+     "match": [
+       "await client.ConnectAsync(host, 587, SecureSocketOptions.Auto, ct);",
+       "public SecureSocketOptions Security { get; set; } = SecureSocketOptions.StartTlsWhenAvailable;",
+       "    \"Security\": \"Auto\","
+     ],
+     "nomatch": [
+       "await client.ConnectAsync(host, 587, SecureSocketOptions.StartTls, ct);",
+       "    \"Security\": \"StartTls\",",
+       "await client.ConnectAsync(host, 465, SecureSocketOptions.SslOnConnect, ct);"
+     ]},
+    {"id": "MAIL-CERT-BYPASS", "kind": "regex", "severity": "error",
+     "files": ["**/*.cs"],
+     "pattern": "\\bServerCertificateValidationCallback\\s*=\\s*(\\([^)]*\\)|\\w+)\\s*=>\\s*true\\b|\\bServerCertificateValidationCallback\\s*=\\s*delegate\\b[^;]*\\breturn\\s+true\\b",
+     "message": "An accept-all certificate callback turns off the server check. Any machine on the path can read the password and the mail.",
+     "fix": "Remove the callback. Keep the default check and install ca-certificates in the image. A Mailpit TLS test may trust only the Mailpit test certificate, in test code.",
+     "match": [
+       "client.ServerCertificateValidationCallback = (s, c, h, e) => true;",
+       "client.ServerCertificateValidationCallback = (sender, certificate, chain, errors) => true;",
+       "client.ServerCertificateValidationCallback = delegate { return true; };"
+     ],
+     "nomatch": [
+       "client.ServerCertificateValidationCallback = (s, c, h, e) => e == SslPolicyErrors.None || IsMailpitTestCertificate(c);",
+       "client.CheckCertificateRevocation = true;"
+     ]},
+    {"id": "MAIL-SYSTEM-NET-MAIL", "kind": "regex", "severity": "error",
+     "files": ["**/*.cs"],
+     "pattern": "^\\s*using\\s+System\\.Net\\.Mail\\s*;|\\bSystem\\.Net\\.Mail\\.SmtpClient\\b",
+     "message": "Microsoft does not recommend System.Net.Mail.SmtpClient for new code (DE0005). It has no modern authentication and weak TLS control.",
+     "fix": "Use MailKit.Net.Smtp.SmtpClient with an explicit SecureSocketOptions value. Existing code keeps System.Net.Mail until a task changes the sender: suppress with a reason.",
+     "match": [
+       "using System.Net.Mail;",
+       "var client = new System.Net.Mail.SmtpClient(host) { EnableSsl = true };"
+     ],
+     "nomatch": [
+       "using MailKit.Net.Smtp;",
+       "using MimeKit;"
+     ]},
+    {"id": "MAIL-SHARED-CLIENT", "kind": "regex", "severity": "warning",
+     "files": ["**/*.cs"],
+     "pattern": "\\bAdd(Singleton|Scoped|Transient)\\s*<\\s*(MailKit\\.Net\\.Smtp\\.)?I?SmtpClient\\s*[,>]",
+     "message": "The MailKit SmtpClient is not thread-safe and holds one connection. A client in DI is shared between requests or kept connected for too long.",
+     "fix": "Create one SmtpClient for each batch inside the sender: connect, authenticate, send, DisconnectAsync(true, ct), dispose. Register the sender, not the client.",
+     "match": [
+       "builder.Services.AddSingleton<SmtpClient>();",
+       "services.AddScoped<ISmtpClient, SmtpClient>();",
+       "services.AddTransient<MailKit.Net.Smtp.SmtpClient>();"
+     ],
+     "nomatch": [
+       "builder.Services.AddSingleton<IEmailSender, MailKitEmailSender>();",
+       "using var client = new SmtpClient();",
+       "builder.Services.AddScoped<SmtpClientFactory>();"
+     ]},
+    {"id": "MAIL-MAILHOG", "kind": "regex", "severity": "warning",
+     "files": ["**/*.cs", "**/*.yml", "**/*.yaml"],
+     "pattern": "\\bmailhog/mailhog\\b|\\bMailHog\\b",
+     "message": "MailHog is not maintained.",
+     "fix": "Use Mailpit: image axllent/mailpit with a pinned tag, or Testcontainers.Mailpit (decision MAIL-04).",
+     "match": [
+       "    image: mailhog/mailhog:latest",
+       "var container = new ContainerBuilder(\"mailhog/mailhog:v1.0.1\").Build();",
+       "// MailHog captures the mails"
+     ],
+     "nomatch": [
+       "    image: axllent/mailpit:v1.31.6",
+       "new MailpitBuilder(\"axllent/mailpit:v1.31.6\").Build()"
+     ]},
+    {"id": "MAIL-PKG-MIMEKIT-CVE", "kind": "regex", "severity": "error",
+     "files": ["**/*.csproj", "**/*.props", "**/*.targets"],
+     "pattern": "Include=\"M(ail|ime)Kit\"[^>]*\\bVersion=\"\\[?\\s*([0-3]\\.|4\\.([0-9]|1[0-4])\\.|4\\.15\\.0\\b)",
+     "message": "MailKit and MimeKit below 4.15.1 allow SMTP command injection through CR LF in a quoted local part (CVE-2026-30227, GHSA-g7hc-96xr-gvvx).",
+     "fix": "Use MailKit and MimeKit 4.15.1 or later, and pin System.Security.Cryptography.Pkcs 10.0.13 or later with transitive pinning.",
+     "match": [
+       "    <PackageVersion Include=\"MailKit\" Version=\"4.15.0\" />",
+       "    <PackageReference Include=\"MimeKit\" Version=\"4.8.0\" />",
+       "    <PackageVersion Include=\"MailKit\" Version=\"3.6.0\" />"
+     ],
+     "nomatch": [
+       "    <PackageVersion Include=\"MailKit\" Version=\"4.18.1\" />",
+       "    <PackageVersion Include=\"MimeKit\" Version=\"4.15.1\" />",
+       "    <PackageReference Include=\"MailKit\" />"
+     ]},
+
+    {"id": "DET-MAIL-01", "kind": "detect", "decision": "MAIL-01", "files": ["**/*.cs", "**/appsettings*.json"],
+     "pattern": "\\bSecureSocketOptions\\.\\w+|\"(Security|SecureSocketOptions)\"\\s*:\\s*\"\\w+\"",
+     "match": ["await client.ConnectAsync(host, 587, SecureSocketOptions.StartTls, ct);", "    \"Security\": \"SslOnConnect\","],
+     "nomatch": ["await client.ConnectAsync(host, port, options.Security, ct);"]},
+    {"id": "DET-MAIL-02", "kind": "detect", "decision": "MAIL-02", "files": ["**/*.cs"],
+     "pattern": "\\b(Mail|Email)Outbox\\w*|\\bOutbox(Mail|Email)\\w*|\\bclass\\s+\\w*(Mail|Email)\\w*\\s*(\\([^)]*\\))?\\s*:\\s*BackgroundService\\b",
+     "match": ["public DbSet<OutboxMail> OutboxMails => Set<OutboxMail>();", "public sealed class MailOutboxWorker : BackgroundService", "public sealed class EmailDispatcher(IServiceScopeFactory scopes) : BackgroundService"],
+     "nomatch": ["public sealed class OrderExpiryWorker : BackgroundService", "await mailer.SendAsync(message, ct);"]},
+    {"id": "DET-MAIL-03", "kind": "detect", "decision": "MAIL-03", "files": ["**/*.cs", "**/*.csproj", "**/*.props"],
+     "pattern": "\\bHtmlRenderer\\b|^\\s*using\\s+(Scriban|Fluid|RazorLight|Razor\\.Templating\\.Core)\\b|Include=\"(Scriban|Fluid\\.Core|RazorLight|Razor\\.Templating\\.Core)\"",
+     "match": ["await using var renderer = new HtmlRenderer(services, loggerFactory);", "using Scriban;", "<PackageReference Include=\"Fluid.Core\" />"],
+     "nomatch": ["var html = HtmlEncoder.Default.Encode(name);"]},
+    {"id": "DET-MAIL-04", "kind": "detect", "decision": "MAIL-04", "files": ["**/*.cs", "**/*.yml", "**/*.yaml"],
+     "pattern": "\\bMailpitBuilder\\b|axllent/mailpit|\\bmailhog/mailhog\\b|\\bsmtp4dev\\b|\\bnetDumbster\\b",
+     "match": ["new MailpitBuilder(\"axllent/mailpit:v1.31.6\").Build()", "    image: axllent/mailpit:v1.31.6", "    image: rnwood/smtp4dev:v3"],
+     "nomatch": ["new PostgreSqlBuilder(\"postgres:18.6-alpine\").Build()"]},
+    {"id": "DET-MAIL-05", "kind": "detect", "decision": "MAIL-05", "files": ["**/*.cs"],
+     "pattern": "\\bSaslMechanismOAuth2\\b|\\bsmtp\\.office365\\.com\\b|outlook\\.office365\\.com/\\.default|\\.SendMail\\.PostAsync\\s*\\(|^\\s*using\\s+Azure\\.Communication\\.Email\\s*;",
+     "match": ["await client.AuthenticateAsync(new SaslMechanismOAuth2(mailbox, token.AccessToken), ct);", "await graph.Users[sender].SendMail.PostAsync(body, cancellationToken: ct);", "using Azure.Communication.Email;"],
+     "nomatch": ["await client.AuthenticateAsync(options.UserName, options.Password, ct);"]}
+  ]
+}

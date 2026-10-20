@@ -28,7 +28,7 @@ A container start costs seconds (the sample run: 8 s, mostly the start). Start i
 public static class TestHost
 {
     // Pin the tag that production uses.
-    private const string PostgresImage = "postgres:17.6-alpine";
+    private const string PostgresImage = "postgres:18.6-alpine";
     private static PostgreSqlContainer? s_database;
     private static Respawner? s_respawner;
 
@@ -138,7 +138,7 @@ public static class Images
     // One place for the pinned tags. Use the tags that production uses.
     public const string SqlServer = "mcr.microsoft.com/mssql/server:2025-CU9-ubuntu-24.04";
     public const string Redis = "redis:8.2";
-    public const string RabbitMq = "rabbitmq:4.2-management-alpine";
+    public const string RabbitMq = "rabbitmq:4.3-management-alpine";
 }
 
 public static class ModuleBuilders
@@ -180,7 +180,7 @@ Read the address with `Hostname` and `GetMappedPublicPort(port)`. Do not use `lo
 ## Traps
 
 - `WithReuse(true)` is experimental. It turns off the Resource Reaper, and a stopped reused container gets a new random port.
-- `new PostgreSqlBuilder().WithImage("postgres:15")` uses the obsolete constructor. Use `new PostgreSqlBuilder("postgres:17.6-alpine")`.
+- `new PostgreSqlBuilder().WithImage("postgres:15")` uses the obsolete constructor. Use `new PostgreSqlBuilder("postgres:18.6-alpine")`.
 - `WithPortBinding(5432, 5432)` collides when two runs share a machine.
 - `UseInMemoryDatabase` in the factory hides SQL, transaction, and constraint bugs.
 - A second `[AssemblyInitialize]` fails discovery (UTA013). Put all assembly setup in one method.

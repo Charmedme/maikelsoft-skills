@@ -6,6 +6,12 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-20
+
+### Changed
+
+- `stack-index` routes to the 11 new skills of dev-stack 1.1.0: `aspnetcore-openapi`, `fluentvalidation`, `sqlserver`, `postgresql`, `dotnet-observability`, `redis`, `elasticsearch`, `rabbitmq`, `wolverine`, `mailkit`, and `puppeteersharp`. The planned list keeps only the front-end and container skills.
+
 ## [0.2.0] - 2026-10-18
 
 ### Added
