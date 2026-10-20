@@ -112,7 +112,32 @@ public sealed class ObservabilityProbe
             Environment.SetEnvironmentVariable("APPLICATIONINSIGHTS_CONNECTION_STRING", DummyConnectionString);
             builder.UseSetting("ConnectionStrings:Orders", AssemblyFixture.ConnectionString);
             builder.ConfigureLogging(logging => logging.AddProvider(logs));
+            builder.ConfigureServices(GiveHmacRedactorATestKey);
         }
+
+        // A solution may use the HMAC redactor with its key from configuration (the safe choice). The
+        // probe host does not read the test settings of the solution, so it gives the redactor a test
+        // key when the package is present. Reflection keeps the probe compiling without the package.
+        private static void GiveHmacRedactorATestKey(IServiceCollection services)
+        {
+            var type = Type.GetType("Microsoft.Extensions.Compliance.Redaction.HmacRedactorOptions, Microsoft.Extensions.Compliance.Redaction");
+            if (type is null)
+            {
+                return;
+            }
+
+            typeof(ProbeFactory).GetMethod(nameof(PostConfigure), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
+                .MakeGenericMethod(type)
+                .Invoke(null, [services]);
+        }
+
+        private static void PostConfigure<T>(IServiceCollection services)
+            where T : class =>
+            services.PostConfigureAll<T>(options =>
+            {
+                typeof(T).GetProperty("Key")?.SetValue(options, Convert.ToBase64String(new byte[32]));
+                typeof(T).GetProperty("KeyId")?.SetValue(options, 1);
+            });
     }
 
     private sealed class RecordingLoggerProvider : ILoggerProvider
