@@ -20,6 +20,8 @@ import argparse
 import json
 import pathlib
 import sys
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import cases
 
 HERE = pathlib.Path(__file__).resolve().parent
 GENERIC = {"build_warnaserror", "build", "tests_pass", "format", "files_unchanged", "package_policy"}
@@ -45,6 +47,8 @@ def describe(ev):
         planted = load(HERE / ev["planted"]) or {}
         for p in planted.get("planted", planted if isinstance(planted, list) else []):
             items[p["id"]] = (p.get("title") or p.get("summary") or p.get("description", ""), False)
+        for d in planted.get("decoys", []) if isinstance(planted, dict) else []:
+            items[d["id"]] = ("Decoy, must not be flagged: " + d.get("description", ""), False)
     return items
 
 
@@ -59,6 +63,8 @@ def run_items(run):
         out[c["id"]] = bool(c["ok"])
     for j in (grade or {}).get("results", []):
         out[j["id"]] = bool(j.get("pass"))
+    for d in (grade or {}).get("decoys_flagged", []) if grade else []:
+        out[d] = False
     return out, set((grade or {}).get("found", []))
 
 
@@ -81,7 +87,7 @@ def main():
     ap.add_argument("--case", nargs="*")
     args = ap.parse_args()
 
-    evals = {e["name"]: e for e in json.loads((HERE / "evals.json").read_text(encoding="utf-8"))["evals"]}
+    evals = cases.load()
     rows = []
     for case_dir in sorted(p for p in args.runs.iterdir() if p.is_dir()):
         name = case_dir.name
@@ -95,7 +101,12 @@ def main():
             counts[variant] = {"n": len(scored), "pass": {}}
             for result, found in scored:
                 for item in items:
-                    ok = found.__contains__(item) if item.startswith("P") else result.get(item)
+                    if item.startswith("P"):
+                        ok = item in found
+                    elif item.startswith("D"):
+                        ok = result.get(item, True)
+                    else:
+                        ok = result.get(item)
                     if ok is None:
                         continue
                     counts[variant]["pass"][item] = counts[variant]["pass"].get(item, 0) + int(ok)

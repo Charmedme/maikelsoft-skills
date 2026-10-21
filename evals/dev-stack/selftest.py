@@ -21,6 +21,7 @@ import tempfile
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import score  # noqa: E402
+import cases  # noqa: E402
 
 
 def build(ev, variant, dest):
@@ -44,7 +45,7 @@ def main():
     parser.add_argument("--keep", type=pathlib.Path, help="keep the built folders here")
     args = parser.parse_args()
     evals = score.load_evals()
-    expected = json.loads((HERE / "selftest" / "expected.json").read_text(encoding="utf-8"))
+    expected = cases.load_expected()
     rows, bad = [], 0
     for case, variants in expected.items():
         if args.case and case not in args.case:

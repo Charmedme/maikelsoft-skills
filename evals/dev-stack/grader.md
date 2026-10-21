@@ -24,6 +24,7 @@ Rules for a review case:
 - The review finds a planted mistake when it names the same problem at the same place. The words can differ. A finding at the correct line with the wrong reason does not count.
 - Count the found mistakes and list their ids.
 - A false positive is a finding that is wrong. A fix that breaks the code is also a false positive. So is a fix with an API that does not exist or that is old. A real problem that is not on the answer sheet is not a false positive. List each false positive with one line of reason.
+- The answer sheet can list decoys: code that looks wrong but is correct. A finding that calls a decoy a problem, or that asks to change it, is a false positive. List the ids of these decoys in `decoys_flagged`, and also list each one in `false_positives`.
 
 Rules for a write case:
 
@@ -37,7 +38,7 @@ Assertions:
 Reply with JSON only, in this form:
 
 ```json
-{"run": "<run>", "found": ["P1", "P3"], "false_positives": ["..."], "results": [{"id": "J1", "pass": true, "evidence": "..."}]}
+{"run": "<run>", "found": ["P1", "P3"], "false_positives": ["..."], "decoys_flagged": ["D2"], "results": [{"id": "J1", "pass": true, "evidence": "..."}]}
 ```
 
-For a write case, leave `found` and `false_positives` empty.
+For a write case, leave `found`, `false_positives`, and `decoys_flagged` empty.

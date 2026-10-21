@@ -24,6 +24,7 @@ import sys
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 from run import PARENT_VARS  # noqa: E402
+import cases
 
 IGNORE = shutil.ignore_patterns("bin", "obj", "TestResults", "node_modules")
 
@@ -71,7 +72,7 @@ def main(argv=None):
     parser.add_argument("--model", default="sonnet")
     parser.add_argument("--timeout", type=int, default=1800)
     args = parser.parse_args(argv)
-    evals = {e["name"]: e for e in json.loads((HERE / "evals.json").read_text(encoding="utf-8"))["evals"]}
+    evals = cases.load()
     args.graded.mkdir(parents=True, exist_ok=True)
     map_file = args.graded / "map.json"
     mapping = json.loads(map_file.read_text()) if map_file.exists() else {}
