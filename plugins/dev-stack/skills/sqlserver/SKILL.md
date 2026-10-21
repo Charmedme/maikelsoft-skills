@@ -214,6 +214,8 @@ The full list is in `references/review-checklist.md`.
 
 End with the report of stack rule 8 (`references/stack-rules.md`): the same headings in the same order on each run.
 
+The change can need a database setting: RCSI, optimized locking, or a compatibility level. For each one, state how it is deployed (a migration with `suppressTransaction: true`, or a DBA step) and when it can run.
+
 ## References
 
 - `references/decisions.md`: read before new code needs DATA-26, DATA-27, DATA-28, DATA-29, or the SQL Server part of DATA-07, DATA-10, DATA-11, DATA-15, or DATA-22.

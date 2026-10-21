@@ -175,6 +175,8 @@ The full list is in `references/review-checklist.md`.
 
 End with the report of stack rule 8 (`references/stack-rules.md`): the same headings in the same order on each run.
 
+In the open points, name the owner of each dead-letter queue (this service, or a named team) and the replay step.
+
 ## References
 
 - `references/messaging-principles.md`: read first. The principles that each message flow follows.

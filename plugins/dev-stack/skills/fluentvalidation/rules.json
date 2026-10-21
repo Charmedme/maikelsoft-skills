@@ -15,7 +15,9 @@
       "id": "FV-AUTOVALIDATION",
       "kind": "regex",
       "severity": "warning",
-      "files": ["**/*.cs"],
+      "files": [
+        "**/*.cs"
+      ],
       "pattern": "\\.AddFluentValidation(AutoValidation|ClientsideAdapters)?\\s*\\(",
       "message": "The FluentValidation.AspNetCore integration is deprecated, does nothing for minimal APIs, and runs async rules synchronously.",
       "fix": "Register with AddValidatorsFromAssemblyContaining<T>() and call ValidateAsync in a generic endpoint filter (references/call-sites.md).",
@@ -32,8 +34,15 @@
       "id": "FV-SYNC-VALIDATE",
       "kind": "regex",
       "severity": "warning",
-      "files": ["**/*.cs"],
-      "exclude": ["tests/**", "test/**", "**/*Tests/**", "**/*Test/**"],
+      "files": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**"
+      ],
       "pattern": "\\b_?\\w*[vV]alidator\\s*\\.\\s*Validate\\s*\\(",
       "message": "A sync Validate call throws AsyncValidatorInvokedSynchronouslyException as soon as the validator has an async rule.",
       "fix": "Use await validator.ValidateAsync(model, ct) with the cancellation token.",
@@ -52,7 +61,9 @@
       "id": "FV-SINGLETON",
       "kind": "regex",
       "severity": "warning",
-      "files": ["**/*.cs"],
+      "files": [
+        "**/*.cs"
+      ],
       "pattern": "\\bAddValidatorsFrom\\w+\\s*(<[^>\\n]+>)?\\s*\\([^;]*ServiceLifetime\\.Singleton",
       "message": "Singleton validators keep each dependency for the life of the app. A scoped dependency (DbContext) becomes a captive dependency.",
       "fix": "Keep the default (scoped) lifetime.",
@@ -69,7 +80,9 @@
       "id": "FV-MANUAL-DICTIONARY",
       "kind": "regex",
       "severity": "warning",
-      "files": ["**/*.cs"],
+      "files": [
+        "**/*.cs"
+      ],
       "pattern": "\\.Errors\\s*\\.\\s*GroupBy\\s*\\([^;]*PropertyName[^;]*\\)\\s*\\.\\s*ToDictionary\\s*\\([^;]*\\.ErrorMessage\\b",
       "message": "This rebuilds ValidationResult.ToDictionary() by hand.",
       "fix": "Use result.ToDictionary() for the messages, and add the error codes as an extension (decision API-20).",
@@ -83,10 +96,41 @@
       ]
     },
     {
+      "id": "FV-CASCADE-DEPENDENT",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**"
+      ],
+      "pattern": "RuleFor\\s*\\((?:(?!Cascade\\s*\\()[^;])*?\\.NotEmpty\\s*\\(\\s*\\)(?:(?!Cascade\\s*\\()[^;])*?\\.(?:Matches|Must|MustAsync|EmailAddress|Length|MaximumLength|MinimumLength)\\s*\\(",
+      "unless": "RuleLevelCascadeMode\\s*=\\s*CascadeMode\\.Stop",
+      "message": "NotEmpty followed by a check that needs a value runs both checks on an empty value: the client gets two messages, and a Must can read null.",
+      "fix": "Set RuleLevelCascadeMode = CascadeMode.Stop in the constructor, or add .Cascade(CascadeMode.Stop) to the rule.",
+      "match": [
+        "RuleFor(x => x.PostalCode).NotEmpty().Matches(\"^[0-9]{4}[A-Z]{2}$\");",
+        "RuleFor(x => x.Email)\n    .NotEmpty()\n    .EmailAddress();",
+        "RuleFor(x => x.Sku).NotEmpty().MustAsync(ExistsAsync).WithErrorCode(\"ORD-SKU\");"
+      ],
+      "nomatch": [
+        "RuleFor(x => x.PostalCode).Cascade(CascadeMode.Stop).NotEmpty().Matches(\"^[0-9]{4}[A-Z]{2}$\");",
+        "RuleFor(x => x.Name).NotEmpty();",
+        "RuleFor(x => x.Quantity).GreaterThan(0).LessThanOrEqualTo(50);",
+        "RuleLevelCascadeMode = CascadeMode.Stop;\nRuleFor(x => x.PostalCode).NotEmpty().Matches(\"^[0-9]{4}[A-Z]{2}$\");"
+      ]
+    },
+    {
       "id": "FV-MOCK-VALIDATOR",
       "kind": "regex",
       "severity": "warning",
-      "files": ["**/*.cs"],
+      "files": [
+        "**/*.cs"
+      ],
       "pattern": "(Mock|Substitute\\.For)\\s*<\\s*IValidator\\s*<",
       "message": "A mocked validator hides a missing registration, a sync call, and the error shape.",
       "fix": "Test the real validator with TestValidateAsync. Use InlineValidator<T> when a consumer test needs a failing validator.",
@@ -103,7 +147,9 @@
       "id": "DET-API-08",
       "kind": "detect",
       "decision": "API-08",
-      "files": ["**/*.cs"],
+      "files": [
+        "**/*.cs"
+      ],
       "pattern": ":\\s*AbstractValidator\\s*<",
       "match": [
         "public sealed class CreateOrderValidator : AbstractValidator<CreateOrderRequest>",

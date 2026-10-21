@@ -129,7 +129,7 @@ The full list is in `references/review-checklist.md`.
 5. The lifetime is the default, or no validator takes a scoped service. tool (FV-SINGLETON) and judge
 6. One library per request type: no DataAnnotations and no `AddValidation` filter next to a validator. judge
 7. Each rule that a client acts on has its own `WithErrorCode`. The codes reach the response (API-20). tool (FV-MANUAL-DICTIONARY) and judge
-8. `RuleLevelCascadeMode = CascadeMode.Stop` where a check needs an earlier one. judge
+8. `RuleLevelCascadeMode = CascadeMode.Stop` where a check needs an earlier one. tool (FV-CASCADE-DEPENDENT)
 9. Child validators come in through the constructor and `SetValidator`. tool (CS1061 for `InjectValidator`)
 10. No state rule or uniqueness check as the only guard in a validator. judge
 11. Limits come from the options class, not from a second literal. judge

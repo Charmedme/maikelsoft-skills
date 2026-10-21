@@ -216,7 +216,7 @@ The full test and a fake relay for the TLS test are in `references/testing.md`.
    Pass: 0 errors. For each warning, fix it or add `// stackcheck: ignore <RULE-ID> <reason>`.
 
 4. With `Microsoft.CodeAnalysis.BannedApiAnalyzers` (`dev-stack:dotnet-analyzers`): `T:System.Net.Mail.SmtpClient` in `BannedSymbols.txt` gives RS0030.
-5. Run the tests. The sender test runs against Mailpit. Pass: all tests green.
+5. Run the tests. Pass: all tests green. Also, one test or more sends a mail through Mailpit (`Testcontainers.Mailpit`, pinned tag) and checks the captured mail. When no such test exists, write it before the report.
 
 ## Review checklist
 
