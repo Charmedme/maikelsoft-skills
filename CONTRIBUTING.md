@@ -27,6 +27,8 @@ Each new skill follows these four steps:
    - 3 runs for each variant, because small changes in a prompt can change the result.
    - Binary assertions. A script scores the `check` assertions (`evals/<plugin>/score.py`).
    - One grader agent for each run scores the `judge` assertions. Never put two outputs in one judgment.
+   - Find where the runs disagree (`evals/<plugin>/divergence.py`). An item that fails in every run is a gap. An item that fails in some runs is left to chance. Move its rule to a form the model cannot skip, for example a tool rule.
+   - Record each change in `docs/work/<plugin>/edit-log.md` with its test and a verdict. Test one change at a time. When one test covers more than one change, the verdict is `confounded`.
 4. **Build.** After the human approves, add the skill to a plugin and update the files in "Release a change".
 
 ## Add a skill
