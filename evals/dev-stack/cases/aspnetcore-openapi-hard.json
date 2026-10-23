@@ -1,0 +1,37 @@
+{
+  "id": 260,
+  "name": "aspnetcore-openapi-hard",
+  "skill": "aspnetcore-openapi",
+  "kind": "write",
+  "fixture": "aspnetcore-openapi-hard",
+  "human": "absent",
+  "request": "A webshop partner starts to sell our products next month. Their developers generate a typed client from our API contract. Publish the contract for all endpoints that the webshop can call. The admin endpoints are for our staff only, so keep them out of the contract. Give each operation a short description. We want to see each contract change in a pull request, so keep the contract file in the repository. Our developers also want a UI to try the API on their own machines. Approved packages: Microsoft.AspNetCore.OpenApi, Scalar.AspNetCore, Microsoft.Extensions.ApiDescription.Server.",
+  "traps": [
+    "Existing code: the handlers have XML comments, but they are private static methods. The OpenAPI source generator skips comments on private methods and lambdas, so GenerateDocumentationFile alone gives no summary. Quiet: no warning.",
+    "Existing code: POST /customers and POST /returns rely on AddValidation with DataAnnotations. The automatic 400 is not in the document. Quiet.",
+    "Existing code: IdempotencyFilter on POST /orders needs the Idempotency-Key header and can answer 400 or 409. A filter is not in the document, so the generated client does not send the header and does not know the 409. Quiet.",
+    "Existing code: GET /orders/{id} and POST /orders/{id}/cancel return TypedResults.Problem (404, 409) in a Results union. These statuses are not in the document without ProducesProblem. Produces<ProblemDetails> documents application/json, not application/problem+json.",
+    "Existing code: GET /orders/{id}/invoice returns IResult. Produces(200, contentType: \"application/pdf\") without a type writes a 200 with no content. Quiet.",
+    "Existing code: StartupMigrator migrates the database in StartAsync. Microsoft.Extensions.ApiDescription.Server starts the whole app at build time (GetDocument.Insider, Production), so the build fails without a database. Turning MigrateOnStartup off breaks the deploy, which has no other migration step.",
+    "Endpoints without WithName have no operationId; the document and Scalar must not be public in Production; the build-time document goes to obj/ by default.",
+    "An external consumer meets decision API-10 (versioning) and API-11 (with the web defaults an int is [\"integer\",\"string\"] and a decimal is [\"number\",\"string\"] with format double). Neither is accepted in the fixture."
+  ],
+  "assertions": [
+    {"id": "C1", "check": "build_warnaserror"},
+    {"id": "C2", "check": "tests_pass"},
+    {"id": "C3", "check": "package_policy", "approved": ["Microsoft.AspNetCore.OpenApi", "Scalar.AspNetCore", "Microsoft.Extensions.ApiDescription.Server"]},
+    {"id": "C4", "check": "probe_tests", "probe": "aspnetcore-openapi-hard", "tests": ["OpenApi_EveryOperation_HasSummaryOrDescription"], "trap": "XML comments on private handlers do not reach the document."},
+    {"id": "C5", "check": "probe_tests", "probe": "aspnetcore-openapi-hard", "tests": ["OpenApi_OperationsWithBody_Document400AsProblemJson"], "trap": "The automatic 400 of AddValidation is not in the document."},
+    {"id": "C6", "check": "probe_tests", "probe": "aspnetcore-openapi-hard", "tests": ["OpenApi_CreateOrder_DocumentsIdempotencyKeyHeaderAnd409"], "trap": "The header and the 409 of an endpoint filter are not in the document."},
+    {"id": "C7", "check": "probe_tests", "probe": "aspnetcore-openapi-hard", "tests": ["OpenApi_GetOrder_Documents404AsProblemJson", "OpenApi_CancelOrder_Documents404And409AsProblemJson"], "trap": "TypedResults.Problem in a Results union is not in the document."},
+    {"id": "C8", "check": "probe_tests", "probe": "aspnetcore-openapi-hard", "tests": ["OpenApi_Invoice_DocumentsPdfAnd404Problem"], "trap": "An IResult file response without a typed Produces has no content in the document."},
+    {"id": "C9", "check": "probe_tests", "probe": "aspnetcore-openapi-hard", "tests": ["Startup_InProduction_StillMigratesNewDatabase"], "trap": "The build-time document starts the app; the fix must skip the migration only for the document build."},
+    {"id": "C10", "check": "file_exists", "files": ["**/*.json"], "exclude": ["**/bin/**", "**/obj/**"], "contains": "\"openapi\"\\s*:\\s*\"3\\.1", "trap": "The build-time document goes to obj/ by default."},
+    {"id": "C11", "check": "probe_tests", "probe": "aspnetcore-openapi-hard", "tests": ["OpenApi_EveryOperation_HasUniqueOperationId", "OpenApi_InProduction_IsNotPublic", "OpenApi_AdminEndpoints_AreNotInPartnerDocument"], "trap": "No operationId on the existing endpoints, or the document is public in Production."},
+    {"id": "C12", "check": "grep_absent", "value": ["\\.WithOpenApi\\s*\\(", "\\bAddSwaggerGen\\s*\\(", "^\\s*using\\s+Microsoft\\.OpenApi\\.(Models|Any)\\s*;"], "files": ["src/**/*.cs"], "trap": "Swashbuckle, the deprecated WithOpenApi, or the Microsoft.OpenApi 1.x namespaces."},
+    {"id": "J1", "judge": "The final message asks decision API-10 (versioning for an external consumer) with a recommendation, or marks it as assumed."},
+    {"id": "J2", "judge": "The final message asks decision API-11 (the JSON number and enum settings that make an int [\"integer\",\"string\"] in the schema), or marks it as assumed. The code does not change the JSON options without that statement."},
+    {"id": "J3", "judge": "The final message says that the build starts the app to write the document, and that the startup migration is skipped only for the document build. Normal starts still migrate."},
+    {"id": "J4", "judge": "The final message says that the document file must be committed after each contract change, and how a pull request or CI shows a change (a diff of the committed file, or oasdiff with decision API-19 assumed)."}
+  ]
+}
