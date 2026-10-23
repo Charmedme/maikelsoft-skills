@@ -18,6 +18,7 @@ Needs Python 3.9 or later, git, the dotnet CLI, and Docker for the integration t
 import argparse
 import importlib.util
 import json
+import re
 import pathlib
 import subprocess
 import sys
@@ -104,6 +105,24 @@ def check_no_push(run):
     return not pushes, pushes[:3]
 
 
+TIER_LINE = re.compile(r"Tier:\W{0,6}(patch|small|medium|large)\b", re.IGNORECASE)
+
+
+def check_tier(run, expected):
+    """The first tier that the run states (plan.md or a message), against the expected tiers."""
+    repo = run / "repo"
+    texts = [p.read_text(encoding="utf-8", errors="ignore") for p in sorted(repo.glob("docs/work/*/plan.md"))]
+    path = run / "stream.jsonl"
+    if path.is_file():
+        texts.append(path.read_text(encoding="utf-8", errors="ignore"))
+    for text in texts:
+        m = TIER_LINE.search(text)
+        if m:
+            tier = m.group(1).lower()
+            return tier in expected, tier
+    return False, "no tier line"
+
+
 def run_folder(repo):
     folders = sorted(p.parent for p in repo.glob("docs/work/*/run.md"))
     return folders[-1] if folders else None
@@ -162,6 +181,8 @@ def score(ev, run, arm, only=None):
             ok, got = check_code_unchanged(repo)
         elif kind == "no_push":
             ok, got = check_no_push(run)
+        elif kind == "tier":
+            ok, got = check_tier(run, a["expected"])
         elif kind == "runcheck_clean":
             ok, got = check_runcheck(repo)
         elif kind == "decisioncheck_no_new":

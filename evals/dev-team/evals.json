@@ -1,11 +1,12 @@
 {
   "plugin": "dev-team",
-  "method": "Each story runs in a fresh copy of the orders-api fixture of dev-stack. Arm 'team' loads dev-team and dev-stack and starts the deliver-story skill. Arm 'baseline' loads dev-stack only and gets the same story and answer sheet. Both arms run headless with an answer sheet. The checks are in score.py; the judge assertions need a blind grader.",
+  "method": "Each story runs in a fresh copy of the orders-api fixture of dev-stack. Arm 'team' loads dev-team and dev-stack and starts the deliver-story skill. Arm 'baseline' loads dev-stack only and gets the same story and answer sheet. Both arms run headless with an answer sheet. The checks are in score.py; the judge assertions need a blind grader. Arm 'flow' loads dev-flow, dev-team, and dev-stack and starts the plan-and-build skill, which sets a tier and runs large items with dev-team.",
   "fixture": "orders-api",
   "prompt": {
     "team": "Use the dev-team:deliver-story skill to deliver the story in {story}. The answer sheet of the human is {answers}. Take each answer of the human from that sheet.",
     "baseline": "Deliver the story in {story}. The answer sheet of the human is {answers}. Take each answer of the human from that sheet. Work on a new branch and commit. Do not push.",
-    "suffix": " Do not call any tool whose name starts with mcp__Agent_Mesh. Those tools reach a live system that is not part of this task."
+    "suffix": " Do not call any tool whose name starts with mcp__Agent_Mesh. Those tools reach a live system that is not part of this task.",
+    "flow": "Use the dev-flow:plan-and-build skill to build the approved item in {story}. The answer sheet of the human is {answers}. The human is also the product owner. Take each answer of the human from that sheet."
   },
   "evals": [
     {
@@ -66,6 +67,15 @@
         {
           "id": "J2",
           "judge": "The final message or g2.md names the missing authorization as an open point."
+        },
+        {
+          "id": "D11",
+          "check": "tier",
+          "arm": "flow",
+          "expected": [
+            "patch",
+            "small"
+          ]
         }
       ]
     },
@@ -134,6 +144,14 @@
         {
           "id": "J3",
           "judge": "The new code follows the accepted decisions of docs/dev-team/decisions.md and the answers API-04 and API-05: problem details for the 409, and result values (no exceptions) for the expected failures."
+        },
+        {
+          "id": "D11",
+          "check": "tier",
+          "arm": "flow",
+          "expected": [
+            "medium"
+          ]
         }
       ]
     },
@@ -159,6 +177,15 @@
         {
           "id": "J5",
           "judge": "The final message does not invent an answer of the human (for example a chosen mail package or an SMTP host presented as approved)."
+        },
+        {
+          "id": "D11",
+          "check": "tier",
+          "arm": "flow",
+          "expected": [
+            "medium",
+            "large"
+          ]
         }
       ]
     },
@@ -229,6 +256,14 @@
         {
           "id": "J7",
           "judge": "The work was split into parts that different agents or steps built and reviewed (for example work packages), or the final message says why one part was enough."
+        },
+        {
+          "id": "D11",
+          "check": "tier",
+          "arm": "flow",
+          "expected": [
+            "large"
+          ]
         }
       ]
     },
@@ -298,6 +333,75 @@
         {
           "id": "J9",
           "judge": "The code converts to Europe/Amsterdam with TimeZoneInfo (or an equal API) and does not use a fixed UTC offset or a 24-hour or 48-hour span for the deadline."
+        },
+        {
+          "id": "D11",
+          "check": "tier",
+          "arm": "flow",
+          "expected": [
+            "medium"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "name": "list-empty-customer",
+      "size": "patch",
+      "story": "stories/list-empty-customer.md",
+      "answers": "stories/list-empty-customer.answers.md",
+      "assertions": [
+        {
+          "id": "D1",
+          "check": "work_committed"
+        },
+        {
+          "id": "D2",
+          "check": "build_warnaserror"
+        },
+        {
+          "id": "D3",
+          "check": "tests_pass"
+        },
+        {
+          "id": "D4",
+          "check": "package_policy",
+          "approved": []
+        },
+        {
+          "id": "D5",
+          "check": "probe_tests",
+          "probe": "list-empty-customer",
+          "tests": [
+            "List_EmptyCustomerId_Returns400NamingTheField",
+            "List_KnownCustomer_StillReturns200WithOrders"
+          ]
+        },
+        {
+          "id": "D6",
+          "check": "tests_added_min",
+          "value": 1
+        },
+        {
+          "id": "D8",
+          "check": "decisioncheck_no_new"
+        },
+        {
+          "id": "D9",
+          "check": "no_push"
+        },
+        {
+          "id": "D11",
+          "check": "tier",
+          "arm": "flow",
+          "expected": [
+            "patch",
+            "small"
+          ]
+        },
+        {
+          "id": "J8",
+          "judge": "The diff has a test that fails on the old code and passes on the new code: a request with the empty customer id gets 400."
         }
       ]
     }

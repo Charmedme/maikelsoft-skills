@@ -23,7 +23,7 @@ ROOT = HERE.parents[1]
 sys.path.insert(0, str(HERE.parent / "dev-stack"))
 import prepare  # noqa: E402
 
-PLUGINS = {"team": ["dev-team", "dev-stack"], "baseline": ["dev-stack"]}
+PLUGINS = {"team": ["dev-team", "dev-stack"], "baseline": ["dev-stack"], "flow": ["dev-flow", "dev-team", "dev-stack"]}
 # Variables of a parent Claude Code session. A child run that inherits them shares the session id
 # of the parent and sends foreground agents to the background. A real user session has none of them.
 PARENT_VARS = ["CLAUDE_CODE_SESSION_ID", "CLAUDE_CODE_REMOTE_SESSION_ID", "CLAUDE_AUTO_BACKGROUND_TASKS",
