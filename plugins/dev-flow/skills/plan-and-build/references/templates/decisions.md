@@ -1,12 +1,13 @@
-# Decisions: <Subject>
+# Technical decisions: <item key> <item title>
 
-| No | Decision | By | Date |
-|----|----------|----|------|
-| Q1 | <Question in short>: <answer> | human | <YYYY-MM-DD> |
-| Q2 | <...>: <...> | recommended, accepted | <YYYY-MM-DD> |
-| Q3 | <...>: <...> | waiting: [questionnaire](questionnaires/<slug>.md) | |
-| Q4 | <...>: <...> | assumed (no human) | <YYYY-MM-DD> |
+Only technical decisions. A product decision is in the item (see `po-questions.md`).
 
-## Prototype
+| No | Item | Decision | By | Date |
+|----|------|----------|----|------|
+| Q1 | <key> | <Question in short>: <answer> | human | <YYYY-MM-DD> |
+| Q2 | <key> | <...>: <...> | recommended, accepted | <YYYY-MM-DD> |
+| Q3 | <key> | <...>: <...> | assumed (no human) | <YYYY-MM-DD> |
 
-- <Date>: <the question>. Verdict: <yes | yes with changes | no>. Reason: <...>
+## Spike
+
+- <Date>: <the question>. Answer: <...>. Reason: <...>
