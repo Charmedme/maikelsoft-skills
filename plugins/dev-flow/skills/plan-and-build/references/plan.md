@@ -15,8 +15,6 @@ Turn the item and the technical decisions into tickets. The item is the spec: do
 
 Ask the technical questions that the research did not settle, in rounds. One decision in each question, with your recommended answer and the reason in one sentence. Number the questions across all rounds (Q1, Q2, ...), so that the human can answer "Q3: yes". A question that depends on another question goes to the next round. Write each answer in `decisions.md` (`templates/decisions.md`), with the item key and who decided.
 
-The repository can have a team decision index (`docs/dev-team/decisions.md`). A decision with an ID from that index (for example API-04) is a team decision. Record it with the `dev-team:team-decisions` skill, which writes the ADR and the index row. Do not add a row to that index by hand.
-
 Topics: the modules and the interfaces, the data and its migration, the test seams, and the risks that are hard to undo. Prefer test seams that exist, and the highest seam that works. A product question goes to the PO (`po-questions.md`), not into this list.
 
 ## Spike
