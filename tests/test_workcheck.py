@@ -112,6 +112,14 @@ class Errors(unittest.TestCase):
             errors, _ = messages(make(d, [("01", "None", "draft")], ("open", "approved", "open"), tier="large"))
             self.assertTrue(any("Design is not" in e for e in errors))
 
+    def test_plan_not_assumed_while_po_waits(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = make(d, [("01", "None", "draft")], ("assumed", "open"))
+            plan = root / "plan.md"
+            plan.write_text(plan.read_text().replace("## Waiting for the PO\n\nNone.", "## Waiting for the PO\n\n- P1: Where does the mail address come from?"), encoding="utf-8")
+            errors, _ = messages(root)
+            self.assertTrue(any("waits for the PO" in e for e in errors))
+
     def test_bad_tier(self):
         with tempfile.TemporaryDirectory() as d:
             errors, _ = messages(make(d, [("01", "None", "draft")], tier="huge"))

@@ -184,6 +184,9 @@ def check(folder: pathlib.Path) -> tuple:
         out.append(Finding("error", "plan.md", "Done is passed, but Plan is not"))
     if gates.get("Done") == "assumed":
         out.append(Finding("error", "plan.md", "Done cannot be assumed: only a human closes the work"))
+    waiting = re.search(r"(?ims)^##\s+Waiting for the PO\s*\n(.*?)(?=^##\s|\Z)", plan)
+    if waiting and gates.get("Plan") == "assumed" and waiting.group(1).strip().rstrip(".").lower() not in ("", "none"):
+        out.append(Finding("error", "plan.md", "Plan cannot be assumed while a question waits for the PO"))
     if not re.search(r"(?im)^##\s+Waiting for the PO", plan):
         out.append(Finding("warning", "plan.md", 'No "Waiting for the PO" section'))
 

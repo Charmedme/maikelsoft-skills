@@ -60,7 +60,7 @@ Outside Claude Code, use the path of the `scripts` folder of this skill. Fix eac
 In a scheduled or unattended run, nobody can answer. When the prompt names an answer sheet, an answer in the sheet counts as the answer of the human.
 
 - A technical question without an answer: take your recommended answer and mark it "assumed" in `decisions.md`. Never assume a new package, or a new external service and its settings. Also never assume a fact that only the human or the PO knows, such as an address, a provider, or a legal rule. Stop the work that depends on it, and give the question in the report.
-- Gate Plan without an answer: write "assumed" in `plan.md` and go on.
+- Gate Plan without an answer: write "assumed" in `plan.md` and go on. Only when no question waits: a product question, a package, a service, or a fact of the human. Else the gate stays "waiting", and you stop before the build.
 - A product question: do not post a comment. Stop the work that depends on it, and give the drafted comment in the report.
 
 ## Report
