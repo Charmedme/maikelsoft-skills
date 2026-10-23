@@ -19,8 +19,8 @@ Each of these sets the tier to medium or higher, whatever the size:
 
 - A schema change or a data migration.
 - Sign-in, authorization, secrets, or file upload.
-- A public API contract or a message contract that other systems use.
-- A new package.
+- A change to a public API or message contract that the item does not ask for. Or a change that breaks existing clients: a removed or renamed field, route, or type. A new endpoint or a new error status that the item asks for is not this risk.
+- A new package, or a new external service (a mail server, a payment provider, a queue).
 - Money, invoices, or prices.
 - The deletion of data.
 - Another step that is hard to undo.

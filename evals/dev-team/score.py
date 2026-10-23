@@ -108,13 +108,29 @@ def check_no_push(run):
 TIER_LINE = re.compile(r"Tier:\W{0,6}(patch|small|medium|large)\b", re.IGNORECASE)
 
 
+def assistant_text(run):
+    """The text blocks that the agents wrote, from stream.jsonl (not the tool results)."""
+    out = []
+    path = run / "stream.jsonl"
+    if not path.is_file():
+        return ""
+    for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
+        try:
+            d = json.loads(line)
+        except ValueError:
+            continue
+        if d.get("type") == "assistant":
+            out += [c.get("text", "") for c in d.get("message", {}).get("content", []) if c.get("type") == "text"]
+        elif d.get("type") == "result":
+            out.append(d.get("result") or "")
+    return "\n".join(out)
+
+
 def check_tier(run, expected):
-    """The first tier that the run states (plan.md or a message), against the expected tiers."""
+    """The tier that the run states (plan.md, else the text of the agents), against the expected tiers."""
     repo = run / "repo"
     texts = [p.read_text(encoding="utf-8", errors="ignore") for p in sorted(repo.glob("docs/work/*/plan.md"))]
-    path = run / "stream.jsonl"
-    if path.is_file():
-        texts.append(path.read_text(encoding="utf-8", errors="ignore"))
+    texts.append(assistant_text(run))
     for text in texts:
         m = TIER_LINE.search(text)
         if m:
