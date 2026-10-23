@@ -11,8 +11,9 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 ### Changed
 
 - **Breaking.** `plan-and-build` starts from an approved work item (user story, bug, task, or chore), not from an idea. An idea without an item goes to `product-flow:idea-to-backlog` first. The item is the only source of product decisions.
-- **Breaking.** Four tiers replace the size check: patch, small, medium, and large. Each tier has its own steps and gates: Done for patch and small, Plan and Done for medium. A large item runs with `dev-team:deliver-story`. A risk sets the tier to medium or higher. Examples: a schema change, authorization, a new package, money. The type of the change (bug, refactor, feature, chore) changes the steps too.
-- The gates are now Design (large without dev-team), Plan, and Done. G1 to G4 are removed.
+- **Breaking.** Four tiers replace the size check: patch, small, medium, and large. Each tier has its own steps and gates: Done for patch and small, Plan and Done for medium. A large item runs with `dev-team:deliver-story`. A risk sets the tier to medium or higher. Examples: a schema change, authorization, a new package, money.
+- The type of the change (bug, refactor, feature, chore) changes the steps of the tier.
+- The gates Design (large without dev-team), Plan, and Done replace G1 to G4.
 - `decisions.md` holds only technical decisions, with the item key on each row.
 - A new team decision goes through `dev-team:team-decisions` when the repository has a team decision index.
 - `workcheck.py` checks the tier, the gates of the tier, and the AC coverage of the tickets. It also checks that the gate Plan is not "assumed" while a question waits for the PO.
