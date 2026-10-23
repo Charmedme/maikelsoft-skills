@@ -88,7 +88,7 @@ await channel.BasicPublishAsync("orders.events", "order.placed.v1", mandatory: t
 10. Consume with `autoAck: false`. Ack after the work and the database commit. An early ack turns a crash into data loss.
 11. Set a prefetch per consumer: `BasicQosAsync(0, n, global: false)`. Start between 10 and 100 and measure. Global QoS fails on quorum queues and RabbitMQ 4.3 denies it by default.
 12. Deserialize or copy `ea.Body` inside `ReceivedAsync`. The client reuses that memory after the handler returns.
-13. Classify failures (principle 7). Permanent (validation, unknown type): `BasicNackAsync(requeue: false)`, so that the dead-letter exchange takes it. Transient: retry with a delay (DLX plus TTL, or the quorum delayed retry of 4.3). Keep `delivery-limit` at 20. Use `dead-letter-strategy=at-least-once` with `overflow=reject-publish` for a queue whose dead letters must not get lost (MSG-08).
+13. Classify failures (principle 7). Permanent (validation, unknown type): `BasicNackAsync(requeue: false)`, so that the dead-letter exchange takes it. Transient: retry with a delay (DLX plus TTL, or the quorum delayed retry of 4.3). Keep `delivery-limit` at 20. From 4.3, `BasicNackAsync(requeue: true)` does not count toward it: requeue with `BasicRejectAsync(requeue: true)`. Use `dead-letter-strategy=at-least-once` with `overflow=reject-publish` for a queue whose dead letters must not get lost (MSG-08).
 14. Expect no global order. For order with failover, use `x-single-active-consumer`. Raise `ConsumerDispatchConcurrency` above 1 (the default) only when order does not matter. Keep a handler shorter than the consumer timeout (30 minutes, enforced on quorum queues). Send a reference instead of a body above 16 MiB.
 
 The full consumer and the topology code are in `references/client.md`.
@@ -113,7 +113,7 @@ The full consumer and the topology code are in `references/client.md`.
 | `["x-queue-mode"] = "lazy"`, `ha-mode` policy | `["x-queue-type"] = "quorum"` |
 | `BasicQosAsync(0, 20, global: true)` | `BasicQosAsync(0, 20, global: false)` |
 | `BasicConsumeAsync(queue, autoAck: true, ...)` | `autoAck: false` and `BasicAckAsync` after the commit |
-| `catch { await ch.BasicNackAsync(tag, false, requeue: true); }` for each error | Classify. `requeue: false` for permanent errors, plus a dead-letter policy |
+| `catch { await ch.BasicNackAsync(tag, false, requeue: true); }` for each error | Classify. `requeue: false` for permanent errors, plus a dead-letter policy. From 4.3 this nack never reaches the `delivery-limit` |
 | `RabbitHutch.CreateBus("host=...")` | `services.AddEasyNetQ("host=...;publisherConfirms=true")` |
 | `UseDelayedExchangeScheduler()`, `"x-delayed-type"` | The default DLX plus TTL scheduler, or the quorum delayed retry |
 | `new RabbitMqBuilder().Build()` | `new RabbitMqBuilder("rabbitmq:4.3-management-alpine").Build()` |
@@ -170,6 +170,7 @@ The full list is in `references/review-checklist.md`.
 12. Contracts have pinned wire names and change only by addition. judge
 13. Tests use a pinned 4.x broker image and wait with a signal, not `Task.Delay`. tool (RMQ-TC-OLD-IMAGE, CS0618), judge
 14. No delayed message exchange plugin. tool (RMQ-DELAYED-PLUGIN)
+15. No `BasicNackAsync` with `requeue: true`: from 4.3 it does not count toward the `delivery-limit`. tool (RMQ-NACK-REQUEUE)
 
 ## Report
 

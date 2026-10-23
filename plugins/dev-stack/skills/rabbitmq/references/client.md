@@ -176,7 +176,7 @@ public sealed class OrderPlacedConsumer(RabbitMqConnection rabbit, IServiceScope
             catch (TimeoutException ex)
             {
                 logger.LogWarning(ex, "Transient failure for {MessageId}", ea.BasicProperties.MessageId);
-                await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true); // delivery-limit stops a loop
+                await channel.BasicRejectAsync(ea.DeliveryTag, requeue: true); // counts toward the delivery-limit
             }
         };
 
@@ -187,7 +187,8 @@ public sealed class OrderPlacedConsumer(RabbitMqConnection rabbit, IServiceScope
 ```
 
 - An exception that leaves `ReceivedAsync` does not nack the message. The message stays unacked until the channel closes. Catch, classify, and ack or nack in each path.
-- `requeue: true` puts the message back at the head of the queue at once. Use it only with a `delivery-limit`, and only for a transient error. For a delay, use a dead-letter exchange with a TTL queue, or the quorum delayed retry of 4.3 (`broker.md`).
+- `requeue: true` puts the message back at the head of the queue at once. Use it only with a `delivery-limit`, and only for a transient error.
+- From RabbitMQ 4.3, only a failed delivery counts toward the `delivery-limit` of a quorum queue: `BasicRejectAsync`, or a channel or connection that closes with unacked messages. `BasicNackAsync(requeue: true)` does not count. A message that fails each time then loops forever. Use `BasicRejectAsync(tag, requeue: true)` for a requeue that must count. For a delay, use a dead-letter exchange with a TTL queue, or the quorum delayed retry of 4.3 (`broker.md`).
 - `ConsumerDispatchConcurrency` on the `ConnectionFactory` is 1 by default: one message at a time for each channel. Raise it only when the order does not matter and the handler is thread-safe.
 
 ## Recovery

@@ -49,7 +49,7 @@ Each check is `tool (<rule ID>)` when a tool finds it, or `judge` when a reviewe
 | 16 | `autoAck: false`. Ack after the work and the commit. | tool (RMQ-AUTOACK), judge |
 | 17 | Prefetch per consumer (`global: false`), between 10 and 100. | tool (RMQ-GLOBAL-QOS), judge |
 | 18 | `ea.Body` is read or copied inside `ReceivedAsync`. | judge |
-| 19 | Failures are classified: permanent errors with `requeue: false`, transient errors with a delayed retry. No catch-all with `requeue: true`. | judge |
+| 19 | Failures are classified: permanent errors with `requeue: false`, transient errors with a delayed retry. No catch-all with `requeue: true`. No `BasicNackAsync` with `requeue: true` (from 4.3 it does not count toward the `delivery-limit`). | tool (RMQ-NACK-REQUEUE), judge |
 | 20 | Each path of `ReceivedAsync` acks or nacks. No exception leaves the handler. | judge |
 | 21 | `ConsumerDispatchConcurrency` above 1 only where order does not matter. | judge |
 | 22 | Handlers end well inside the 30-minute consumer timeout. | judge |

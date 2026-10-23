@@ -1,60 +1,194 @@
 {
   "skill": "rabbitmq",
   "rules": [
-    {"id": "RMQ-REMOVED-ARGS", "kind": "regex", "severity": "error",
-     "files": ["**/*.cs", "**/*.json", "**/*.yml", "**/*.yaml", "**/*.sh", "**/*.conf"],
-     "pattern": "\"x-queue-(mode|version|master-locator)\"|\\bWithQueueMode\\s*\\(|\"ha-(mode|params|sync-mode)\"",
-     "message": "RabbitMQ 4.x removed lazy mode, the queue version and master locator arguments, and classic mirrored queues. The broker rejects the declaration or the policy.",
-     "fix": "Declare durable work queues with [\"x-queue-type\"] = \"quorum\". Replace ha-* policies with quorum queues.",
-     "match": ["[\"x-queue-mode\"] = \"lazy\",", "c => c.WithQueueMode(QueueMode.Lazy)", "rabbitmqctl set_policy ha-all \".*\" '{\"ha-mode\":\"all\"}'"],
-     "nomatch": ["[\"x-queue-type\"] = \"quorum\",", "c => c.WithQueueType(QueueType.Quorum)"]},
-    {"id": "RMQ-GLOBAL-QOS", "kind": "regex", "severity": "error",
-     "files": ["**/*.cs"],
-     "pattern": "\\bBasicQos(Async)?\\s*\\([^;]*\\bglobal\\s*:\\s*true",
-     "message": "Quorum queues do not support global QoS, and RabbitMQ 4.3 denies it by default.",
-     "fix": "Set the prefetch per consumer: BasicQosAsync(0, n, global: false). Start between 10 and 100.",
-     "match": ["await channel.BasicQosAsync(0, 20, global: true, ct);", "await ch.BasicQosAsync(prefetchSize: 0, prefetchCount: 10, global: true);"],
-     "nomatch": ["await channel.BasicQosAsync(prefetchSize: 0, prefetchCount: 20, global: false, ct);", "await channel.BasicQosAsync(0, 20, false, ct);"]},
-    {"id": "RMQ-AUTOACK", "kind": "regex", "severity": "warning",
-     "files": ["**/*.cs"],
-     "exclude": ["tests/**", "test/**", "**/*Tests/**", "**/*Test/**"],
-     "pattern": "\\bautoAck\\s*:\\s*true\\b|\\.WithAutoAck\\s*\\(",
-     "message": "With automatic ack, the broker forgets the message on delivery. A crash or an exception in the handler loses it.",
-     "fix": "Consume with autoAck: false and call BasicAckAsync after the work and the database commit.",
-     "match": ["await channel.BasicConsumeAsync(\"billing.order-placed\", autoAck: true, consumer, ct);", "c => c.WithAutoAck()"],
-     "nomatch": ["await channel.BasicConsumeAsync(\"billing.order-placed\", autoAck: false, consumer, ct);", "c => c.WithPrefetchCount(20)"]},
-    {"id": "RMQ-SINGLETON-CHANNEL", "kind": "regex", "severity": "warning",
-     "files": ["**/*.cs"],
-     "pattern": "\\bAddSingleton\\s*(<\\s*IChannel\\s*>\\s*)?\\(\\s*(await\\s+[\\w.]+\\.CreateChannelAsync\\s*\\(|\\w+\\s*=>\\s*[^;]*CreateChannel)",
-     "message": "One IChannel for all requests mixes the frames of concurrent publishes, and one channel error stops all publishers.",
-     "fix": "Give each publisher its own channel with publisher confirms, or publish from one outbox BackgroundService that owns its channel.",
-     "match": ["builder.Services.AddSingleton(await rabbitConnection.CreateChannelAsync());", "services.AddSingleton<IChannel>(sp => sp.GetRequiredService<IConnection>().CreateChannelAsync().GetAwaiter().GetResult());"],
-     "nomatch": ["builder.Services.AddSingleton<RabbitMqConnection>();", "await using var channel = await connection.CreateChannelAsync(options, ct);"]},
-    {"id": "RMQ-TC-OLD-IMAGE", "kind": "regex", "severity": "warning",
-     "files": ["**/*.cs"],
-     "pattern": "\\bRabbitMqBuilder\\s*\\(\\s*(\"rabbitmq:3[.\\-:\"]|\\))",
-     "message": "new RabbitMqBuilder() is obsolete (CS0618) and starts rabbitmq:3.11. Tests then run on another major version than production.",
-     "fix": "Pin the production major version: new RabbitMqBuilder(\"rabbitmq:4.3-management-alpine\").",
-     "match": ["var c = new RabbitMqBuilder().Build();", "new RabbitMqBuilder(\"rabbitmq:3.13-management\").Build()"],
-     "nomatch": ["new RabbitMqBuilder(\"rabbitmq:4.3-management-alpine\").Build()", "new RabbitMqBuilder(Images.RabbitMq).Build()"]},
-    {"id": "RMQ-DELAYED-PLUGIN", "kind": "regex", "severity": "warning",
-     "files": ["**/*.cs"],
-     "pattern": "\\bUseDelayedExchangeScheduler\\s*\\(|\"x-delayed-(message|type)\"",
-     "message": "The delayed message exchange plugin keeps messages on one node without replication, and it is not part of the default broker.",
-     "fix": "Use a dead-letter exchange with a TTL queue, the EasyNetQ default scheduler, or Wolverine scheduled messages.",
-     "match": ["services.AddEasyNetQ(cs).UseDelayedExchangeScheduler();", "[\"x-delayed-type\"] = \"topic\","],
-     "nomatch": ["services.AddEasyNetQ(cs);", "[\"x-dead-letter-exchange\"] = \"orders.dlx\","]},
-    {"id": "RMQ-PKG-EASYNETQ-ALPHA", "kind": "package", "ecosystem": "nuget",
-     "package": "EasyNetQ*", "versions": ">=9.0.0", "severity": "warning",
-     "message": "EasyNetQ 9 is an alpha. Stay on EasyNetQ 8.x, and use Wolverine for new flows (decision MSG-04)."},
-
-    {"id": "DET-MSG-03", "kind": "detect", "decision": "MSG-03", "files": ["**/*.cs"],
-     "pattern": "\\bnew\\s+ConnectionFactory\\b|\\bAddEasyNetQ\\s*\\(|\\bUseRabbitMq(UsingNamedConnection)?\\s*\\(",
-     "match": ["var factory = new ConnectionFactory { Uri = uri };", "services.AddEasyNetQ(\"host=rabbitmq\");", "opts.UseRabbitMq(new Uri(cs))"],
-     "nomatch": ["var factory = new WebApplicationFactory<Program>();", "services.AddHttpClient();"]},
-    {"id": "DET-MSG-07", "kind": "detect", "decision": "MSG-07", "files": ["**/*.cs"],
-     "pattern": "\"x-queue-type\"|\\bUseQuorumQueues\\s*\\(|\\bWithQueueType\\s*\\(",
-     "match": ["[\"x-queue-type\"] = \"quorum\",", ".UseQuorumQueues()", "c => c.WithQueueType(QueueType.Quorum)"],
-     "nomatch": ["[\"x-dead-letter-exchange\"] = \"billing.dlx\","]}
+    {
+      "id": "RMQ-REMOVED-ARGS",
+      "kind": "regex",
+      "severity": "error",
+      "files": [
+        "**/*.cs",
+        "**/*.json",
+        "**/*.yml",
+        "**/*.yaml",
+        "**/*.sh",
+        "**/*.conf"
+      ],
+      "pattern": "\"x-queue-(mode|version|master-locator)\"|\\bWithQueueMode\\s*\\(|\"ha-(mode|params|sync-mode)\"",
+      "message": "RabbitMQ 4.x removed lazy mode, the queue version and master locator arguments, and classic mirrored queues. The broker rejects the declaration or the policy.",
+      "fix": "Declare durable work queues with [\"x-queue-type\"] = \"quorum\". Replace ha-* policies with quorum queues.",
+      "match": [
+        "[\"x-queue-mode\"] = \"lazy\",",
+        "c => c.WithQueueMode(QueueMode.Lazy)",
+        "rabbitmqctl set_policy ha-all \".*\" '{\"ha-mode\":\"all\"}'"
+      ],
+      "nomatch": [
+        "[\"x-queue-type\"] = \"quorum\",",
+        "c => c.WithQueueType(QueueType.Quorum)"
+      ]
+    },
+    {
+      "id": "RMQ-GLOBAL-QOS",
+      "kind": "regex",
+      "severity": "error",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\bBasicQos(Async)?\\s*\\([^;]*\\bglobal\\s*:\\s*true",
+      "message": "Quorum queues do not support global QoS, and RabbitMQ 4.3 denies it by default.",
+      "fix": "Set the prefetch per consumer: BasicQosAsync(0, n, global: false). Start between 10 and 100.",
+      "match": [
+        "await channel.BasicQosAsync(0, 20, global: true, ct);",
+        "await ch.BasicQosAsync(prefetchSize: 0, prefetchCount: 10, global: true);"
+      ],
+      "nomatch": [
+        "await channel.BasicQosAsync(prefetchSize: 0, prefetchCount: 20, global: false, ct);",
+        "await channel.BasicQosAsync(0, 20, false, ct);"
+      ]
+    },
+    {
+      "id": "RMQ-AUTOACK",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "tests/**",
+        "test/**",
+        "**/*Tests/**",
+        "**/*Test/**"
+      ],
+      "pattern": "\\bautoAck\\s*:\\s*true\\b|\\.WithAutoAck\\s*\\(",
+      "message": "With automatic ack, the broker forgets the message on delivery. A crash or an exception in the handler loses it.",
+      "fix": "Consume with autoAck: false and call BasicAckAsync after the work and the database commit.",
+      "match": [
+        "await channel.BasicConsumeAsync(\"billing.order-placed\", autoAck: true, consumer, ct);",
+        "c => c.WithAutoAck()"
+      ],
+      "nomatch": [
+        "await channel.BasicConsumeAsync(\"billing.order-placed\", autoAck: false, consumer, ct);",
+        "c => c.WithPrefetchCount(20)"
+      ]
+    },
+    {
+      "id": "RMQ-SINGLETON-CHANNEL",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\bAddSingleton\\s*(<\\s*IChannel\\s*>\\s*)?\\(\\s*(await\\s+[\\w.]+\\.CreateChannelAsync\\s*\\(|\\w+\\s*=>\\s*[^;]*CreateChannel)",
+      "message": "One IChannel for all requests mixes the frames of concurrent publishes, and one channel error stops all publishers.",
+      "fix": "Give each publisher its own channel with publisher confirms, or publish from one outbox BackgroundService that owns its channel.",
+      "match": [
+        "builder.Services.AddSingleton(await rabbitConnection.CreateChannelAsync());",
+        "services.AddSingleton<IChannel>(sp => sp.GetRequiredService<IConnection>().CreateChannelAsync().GetAwaiter().GetResult());"
+      ],
+      "nomatch": [
+        "builder.Services.AddSingleton<RabbitMqConnection>();",
+        "await using var channel = await connection.CreateChannelAsync(options, ct);"
+      ]
+    },
+    {
+      "id": "RMQ-TC-OLD-IMAGE",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\bRabbitMqBuilder\\s*\\(\\s*(\"rabbitmq:3[.\\-:\"]|\\))",
+      "message": "new RabbitMqBuilder() is obsolete (CS0618) and starts rabbitmq:3.11. Tests then run on another major version than production.",
+      "fix": "Pin the production major version: new RabbitMqBuilder(\"rabbitmq:4.3-management-alpine\").",
+      "match": [
+        "var c = new RabbitMqBuilder().Build();",
+        "new RabbitMqBuilder(\"rabbitmq:3.13-management\").Build()"
+      ],
+      "nomatch": [
+        "new RabbitMqBuilder(\"rabbitmq:4.3-management-alpine\").Build()",
+        "new RabbitMqBuilder(Images.RabbitMq).Build()"
+      ]
+    },
+    {
+      "id": "RMQ-DELAYED-PLUGIN",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\bUseDelayedExchangeScheduler\\s*\\(|\"x-delayed-(message|type)\"",
+      "message": "The delayed message exchange plugin keeps messages on one node without replication, and it is not part of the default broker.",
+      "fix": "Use a dead-letter exchange with a TTL queue, the EasyNetQ default scheduler, or Wolverine scheduled messages.",
+      "match": [
+        "services.AddEasyNetQ(cs).UseDelayedExchangeScheduler();",
+        "[\"x-delayed-type\"] = \"topic\","
+      ],
+      "nomatch": [
+        "services.AddEasyNetQ(cs);",
+        "[\"x-dead-letter-exchange\"] = \"orders.dlx\","
+      ]
+    },
+    {
+      "id": "RMQ-PKG-EASYNETQ-ALPHA",
+      "kind": "package",
+      "ecosystem": "nuget",
+      "package": "EasyNetQ*",
+      "versions": ">=9.0.0",
+      "severity": "warning",
+      "message": "EasyNetQ 9 is an alpha. Stay on EasyNetQ 8.x, and use Wolverine for new flows (decision MSG-04)."
+    },
+    {
+      "id": "DET-MSG-03",
+      "kind": "detect",
+      "decision": "MSG-03",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\bnew\\s+ConnectionFactory\\b|\\bAddEasyNetQ\\s*\\(|\\bUseRabbitMq(UsingNamedConnection)?\\s*\\(",
+      "match": [
+        "var factory = new ConnectionFactory { Uri = uri };",
+        "services.AddEasyNetQ(\"host=rabbitmq\");",
+        "opts.UseRabbitMq(new Uri(cs))"
+      ],
+      "nomatch": [
+        "var factory = new WebApplicationFactory<Program>();",
+        "services.AddHttpClient();"
+      ]
+    },
+    {
+      "id": "DET-MSG-07",
+      "kind": "detect",
+      "decision": "MSG-07",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\"x-queue-type\"|\\bUseQuorumQueues\\s*\\(|\\bWithQueueType\\s*\\(",
+      "match": [
+        "[\"x-queue-type\"] = \"quorum\",",
+        ".UseQuorumQueues()",
+        "c => c.WithQueueType(QueueType.Quorum)"
+      ],
+      "nomatch": [
+        "[\"x-dead-letter-exchange\"] = \"billing.dlx\","
+      ]
+    },
+    {
+      "id": "RMQ-NACK-REQUEUE",
+      "kind": "regex",
+      "severity": "error",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\bBasicNack(Async)?\\s*\\([^;]*\\brequeue\\s*:\\s*true",
+      "message": "From RabbitMQ 4.3, basic.nack with requeue does not count toward the delivery-limit of a quorum queue. A message that fails each time then loops forever.",
+      "fix": "For a failed delivery, use BasicRejectAsync(tag, requeue: true): it counts toward the delivery-limit. Better: retry with a delay (a DLX with a TTL queue), and BasicNackAsync(requeue: false) for a permanent error.",
+      "match": [
+        "await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true);",
+        "await ch.BasicNackAsync(tag, false, requeue: true);"
+      ],
+      "nomatch": [
+        "await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);",
+        "await channel.BasicRejectAsync(ea.DeliveryTag, requeue: true);"
+      ]
+    }
   ]
 }

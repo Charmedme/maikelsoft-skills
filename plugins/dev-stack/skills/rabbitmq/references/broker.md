@@ -44,7 +44,7 @@ When nobody runs policies (a small service, a test), arguments in the declaratio
 
 - Give each service one dead-letter exchange and one dead-letter queue `{service}.dlq` (MSG-06). A dead-letter queue per listener only when another team owns the queue.
 - A message goes to the dead-letter exchange on `BasicNack` or `BasicReject` with `requeue: false`, on an expired TTL, on a length overflow, and when it passes the `delivery-limit` of a quorum queue.
-- `delivery-limit` on quorum queues: keep 20 (the 4.x default). A requeue loop then ends in the dead-letter queue, not in a hot loop forever.
+- `delivery-limit` on quorum queues: keep 20 (the 4.x default). A requeue loop then ends in the dead-letter queue, not in a hot loop forever. From 4.3, the limit counts only failed deliveries (`delivery-count`): `basic.reject`, and a closed channel or connection. A `basic.nack` with requeue only increments `acquired-count`, and does not count.
 - Quorum queues dead-letter with `at-most-once` by default: a message can get lost on the way to the dead-letter queue. For a queue whose dead letters must not get lost, set `dead-letter-strategy=at-least-once` and `overflow=reject-publish` in the policy. (docs)
 - Alert on a dead-letter depth greater than 0. Each dead-letter queue has an owner and a replay procedure: read, fix the cause, and publish again to the original exchange with a new message ID.
 

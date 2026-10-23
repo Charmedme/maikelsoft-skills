@@ -118,6 +118,14 @@ This log records each change to a skill or to an eval case, the test that measur
 - Verdict: proposed
 - Evidence: as E7.
 
+### E12: rabbitmq fact: basic.nack with requeue does not count toward the delivery-limit on 4.3
+- Date and version: 2026-10-23, proposed for dev-stack 1.1.1
+- Change: the transient path of `references/client.md` uses `BasicRejectAsync(requeue: true)`. `broker.md`, `SKILL.md`, and review checklist item 19 state the 4.3 rule. The new tool rule RMQ-NACK-REQUEUE finds `BasicNackAsync(..., requeue: true)`.
+- Test: the rule test cases in `rules.json`. No eval run yet.
+- Observed: the old text said that the `delivery-limit` stops a nack loop. A hard-case agent saw 2,877 redeliveries in 5 seconds on 4.3. The RabbitMQ docs confirm it: from 4.3 the limit uses `delivery-count`, and `basic.nack` only increments `acquired-count`.
+- Verdict: proposed (the fact is verified in the docs, the effect on runs is not tested)
+- Evidence: https://www.rabbitmq.com/docs/quorum-queues, https://www.rabbitmq.com/blog/2026/04/23/rabbitmq-4.3-release
+
 ## Lessons
 
 ### Round 1.1.0 (2026-10-21)
