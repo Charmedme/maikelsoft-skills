@@ -105,7 +105,7 @@ def check_no_push(run):
     return not pushes, pushes[:3]
 
 
-TIER_LINE = re.compile(r"Tier:\W{0,6}(patch|small|medium|large)\b", re.IGNORECASE)
+TIER_LINE = re.compile(r"\btier(?::| to| is)\W{0,6}(patch|small|medium|large)\b", re.IGNORECASE)
 
 
 def assistant_text(run):

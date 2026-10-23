@@ -97,13 +97,15 @@ In a scheduled or unattended run, the skill takes its recommended answer for a t
 
 ## Test results
 
-24 runs in round 1 and 24 runs in rounds 2 to 4, on the orders-api fixture, model Opus, headless, with an answer sheet. Cost is the median per run.
+24 runs in round 1 and 30 runs in rounds 2 to 5, on the orders-api fixture, model Opus, headless, with an answer sheet. Cost is the median per run.
 
 | Item | Checks | Tier | dev-flow 2.0 | dev-team | No plugin |
 |------|--------|------|--------------|----------|-----------|
 | Bug (patch) | 9/9 x3 | small | $0.84 | $3.40 | $0.36 |
 | Small story | 9/9 x3 | small | $1.28 | $4.14 | $0.40 |
 | Medium story | 9/9 x3 | small | $1.54 | $8.01 | $0.57 |
+| Medium story with a DST rule | 9/9 x3 | medium | $2.72 | $11.11 | $0.77 |
+| Large story (3 behaviours, schema change) | 9/9, 8/9, 9/9 | medium x2, large x1 | $4.57 | $9.72 | $1.12 |
 | Story with a missing fact (must stop) | stops 3 of 3 | medium | $1.18 | $3.12 | builds anyway |
 
 Each delivered run passes the build, the tests, the package policy, and each hidden acceptance test. The details, the verdict of each change, and the gaps are in the [test results](../../docs/work/flow-scale/results.md).
@@ -113,7 +115,7 @@ Each delivered run passes the build, the tests, the package policy, and each hid
 - The skill uses sub-agents for the review of a small item and for each ticket of a medium item, when Claude Code has them.
 - The checker checks the structure of the work folder. It does not check if a plan is good.
 - The product question path is tested only unattended: no test posted a comment to a real tracker.
-- No test item reached the large tier, so the hand-off to `dev-team` is not tested end to end.
+- The hand-off to `dev-team` ran in one test run only. The tier of the large story was not stable (medium in 2 of 3 runs).
 
 ## Documentation
 
