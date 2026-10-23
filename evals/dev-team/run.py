@@ -48,7 +48,16 @@ def start(run, ev, arm, cfg, args):
     env["DEV_TEAM_PROFILE"] = str(run.resolve() / "profile.md")
     env["PATH"] = env.get("PATH", "") + os.pathsep + str(pathlib.Path.home() / ".dotnet")
     with open(run / "stream.jsonl", "w") as out, open(run / "stderr.log", "w") as err:
-        code = subprocess.run(cmd, cwd=repo, env=env, stdout=out, stderr=err, timeout=args.timeout).returncode
+        try:
+            code = subprocess.run(cmd, cwd=repo, env=env, stdout=out, stderr=err, timeout=args.timeout).returncode
+        except subprocess.TimeoutExpired:
+            code = "timeout"
+    # Free disk space: the scorer builds again, and Docker keeps the volumes of stopped containers.
+    for name in ("bin", "obj", "TestResults"):
+        for folder in list(repo.rglob(name)):
+            if folder.is_dir():
+                subprocess.run(["rm", "-rf", str(folder)])
+    subprocess.run(["docker", "volume", "prune", "-f"], capture_output=True)
     return f"{run.relative_to(args.runs)} exit {code}"
 
 
