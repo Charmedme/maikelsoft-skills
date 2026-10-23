@@ -150,6 +150,7 @@
           "check": "tier",
           "arm": "flow",
           "expected": [
+            "small",
             "medium"
           ]
         }
@@ -262,6 +263,7 @@
           "check": "tier",
           "arm": "flow",
           "expected": [
+            "medium",
             "large"
           ]
         }
