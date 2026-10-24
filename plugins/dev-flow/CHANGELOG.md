@@ -24,7 +24,7 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 - `speclock.py` locks the approved test cases and watches the DSL. A PreToolUse hook (`hooks/guard.py`) blocks each edit of a locked test, also through Bash.
 - `mutate.py`, a boundary mutation check: it flips each comparison in the changed code and runs the acceptance tests. A mutation that survives is a rule without an example. When the project has Stryker, the skill runs it too.
-- `examplecheck.py` checks `examples.md`: each rule has an example, each limit has the cases below, at, and above, and each open source has a question.
+- `examplecheck.py` checks `examples.md`: each rule has an example, each limit has the cases below, at, and above, and each open source has a question. A word with more than one meaning in a criterion cannot have a technical or assumed answer.
 - Product questions go to the PO as a comment on the item (`references/po-questions.md`), after the human approves the exact text. The skill first searches the existing decisions. In solo work, an answer that cites an existing decision counts as approved.
 - In an unattended run, the skill never assumes a new package or a new external service. It also never assumes a fact that only the human or the PO knows. While a question waits, it does not start the build.
 

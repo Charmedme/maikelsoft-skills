@@ -57,4 +57,5 @@ Write "None." under a section without content. The Source column is `item`, a de
 - An example adds real values, not a new rule. A new rule is a question.
 - An example with the source `open: P<n>` is not ready. The build of that rule waits for the answer.
 - In solo work, the PO is the human in the session. Then an answer that cites an existing decision counts as approved. A new decision always needs the PO.
+- A word with more than one meaning in a criterion is a product question. Do not answer it as a technical choice or an assumption. This is also true when an answer sheet lets you take your own answer for technical choices. Only the item, a decision that answers that word, or the PO can answer it. A word of a technical contract is not a criterion: mark it `(contract)`.
 - Do not change the item. A PO answer that changes an acceptance criterion goes back to the PO (`po-questions.md`).

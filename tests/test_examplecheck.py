@@ -65,6 +65,10 @@ class ExampleCheck(unittest.TestCase):
         errors, *_ = ec.check(GOOD.replace("| AC1 R1 | normal |", "| AC9 R1 | normal |"))
         self.assertTrue(any("does not exist" in e for e in errors))
 
+    def test_word_answer_is_not_technical(self):
+        errors, *_ = ec.check(GOOD.replace("Answer: open: P1", "Answer: na 2:00. Technisch, aanbeveling van de agent."))
+        self.assertTrue(any("is a product question" in e for e in errors))
+
 
 if __name__ == "__main__":
     unittest.main()

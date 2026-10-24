@@ -11,6 +11,8 @@ The script checks:
   - Each rule with "(limit: ...)" has the cases below, at, and above.
   - Each example row names a rule that exists, and has a source.
   - Each "open: P<n>" source has a question P<n> under Open questions.
+  - No word with more than one meaning in a criterion has a technical or an assumed
+    answer. A word of a technical contract, marked "(contract)", can have one.
 
 It prints the rules that wait for an answer. Exit code 1 means one or more errors.
 It uses the Python standard library only.
@@ -28,6 +30,7 @@ RULE = re.compile(r"^\s*[-*]\s+(AC\d+\s+R\d+)\b(.*)$")
 LIMIT = re.compile(r"\(limit:", re.I)
 ROW = re.compile(r"^\|(.+)\|\s*$")
 QUESTION = re.compile(r"^\s*[-*]\s+(P\d+)\b")
+GUESS = re.compile(r"\b(technical|technisch|assumed|aangenomen|recommendation of the agent|aanbeveling van de agent)\b", re.I)
 
 
 def sections(text):
@@ -88,6 +91,10 @@ def check(text):
             missing = {"below", "at", "above"} - cases[rule]
             if missing:
                 errors.append(f"{rule} has a limit, but no example for: {', '.join(sorted(missing))}")
+    for line in sec.get("Words with more than one meaning", []):
+        word, _, answer = line.partition("Answer:")
+        if GUESS.search(answer) and "(contract" not in word.lower():
+            errors.append(f"A word with more than one meaning is a product question, not a technical or assumed answer: {line.strip()[:80]}")
     questions = {m.group(1) for line in sec.get("Open questions", []) if (m := QUESTION.match(line))}
     for rule, q in sorted(waiting):
         if q not in questions:
