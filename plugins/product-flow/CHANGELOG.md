@@ -6,6 +6,17 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-24
+
+### Added
+
+- The skill `example-mapping`, as a business analyst (BA): it turns one approved item into rules, examples, and questions before the build, in `examples.md`. It gives an example below, at, and above each limit. It lists the words with more than one meaning. It searches the existing decisions before it asks the PO. `examplecheck.py` checks the file. `dev-flow:plan-and-build` starts it for each small, medium, or large item.
+- Rule A10 of `backlog-story`: each acceptance criterion has one or more concrete examples (Given/When/Then, or a table) in an "Examples" section. A team profile turns it off with `examples: no`.
+
+### Changed
+
+- Rule A5: the criteria stay a checklist of rules, and the examples go under "Examples".
+
 ## [1.2.0] - 2026-10-16
 
 ### Added
@@ -58,7 +69,8 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 - The shared language rules: English in ASD-STE100 Simplified Technical English, and Dutch in Begrijpelijk Nederlands (B1).
 - Test results for each skill against a baseline without the skill.
 
-[Unreleased]: https://github.com/Charmedme/maikelsoft-skills/compare/product-flow-v1.2.0...HEAD
+[Unreleased]: https://github.com/Charmedme/maikelsoft-skills/compare/product-flow-v1.3.0...HEAD
+[1.3.0]: https://github.com/Charmedme/maikelsoft-skills/compare/product-flow-v1.2.0...product-flow-v1.3.0
 [1.2.0]: https://github.com/Charmedme/maikelsoft-skills/compare/product-flow-v1.1.0...product-flow-v1.2.0
 [1.1.0]: https://github.com/Charmedme/maikelsoft-skills/compare/product-flow-v1.0.0...product-flow-v1.1.0
 [1.0.0]: https://github.com/Charmedme/maikelsoft-skills/releases/tag/product-flow-v1.0.0

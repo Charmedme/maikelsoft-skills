@@ -24,6 +24,7 @@ claude plugin install product-flow@maikelsoft-skills
 | `backlog-goal` | Write or review a product goal or a sprint goal. |
 | `product-prototype` | Build a throwaway clickable prototype with your design system or branding, to test one question. |
 | `backlog-push` | Put a drafted backlog into Jira, Azure DevOps, GitHub, GitLab, or Linear, or into files. |
+| `example-mapping` | Turn one approved item into rules, examples, and questions for the PO before the build (`examples.md`). |
 
 ## Quick start
 
@@ -65,9 +66,15 @@ One file holds the full run: `backlog-<slug>.md`. It has the request, the source
 
 At the start, the skills ask which template applies. A team profile is one Markdown file with the standard of the team, for example an MVP framework. It wins over the rules of the skills where they conflict. Its "Checker" section can allow Given/When/Then, criteria on an epic, and a title format. Without a profile, the skills use the template of the ticket system or their own templates. Acceptance criteria are then a short rule list, not Given/When/Then.
 
+Each criterion has one or more concrete examples in an "Examples" section (rule A10). A profile turns that rule off with `examples: no`.
+
 ### Open questions
 
 The context file keeps each open question one time, with its owner and status. Items refer to it by number (O1, O2). The G3 summary gives the open questions for each owner, so the list can go to a refinement or a customer meeting.
+
+### Example mapping
+
+`example-mapping` works as a BA on one approved item, before the build. It lists the rules of each criterion and gives an example below, at, and above each limit. It lists the words with more than one meaning. Then it searches the existing decisions, for example the Decisions table of the context file. Only the rules without an answer go to the PO, each with a recommended answer. `dev-flow:plan-and-build` starts it for each small, medium, or large item.
 
 ### Duplicates
 
@@ -81,6 +88,7 @@ The skills use these scripts. They use only the Python standard library.
 |--------|--------|
 | `backlogcheck.py` | Stories, features, epics, and goals: role, value, criteria, edge cases, scope, measures, size. |
 | `backlogtree.py` | The tree of the draft, possible duplicates, the push log (to continue a push that stopped), and the file export. |
+| `examplecheck.py` | `examples.md`: each rule has an example, each limit has the cases below, at, and above, and each open example has a question. |
 | `protocheck.py` | The prototype: the banner, the question, the states, no external calls. |
 | `doccheck.py` | The language rules of this repository. |
 
