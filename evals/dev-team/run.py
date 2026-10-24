@@ -2,7 +2,7 @@
 """Make the run folders of the dev-team evals and start one headless claude run in each.
 
     python3 evals/dev-team/run.py <runs> [--eval get-order ...] [--arm team baseline] [--runs-per-arm 3]
-                                  [--parallel 3] [--budget 40] [--model opus]
+                                  [--parallel 3] [--budget 15] [--model opus]
 
 Each run gets <runs>/<eval>/<arm>/<n>/repo (a git repository with the orders-api fixture on main)
 and writes stream.jsonl and stderr.log next to it. A run folder that has a stream.jsonl is skipped.
@@ -17,6 +17,9 @@ import os
 import pathlib
 import subprocess
 import sys
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
+import runwatch  # noqa: E402
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
@@ -52,11 +55,7 @@ def start(run, ev, arm, cfg, args):
     # Each run has its own profile, so that runs at the same time do not share earlier answers.
     env["DEV_TEAM_PROFILE"] = str(run.resolve() / "profile.md")
     env["PATH"] = env.get("PATH", "") + os.pathsep + str(pathlib.Path.home() / ".dotnet")
-    with open(run / "stream.jsonl", "w") as out, open(run / "stderr.log", "w") as err:
-        try:
-            code = subprocess.run(cmd, cwd=repo, env=env, stdout=out, stderr=err, timeout=args.timeout).returncode
-        except subprocess.TimeoutExpired:
-            code = "timeout"
+    code = runwatch.run_watched(cmd, repo, env, run, {"max_minutes": args.max_minutes, "stall_minutes": args.stall_minutes})
     # Free disk space: the scorer builds again, and Docker keeps the volumes of stopped containers.
     for name in ("bin", "obj", "TestResults"):
         for folder in list(repo.rglob(name)):
@@ -73,9 +72,10 @@ def main(argv=None):
     parser.add_argument("--arm", nargs="*", default=["team", "baseline"])
     parser.add_argument("--runs-per-arm", type=int, default=3)
     parser.add_argument("--parallel", type=int, default=3)
-    parser.add_argument("--budget", type=float, default=40)
+    parser.add_argument("--budget", type=float, default=15)
     parser.add_argument("--model", default="opus")
-    parser.add_argument("--timeout", type=int, default=5400)
+    parser.add_argument("--max-minutes", type=float, default=25, help="stop a run after this wall time")
+    parser.add_argument("--stall-minutes", type=float, default=6, help="stop a run without output for this time")
     args = parser.parse_args(argv)
     cfg = json.loads((HERE / "evals.json").read_text(encoding="utf-8"))
     jobs = []

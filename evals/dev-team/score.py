@@ -76,7 +76,9 @@ def usage(run):
                 except ValueError:
                     pass
     last = results[-1] if results else {}
+    stop = run / "stop.json"
     return {
+        "stop": json.loads(stop.read_text(encoding="utf-8"))["reason"] if stop.exists() else "none",
         "cost_usd": round(max((r.get("total_cost_usd", 0.0) for r in results), default=0.0), 2),
         "minutes": round(sum(r.get("duration_ms", 0) for r in results) / 60000, 1),
         "turns": sum(r.get("num_turns") or 0 for r in results),
@@ -257,7 +259,7 @@ def main(argv=None):
         (run / "checks.json").write_text(json.dumps({"results": res, "usage": u}, indent=1), encoding="utf-8")
         passed = sum(r["ok"] for r in res)
         fails = ",".join(r["id"] for r in res if not r["ok"]) or "-"
-        print(f"{name:13} {arm:9} {n:3} {passed}/{len(res)} fail={fails} ${u['cost_usd']} {u['minutes']}min")
+        print(f"{name:13} {arm:9} {n:3} {passed}/{len(res)} fail={fails} ${u['cost_usd']} {u['minutes']}min" + (f" STOP: {u['stop']}" if u['stop'] != 'none' else ""))
         table.append({"eval": name, "arm": arm, "run": n, "passed": passed, "total": len(res), "fails": fails, **{k: u[k] for k in ("cost_usd", "minutes", "turns")}})
     (args.runs / "scores.json").write_text(json.dumps(table, indent=1), encoding="utf-8")
     return 0
