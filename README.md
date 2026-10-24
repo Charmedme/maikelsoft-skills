@@ -38,7 +38,7 @@ claude plugin install <plugin>@maikelsoft-skills
 | .NET code | `dev-stack` | The stack is not .NET |
 | Docs to write or review | `dev-docs` | |
 | A skill or an agent to build | `dev-build` | |
-| Screens or a flow to design | `ux-design` | |
+| Screens or a flow to design | `ux-design` | The story has no user interface, or you only want one quick visual idea |
 
 Each plugin README has a section "When it helps".
 

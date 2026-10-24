@@ -54,6 +54,22 @@ pip install playwright
 - **The design system wins, and gets checked.** Without a design system, the agent makes a minimal foundation in the work folder. With one, it audits it first. It reports each fault in `design-system-issues.md` and fixes the serious ones in a marked `ds-fixes.css`. It never changes the design system of the project.
 - **Facts by tools.** `uxcheck.py design` checks the spec, the source tags, the states, and the failure paths. `uxcheck.py mockup` renders each mockup and finds tells: colors and sizes outside the tokens, more than one primary action, nested surfaces, unlabeled inputs, and low contrast. `uxcheck.py system` audits a design system.
 
+## When it helps
+
+Use it when:
+
+- A story changes screens, and a developer or an agent builds them. The design spec gives each screen 10 decisions with a source, so the build does not guess.
+- The states matter: errors, empty lists, slow or failed saves, no permission. The plugin designs each state and makes a mockup frame for it.
+- The project has no design system, or a design system with faults. The plugin makes a foundation, or it reports the faults and keeps them out of the mockups.
+- The same kind of story comes back often. The same story gives the same main decisions in 89% to 100% of the run pairs.
+- You use Sonnet. On Sonnet, the plugin wins each criterion against Sonnet without the plugin.
+
+Do not use it when:
+
+- The story has no user interface, for example backend work or boilerplate.
+- You only want one quick visual idea. On Opus, the mockups without the plugin have as much product detail and clarity, at about half the cost.
+- Nobody reads the proposed decisions and the opportunities. They wait for the product owner, and without a reader they add cost and no value.
+
 ## Test results
 
 We tested the plugin in four iterations on a fictional field-service product. There were three fixtures: a strong design system, no design system, and a design system with 9 planted faults. Each variant ran 3 times for each case. Blind graders compared the results in pairs. The full results are in [`evals/ux-design/results-2026-10-24.md`](../../evals/ux-design/results-2026-10-24.md).
