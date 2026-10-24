@@ -26,6 +26,7 @@ claude plugin install <plugin>@maikelsoft-skills
 | [product-flow](plugins/product-flow/README.md) | 1.2.0 | Takes a product idea to an approved backlog in the ticket system, for product owners and business analysts. Seven skills: research, questions, prototype, spec, items, and push. |
 | [dev-stack](plugins/dev-stack/README.md) | 1.1.0 | Stack skills for a .NET 10 team. They cover C#, ASP.NET Core, OpenAPI, validation, EF Core, SQL Server, PostgreSQL, MSTest 4, and analyzers. Also observability, Redis, Elasticsearch, RabbitMQ, Wolverine, MailKit, PuppeteerSharp, secure coding, and the move to AwesomeAssertions. Each skill has version-specific rules, a check step with a tool, and one report format. |
 | [dev-team](plugins/dev-team/README.md) | 0.3.0 | Preview. Delivers one large or risky work item with a team of agents. A senior designs and builds the core, mediors build work packages, and a security reviewer checks the diff. Two human gates. Needs dev-stack. |
+| [ux-design](plugins/ux-design/README.md) | 0.1.0 | Preview. A UX designer agent that frames the problem and designs the flow, the patterns, the screens, and the states, with a source for each decision. It audits the design system or makes a foundation, and makes mockups from it. |
 
 ## Language rules
 

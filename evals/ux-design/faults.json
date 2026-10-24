@@ -1,0 +1,156 @@
+[
+  {
+    "id": "F1",
+    "fault": "Muted text contrast 2.5:1",
+    "doc": [
+      [
+        "muted"
+      ],
+      [
+        "contrast",
+        "4.5",
+        "2.5",
+        "2.3",
+        "2.2"
+      ]
+    ],
+    "tell": "TELL-11"
+  },
+  {
+    "id": "F2",
+    "fault": "Light accent: white text on the accent fails",
+    "doc": [
+      [
+        "accent",
+        "primary button",
+        "teal"
+      ],
+      [
+        "contrast",
+        "4.5",
+        "lighter",
+        "darker",
+        "darken"
+      ]
+    ],
+    "tell": "TELL-11"
+  },
+  {
+    "id": "F3",
+    "fault": "Warning status contrast 2.2:1",
+    "doc": [
+      [
+        "warning"
+      ],
+      [
+        "contrast",
+        "4.5",
+        "2.2"
+      ]
+    ],
+    "tell": "TELL-11"
+  },
+  {
+    "id": "F4",
+    "fault": "Chaotic type scale, 10px table header",
+    "doc": [
+      [
+        "10px",
+        "11px",
+        "type scale",
+        "font size",
+        "font-size",
+        "sizes"
+      ],
+      [
+        "scale",
+        "token",
+        "off",
+        "too small",
+        "10px"
+      ]
+    ],
+    "tell": null
+  },
+  {
+    "id": "F5",
+    "fault": "Gradient on the primary button",
+    "doc": [
+      [
+        "gradient"
+      ],
+      [
+        "button",
+        "primary",
+        "remove",
+        "flat",
+        "fix"
+      ]
+    ],
+    "tell": "TELL-05"
+  },
+  {
+    "id": "F6",
+    "fault": "Focus outline removed",
+    "doc": [
+      [
+        "focus",
+        "outline"
+      ],
+      [
+        "visible",
+        "removed",
+        "none",
+        "missing",
+        "keyboard"
+      ]
+    ],
+    "tell": null
+  },
+  {
+    "id": "F7",
+    "fault": "Status by color dot only",
+    "doc": [
+      [
+        "dot",
+        "color only",
+        "colour only"
+      ],
+      [
+        "text",
+        "word",
+        "label",
+        "1.4.1",
+        "color alone",
+        "colour alone"
+      ]
+    ],
+    "tell": null
+  },
+  {
+    "id": "F8",
+    "fault": "Placeholder as the label",
+    "doc": [
+      [
+        "placeholder"
+      ],
+      [
+        "label"
+      ]
+    ],
+    "tell": "TELL-09"
+  },
+  {
+    "id": "F9",
+    "fault": "Card around each table (nested surfaces)",
+    "doc": [
+      [
+        "card"
+      ],
+      [
+        "table"
+      ]
+    ],
+    "tell": "TELL-04"
+  }
+]

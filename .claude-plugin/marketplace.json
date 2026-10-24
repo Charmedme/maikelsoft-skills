@@ -137,6 +137,25 @@
         "dutch",
         "b1"
       ]
+    },
+    {
+      "name": "ux-design",
+      "source": "./plugins/ux-design",
+      "description": "A UX designer agent and its practice skills: problem frame, flow, pattern rules, design spec with a source for each decision, states, design-system audit, and mockups.",
+      "category": "design",
+      "tags": [
+        "ux",
+        "design",
+        "agents",
+        "patterns",
+        "states",
+        "mockups",
+        "design-system",
+        "asd-ste100",
+        "simplified-technical-english",
+        "dutch",
+        "b1"
+      ]
     }
   ]
 }
