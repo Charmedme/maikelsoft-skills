@@ -88,13 +88,12 @@ Use dev-team when a wrong guess costs more than the extra time and money, or whe
 
 Use it when:
 
-- You ask for a full record: a design, ADRs, a decision index, reviews, and a security review.
+- You need a full record: a design, ADRs, a decision index, reviews, and a security review.
 - The change is risky, and a separate security review of the diff is worth the cost.
-- You want to compare the work of a team with the work of one session.
 
-It helps less when:
+Do not use it when:
 
-- You want a correct result at a low cost. In each test, one session with `dev-flow:plan-and-build` passed the same hidden tests at a third to a half of the cost. dev-team costs 10 to 13 times the baseline.
+- You want a correct result at a low cost. One session with `dev-flow:plan-and-build` gets the same result. The team costs about 10 times as much as plain Claude Code.
 - You want a fast result. A team run takes 15 to 40 minutes.
 - The stack is not .NET. The stack skills cover .NET only.
 

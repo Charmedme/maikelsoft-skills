@@ -119,22 +119,20 @@ In a scheduled or unattended run, the skill takes its recommended answer for a t
 
 ## When it helps
 
-The tests show where the skill adds value, and where plain Claude Code is enough.
-
 Use it when:
 
-- The item has rules with limits: a period, an amount, a count, a time. Example mapping writes an example below, at, and above each limit. On zitten-kloten, this fixed the time limit boundary in 6 of 6 runs. No run without it had the boundary correct.
-- A wrong guess is expensive, and a person must approve the specification. The gate Spec shows the rules, the examples, and the source of each answer on one page.
+- The item has business rules with limits, for example a period, an amount, a count, or a time. Example mapping gives an example below, at, and above each limit. Without it, a model often does not test the exact limit.
+- A wrong result costs more than the extra time. The gate Spec shows the rules, the examples, and the source of each answer on one page, before code exists.
 - The tests must stay the contract. The lock and the hook stop an agent that changes a test to make it pass.
-- A fact of the human or the PO is missing. The skill stops and asks. A run without a plugin guesses and builds.
-- You want a record: examples, decisions, and a report for each gate.
+- The item can miss facts. The skill stops and asks the PO. Without the skill, the model guesses and builds.
+- You need a record of the work: examples, decisions, and a report.
 
-It helps less when:
+Do not use it when:
 
-- The fix is small and clear. A run without a plugin passes the same hidden tests on the synthetic fixture, at a half to a third of the cost and faster.
-- The item is ambiguous in a way that the model does not see. The skill did not ask "which pile" in 6 of 6 runs. Only the human at the gate Spec can catch that.
-- Nobody reads the gate Spec. The value of the gate is the human check. Without it, the cost is about 2 times the baseline (Sonnet: $1 to $1.70 against $0.65) for a small gain.
-- You explore or prototype. Use `product-flow:product-prototype`, or plain Claude Code.
+- The change is small and clear, for example a typo, a config value, or a bug with a known cause. Plain Claude Code gives the same result faster and at a lower cost.
+- You explore or make a prototype. The gates slow you down, and the tests get thrown away. Use `product-flow:product-prototype` or plain Claude Code.
+- Nobody reads the gate Spec. Its value is the human check. A model does not see each word with two meanings, and it can take a related decision as the answer. Without a reader, you pay about 2 times the cost for a small gain.
+- There is no item and no PO. Make the item first with `product-flow`.
 
 ## Test results
 
@@ -158,7 +156,7 @@ Each delivered run passes the build, the tests, the package policy, and each hid
 - The product question path is tested only unattended: no test posted a comment to a real tracker.
 - The hand-off to `dev-team` ran in one test run only.
 - On the synthetic fixture, a run without a plugin passes the same hidden tests at a lower cost. The value of the flow is in the gates, the lock, and the questions, not in a higher test score.
-- Example mapping finds a gap only when the run reads the criterion closely. Refer to the [zitten-kloten results](../../docs/work/flow-scale/zk-results.md).
+- Example mapping does not find each ambiguity. The human at the gate Spec still reads the examples and their sources.
 
 ## Documentation
 

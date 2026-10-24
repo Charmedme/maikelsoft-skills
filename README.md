@@ -33,14 +33,14 @@ claude plugin install <plugin>@maikelsoft-skills
 | You have | Use | Skip it when |
 |----------|-----|--------------|
 | An idea, not yet items | `product-flow` | You build it yourself and know what to build |
-| An approved item with rules and limits | `dev-flow` | The fix is small and clear: plain Claude Code passes the same tests at a lower cost |
-| A risky item, and you need a full record | `dev-team` | You want a fast or cheap result: one session with `dev-flow` passes the same tests |
+| An approved item with rules and limits | `dev-flow` | The change is small and clear: plain Claude Code is faster and cheaper |
+| A risky item, and you need a full record | `dev-team` | You want a fast or cheap result: one session with `dev-flow` gets the same result |
 | .NET code | `dev-stack` | The stack is not .NET |
 | Docs to write or review | `dev-docs` | |
 | A skill or an agent to build | `dev-build` | |
 | Screens or a flow to design | `ux-design` | |
 
-Each plugin README has a section "When it helps", with the test results behind it.
+Each plugin README has a section "When it helps".
 
 ## Language rules
 

@@ -100,17 +100,16 @@ In a scheduled or unattended run, the skill takes its recommended answers and ma
 
 Use it when:
 
-- An idea must become items that other people build: a team, an agency, or agents. The skills write role, value, criteria, examples, and scope in one standard.
-- The idea is not clear yet. The questions and the prototype find what the requester means before a backlog exists.
+- An idea must become items that other people or agents build. The items get one standard: role, value, criteria, examples, and scope.
+- The idea is not clear yet. The questions and the prototype find what the requester means before the backlog exists.
 - Your team has a standard, for example an MVP framework. A team profile makes the skills follow it.
 - An item goes to a build. `example-mapping` finds the limits and the words with more than one meaning, and searches the existing decisions first.
 
-It helps less when:
+Do not use it when:
 
 - You know what to build and you build it yourself. Write one item, or go to `dev-flow:plan-and-build`.
 - The work is a bug or a chore. One clear item is enough.
-- You need a decision of the business. The skills prepare the question with a recommended answer. They do not decide.
-- You expect the skills to find each ambiguity. In the tests, the model did not see some words with two meanings. The PO still reads the examples.
+- You need a decision of the business. The skills prepare each question with a recommended answer. The PO decides.
 
 ## Limits
 
