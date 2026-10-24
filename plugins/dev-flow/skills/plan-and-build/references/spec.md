@@ -36,8 +36,21 @@ Find the place first: the project guide, or an acceptance folder that exists. El
    ```
 
    The test cases are locked: the hook blocks each edit. The DSL is watched: you can add methods, and `check` lists each change for the review. The driver is free: it is plumbing.
-7. **Build with TDD.** Write unit tests and code until all acceptance tests and all unit tests pass. Change the driver when the protocol needs it.
-8. **Check the lock.** Before each commit and before the gate Done, run `speclock.py check`. It must show 0 changes.
+7. **Build one scenario at a time.** Take the next acceptance test, in the order of the examples:
+   1. Run it: it must be red.
+   2. Write unit tests and code until it is green. All acceptance tests that were green stay green.
+   3. Review the diff of this step: is it the smallest change that makes the scenario pass?
+   4. Run `speclock.py check`, and commit: `<item key>: <scenario>`.
+
+   Start the next scenario only after the commit. Change the driver when the protocol needs it.
+8. **Find the holes.** After the last scenario, run the boundary mutation check on the changed code:
+
+   ```
+   python3 ${CLAUDE_SKILL_DIR}/scripts/mutate.py --base <base commit> --test "<command that runs the acceptance tests>"
+   ```
+
+   Each mutation that survives is a rule that no example checks, often a limit. For each one, look for the answer in the decisions (`example-mapping.md`, step 3). With an answer: add the example as a new acceptance test, through the gate Spec. Without an answer: it is a product question (`po-questions.md`). The project can have Stryker: `dotnet-stryker` in the tool manifest, or `@stryker-mutator` in `package.json`. Then also run it on the changed files, and give its score in the report.
+9. **Check the lock.** Before the gate Done, run `speclock.py check`. It must show 0 changes.
 
 ## When a locked test seems wrong
 

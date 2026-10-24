@@ -1,7 +1,7 @@
 ---
 name: plan-and-build
 description: Builds one approved work item (user story, bug, task, or chore) from the tracker to tested commits. Turns the examples of the item into acceptance tests first, locks them after the human approves them, and builds with TDD until they pass. Sets a tier from the size and the risk of the change, and runs only the steps of that tier. Sends product questions back to the product owner on the item. Use when the user wants an item, a ticket, a bug fix, or a story built, says "plan and build", or wants to continue a run that has a docs/work/<slug>/plan.md. Not for a new idea without an item (product-flow:idea-to-backlog).
-allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/speclock.py *), Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/workcheck.py *), Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/doccheck.py *)
+allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/speclock.py *), Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/mutate.py *), Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/workcheck.py *), Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/doccheck.py *)
 ---
 
 # Plan and build
@@ -21,7 +21,7 @@ This skill builds one approved work item. The examples on the item are the speci
 ## Start
 
 1. **Find the run.** When `docs/work/<slug>/plan.md` exists for this item, read it and continue at the first open step.
-2. **Read the item.** Read `references/intake.md` and follow it. No approved item (only an idea or a wish): stop. Tell the human to make the item first with `product-flow:idea-to-backlog`.
+2. **Read the item.** Read `references/intake.md` and follow it. For example mapping, it uses `references/example-mapping.md`. No approved item (only an idea or a wish): stop. Tell the human to make the item first with `product-flow:idea-to-backlog`.
 3. **Set the tier.** Read `references/tiers.md`. Tell the human the tier and the type in one line, with the reason. Do not wait for an answer.
 
 ## Steps of each tier
@@ -32,7 +32,7 @@ This skill builds one approved work item. The examples on the item are the speci
 | Gate Spec | No | Yes | Yes, with the ticket list | `dev-team:deliver-story` |
 | Plan | None | None | `plan.md`, `research.md`, tickets (`references/plan.md`) | `dev-team:deliver-story` |
 | Build | TDD | TDD | `references/build.md` | `dev-team:deliver-story` |
-| Review | The checks | The checks and `speclock.py check` | The same, and a review sub-agent (`references/review.md`) | `dev-team:deliver-story` |
+| Review | The checks | The checks, `speclock.py check`, and `mutate.py` | The same, and a review sub-agent (`references/review.md`) | `dev-team:deliver-story` |
 | Gate Done | Yes | Yes | Yes | `dev-team:deliver-story` |
 
 - **Patch.** Make the branch (`references/build.md`, "Before the first ticket"). Write the test that fails because of the bug. Fix the code. Run the checks and commit.
@@ -49,6 +49,7 @@ Move the tier up when the facts show more work or a risk of `references/tiers.md
 ## Checkers
 
 - `python3 ${CLAUDE_SKILL_DIR}/scripts/speclock.py approve|check|unlock`: the lock of the approved acceptance tests (`references/spec.md`).
+- `python3 ${CLAUDE_SKILL_DIR}/scripts/mutate.py --base <commit> --test "<command>"`: the boundary mutation check, which finds rules without an example (`references/spec.md`, step 8).
 - `python3 ${CLAUDE_SKILL_DIR}/scripts/workcheck.py <work folder>`: the structure of a medium work folder. With `--next`, it gives the tickets that can start now.
 - `python3 ${CLAUDE_SKILL_DIR}/scripts/doccheck.py <file>`: the language of each document that you write.
 

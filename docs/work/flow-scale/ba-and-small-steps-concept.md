@@ -51,3 +51,11 @@ Rerun zitten-kloten #36 to #39 with the new flow, on Sonnet (one third of the co
 - The known gaps that the run finds: the deadline boundary, the pause (answered by Q44), and where the old cards of the Kaartruil go.
 - The stops that it avoids because a decision answers the question.
 - The cost and the time, with the stop rules of the run script.
+
+## Decisions of the human (2026-10-24)
+
+| No | Decision |
+|----|----------|
+| B1 | The owner gave no preference for the roles. Assumption: a BA skill (example mapping) in product-flow, and the PO stays a human. |
+| B2 | In solo work, an answer that cites an existing decision counts as approved. |
+| B3 | Build one scenario at a time, the boundary mutation check, and Stryker when the project has it. |

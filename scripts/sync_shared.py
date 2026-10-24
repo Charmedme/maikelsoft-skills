@@ -18,6 +18,7 @@ other file in references/.
 
 Each skill whose SKILL.md names one of these files also gets it in references/:
     shared/po-questions.md
+    shared/example-mapping.md
 
 A SKILL.md that has these two marker lines also gets shared/workflow.md between them:
     <!-- BEGIN shared/workflow.md -->
@@ -40,7 +41,7 @@ PLUGIN_COPIES = {
     "dev-build": {SHARED / "grill.md": pathlib.Path("references") / "grill.md"},
 }
 # Shared files for each skill that names the file in its SKILL.md.
-NAMED_COPIES = [SHARED / "po-questions.md"]
+NAMED_COPIES = [SHARED / "po-questions.md", SHARED / "example-mapping.md"]
 BLOCK = re.compile(r"(<!-- BEGIN shared/workflow\.md -->\n).*?(<!-- END shared/workflow\.md -->)", re.DOTALL)
 
 
