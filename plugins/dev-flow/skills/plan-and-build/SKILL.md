@@ -1,6 +1,6 @@
 ---
 name: plan-and-build
-description: Builds one approved work item (user story, bug, task, or chore) from the tracker to tested commits. Turns the examples of the item into acceptance tests first, locks them after the human approves them, and builds with TDD until they pass. Sets a tier from the size and the risk of the change, and runs only the steps of that tier. Sends product questions back to the product owner on the item. Use when the user wants an item, a ticket, a bug fix, or a story built, says "plan and build", or wants to continue a run that has a docs/work/<slug>/plan.md. Not for a new idea without an item (product-flow:idea-to-backlog).
+description: Builds one approved work item (user story, bug, task, or chore) from the tracker to tested commits, in one session. Turns the examples of the item into acceptance tests first, locks them after the human approves them, and builds with TDD until they pass. Sets a tier from the size and the risk of the change, and runs only the steps of that tier. Sends product questions back to the product owner on the item. Use when the user wants an item, a ticket, a bug fix, or a story built, says "plan and build", or wants to continue a run that has a docs/work/<slug>/plan.md. Not for a new idea without an item (product-flow:idea-to-backlog).
 allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/speclock.py *), Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/mutate.py *), Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/workcheck.py *), Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/doccheck.py *)
 ---
 
@@ -28,17 +28,17 @@ This skill builds one approved work item. The examples on the item are the speci
 
 | Step | Patch | Small | Medium | Large |
 |------|-------|-------|--------|-------|
-| Specification | One test that fails because of the bug | Acceptance tests from the examples (`references/spec.md`) | The same | `dev-team:deliver-story` |
-| Gate Spec | No | Yes | Yes, with the ticket list | `dev-team:deliver-story` |
-| Plan | None | None | `plan.md`, `research.md`, tickets (`references/plan.md`) | `dev-team:deliver-story` |
-| Build | TDD | TDD | `references/build.md` | `dev-team:deliver-story` |
-| Review | The checks | The checks, `speclock.py check`, and `mutate.py` | The same, and a review sub-agent (`references/review.md`) | `dev-team:deliver-story` |
-| Gate Done | Yes | Yes | Yes | `dev-team:deliver-story` |
+| Specification | One test that fails because of the bug | Acceptance tests from the examples (`references/spec.md`) | The same | The same |
+| Gate Spec | No | Yes | Yes, with the ticket list | Yes, after a gate Design |
+| Plan | None | None | `plan.md`, `research.md`, tickets (`references/plan.md`) | The same |
+| Build | TDD | One scenario at a time | The same, ticket by ticket (`references/build.md`) | The same |
+| Review | The checks | The checks, `speclock.py check`, and `mutate.py` | The same, and a review sub-agent (`references/review.md`) | The same |
+| Gate Done | Yes | Yes | Yes | Yes |
 
 - **Patch.** Make the branch (`references/build.md`, "Before the first ticket"). Write the test that fails because of the bug. Fix the code. Run the checks and commit.
 - **Small.** Make the branch. Follow `references/spec.md` to the gate Spec. After the approval, lock the tests and build with TDD. No `plan.md`: the report holds the plan and the result.
 - **Medium.** Do research and technical questions (`references/research.md`, `references/plan.md`). Follow `references/spec.md`. At the gate Spec, also show the ticket list (number, title, the acceptance tests that it makes pass). Then build the tickets.
-- **Large.** Load `dev-team:deliver-story` with the Skill tool, and give it the item and the answer sheet when there is one. That skill holds the run from here. When `dev-team` is not installed, tell the human, and run the medium steps with a gate Design before the gate Spec.
+- **Large.** Run the medium steps in one session. Before the gate Spec, give a gate **Design**: the parts, the risks, and the order of the tickets. Start `dev-team:deliver-story` only when the human asks for the team. In the tests, one session passed the same hidden tests as the team at a third to a half of the cost.
 - **Team decisions.** When the repository has a team decision index (`docs/dev-team/decisions.md`): in the medium and large tier, record a new team decision with the `dev-team:team-decisions` skill. In the patch and small tier, do not change that index: list each new team decision in the report.
 - **Gate Done.** Run `speclock.py check`: it must show 0 changes. Give the report. The human decides when to close the work.
 

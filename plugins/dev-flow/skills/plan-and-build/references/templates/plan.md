@@ -40,7 +40,7 @@ Status: draft | todo | doing | blocked | done
 - Spec: open
 - Done: open
 
-Gate: open | waiting | approved | assumed. Large tier without dev-team also has the gate Design before the gate Spec.
+Gate: open | waiting | approved | assumed. Large tier also has the gate Design before the gate Spec.
 
 Add the date and one line of reason when a gate changes.
 

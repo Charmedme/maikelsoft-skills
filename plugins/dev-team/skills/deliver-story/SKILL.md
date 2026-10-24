@@ -1,6 +1,6 @@
 ---
 name: deliver-story
-description: Delivers one large or risky work item with the dev-team agents, from the approved item to tested commits on a branch. The main session is the team lead. It gets the item, starts the senior, the reflector, and the security reviewer, holds the two human gates, sends product questions to the product owner, and checks the run. Use when dev-flow:plan-and-build sets the tier large, or when the user asks the team to build an item or says "deliver this story" or "let the team do it". Not for a patch, a small change, or a medium change that one session can do (dev-flow:plan-and-build), or a review only.
+description: Delivers one large or risky work item with the dev-team agents, from the approved item to tested commits on a branch. The main session is the team lead. It gets the item, starts the senior, the reflector, and the security reviewer, holds the two human gates, sends product questions to the product owner, and checks the run. Use when the user asks the team to build an item or says "deliver this story" or "let the team do it". Not for a patch, a small change, or a medium change that one session can do (dev-flow:plan-and-build), or a review only.
 ---
 
 # Deliver a story
