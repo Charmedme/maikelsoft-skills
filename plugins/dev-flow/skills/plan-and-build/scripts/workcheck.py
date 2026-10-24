@@ -5,12 +5,15 @@ Usage:
     python3 workcheck.py <work folder> [--next] [--format text|json]
 
 The script checks:
-  - plan.md exists, and its local links point to files that exist.
-  - Each ticket file has a number, a spec link, "Blocked by", a status, and
-    acceptance criteria. A done ticket has all criteria checked.
+  - plan.md exists, has a valid tier, and its local links point to files that exist.
+  - The gates of the tier exist and are in order: Design (large) before Spec
+    before Done, and Spec before the build of a ticket.
+  - Each ticket file has a number, an "Item" line with the AC numbers that it
+    covers, "Blocked by", a status, and acceptance criteria. A done ticket has
+    all criteria checked.
+  - Each acceptance criterion of the item (lines "- AC1: ...") is in a ticket.
   - Each blocker exists, and the blockers have no cycle.
   - The ticket table in plan.md agrees with the ticket files.
-  - The gates are in order: G1 before G2, G2 before G3, G3 before the build.
 
 With --next, the script prints the tickets that can start now: status todo,
 and each blocker done. The script only reports. It does not change a file.
@@ -30,14 +33,18 @@ from dataclasses import asdict, dataclass
 STATUSES = ("draft", "todo", "doing", "blocked", "done")
 BUILD_STATUSES = ("todo", "doing", "blocked", "done")
 GATE_STATES = ("open", "waiting", "approved", "assumed")
-GATES = ("G1", "G2", "G3", "G4")
+TIERS = {"small": ("Spec", "Done"), "medium": ("Spec", "Done"), "large": ("Design", "Spec", "Done")}
+GATES = ("Design", "Spec", "Done")
 
 TICKET_NAME = re.compile(r"^(\d{2,3})-[a-z0-9][a-z0-9-]*\.md$")
 TITLE = re.compile(r"^#\s+(\d{2,3}):\s+\S")
-FIELD = re.compile(r"^\*\*(Spec|Blocked by|Status):\*\*\s*(.*?)\s*$", re.MULTILINE)
+FIELD = re.compile(r"^\*\*(Item|Blocked by|Status):\*\*\s*(.*?)\s*$", re.MULTILINE)
+TIER = re.compile(r"^\*\*Tier:\*\*\s*`?([A-Za-z]+)", re.MULTILINE)
+PLAN_AC = re.compile(r"^\s*[-*]\s+(AC\d+)\s*:", re.MULTILINE)
+AC_REF = re.compile(r"\bAC\d+\b")
 CRITERION = re.compile(r"^\s*[-*]\s+\[([ xX])\]\s+\S", re.MULTILINE)
 LINK = re.compile(r"\[[^\]]*\]\(([^)\s#]+)(?:#[^)]*)?\)")
-GATE_LINE = re.compile(r"^\s*[-*]\s+(G[1-4])\b[^:\n]*:\s*([A-Za-z]+)", re.MULTILINE)
+GATE_LINE = re.compile(r"^\s*[-*]\s+(Design|Spec|Done)\b[^:\n]*:\s*([A-Za-z]+)", re.MULTILINE)
 ROW = re.compile(r"^\|\s*(\d{2,3})\s*\|(.*)\|\s*$", re.MULTILINE)
 
 
@@ -56,6 +63,7 @@ class Ticket:
     status: str
     criteria: int
     checked: int
+    covers: list
 
 
 def numbers(text: str) -> list:
@@ -84,15 +92,12 @@ def read_ticket(path: pathlib.Path, root: pathlib.Path, out: list) -> Ticket | N
         out.append(Finding("error", rel, f"Title number {title.group(1)} differs from file number {name.group(1)}"))
 
     fields = {k: v for k, v in FIELD.findall(text)}
-    for key in ("Spec", "Blocked by", "Status"):
+    for key in ("Item", "Blocked by", "Status"):
         if key not in fields:
             out.append(Finding("error", rel, f'Missing line "**{key}:**"'))
-    spec_links = local_links(fields.get("Spec", ""))
-    if "Spec" in fields and not spec_links:
-        out.append(Finding("error", rel, "The Spec line has no link to a spec file"))
-    for target in spec_links:
-        if not (path.parent / target).resolve().is_file():
-            out.append(Finding("error", rel, f"Spec link target does not exist: {target}"))
+    covers = AC_REF.findall(fields.get("Item", ""))
+    if "Item" in fields and not covers:
+        out.append(Finding("warning", rel, "The Item line names no acceptance criterion (AC1, AC2, ...)"))
 
     status = fields.get("Status", "").strip().lower().strip("`")
     if "Status" in fields and status not in STATUSES:
@@ -107,7 +112,7 @@ def read_ticket(path: pathlib.Path, root: pathlib.Path, out: list) -> Ticket | N
     if status == "blocked" and not re.search(r"(?im)^#+\s*blocked|reason", text):
         out.append(Finding("warning", rel, "Status is blocked, but the ticket gives no reason"))
 
-    return Ticket(name.group(1), rel, numbers(fields.get("Blocked by", "")), status, len(marks), checked)
+    return Ticket(name.group(1), rel, numbers(fields.get("Blocked by", "")), status, len(marks), checked, covers)
 
 
 def find_cycle(tickets: dict) -> list:
@@ -155,8 +160,15 @@ def check(folder: pathlib.Path) -> tuple:
         if not (folder / target).resolve().exists():
             out.append(Finding("error", "plan.md", f"Link target does not exist: {target}"))
 
+    tier_match = TIER.search(plan)
+    tier = tier_match.group(1).lower() if tier_match else None
+    if tier not in TIERS:
+        out.append(Finding("error", "plan.md", f'The "**Tier:**" line must start with one of: {", ".join(TIERS)}'))
+        tier = "medium"
+    needed = TIERS[tier]
+
     gates = read_gates(plan)
-    for gate in GATES:
+    for gate in needed:
         state = gates.get(gate)
         if state is None:
             out.append(Finding("error", "plan.md", f'No line for gate {gate} in the "Gates" section'))
@@ -164,16 +176,19 @@ def check(folder: pathlib.Path) -> tuple:
             out.append(Finding("error", "plan.md", f'Gate {gate} state "{state}" is not one of: {", ".join(GATE_STATES)}'))
 
     def passed(gate):
-        return gates.get(gate) in ("approved", "assumed")
+        return gate not in needed or gates.get(gate) in ("approved", "assumed")
 
-    if passed("G2") and not passed("G1"):
-        out.append(Finding("error", "plan.md", "G2 is passed, but G1 is not"))
-    if gates.get("G2") == "assumed":
-        out.append(Finding("error", "plan.md", "G2 cannot be assumed: only a human can validate the prototype"))
-    if passed("G3") and gates.get("G2") != "approved":
-        out.append(Finding("error", "plan.md", "G3 is passed, but G2 is not approved"))
-    if passed("G4") and not passed("G3"):
-        out.append(Finding("error", "plan.md", "G4 is passed, but G3 is not"))
+    if gates.get("Spec") in ("approved", "assumed") and not passed("Design"):
+        out.append(Finding("error", "plan.md", "Spec is passed, but Design is not"))
+    if gates.get("Done") in ("approved", "assumed") and not passed("Spec"):
+        out.append(Finding("error", "plan.md", "Done is passed, but Spec is not"))
+    if gates.get("Done") == "assumed":
+        out.append(Finding("error", "plan.md", "Done cannot be assumed: only a human closes the work"))
+    waiting = re.search(r"(?ims)^##\s+Waiting for the PO\s*\n(.*?)(?=^##\s|\Z)", plan)
+    if waiting and gates.get("Spec") == "assumed" and waiting.group(1).strip().rstrip(".").lower() not in ("", "none"):
+        out.append(Finding("error", "plan.md", "Spec cannot be assumed while a question waits for the PO"))
+    if not re.search(r"(?im)^##\s+Waiting for the PO", plan):
+        out.append(Finding("warning", "plan.md", 'No "Waiting for the PO" section'))
 
     tickets = {}
     ticket_dir = folder / "tickets"
@@ -194,19 +209,19 @@ def check(folder: pathlib.Path) -> tuple:
                 out.append(Finding("error", t.path, "The ticket blocks itself"))
             elif t.status in ("doing", "done") and tickets[b].status != "done":
                 out.append(Finding("error", t.path, f"Status is {t.status}, but blocker {b} is {tickets[b].status}"))
-        if t.status in BUILD_STATUSES and not passed("G3"):
-            out.append(Finding("error", t.path, f"Status is {t.status}, but gate G3 is not passed"))
+        if t.status in BUILD_STATUSES and not passed("Spec"):
+            out.append(Finding("error", t.path, f"Status is {t.status}, but gate Spec is not passed"))
     cycle = find_cycle(tickets)
     if cycle:
         out.append(Finding("error", "tickets/", "Blocker cycle: " + " -> ".join(cycle)))
 
-    specs = sorted((folder / "specs").glob("*.md")) if (folder / "specs").is_dir() else []
-    if tickets and not specs:
-        out.append(Finding("error", "specs/", "There are tickets, but no spec in specs/"))
-    linked = {str((folder / t).resolve()) for t in local_links(plan)}
-    for spec in specs:
-        if str(spec.resolve()) not in linked:
-            out.append(Finding("warning", "plan.md", f"No link to {spec.relative_to(folder)}"))
+    if tickets and tier == "small":
+        out.append(Finding("warning", "tickets/", "Tier small has tickets: set the tier to medium"))
+    if tickets:
+        covered = {a for t in tickets.values() for a in t.covers}
+        for ac in PLAN_AC.findall(plan):
+            if ac not in covered:
+                out.append(Finding("error", "plan.md", f"{ac} of the item is in no ticket"))
 
     rows = {}
     for number, rest in ROW.findall(plan):
@@ -217,11 +232,13 @@ def check(folder: pathlib.Path) -> tuple:
             out.append(Finding("error", "plan.md", f"Ticket {n} is not in the ticket table"))
             continue
         cells = rows[n]
-        if len(cells) >= 3:
-            if sorted(numbers(cells[1])) != sorted(t.blocked_by):
+        if len(cells) >= 4:
+            if sorted(numbers(cells[2])) != sorted(t.blocked_by):
                 out.append(Finding("error", "plan.md", f"Ticket {n}: 'Blocked by' differs from the ticket file"))
-            if cells[2].lower().strip("`* ") != t.status:
-                out.append(Finding("error", "plan.md", f"Ticket {n}: status '{cells[2]}' differs from the ticket file ({t.status})"))
+            if cells[3].lower().strip("`* ") != t.status:
+                out.append(Finding("error", "plan.md", f"Ticket {n}: status '{cells[3]}' differs from the ticket file ({t.status})"))
+        else:
+            out.append(Finding("error", "plan.md", f"Ticket {n}: the row needs the columns Ticket, AC, Blocked by, Status"))
         if not any(pathlib.Path(x).name == pathlib.Path(t.path).name for x in local_links(cells[0] if cells else "")):
             out.append(Finding("warning", "plan.md", f"Ticket {n}: the table has no link to {t.path}"))
     for n in rows:
@@ -270,7 +287,7 @@ def main(argv=None) -> int:
                 print(f"NEXT {t.number} {t.path}")
         else:
             print("NEXT none")
-    gate_text = " ".join(f"{g}={gates.get(g, '?')}" for g in GATES)
+    gate_text = " ".join(f"{g}={gates.get(g, '?')}" for g in GATES if g in gates)
     print(f"workcheck: {errors} errors, {warnings} warnings | {len(tickets)} tickets, {done} done | {gate_text}")
     return 1 if errors else 0
 

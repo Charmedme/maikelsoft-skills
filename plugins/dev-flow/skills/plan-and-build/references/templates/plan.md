@@ -1,32 +1,46 @@
-# Plan: <Title>
+# Plan: <item key> <item title>
 
-**Goal:** <One or two sentences: the problem and the result for the user.>
-**Size:** <small | medium | large>
-**Phase:** <research | grill | plan | prototype | build | review | done>
+**Item:** <link to the item, or the path of the item file>
 
-## Documents
+**Tier:** <small | medium | large> <type: bug | refactor | feature | chore>. <reason in one line>
 
-- [Research](research.md)
-- [Decisions](decisions.md)
-- [<Spec name>](specs/<name>.md)
+**Step:** <research | questions | plan | build | review | done>
 
-## Tickets
+## Item
 
-| No | Ticket | Blocked by | Status |
-|----|--------|------------|--------|
-| 01 | [<Title>](tickets/01-<slug>.md) | None | draft |
-| 02 | [<Title>](tickets/02-<slug>.md) | 01 | draft |
+Acceptance criteria (verbatim from the item):
+
+- AC1: <...>
+- AC2: <...>
+
+PO decisions that the work touches:
+
+- <decision, with the link to the comment or the record. Or "None.">
+
+## Research
+
+A link to [research.md](research.md).
+
+## Plan
+
+The ticket table and a link to [decisions.md](decisions.md). The acceptance tests are in `<path of the Specs folder>`.
+
+| No | Ticket | AC | Blocked by | Status |
+|----|--------|----|------------|--------|
+| 01 | [<Title>](tickets/01-<slug>.md) | AC1 | None | draft |
 
 Status: draft | todo | doing | blocked | done
 
+## Waiting for the PO
+
+<Each product question, the link of the comment, and the answer with its date when it comes. Or "None.">
+
 ## Gates
 
-- G1 Shared understanding: open
-- G2 Prototype validated: open
-- G3 Tickets approved: open
-- G4 Done: open
+- Spec: open
+- Done: open
 
-Gate: open | waiting | approved | assumed
+Gate: open | waiting | approved | assumed. Large tier also has the gate Design before the gate Spec.
 
 Add the date and one line of reason when a gate changes.
 

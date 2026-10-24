@@ -22,6 +22,9 @@ import re
 import subprocess
 import sys
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
+import runwatch  # noqa: E402
+
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 sys.path.insert(0, str(HERE))
@@ -91,11 +94,7 @@ def start(run, ev, variant, args):
            "--output-format", "stream-json", "--verbose", "--max-budget-usd", str(args.budget)]
     env = {k: v for k, v in os.environ.items() if k not in PARENT_VARS}
     env["PATH"] = env.get("PATH", "") + os.pathsep + str(pathlib.Path.home() / ".dotnet")
-    with open(run / "stream.jsonl", "w") as out, open(run / "stderr.log", "w") as err:
-        try:
-            code = subprocess.run(cmd, cwd=repo, env=env, stdout=out, stderr=err, timeout=args.timeout).returncode
-        except subprocess.TimeoutExpired:
-            code = "timeout"
+    code = runwatch.run_watched(cmd, repo, env, run, {"max_minutes": args.max_minutes, "stall_minutes": args.stall_minutes})
     (run / "final.md").write_text(final_message(run / "stream.jsonl"), encoding="utf-8")
     clean(repo)
     return f"{run.relative_to(args.runs)} exit {code}"
@@ -110,7 +109,8 @@ def main(argv=None):
     parser.add_argument("--parallel", type=int, default=4)
     parser.add_argument("--budget", type=float, default=10)
     parser.add_argument("--model", default="opus")
-    parser.add_argument("--timeout", type=int, default=3600)
+    parser.add_argument("--max-minutes", type=float, default=25, help="stop a run after this wall time")
+    parser.add_argument("--stall-minutes", type=float, default=6, help="stop a run without output for this time")
     args = parser.parse_args(argv)
     evals = cases.load_list()
     jobs = []

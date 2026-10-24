@@ -18,6 +18,7 @@ Needs Python 3.9 or later, git, the dotnet CLI, and Docker for the integration t
 import argparse
 import importlib.util
 import json
+import re
 import pathlib
 import subprocess
 import sys
@@ -75,7 +76,9 @@ def usage(run):
                 except ValueError:
                     pass
     last = results[-1] if results else {}
+    stop = run / "stop.json"
     return {
+        "stop": json.loads(stop.read_text(encoding="utf-8"))["reason"] if stop.exists() else "none",
         "cost_usd": round(max((r.get("total_cost_usd", 0.0) for r in results), default=0.0), 2),
         "minutes": round(sum(r.get("duration_ms", 0) for r in results) / 60000, 1),
         "turns": sum(r.get("num_turns") or 0 for r in results),
@@ -102,6 +105,53 @@ def check_code_unchanged(repo):
 def check_no_push(run):
     pushes = [c for c in commands(run) if "git push" in c or "gh pr create" in c or "/pulls" in c]
     return not pushes, pushes[:3]
+
+
+TIER_LINE = re.compile(r"\btier(?::| to| is)\W{0,6}(patch|small|medium|large)\b", re.IGNORECASE)
+
+
+def assistant_text(run):
+    """The text blocks that the agents wrote, from stream.jsonl (not the tool results)."""
+    out = []
+    path = run / "stream.jsonl"
+    if not path.is_file():
+        return ""
+    for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
+        try:
+            d = json.loads(line)
+        except ValueError:
+            continue
+        if d.get("type") == "assistant":
+            out += [c.get("text", "") for c in d.get("message", {}).get("content", []) if c.get("type") == "text"]
+        elif d.get("type") == "result":
+            out.append(d.get("result") or "")
+    return "\n".join(out)
+
+
+def check_tier(run, expected):
+    """The tier that the run states (plan.md, else the text of the agents), against the expected tiers."""
+    repo = run / "repo"
+    texts = [p.read_text(encoding="utf-8", errors="ignore") for p in sorted(repo.glob("docs/work/*/plan.md"))]
+    texts.append(assistant_text(run))
+    for text in texts:
+        m = TIER_LINE.search(text)
+        if m:
+            tier = m.group(1).lower()
+            return tier in expected, tier
+    return False, "no tier line"
+
+
+def check_speclock(repo):
+    """The run locked its acceptance tests, and no locked file changed after the approval."""
+    lock = repo / ".dev-flow" / "spec-lock.json"
+    if not lock.is_file():
+        return False, "no .dev-flow/spec-lock.json"
+    files = json.loads(lock.read_text(encoding="utf-8")).get("files", {})
+    if not files:
+        return False, "the lock file has no files"
+    script = ROOT / "plugins" / "dev-flow" / "skills" / "plan-and-build" / "scripts" / "speclock.py"
+    p = subprocess.run([sys.executable, str(script), "check"], cwd=repo, capture_output=True, text=True)
+    return p.returncode == 0, p.stdout.strip().splitlines()[-3:]
 
 
 def run_folder(repo):
@@ -162,6 +212,10 @@ def score(ev, run, arm, only=None):
             ok, got = check_code_unchanged(repo)
         elif kind == "no_push":
             ok, got = check_no_push(run)
+        elif kind == "speclock_clean":
+            ok, got = check_speclock(repo)
+        elif kind == "tier":
+            ok, got = check_tier(run, a["expected"])
         elif kind == "runcheck_clean":
             ok, got = check_runcheck(repo)
         elif kind == "decisioncheck_no_new":
@@ -205,7 +259,7 @@ def main(argv=None):
         (run / "checks.json").write_text(json.dumps({"results": res, "usage": u}, indent=1), encoding="utf-8")
         passed = sum(r["ok"] for r in res)
         fails = ",".join(r["id"] for r in res if not r["ok"]) or "-"
-        print(f"{name:13} {arm:9} {n:3} {passed}/{len(res)} fail={fails} ${u['cost_usd']} {u['minutes']}min")
+        print(f"{name:13} {arm:9} {n:3} {passed}/{len(res)} fail={fails} ${u['cost_usd']} {u['minutes']}min" + (f" STOP: {u['stop']}" if u['stop'] != 'none' else ""))
         table.append({"eval": name, "arm": arm, "run": n, "passed": passed, "total": len(res), "fails": fails, **{k: u[k] for k in ("cost_usd", "minutes", "turns")}})
     (args.runs / "scores.json").write_text(json.dumps(table, indent=1), encoding="utf-8")
     return 0

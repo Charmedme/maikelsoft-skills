@@ -4,7 +4,7 @@ dev-team is a Claude Code plugin that delivers one user story with a small team 
 
 English output follows ASD-STE100 Simplified Technical English. Dutch output follows Begrijpelijk Nederlands (taalniveau B1).
 
-Status: version 0.2.0, preview. Read the test results below before you use it on real work.
+Status: version 0.3.0, preview. Since 0.3.0, `dev-flow:plan-and-build` builds each item in one session and starts dev-team only when you ask for the team. Product questions of the senior go to the product owner as a comment on the item. Read the test results below before you use it on real work.
 
 ## Install
 
@@ -82,7 +82,20 @@ The cost and time are medians. What this means:
 - The team leaves a full record: design, ADRs, decision index, reviews, security review, and a G2 report.
 - The team costs about 10 times as much (light mode) to 13 times as much (full mode), and it takes much longer.
 
-Use dev-team when a wrong guess costs more than the extra time and money, or when you need the record. Use plain Claude Code for small, clear changes.
+Use dev-team when a wrong guess costs more than the extra time and money, or when you need the record. For a patch, a small, or a medium item, use `dev-flow:plan-and-build`. In the tests it passed the same hidden acceptance tests at 3 to 5 times lower cost.
+
+## When it helps
+
+Use it when:
+
+- You need a full record: a design, ADRs, a decision index, reviews, and a security review.
+- The change is risky, and a separate security review of the diff is worth the cost.
+
+Do not use it when:
+
+- You want a correct result at a low cost. One session with `dev-flow:plan-and-build` gets the same result. The team costs about 10 times as much as plain Claude Code.
+- You want a fast result. A team run takes 15 to 40 minutes.
+- The stack is not .NET. The stack skills cover .NET only.
 
 ## Limits
 

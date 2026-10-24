@@ -1,43 +1,38 @@
-# Phase 3: Plan
+# Plan (medium and large tier)
 
-Turn the decisions into separate documents. Do not ask new questions here. If a decision is missing, go back to phase 2 for that decision only.
-
-Each item is a separate file:
+Turn the item and the technical decisions into tickets. The item is the spec: do not write a separate spec, and do not copy the acceptance criteria into a second document. Link to the item.
 
 ```
 <work folder>/
-  plan.md                 the goal, the order, the status, the gates
+  plan.md                 the item, the tier, the tickets, the gates, the questions for the PO
   research.md
-  decisions.md
-  specs/<name>.md         one or more
+  decisions.md            technical decisions only
   tickets/NN-<slug>.md    one file for each ticket
-  questionnaires/<slug>.md
-  prototype/
+  spike/                  only when a spike was needed
 ```
 
-## The plan
+## Technical questions
 
-Use `templates/plan.md`. The plan is the index of the run. It has the goal in one or two sentences, a link to each spec, the ticket table, and the gates. Do not copy text from a spec or a ticket into the plan.
+Ask the technical questions that the research did not settle, in rounds. One decision in each question, with your recommended answer and the reason in one sentence. Number the questions across all rounds (Q1, Q2, ...), so that the human can answer "Q3: yes". A question that depends on another question goes to the next round. Write each answer in `decisions.md` (`templates/decisions.md`), with the item key and who decided.
 
-## The specs
+Topics: the modules and the interfaces, the data and its migration, the test seams, and the risks that are hard to undo. Prefer test seams that exist, and the highest seam that works. A product question goes to the PO (`po-questions.md`), not into this list.
 
-Use `templates/spec.md`. Write one spec for each feature (see `size.md`). A spec says what the work does and why, from the view of the user. It has the decisions of phase 2, the test seams, and what is out of scope.
+## Spike
 
-- Do not put file paths or code in a spec. They change too fast.
-- Exception: a type, a state machine, or a schema from the prototype that gives a decision more exactly than text. Keep only the part with the decision, and say that it comes from the prototype.
+Make a spike only for a technical risk: "Does this library, query, API, or data model work as we need?" A spike is throwaway code in `<work folder>/spike/` that answers that one question. Run it, and write the answer and the reason in `decisions.md`. A question about what the user sees is not a spike: it is a product question.
 
 ## The tickets
 
 Use `templates/ticket.md`. Number the tickets from `01`, with the blockers first.
 
-- **Vertical slices.** Each ticket makes one narrow path work through all layers (data, logic, interface, tests). A person can show or check a finished ticket alone.
+- **Vertical slices.** Each ticket makes one narrow path work through all layers (data, logic, interface, tests).
 - **One context window.** A ticket is small enough for one agent to do from the start to the end.
 - **Prepare first.** When a change to the existing code makes the work easier, put that change in the first ticket.
-- **Blocked by.** Each ticket lists the tickets that it needs before it can start. Add a blocker only when the ticket really needs it.
-- **Wide changes.** A rename or type change that touches the full codebase cannot be a vertical slice. Do it in three steps. First, add the new form next to the old form. Then move the callers in batches, one ticket for each batch. Last, remove the old form.
-- **Acceptance criteria.** Each criterion is a behaviour that a test or a person can check.
+- **Blocked by.** Add a blocker only when the ticket really needs it.
+- **Wide changes.** A rename or type change over the full codebase takes three steps. Add the new form next to the old form. Move the callers in batches. Remove the old form.
+- **Acceptance criteria.** Each ticket names the AC numbers of the item that it covers, and the acceptance tests that it makes pass. Each AC of the item is in one ticket or more. A ticket can add technical criteria, for example "the migration keeps existing rows valid".
 
-Set the status of each ticket to `draft`. Phase 5 changes it to `todo` after gate G3.
+Set the status of each ticket to `draft`. After the gate Spec, set it to `todo`.
 
 ## Check
 

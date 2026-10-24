@@ -27,19 +27,18 @@
     {
       "name": "dev-flow",
       "source": "./plugins/dev-flow",
-      "description": "Plan and build a change from an idea to working code: research, questions, plan, specs, tickets, a prototype to validate, and then the build.",
+      "description": "Builds one approved work item (story, bug, task, or chore) from the tracker to tested commits, spec first. Example mapping, acceptance tests that are locked after your approval, and one scenario at a time. Sets a tier from the size and the risk of the change. Product questions go back to the product owner on the item.",
       "category": "development",
       "tags": [
         "planning",
-        "spec",
         "tickets",
-        "prototype",
         "tdd",
-        "grilling",
         "asd-ste100",
         "simplified-technical-english",
         "dutch",
-        "b1"
+        "b1",
+        "work-item",
+        "tiers"
       ]
     },
     {
@@ -65,7 +64,7 @@
     {
       "name": "product-flow",
       "source": "./plugins/product-flow",
-      "description": "Take a product idea to an approved backlog: research, questions, a prototype with your branding, a spec with a story map, and goals, epics, features, and user stories in your ticket system. For product owners and business analysts.",
+      "description": "Take a product idea to an approved backlog: research, questions, a prototype with your branding, a spec with a story map, and goals, epics, features, and user stories in your ticket system. Example mapping turns an item into rules, examples, and questions before the build. For product owners and business analysts.",
       "category": "productivity",
       "tags": [
         "product-owner",
@@ -123,7 +122,7 @@
     {
       "name": "dev-team",
       "source": "./plugins/dev-team",
-      "description": "A small developer team for one user story: a senior designs and builds the core, mediors build work packages, a security reviewer checks the diff, and the main session leads with two human gates. Needs dev-stack. Preview.",
+      "description": "A small developer team for one work item, when you ask for the team: a senior designs and builds the core, mediors build work packages, a security reviewer checks the diff, and the main session leads with two human gates. Needs dev-stack. Preview.",
       "category": "development",
       "tags": [
         "agents",
@@ -133,6 +132,25 @@
         "security-review",
         "adr",
         "dotnet",
+        "asd-ste100",
+        "simplified-technical-english",
+        "dutch",
+        "b1"
+      ]
+    },
+    {
+      "name": "ux-design",
+      "source": "./plugins/ux-design",
+      "description": "A UX designer agent and its practice skills: problem frame, flow, pattern rules, design spec with a source for each decision, states, design-system audit, and mockups.",
+      "category": "design",
+      "tags": [
+        "ux",
+        "design",
+        "agents",
+        "patterns",
+        "states",
+        "mockups",
+        "design-system",
         "asd-ste100",
         "simplified-technical-english",
         "dutch",

@@ -1,6 +1,6 @@
 # <NN>: <Title>
 
-**Spec:** [<Spec name>](../specs/<name>.md)
+**Item:** [<item key>](../plan.md#item), AC<n>, AC<n>
 **Blocked by:** <None | 01, 02>
 **Status:** draft
 
