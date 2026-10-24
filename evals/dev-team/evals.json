@@ -1,12 +1,14 @@
 {
   "plugin": "dev-team",
-  "method": "Each story runs in a fresh copy of the orders-api fixture of dev-stack. Arm 'team' loads dev-team and dev-stack and starts the deliver-story skill. Arm 'baseline' loads dev-stack only and gets the same story and answer sheet. Both arms run headless with an answer sheet. The checks are in score.py; the judge assertions need a blind grader. Arm 'flow' loads dev-flow, dev-team, and dev-stack and starts the plan-and-build skill, which sets a tier and runs large items with dev-team.",
+  "method": "Each story runs in a fresh copy of the orders-api fixture of dev-stack. Arm 'team' loads dev-team and dev-stack and starts the deliver-story skill. Arm 'baseline' loads dev-stack only and gets the same story and answer sheet. Both arms run headless with an answer sheet. The checks are in score.py; the judge assertions need a blind grader. Arm 'flow' loads dev-flow, dev-team, and dev-stack and starts the plan-and-build skill, which sets a tier and runs large items with dev-team. Arms 'flowspec' (the current dev-flow, spec first) and 'flow20' (dev-flow 2.0 from DEV_FLOW20_ROOT) compare the two flows.",
   "fixture": "orders-api",
   "prompt": {
     "team": "Use the dev-team:deliver-story skill to deliver the story in {story}. The answer sheet of the human is {answers}. Take each answer of the human from that sheet.",
     "baseline": "Deliver the story in {story}. The answer sheet of the human is {answers}. Take each answer of the human from that sheet. Work on a new branch and commit. Do not push.",
     "suffix": " Do not call any tool whose name starts with mcp__Agent_Mesh. Those tools reach a live system that is not part of this task.",
-    "flow": "Use the dev-flow:plan-and-build skill to build the approved item in {story}. The answer sheet of the human is {answers}. The human is also the product owner. Take each answer of the human from that sheet."
+    "flow": "Use the dev-flow:plan-and-build skill to build the approved item in {story}. The answer sheet of the human is {answers}. The human is also the product owner. Take each answer of the human from that sheet.",
+    "flowspec": "Use the dev-flow:plan-and-build skill to build the approved item in {story}. The answer sheet of the human is {answers}. The human is also the product owner. Take each answer of the human from that sheet.",
+    "flow20": "Use the dev-flow:plan-and-build skill to build the approved item in {story}. The answer sheet of the human is {answers}. The human is also the product owner. Take each answer of the human from that sheet."
   },
   "evals": [
     {
@@ -404,6 +406,148 @@
         {
           "id": "J8",
           "judge": "The diff has a test that fails on the old code and passes on the new code: a request with the empty customer id gets 400."
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "name": "order-discount",
+      "size": "medium-hidden",
+      "story": "stories/order-discount.md",
+      "answers": "stories/order-discount.answers.md",
+      "assertions": [
+        {
+          "id": "D1",
+          "check": "work_committed"
+        },
+        {
+          "id": "D2",
+          "check": "build_warnaserror"
+        },
+        {
+          "id": "D3",
+          "check": "tests_pass"
+        },
+        {
+          "id": "D4",
+          "check": "package_policy",
+          "approved": []
+        },
+        {
+          "id": "D9",
+          "check": "no_push"
+        },
+        {
+          "id": "D5",
+          "check": "probe_tests",
+          "probe": "order-discount",
+          "tests": [
+            "E1_Welcome10_DiscountOnSubtotal_RoundedHalfAwayFromZero",
+            "E2_Code_IgnoresCaseAndSpaces",
+            "E3_ExpiredAndUnknownCodes_Return422_AndStoreNothing",
+            "E4_Minimum_Exactly50Qualifies_49_99DoesNot",
+            "E5_NoCode_DiscountZero",
+            "E6_List_ShowsTheSameAmounts"
+          ]
+        },
+        {
+          "id": "D13",
+          "check": "probe_tests",
+          "probe": "order-discount",
+          "tests": [
+            "H1_Rounding_HalfAwayFromZero_NotToEven",
+            "H2_Welcome10_ValidToTheEndOfItsLastDayUtc",
+            "H3_Spring25_ValidOnItsLastDay",
+            "H4_Discount_IsStored_AndSurvivesARestart"
+          ]
+        },
+        {
+          "id": "D11",
+          "check": "tier",
+          "arm": "flowspec",
+          "expected": [
+            "medium",
+            "large"
+          ]
+        },
+        {
+          "id": "D12",
+          "check": "speclock_clean",
+          "arm": "flowspec"
+        },
+        {
+          "id": "J10",
+          "judge": "The diff has an acceptance test for each example of the item, and the test checks the values of the example."
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "name": "order-export",
+      "size": "small-hidden",
+      "story": "stories/order-export.md",
+      "answers": "stories/order-export.answers.md",
+      "assertions": [
+        {
+          "id": "D1",
+          "check": "work_committed"
+        },
+        {
+          "id": "D2",
+          "check": "build_warnaserror"
+        },
+        {
+          "id": "D3",
+          "check": "tests_pass"
+        },
+        {
+          "id": "D4",
+          "check": "package_policy",
+          "approved": []
+        },
+        {
+          "id": "D9",
+          "check": "no_push"
+        },
+        {
+          "id": "D5",
+          "check": "probe_tests",
+          "probe": "order-export",
+          "tests": [
+            "E1_TwoLines_HeaderAndRows",
+            "E2_CommaInSku_IsQuoted",
+            "E3_FormulaInSku_GetsAQuote",
+            "E4_NoOrders_OnlyHeader_EmptyId400"
+          ]
+        },
+        {
+          "id": "D13",
+          "check": "probe_tests",
+          "probe": "order-export",
+          "tests": [
+            "H1_DutchServerCulture_StillUsesADot",
+            "H2_DoubleQuoteInSku_IsDoubled",
+            "H3_AtAndMinus_GetAQuote",
+            "H4_FormulaWithComma_GetsQuoteAndIsQuoted"
+          ]
+        },
+        {
+          "id": "D11",
+          "check": "tier",
+          "arm": "flowspec",
+          "expected": [
+            "small",
+            "medium"
+          ]
+        },
+        {
+          "id": "D12",
+          "check": "speclock_clean",
+          "arm": "flowspec"
+        },
+        {
+          "id": "J10",
+          "judge": "The diff has an acceptance test for each example of the item, and the test checks the values of the example."
         }
       ]
     }

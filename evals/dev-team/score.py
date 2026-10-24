@@ -139,6 +139,19 @@ def check_tier(run, expected):
     return False, "no tier line"
 
 
+def check_speclock(repo):
+    """The run locked its acceptance tests, and no locked file changed after the approval."""
+    lock = repo / ".dev-flow" / "spec-lock.json"
+    if not lock.is_file():
+        return False, "no .dev-flow/spec-lock.json"
+    files = json.loads(lock.read_text(encoding="utf-8")).get("files", {})
+    if not files:
+        return False, "the lock file has no files"
+    script = ROOT / "plugins" / "dev-flow" / "skills" / "plan-and-build" / "scripts" / "speclock.py"
+    p = subprocess.run([sys.executable, str(script), "check"], cwd=repo, capture_output=True, text=True)
+    return p.returncode == 0, p.stdout.strip().splitlines()[-3:]
+
+
 def run_folder(repo):
     folders = sorted(p.parent for p in repo.glob("docs/work/*/run.md"))
     return folders[-1] if folders else None
@@ -197,6 +210,8 @@ def score(ev, run, arm, only=None):
             ok, got = check_code_unchanged(repo)
         elif kind == "no_push":
             ok, got = check_no_push(run)
+        elif kind == "speclock_clean":
+            ok, got = check_speclock(repo)
         elif kind == "tier":
             ok, got = check_tier(run, a["expected"])
         elif kind == "runcheck_clean":

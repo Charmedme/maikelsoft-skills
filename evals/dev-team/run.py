@@ -23,7 +23,12 @@ ROOT = HERE.parents[1]
 sys.path.insert(0, str(HERE.parent / "dev-stack"))
 import prepare  # noqa: E402
 
-PLUGINS = {"team": ["dev-team", "dev-stack"], "baseline": ["dev-stack"], "flow": ["dev-flow", "dev-team", "dev-stack"]}
+PLUGINS = {"team": ["dev-team", "dev-stack"], "baseline": ["dev-stack"], "flow": ["dev-flow", "dev-team", "dev-stack"],
+           "flowspec": ["dev-flow", "dev-team", "dev-stack"]}
+# dev-flow 2.0 (tiers, no spec first) from a worktree of an older commit, for a comparison arm.
+if os.environ.get("DEV_FLOW20_ROOT"):
+    _old = pathlib.Path(os.environ["DEV_FLOW20_ROOT"]) / "plugins"
+    PLUGINS["flow20"] = [str(_old / "dev-flow"), str(_old / "dev-team"), "dev-stack"]
 # Variables of a parent Claude Code session. A child run that inherits them shares the session id
 # of the parent and sends foreground agents to the background. A real user session has none of them.
 PARENT_VARS = ["CLAUDE_CODE_SESSION_ID", "CLAUDE_CODE_REMOTE_SESSION_ID", "CLAUDE_AUTO_BACKGROUND_TASKS",
@@ -41,7 +46,7 @@ def start(run, ev, arm, cfg, args):
     cmd = ["claude", "-p", prompt, "--model", args.model, "--permission-mode", "bypassPermissions",
            "--output-format", "stream-json", "--verbose", "--max-budget-usd", str(args.budget)]
     for p in PLUGINS[arm]:
-        cmd += ["--plugin-dir", str(ROOT / "plugins" / p)]
+        cmd += ["--plugin-dir", p if os.path.isabs(p) else str(ROOT / "plugins" / p)]
     env = {k: v for k, v in os.environ.items() if k not in PARENT_VARS}
     env["CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH"] = "3"
     # Each run has its own profile, so that runs at the same time do not share earlier answers.
