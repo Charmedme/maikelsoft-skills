@@ -1,0 +1,39 @@
+{
+  "id": 254,
+  "name": "rabbitmq-hard",
+  "skill": "rabbitmq",
+  "kind": "write",
+  "fixture": "rabbitmq-hard",
+  "human": "absent",
+  "request": "The payments team moved card payments to their new payment gateway. The gateway now confirms each payment asynchronously over RabbitMQ; its events are described in docs/payment-gateway-events.md. Process these results in our service. When a payment is captured, store the payment (GET /orders/{id}/payments shows it with the status Captured) and mark the order paid (GET /orders/{id} shows the status Paid). Then tell the warehouse that it can pick the order: publish order.paid.v1 on orders.events with orderId, amount, currency and paidAt. When a payment fails, store it with the status Failed and its reason; the order stays Placed. Finance needs every payment result: a result that we cannot process must never get lost. Use our existing messaging setup. Approved packages: RabbitMQ.Client and Testcontainers.RabbitMq.",
+  "traps": [
+    "Existing code, version fact, quiet: RabbitMqConsumer<T> catches every handler error and calls BasicNackAsync(requeue: true). Its comment says that the delivery-limit (20) moves a poison message to orders.dlq. From RabbitMQ 4.3, basic.nack with requeue does not count toward the delivery-limit (only basic.reject and a closed channel count). A message that fails each time loops forever (checked on 4.3.6: 4129 deliveries in 15 s, nothing in the dead-letter queue; with BasicRejectAsync the message reached the dead-letter queue after 21 deliveries). A payment consumer on this base class loops on a payment for an unknown order, and the existing stock consumer loops on a bad receipt.",
+    "Existing code, quiet: the base class deserializes ea.Body before its try block. A body that cannot be read throws out of ReceivedAsync. RabbitMQ.Client 7 then neither acks nor nacks: the message stays unacked until the channel closes (checked on 4.3.6). It never reaches the dead-letter queue.",
+    "Existing code, quiet default: the base class sets no BasicQos. The prefetch is then 0 (no limit), and the broker pushes every message to one consumer.",
+    "Quiet default: quorum queues dead-letter at-most-once by default, so a dead letter can get lost. 'Must never get lost' needs dead-letter-strategy at-least-once together with overflow reject-publish (with the default drop-head, the queue falls back to at-most-once).",
+    "Version fact, existing broker: queue arguments are fixed. Adding x-dead-letter-strategy or x-overflow to the shared WorkQueueArguments() breaks the redeclaration of the existing orders.stock-received queue on the production broker (inequivalent arg, PRECONDITION_FAILED; checked on 4.3.6). A fresh test broker hides it. Put the new arguments only on the new queue, or use a policy.",
+    "Existing code, quiet: the base class deserializes with the default JsonSerializerOptions (case-sensitive). The warehouse sends PascalCase, so it works. The Go gateway sends camelCase: every field of the payment record is empty, without an error.",
+    "New code: the gateway publishes the same result again with a new message_id when it misses a confirm. Deduplication on message_id stores the payment twice. Use paymentId (unique index or upsert).",
+    "New code: order.paid.v1 must go through the outbox in the same SaveChangesAsync as the payment, and the message is acked after the commit. A publish from the consumer after the save loses the event when the broker drops."
+  ],
+  "assertions": [
+    {"id": "C1", "check": "build_warnaserror"},
+    {"id": "C2", "check": "tests_pass"},
+    {"id": "C3", "check": "package_policy", "approved": ["RabbitMQ.Client", "Testcontainers.RabbitMq"]},
+    {"id": "C4", "check": "grep_absent", "scope": "all", "value": ["\\bBasicNack(Async)?\\s*\\([^;]*\\brequeue\\s*:\\s*true", "\\bBasicNack(Async)?\\s*\\([^;:]*,\\s*(false|true)\\s*,\\s*true\\b"], "files": ["src/**/*.cs"], "trap": "BasicNackAsync with requeue: true does not count toward the delivery-limit of RabbitMQ 4.3: a failing message loops forever."},
+    {"id": "C5", "check": "probe_tests", "probe": "rabbitmq-hard", "tests": ["PaymentCaptured_MarksOrderPaidAndStoresPayment"], "trap": "The default JsonSerializerOptions of the base class do not read the camelCase body of the gateway."},
+    {"id": "C6", "check": "probe_tests", "probe": "rabbitmq-hard", "tests": ["PaymentCaptured_PublishesOrderPaid"]},
+    {"id": "C7", "check": "probe_tests", "probe": "rabbitmq-hard", "tests": ["SamePaymentTwice_StoresOnePayment"], "trap": "The same paymentId comes again with a new message_id."},
+    {"id": "C8", "check": "probe_tests", "probe": "rabbitmq-hard", "tests": ["PaymentQueue_KeepsDeadLettersAtLeastOnce"], "trap": "Quorum queues dead-letter at-most-once by default; at-least-once needs overflow reject-publish."},
+    {"id": "C9", "check": "probe_tests", "probe": "rabbitmq-hard", "tests": ["PaymentForUnknownOrder_EndsInDeadLetterQueue"], "trap": "A failing payment result loops forever (nack with requeue on 4.3), or is acked and lost."},
+    {"id": "C10", "check": "probe_tests", "probe": "rabbitmq-hard", "tests": ["StockReceiptWithZeroQuantity_EndsInOrdersDlq"], "trap": "Existing consumer: the nack loop of the base class on RabbitMQ 4.3."},
+    {"id": "C11", "check": "probe_tests", "probe": "rabbitmq-hard", "tests": ["MalformedStockReceipt_EndsInOrdersDlq"], "trap": "Existing consumer: a body that cannot be read stays unacked."},
+    {"id": "C12", "check": "probe_tests", "probe": "rabbitmq-hard", "tests": ["PaymentConsumer_HasPrefetchLimit"], "trap": "No BasicQos: prefetch 0 (no limit)."},
+    {"id": "C13", "check": "probe_tests", "probe": "rabbitmq-hard", "tests": ["StockReceipt_OnProductionTopology_IsBooked"], "trap": "Changed arguments of an existing queue fail the redeclaration on the production broker."},
+    {"id": "J1", "judge": "The final message says that the existing RabbitMqConsumer<T> (or StockReceivedConsumer) nacks with requeue: true, and that on RabbitMQ 4.3 such a nack does not count toward the delivery-limit, so a message that fails each time loops forever. The code no longer does this, or the message reports it as an open point."},
+    {"id": "J2", "judge": "order.paid.v1 is written as an outbox row in the same SaveChangesAsync as the stored payment and the order status, and the consumer acks the message only after that save. The consumer does not publish to RabbitMQ itself."},
+    {"id": "J3", "judge": "The consumer treats a payment result that cannot succeed on a retry (unknown order, a body that cannot be read, an order that cannot be paid) as permanent and sends it to the dead-letter queue at once, and retries a transient error (database down, timeout) with a limit. It does not ack and drop a result, and it has no retry without a limit."},
+    {"id": "J4", "judge": "The final message marks the open team decisions that the work needed as assumed, at least the failure handling and dead letters (MSG-08) and the idempotency (MSG-10), and names who owns the dead letters of the payment queue (for example finance or the orders team) and how they are replayed."},
+    {"id": "J5", "judge": "A payment.failed.v1 result stores a payment with the status Failed and its reason, and leaves the order Placed. A test covers it."}
+  ]
+}

@@ -1,0 +1,118 @@
+{
+  "skill": "rabbitmq",
+  "base": "rabbitmq-hard",
+  "planted": [
+    {
+      "id": "P1",
+      "file": "src/Orders.Api/Messaging/RabbitMqConsumer.cs",
+      "line": 85,
+      "description": "Version fact, existing code next to the change: every failure that is not a JsonException is nacked with requeue: true, and the comment trusts the delivery-limit (20) to move a poison message to orders.dlq. From RabbitMQ 4.3, basic.nack with requeue does not count toward the delivery-limit (only basic.reject and a closed channel count). A payment result that fails each time (for example the unique violation of a resent result, P4, or a publish failure after the save, P5) loops forever and never reaches the dead-letter queue. Use BasicRejectAsync(requeue: true) for a transient failure (it counts), or a delayed retry, and BasicNackAsync(requeue: false) for a permanent failure.",
+      "severity": "high",
+      "subtle": true
+    },
+    {
+      "id": "P2",
+      "file": "src/Orders.Api/Messaging/RabbitMqTopology.cs",
+      "line": 23,
+      "description": "Over two files: the change adds x-dead-letter-strategy to the shared WorkQueueArguments(), which RabbitMqConsumer.cs line 55 also uses for the existing queue orders.stock-received. Queue arguments are fixed: on the production broker, where that queue exists without the argument, the redeclaration fails with PRECONDITION_FAILED (inequivalent arg 'x-dead-letter-strategy'), the channel closes, and the stock consumer stops in a reconnect loop. The tests do not see it, because they start a fresh broker. Put the new arguments only on the new payment queue (or in a policy).",
+      "severity": "high",
+      "subtle": true
+    },
+    {
+      "id": "P3",
+      "file": "src/Orders.Api/Messaging/RabbitMqTopology.cs",
+      "line": 27,
+      "description": "Quiet default: dead-letter-strategy at-least-once needs overflow reject-publish. With the default overflow drop-head, the quorum queue falls back to at-most-once without an error, so a dead letter can still get lost. Add x-overflow reject-publish (on the payment queue only, see P2).",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P4",
+      "file": "src/Orders.Api/Payments/PaymentResultConsumer.cs",
+      "line": 29,
+      "description": "Over two files: the consumer deduplicates on message_id, but docs/payment-gateway-events.md (line 28) says that the gateway publishes the same result again with a new message_id, and that paymentId identifies a result. A resent capture is not seen as a duplicate: the insert hits the new unique index on ProviderReference, SaveChangesAsync throws, and the base class nacks it with requeue forever (P1). Deduplicate on paymentId (check ProviderReference, and treat the unique violation as done); the processed_messages table is not needed.",
+      "severity": "high",
+      "subtle": true
+    },
+    {
+      "id": "P5",
+      "file": "src/Orders.Api/Payments/PaymentResultConsumer.cs",
+      "line": 62,
+      "description": "order.paid.v1 is published after SaveChangesAsync, not through the outbox (decision MSG-09). When the broker is down or the process stops after the save, the event is lost: the redelivery is skipped as already processed, so the warehouse never picks the order. Write the event with db.Enqueue in the same SaveChangesAsync as the payment and the order status, and remove OrderEventsPublisher.",
+      "severity": "high",
+      "subtle": false
+    },
+    {
+      "id": "P6",
+      "file": "src/Orders.Api/Messaging/OrderEventsPublisher.cs",
+      "line": 52,
+      "description": "Version fact (RabbitMQ.Client 7): confirms are on, but publisherConfirmationTrackingEnabled is false. Then BasicPublishAsync does not wait for the confirm and does not throw on a broker nack (checked: with tracking a nacked publish throws PublishException, without tracking it returns without an error). The class comment promises confirms that the code does not check. Set both options to true (or remove the class, see P5).",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P7",
+      "file": "src/Orders.Api/Messaging/RabbitMqConsumer.cs",
+      "line": 69,
+      "description": "Over two files: the base class deserializes with the default JsonSerializerOptions (case-sensitive). The warehouse sends PascalCase, but the Go gateway sends camelCase (docs/payment-gateway-events.md). Every field of PaymentResultV1 stays empty (OrderId is Guid.Empty), so each real result is treated as an unknown order and dropped (P8). The test hides it: it serializes the C# record with PascalCase names (PaymentResultConsumerTests.cs line 89). Use JsonSerializerDefaults.Web (case-insensitive, it still reads the warehouse), and test with the camelCase sample of the docs.",
+      "severity": "high",
+      "subtle": true
+    },
+    {
+      "id": "P8",
+      "file": "src/Orders.Api/Payments/PaymentResultConsumer.cs",
+      "line": 35,
+      "description": "A payment for an unknown order is logged and acked: the money was taken and the result is gone. Finance needs every result. Send it to the dead-letter queue (BasicNackAsync requeue: false, through a permanent-failure exception) with an owner and a replay step.",
+      "severity": "medium",
+      "subtle": false
+    },
+    {
+      "id": "P9",
+      "file": "src/Orders.Api/Payments/PaymentResultConsumer.cs",
+      "line": 51,
+      "description": "A failed payment cancels the order, and TimeSpan.MaxValue bypasses the cancel window. The order must stay Placed so that the customer can pay again. It also skips the order.cancelled.v1 event of the normal cancel path. Remove the cancel.",
+      "severity": "medium",
+      "subtle": false
+    },
+    {
+      "id": "P10",
+      "file": "src/Orders.Api/Messaging/RabbitMqConsumer.cs",
+      "line": 62,
+      "description": "No BasicQosAsync on the consumer channel: the prefetch is 0 (no limit), and the broker pushes every message of the queue to one consumer. Set BasicQosAsync(0, 20, global: false) before BasicConsumeAsync.",
+      "severity": "low",
+      "subtle": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "src/Orders.Api/Messaging/RabbitMqConsumer.cs",
+      "line": 65,
+      "description": "ea.Body.ToArray() before the first await is correct: it copies the body while the memory is still valid. The client reuses ea.Body only after the handler returns."
+    },
+    {
+      "id": "D2",
+      "file": "src/Orders.Api/Messaging/RabbitMqConsumer.cs",
+      "line": 78,
+      "description": "BasicNackAsync with requeue: false for a JsonException is correct: a body that cannot be read never succeeds, and the nack sends it to orders.dlx at once. Only the requeue: true nack (P1) is wrong."
+    },
+    {
+      "id": "D3",
+      "file": "src/Orders.Api/Data/PaymentConfiguration.cs",
+      "line": 21,
+      "description": "The unique index on the nullable ProviderReference is correct. PostgreSQL treats NULL values as distinct in a unique index, so the older declined payments without a reference do not conflict, and the index makes a resent paymentId fail instead of a second payment."
+    },
+    {
+      "id": "D4",
+      "file": "src/Orders.Api/Orders/Order.cs",
+      "line": 81,
+      "description": "MarkPaid returns without an error when the order is already Paid. That is the idempotent state check of principle 3, not a swallowed error."
+    },
+    {
+      "id": "D5",
+      "file": "src/Orders.Api/Messaging/OrderEventsPublisher.cs",
+      "line": 16,
+      "description": "The one channel of the singleton is guarded by a SemaphoreSlim, so two publishes never use it at the same time. That is not the shared-channel mistake of RMQ-SINGLETON-CHANNEL. The problems of this class are P5 and P6."
+    }
+  ]
+}
