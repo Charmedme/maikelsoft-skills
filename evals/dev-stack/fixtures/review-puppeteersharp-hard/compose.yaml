@@ -1,0 +1,30 @@
+# Local stack: the API and PostgreSQL. Start with: docker compose up --build
+services:
+  orders-api:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      ConnectionStrings__Orders: "Host=db;Port=5432;Database=orders;Username=orders;Password=${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}"
+    # Chrome runs as a non-root user with its sandbox on. The sandbox needs this capability in Docker.
+    cap_add:
+      - SYS_ADMIN
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:18.6-alpine
+    environment:
+      POSTGRES_DB: orders
+      POSTGRES_USER: orders
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orders -d orders"]
+      interval: 5s
+      retries: 10
+    volumes:
+      - orders-data:/var/lib/postgresql
+
+volumes:
+  orders-data:

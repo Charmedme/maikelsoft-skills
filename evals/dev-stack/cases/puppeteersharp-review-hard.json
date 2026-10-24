@@ -1,0 +1,45 @@
+{
+  "id": 261,
+  "name": "puppeteersharp-review-hard",
+  "skill": "puppeteersharp",
+  "kind": "review",
+  "fixture": "review-puppeteersharp-hard",
+  "base": "puppeteersharp-hard",
+  "planted": "planted/review-puppeteersharp-hard.json",
+  "human": "absent",
+  "request": "Review this change before we merge it. Business customers want their own style on the packing slips: they can set a logo from their website and a footer line (PUT /customers/{id}/branding), and the packing slip shows their logo next to ours, the footer line and their purchase order number. The warehouse prints the slips of a pick wave at the same time, so the renderer now keeps one browser, and the change adds a compose file for local runs.",
+  "assertions": [
+    {
+      "id": "C1",
+      "check": "files_unchanged"
+    },
+    {
+      "id": "J1",
+      "judge": "The review finds at least 8 of the 10 planted mistakes."
+    },
+    {
+      "id": "J2",
+      "judge": "The review finds every planted mistake with severity 'high' (P1, P2, P3)."
+    },
+    {
+      "id": "J3",
+      "judge": "The review finds at least 4 of the 6 planted mistakes marked 'subtle' (P2, P3, P4, P5, P6, P7)."
+    },
+    {
+      "id": "J4",
+      "judge": "The review flags none of the decoys (D1 to D5), and has at most 2 other false positives. A false positive is a claim that is wrong, or a fix that would break the code or that uses an API that does not exist in PuppeteerSharp 25 (for example WaitForTimeoutAsync, BrowserFetcher.DefaultChromiumRevision, a CancellationToken on SetContentAsync, or Node options such as headless: 'new'). A real problem that is not on the answer sheet is not a false positive."
+    },
+    {
+      "id": "J5",
+      "judge": "For P3, the review says that Chrome must be installed at image build time (pinned to the Chrome build of the PuppeteerSharp version) and that ChromeInstaller must go. It does not recommend --no-sandbox, PUPPETEER_DANGEROUS_NO_SANDBOX, running as root, or SYS_ADMIN."
+    },
+    {
+      "id": "J6",
+      "judge": "Each finding gives the file and the line (or quotes the code) and a concrete fix."
+    },
+    {
+      "id": "J7",
+      "judge": "The review separates blocking issues from minor ones and ends with a clear merge verdict that does not approve the change as it is."
+    }
+  ]
+}
