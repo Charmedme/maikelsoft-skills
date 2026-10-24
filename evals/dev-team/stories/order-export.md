@@ -2,7 +2,7 @@ Story ORD-52: Export the orders of a customer as CSV
 
 State: approved
 
-As a customer service agent, I want to download the orders of a customer as a CSV file, so that I can answer questions in a spreadsheet.
+As a customer service agent, I want to download the orders of a customer as CSV, so that I can answer questions in a spreadsheet.
 
 Acceptance criteria:
 - [ ] AC1: GET /orders/export?customerId={id} returns a CSV file (content type text/csv). The first line is the header id,placedAt,status,sku,quantity,unitPrice,lineTotal. Each order line is one row.

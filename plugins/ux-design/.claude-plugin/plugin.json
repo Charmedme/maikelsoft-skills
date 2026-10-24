@@ -1,0 +1,22 @@
+{
+  "name": "ux-design",
+  "displayName": "UX design",
+  "version": "0.1.0",
+  "description": "A UX designer agent and its practice skills: a fixed method, pattern rules, visual craft, and states, with a source for each design decision. Output in ASD-STE100 Simplified Technical English or Begrijpelijk Nederlands (B1).",
+  "author": {
+    "name": "Maikel",
+    "url": "https://github.com/Charmedme"
+  },
+  "homepage": "https://github.com/Charmedme/maikelsoft-skills/tree/main/plugins/ux-design",
+  "repository": "https://github.com/Charmedme/maikelsoft-skills",
+  "license": "MIT",
+  "keywords": [
+    "ux",
+    "design",
+    "agents",
+    "patterns",
+    "states",
+    "mockups",
+    "asd-ste100"
+  ]
+}
