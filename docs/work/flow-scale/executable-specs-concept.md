@@ -50,3 +50,12 @@ Our easy stories cannot show a gain: each arm passes. The test needs stories tha
 - Farley, Engineering discipline in the AI era (Aviator podcast).
 - Robert C. Martin, disciplined agentic engineering (summary on noqta.tn), and the `swingerman/atdd` Claude Code plugin based on his approach.
 - Böckeler, Understanding Spec-Driven-Development: Kiro, spec-kit, and Tessl (martinfowler.com, 2025-10-15).
+
+## Decisions of the human (2026-10-24)
+
+| No | Decision |
+|----|----------|
+| S1 | The PO writes the examples on the item. product-flow writes them, and rule A5 changes its default to scenarios. dev-flow makes them executable. |
+| S2 | A PreToolUse hook blocks edits of approved acceptance tests, and a hash check finds each other change. A change needs the approval of the human. |
+| S3 | The DSL and the protocol driver are made one time for each project. Later items add test cases. |
+| S4 | Build the spec-first flow together with the cost changes (lean path, Sonnet reviewer, quiet checks, counted large rule). Test on new stories with hidden probes: baseline, dev-flow 2.0, and the new flow, on Opus and on Sonnet. |
