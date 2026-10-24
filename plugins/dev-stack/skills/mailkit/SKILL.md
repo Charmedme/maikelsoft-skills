@@ -2,8 +2,8 @@
 name: mailkit
 description: Outgoing mail code with MailKit 4 and MimeKit 4 in .NET. Use when code or a review sends email over SMTP, for example MailKit SmtpClient, MimeMessage, BodyBuilder, SecureSocketOptions, SMTP settings and the SMTP password, a mail outbox or a background mail sender, retries after a relay failure, mail templates, OAuth2 SMTP for Microsoft 365 or Gmail, the Pkcs audit warning after MailKit is added, or mail tests with Mailpit. Not for reading mail (IMAP, POP3), Microsoft Graph sendMail, the Azure Communication Services Email SDK, or messages between services (dev-stack:rabbitmq, dev-stack:wolverine).
 metadata:
-  verified: "2026-10-19"
-  versions: "MailKit 4.18.1, MimeKit 4.18.1, System.Security.Cryptography.Pkcs 10.0.13, Mailpit v1.31.6, Testcontainers.Mailpit 4.16.0, .NET 10"
+  verified: "2026-10-24"
+  versions: "MailKit 4.18.2, MimeKit 4.18.2, System.Security.Cryptography.Pkcs 10.0.13, Mailpit v1.31.6, Testcontainers.Mailpit 4.16.0, .NET 10"
 ---
 
 # MailKit
@@ -14,8 +14,8 @@ How to send mail from a .NET service with MailKit and MimeKit: settings, TLS, th
 
 1. Read `references/stack-rules.md`.
 2. Find the version: `MailKit` and `MimeKit` in `Directory.Packages.props` or `*.csproj`.
-   - 4.15.1 to 4.x: use this file.
-   - Below 4.15.1: MimeKit has CVE-2026-30227 (SMTP command injection). Tell the human, and upgrade when the task touches mail.
+   - MailKit 4.16.0 and MimeKit 4.15.1 to 4.x: use this file.
+   - Lower: MailKit below 4.16.0 has CVE-2026-41319 (STARTTLS response injection). MimeKit below 4.15.1 has CVE-2026-30227 (SMTP command injection). Tell the human, and upgrade when the task touches mail.
    - 5.x: not released on 2026-10-19. Look up the breaking changes before you write code (stack rule 2).
    - `System.Net.Mail.SmtpClient`: existing code keeps it until a task changes the sender. New code uses MailKit (rule 1).
 3. Find the send path: an outbox table, Wolverine (`UseWolverine`), a job library, or a send inside the request.
@@ -42,10 +42,10 @@ Existing code keeps its style (stack rule 3).
 ### Packages
 
 1. Use MailKit. Microsoft does not recommend `System.Net.Mail.SmtpClient` for new code (DE0005): it has no modern authentication and weak TLS control.
-2. Use MailKit and MimeKit 4.15.1 or later. MimeKit 4.18.1 pulls `System.Security.Cryptography.Pkcs` 10.0.0 (NU1902, NU1903), so `dotnet build -warnaserror` fails. Add a direct `PackageVersion` for Pkcs 10.0.13 or later with `CentralPackageTransitivePinningEnabled`. This pin has standing approval (stack rule 5). Name it in the report. Do not hide the warnings with `NoWarn` or `NuGetAudit=false`.
+2. Use MailKit and MimeKit 4.18.2 or later. The minimum is MailKit 4.16.0 (CVE-2026-41319) and MimeKit 4.15.1 (CVE-2026-30227). MimeKit 4.18.2 depends on `System.Security.Cryptography.Pkcs` 10.0.13, so it needs no pin. MimeKit 4.15.1 to 4.18.1 pull Pkcs 10.0.0 (NU1902, NU1903), so `dotnet build -warnaserror` fails. When you cannot upgrade to 4.18.2, add a direct `PackageVersion` for Pkcs 10.0.13 or later with `CentralPackageTransitivePinningEnabled`. This pin has standing approval (stack rule 5). Name it in the report. Do not hide the warnings with `NoWarn`, `NuGetAudit=false`, or `NuGetAuditSuppress`.
 
 ```xml
-<!-- MimeKit 4.18.1 pulls Pkcs 10.0.0 (GHSA-2fmv-rv2c-59x7, GHSA-846f-f764-76mx). Transitive pinning lifts it. -->
+<!-- Only for MimeKit 4.15.1 to 4.18.1, which pull Pkcs 10.0.0 (GHSA-2fmv-rv2c-59x7, GHSA-846f-f764-76mx). -->
 <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
 ```
 

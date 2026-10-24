@@ -15,11 +15,12 @@ Checked on 2026-10-19. The facts of this skill come from these primary sources. 
 
 | Item | Version on 2026-10-19 | Source |
 |------|-----------------------|--------|
-| MailKit | 4.18.1 (2026-09-27), MIT | [nuget.org MailKit](https://www.nuget.org/packages/MailKit) |
-| MimeKit | 4.18.1 (2026-09-19), MIT. Depends on System.Security.Cryptography.Pkcs 10.0.0 | [nuget.org MimeKit](https://www.nuget.org/packages/MimeKit) |
+| MailKit | 4.18.2 (2026-10-23), MIT. Depends on MimeKit 4.18.2 | [nuget.org MailKit](https://www.nuget.org/packages/MailKit) |
+| MimeKit | 4.18.2 (2026-10-21), MIT. Depends on System.Security.Cryptography.Pkcs 10.0.13. Versions 4.15.1 to 4.18.1 depend on Pkcs 10.0.0 | [nuget.org MimeKit](https://www.nuget.org/packages/MimeKit) |
 | MailKit 5.0 | Not released, also not as a prerelease | [nuget.org MailKit versions](https://www.nuget.org/packages/MailKit#versions-body-tab) |
 | System.Security.Cryptography.Pkcs | 10.0.13 (the pin) | [nuget.org](https://www.nuget.org/packages/System.Security.Cryptography.Pkcs) |
 | Pkcs 10.0.0 advisories | GHSA-2fmv-rv2c-59x7 (moderate), GHSA-846f-f764-76mx (high) | [GHSA-2fmv-rv2c-59x7](https://github.com/advisories/GHSA-2fmv-rv2c-59x7), [GHSA-846f-f764-76mx](https://github.com/advisories/GHSA-846f-f764-76mx) |
+| CVE-2026-41319 | MailKit below 4.16.0: STARTTLS response injection, can force a weaker SASL mechanism. Fixed in 4.16.0 | [GHSA-9j88-vvj5-vhgr](https://github.com/advisories/GHSA-9j88-vvj5-vhgr) |
 | CVE-2026-30227 | MimeKit 4.15.0 and older. Fixed in 4.15.1 | [GHSA-g7hc-96xr-gvvx](https://github.com/advisories/GHSA-g7hc-96xr-gvvx) |
 | Mailpit | v1.31.6 (2026-10-15), MIT | [Docker Hub axllent/mailpit](https://hub.docker.com/r/axllent/mailpit) |
 | Testcontainers.Mailpit | 4.16.0 (module since 4.14.0) | [nuget.org](https://www.nuget.org/packages/Testcontainers.Mailpit) |
@@ -51,6 +52,8 @@ Checked on 2026-10-19. The facts of this skill come from these primary sources. 
 ## Checked by compile and run
 
 These facts were compiled or run with .NET SDK 10.0.402 on 2026-10-19:
+
+- MailKit 4.18.2 without a Pkcs pin (2026-10-24): `dotnet build -warnaserror` gives 0 warnings. Pkcs resolves to 10.0.13.
 
 - MailKit 4.18.1 without a Pkcs pin: `dotnet build -warnaserror` fails with NU1902 and NU1903. With Pkcs 10.0.13 in `Directory.Packages.props` and transitive pinning: 0 warnings.
 - `SecureSocketOptions.Auto` against a relay without STARTTLS: `AUTH` and `MAIL FROM` in plain text. `StartTls`: no `AUTH`, the connect throws.

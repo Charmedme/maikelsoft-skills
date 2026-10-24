@@ -16,8 +16,8 @@ Each check is `tool (<rule ID>)` when a tool finds it, or `judge` when a reviewe
 
 | # | Check | Type |
 |---|-------|------|
-| 1 | MailKit and MimeKit are 4.15.1 or later (CVE-2026-30227). | tool (MAIL-PKG-MIMEKIT-CVE) |
-| 2 | `System.Security.Cryptography.Pkcs` 10.0.13 or later is pinned with `CentralPackageTransitivePinningEnabled`. The build has no NU1902 or NU1903. | tool (`dotnet build -warnaserror`, `dotnet package list --vulnerable --include-transitive`) |
+| 1 | MailKit is 4.16.0 or later (CVE-2026-41319). MimeKit is 4.15.1 or later (CVE-2026-30227). | tool (MAIL-PKG-MIMEKIT-CVE) |
+| 2 | With MimeKit 4.15.1 to 4.18.1, `System.Security.Cryptography.Pkcs` 10.0.13 or later is pinned with `CentralPackageTransitivePinningEnabled`. The build has no NU1902 or NU1903. | tool (`dotnet build -warnaserror`, `dotnet package list --vulnerable --include-transitive`) |
 | 3 | No `NoWarn` for NU190x and no `NuGetAudit=false`. | tool (SC-NUGETAUDIT-OFF), judge |
 | 4 | No `System.Net.Mail.SmtpClient` in new code. | tool (MAIL-SYSTEM-NET-MAIL, RS0030) |
 | 5 | No MailKit 5 shapes (`await using` on the client, `SendResult`). MailKit 5 is not released. | judge (the build fails) |

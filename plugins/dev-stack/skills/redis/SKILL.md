@@ -196,7 +196,7 @@ The full list is in `references/review-checklist.md`.
 
 ## Report
 
-End with the report of stack rule 8 (`references/stack-rules.md`): the same headings in the same order on each run.
+End with the report of stack rule 8 (`references/stack-rules.md`): the same headings in the same order on each run. For each cached type, state in one sentence why it is a DTO and not the entity (rule 11).
 
 ## References
 
