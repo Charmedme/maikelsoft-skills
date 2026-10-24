@@ -94,6 +94,11 @@ class SpecLock(unittest.TestCase):
         r = self.hook("Bash", {"command": "cat tests/Acceptance/Specs/CancelSpecs.cs 2>/dev/null; dotnet test 2>&1 | tail -5"})
         self.assertEqual(r.returncode, 0)
 
+    def test_hook_allows_file_name_in_commit_message(self):
+        self.lock()
+        cmd = "sed -i 's/a/b/' docs/plan.md\ngit commit -q -m \"Test CancelSpecs.cs passes\""
+        self.assertEqual(self.hook("Bash", {"command": cmd}).returncode, 0)
+
     def test_hook_passes_without_lock(self):
         self.assertEqual(self.hook("Edit", {"file_path": str(self.spec)}).returncode, 0)
 

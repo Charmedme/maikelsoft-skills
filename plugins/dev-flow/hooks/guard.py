@@ -58,11 +58,17 @@ def main() -> int:
             root, files = lock_for(cwd)
             if not files:
                 return 0
-            writes = bool(WRITE_WORDS.search(command))
+            # Look at each simple command alone, so that a file name in a commit message does not count.
+            segments = [s.strip() for s in re.split(r"\n|&&|\|\||;|\|", command) if s.strip()]
             for name, e in files.items():
                 base = re.escape(pathlib.Path(name).name)
-                redirect = re.search(r">>?\s*['\"]?\S*" + base, command)
-                if redirect or (writes and re.search(base, command)):
+                hit = False
+                for seg in segments:
+                    if re.search(r">>?\s*['\"]?\S*" + base, seg):
+                        hit = True
+                    elif WRITE_WORDS.match(seg) or re.match(r"^(\w+=\S+\s+)*(rm|mv|cp|sed|perl|truncate|tee|git\s+(checkout|restore|rm|mv))\b", seg):
+                        hit = hit or bool(re.search(base, seg))
+                if hit:
                     print(MESSAGE.format(file=name, item=e.get("item"), by=e.get("by")), file=sys.stderr)
                     return 2
         return 0
