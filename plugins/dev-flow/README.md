@@ -117,6 +117,25 @@ The exit code is 1 when there is one or more errors. The checker finds these err
 
 In a scheduled or unattended run, the skill takes its recommended answer for a technical question and marks it "assumed". It never assumes a new package, a new service, or a fact that only you or the PO know. It never posts a comment. While a question waits, it stops before the build.
 
+## When it helps
+
+The tests show where the skill adds value, and where plain Claude Code is enough.
+
+Use it when:
+
+- The item has rules with limits: a period, an amount, a count, a time. Example mapping writes an example below, at, and above each limit. On zitten-kloten, this fixed the time limit boundary in 6 of 6 runs. No run without it had the boundary correct.
+- A wrong guess is expensive, and a person must approve the specification. The gate Spec shows the rules, the examples, and the source of each answer on one page.
+- The tests must stay the contract. The lock and the hook stop an agent that changes a test to make it pass.
+- A fact of the human or the PO is missing. The skill stops and asks. A run without a plugin guesses and builds.
+- You want a record: examples, decisions, and a report for each gate.
+
+It helps less when:
+
+- The fix is small and clear. A run without a plugin passes the same hidden tests on the synthetic fixture, at a half to a third of the cost and faster.
+- The item is ambiguous in a way that the model does not see. The skill did not ask "which pile" in 6 of 6 runs. Only the human at the gate Spec can catch that.
+- Nobody reads the gate Spec. The value of the gate is the human check. Without it, the cost is about 2 times the baseline (Sonnet: $1 to $1.70 against $0.65) for a small gain.
+- You explore or prototype. Use `product-flow:product-prototype`, or plain Claude Code.
+
 ## Test results
 
 24 runs in round 1 and 30 runs in rounds 2 to 5, on the orders-api fixture, model Opus, headless, with an answer sheet. Cost is the median per run.

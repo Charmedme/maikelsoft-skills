@@ -84,6 +84,20 @@ The cost and time are medians. What this means:
 
 Use dev-team when a wrong guess costs more than the extra time and money, or when you need the record. For a patch, a small, or a medium item, use `dev-flow:plan-and-build`. In the tests it passed the same hidden acceptance tests at 3 to 5 times lower cost.
 
+## When it helps
+
+Use it when:
+
+- You ask for a full record: a design, ADRs, a decision index, reviews, and a security review.
+- The change is risky, and a separate security review of the diff is worth the cost.
+- You want to compare the work of a team with the work of one session.
+
+It helps less when:
+
+- You want a correct result at a low cost. In each test, one session with `dev-flow:plan-and-build` passed the same hidden tests at a third to a half of the cost. dev-team costs 10 to 13 times the baseline.
+- You want a fast result. A team run takes 15 to 40 minutes.
+- The stack is not .NET. The stack skills cover .NET only.
+
 ## Limits
 
 - The senior starts the mediors as nested agents. This needs `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` of 2 or more (default 3).
