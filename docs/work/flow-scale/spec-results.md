@@ -30,7 +30,7 @@ Checks and median cost for each run. Each arm passes the build, the tests, the p
 
 ## Conclusions
 
-1. On stories with clear examples, Claude Code with Opus or Sonnet writes correct code without a workflow. Neither flow made the code more correct in any of our 14 cases so far.
+1. On stories with clear examples, Claude Code with Opus or Sonnet writes correct code without a workflow. Neither flow made the code more correct in any of our 8 cases so far.
 2. The model is the largest cost lever: Sonnet costs one third of Opus here, at the same result. An independent benchmark (Artificial Analysis) found the reverse at a matched score on harder tasks. So this result holds for this kind of work, not in general.
 3. The flows give value that the hidden probes do not measure. They stop when a fact of the human is missing. They keep approved tests that the agent cannot change. They keep a record of the decisions. The team decides if that value is worth 1.6 to 4 times the cost. This test cannot decide it.
 4. Synthetic stories do not separate the arms any more. The next useful test uses real items from a real backlog. The probes are the tests that the team wrote later.
