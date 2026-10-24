@@ -1,0 +1,118 @@
+{
+  "skill": "redis",
+  "base": "redis-hard",
+  "planted": [
+    {
+      "id": "P1",
+      "file": "Directory.Packages.props",
+      "line": 13,
+      "description": "Version fact, over two files: the change adds a direct StackExchange.Redis 2.13.17 ('latest stable 2.x'). The current line is 3.x (3.4.5). The SER305 to SER308 lines that the change adds to .editorconfig (line 53) do nothing: the analyzers ship only with StackExchange.Redis 3.x, and 2.13.17 has none. So the sync over async in CacheHealthCheck.cs line 14 builds clean. With 3.4.5 the same build fails with SER307 at that line. Use PackageVersion 3.4.5.",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P2",
+      "file": "src/Orders.Api/Catalog/ProductEndpoints.cs",
+      "line": 95,
+      "description": "The new promotion endpoints remove the cache key before SaveChangesAsync (StartPromotionAsync lines 95-96, EndPromotionAsync lines 114-115), copied from the existing ChangePriceAsync (lines 65-66). A read between the remove and the commit caches the old state again for 30 minutes: an ended promotion stays on the page and in checkout. Save first, then remove (also fix ChangePriceAsync).",
+      "severity": "medium",
+      "subtle": false
+    },
+    {
+      "id": "P3",
+      "file": "src/Orders.Api/Orders/OrderEndpoints.cs",
+      "line": 51,
+      "description": "Existing code that the change now depends on (the new comment at line 60): checkout reads the price through ProductCache, which keeps an L1 copy for 30 minutes (Program.cs line 53). HybridCache has no backplane, so after a promotion ends (or a price changes) on one replica, checkout on the other replicas charges the old promotion price for up to 30 minutes. A price for a write decision must come from the database (compute the current price there), or at least from L2 only.",
+      "severity": "high",
+      "subtle": true
+    },
+    {
+      "id": "P4",
+      "file": "src/Orders.Api/Catalog/ProductCache.cs",
+      "line": 21,
+      "description": "The product read uses the default entry options: L1 for 30 minutes (Program.cs line 53, equal to L2). RemoveAsync on one replica does not clear the L1 of the other two replicas (HybridCache has no backplane), so the product page shows an ended promotion there for up to 30 minutes. Give the product entry Flags = HybridCacheEntryFlags.DisableLocalCache (or a short LocalCacheExpiration that the business accepts, or a backplane such as FusionCache).",
+      "severity": "high",
+      "subtle": false
+    },
+    {
+      "id": "P5",
+      "file": "src/Orders.Api/Catalog/ProductCache.cs",
+      "line": 29,
+      "description": "The cached value is the ProductResponse with the price computed at caching time (ProductContracts.cs line 35). The entry lives 30 minutes, so the promotion price stays on the page and in checkout after endsAt until the job removes the key, and that removal misses (P8) and never reaches the L1 of other replicas. Cache the list price, the percentage and endsAt, and compute the price at read time (or cap the expiration at endsAt).",
+      "severity": "high",
+      "subtle": true
+    },
+    {
+      "id": "P6",
+      "file": "src/Orders.Api/Catalog/ProductCache.cs",
+      "line": 14,
+      "description": "Existing key without a version segment, and the change adds ListPrice and Promotion to the cached ProductResponse. During the rolling deploy (deploy/compose.yml, start-first) the old version keeps writing the old shape under product:{sku}; the new version reads it with ListPrice 0 and Promotion null, with no error, for up to 30 minutes. Bump the key (v2:product:{sku}, decision CACHE-03).",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P7",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 36,
+      "description": "ConnectionMultiplexer.ConnectAsync with the plain connection string keeps abortConnect=true (the default): when Valkey is down at startup, the app throws and does not start, so a cache outage takes the shop down. Set AbortOnConnectFail = false (and ClientName). Also, AddStackExchangeRedisCache still uses options.Configuration (line 43), so the process opens a second connection; pass the same multiplexer through ConnectionMultiplexerFactory.",
+      "severity": "medium",
+      "subtle": false
+    },
+    {
+      "id": "P8",
+      "file": "src/Orders.Api/Catalog/PromotionExpiryJob.cs",
+      "line": 64,
+      "description": "Over two files: the job removes $\"orders:product:{sku}\" through HybridCache, but AddStackExchangeRedisCache already adds InstanceName \"orders:\" (Program.cs line 44). The removal targets orders:orders:product:{sku}, which does not exist, so the job never clears an expired promotion from the cache. Use ProductCache.InvalidateAsync (the one key builder). The direct lock key at line 19 is correct with its prefix, because the multiplexer has no InstanceName.",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P9",
+      "file": "src/Orders.Api/Health/CacheHealthCheck.cs",
+      "line": 14,
+      "description": "PingAsync().Result blocks a thread pool thread in each readiness probe (sync over async, SER307 in StackExchange.Redis 3.x). Under load it starves the pool that must process the reply. Make CheckHealthAsync async and await PingAsync.",
+      "severity": "medium",
+      "subtle": false
+    },
+    {
+      "id": "P10",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 49,
+      "description": "MaximumPayloadBytes = 1024 * 1024 is the default (1 MB), so the line changes nothing and the comment is wrong: a larger product still is not cached (HybridCache logs it and skips the store). Remove the line; keep cached values small.",
+      "severity": "low",
+      "subtle": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "src/Orders.Api/Catalog/PromotionExpiryJob.cs",
+      "line": 69,
+      "description": "LockReleaseAsync(LockKey, token) in finally is correct: it deletes the lock only when the token is still ours. It is not KeyDeleteAsync."
+    },
+    {
+      "id": "D2",
+      "file": "src/Orders.Api/Catalog/PromotionExpiryJob.cs",
+      "line": 21,
+      "description": "A lock expiry of 2 minutes with a 1 minute timer is correct: the lock only prevents duplicate work, the release in finally frees it after each run, and the work is idempotent (ending an expired promotion twice gives the same row). Correctness does not depend on the lock."
+    },
+    {
+      "id": "D3",
+      "file": "src/Orders.Api/Catalog/PromotionExpiryJob.cs",
+      "line": 50,
+      "description": "A new DI scope for each run in the singleton BackgroundService is the correct way to use the scoped OrdersDbContext. It is not a captive dependency."
+    },
+    {
+      "id": "D4",
+      "file": "src/Orders.Api/Catalog/Promotions.cs",
+      "line": 6,
+      "description": "Math.Round to 2 decimals with MidpointRounding.AwayFromZero is correct and matches the VAT rounding of PriceCalculator (line 14). Banker's rounding would be the inconsistent choice."
+    },
+    {
+      "id": "D5",
+      "file": "src/Orders.Api/Catalog/PromotionExpiryJob.cs",
+      "line": 19,
+      "description": "The direct Redis key orders:v1:lock:promotion-expiry carries the service prefix itself. That is correct: the raw multiplexer has no InstanceName (only the IDistributedCache adds it)."
+    }
+  ]
+}

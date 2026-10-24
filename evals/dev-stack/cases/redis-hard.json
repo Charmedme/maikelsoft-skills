@@ -1,0 +1,34 @@
+{
+  "id": 250,
+  "name": "redis-hard",
+  "skill": "redis",
+  "kind": "write",
+  "fixture": "redis-hard",
+  "human": "absent",
+  "request": "Marketing wants to run promotions on products. Add PUT /products/{sku}/promotion with the body { \"percentOff\": 1-90, \"endsAt\": \"<UTC time>\" }. The product gets that discount on its net price until endsAt. endsAt must be in the future, and a new promotion replaces the old one. Add DELETE /products/{sku}/promotion to end a promotion early. GET /products/{sku} also returns \"listPrice\" (the normal net price) and \"promotion\" ({ \"percentOff\", \"endsAt\" }, or null when there is none); \"price\" and \"grossPrice\" are what the customer pays now. Checkout (POST /orders) charges the price that the customer pays at the moment of the order. When a promotion ends, early or at endsAt, the shop must stop showing it and stop charging it. Add tests. No new packages are approved, apart from the caching packages that we already use and their dependencies.",
+  "traps": [
+    "Existing code, quiet: checkout (POST /orders) reads the unit price through ProductCache, which keeps an L1 copy for 30 minutes. HybridCache 10.11.0 has no backplane, so after a promotion ends (or a price changes) on one replica, checkout on another replica charges the old price. A price for a write decision must come from the database (or from L2 only).",
+    "Existing code, quiet default: AddHybridCache sets LocalCacheExpiration 30 minutes, equal to Expiration. RemoveAsync on node A does not clear the L1 of node B, so the product page on the other replicas (deploy/compose.yml has 3) shows an ended promotion for up to 30 minutes. Use DisableLocalCache for product data (or a backplane).",
+    "New code, quiet: a cached ProductResponse with the price computed at caching time outlives endsAt (Expiration 30 minutes, and L1). Cache the promotion and its end, and compute the price at read time (or cap the expiration at endsAt).",
+    "Existing code, quiet: the key product:{sku} has no version segment. The change adds listPrice and promotion to the cached value. During the rolling deploy (start-first, one replica at a time) the old version keeps writing the old shape under the same key, and the new version reads it with listPrice 0 and no promotion, with no error. Bump the key version (CACHE-03).",
+    "Existing code, version fact: Microsoft.Extensions.Caching.StackExchangeRedis 10.0.13 declares StackExchange.Redis >= 2.7.27, and the fixture has no direct reference, so the app runs on StackExchange.Redis 2.7.27 (2023). The fixture has CentralPackageTransitivePinningEnabled, so a PackageVersion 3.x is enough.",
+    "Existing code, copied into new code: ChangePriceAsync removes the cache key before SaveChangesAsync. A read between the remove and the commit stores the old price again for 30 minutes. New promotion endpoints that copy the pattern have the same race. Save first, then remove."
+  ],
+  "assertions": [
+    {"id": "C1", "check": "build_warnaserror"},
+    {"id": "C2", "check": "tests_pass"},
+    {"id": "C3", "check": "package_policy", "approved": ["Microsoft.Extensions.Caching.Hybrid", "Microsoft.Extensions.Caching.StackExchangeRedis", "StackExchange.Redis", "Testcontainers.Redis"]},
+    {"id": "C4", "check": "resolved_min", "value": {"StackExchange.Redis": "3.0.0"}, "trap": "The cache package alone resolves StackExchange.Redis 2.7.27."},
+    {"id": "C5", "check": "probe_tests", "probe": "redis-hard", "tests": ["Promotion_IsShownAndCharged"]},
+    {"id": "C6", "check": "probe_tests", "probe": "redis-hard", "tests": ["EndPromotionOnNodeA_NodeBShowsListPrice"], "trap": "HybridCache has no backplane and L1 lives 30 minutes: node B shows the ended promotion."},
+    {"id": "C7", "check": "probe_tests", "probe": "redis-hard", "tests": ["EndPromotionOnNodeA_CheckoutOnNodeBChargesListPrice"], "trap": "Checkout reads the price through the cache (existing code): node B charges the ended promotion."},
+    {"id": "C8", "check": "probe_tests", "probe": "redis-hard", "tests": ["PromotionEndsAt_PriceReturnsToListPrice"], "trap": "The cached price outlives endsAt."},
+    {"id": "C9", "check": "probe_tests", "probe": "redis-hard", "tests": ["CacheEntryOfPreviousVersion_IsNotServed"], "trap": "The key has no version segment: an entry of the previous version gives listPrice 0."},
+    {"id": "C10", "check": "grep_absent", "value": ["\\bGetOrSetAsync\\b", "\\bAddRedisCache\\s*\\(", "\\.AddRedis\\s*\\(", "\\.Result\\s*(?:[;),\\]]|\\.)|\\.GetAwaiter\\(\\)\\.GetResult\\(\\)", "\\.Wait\\(\\s*\\)", "ThreadPool\\.SetMinThreads", "\\bAddDistributedMemoryCache\\s*\\(", "\\bKeys(Async)?\\s*\\(\\s*(pattern\\s*:)?", "ConnectionMultiplexer\\.Connect\\s*\\(", "\\bRemoveByPrefixAsync\\b"], "files": ["src/**/*.cs"], "trap": "Invented cache APIs, sync over async, KEYS, a memory cache as the shared L2, and a blocking connect."},
+    {"id": "J1", "judge": "Every write path that changes a product (the new promotion endpoints, and the existing price change) saves to the database first and then removes the cache key. Or the final message reports the remove-before-save order of the existing ChangePriceAsync as an open point."},
+    {"id": "J2", "judge": "The final message says that checkout read the price through the product cache (existing code), and states how checkout now gets the current price, or reports it as an open point."},
+    {"id": "J3", "judge": "The final message says that the app resolved StackExchange.Redis 2.7.27 through the cache package, and names the direct 3.x reference (or names it as an open point)."},
+    {"id": "J4", "judge": "The final message gives the reason for the new cache key (or key version): the shape of the cached value changed, and entries of the old shape (written by the previous version during the deploy, or still in Valkey) must not be read as the new shape."},
+    {"id": "J5", "judge": "The final message marks the open team decisions as assumed: at least how all instances see a change (CACHE-07), the TTLs (CACHE-04), and the key format (CACHE-03)."}
+  ]
+}
