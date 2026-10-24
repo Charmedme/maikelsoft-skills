@@ -96,6 +96,21 @@ The skills use these scripts. They use only the Python standard library.
 
 In a scheduled or unattended run, the skill takes its recommended answers and marks them "assumed". It stops after the prototype, because only a human can validate it. `backlog-push` never creates items without your approval.
 
+## When it helps
+
+Use it when:
+
+- An idea must become items that other people or agents build. The items get one standard: role, value, criteria, examples, and scope.
+- The idea is not clear yet. The questions and the prototype find what the requester means before the backlog exists.
+- Your team has a standard, for example an MVP framework. A team profile makes the skills follow it.
+- An item goes to a build. `example-mapping` finds the limits and the words with more than one meaning, and searches the existing decisions first.
+
+Do not use it when:
+
+- You know what to build and you build it yourself. Write one item, or go to `dev-flow:plan-and-build`.
+- The work is a bug or a chore. One clear item is enough.
+- You need a decision of the business. The skills prepare each question with a recommended answer. The PO decides.
+
 ## Limits
 
 - The push needs a connector for your ticket system in Claude Code or claude.ai. Without one, you get files.

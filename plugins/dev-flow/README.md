@@ -117,6 +117,23 @@ The exit code is 1 when there is one or more errors. The checker finds these err
 
 In a scheduled or unattended run, the skill takes its recommended answer for a technical question and marks it "assumed". It never assumes a new package, a new service, or a fact that only you or the PO know. It never posts a comment. While a question waits, it stops before the build.
 
+## When it helps
+
+Use it when:
+
+- The item has business rules with limits, for example a period, an amount, a count, or a time. Example mapping gives an example below, at, and above each limit. Without it, a model often does not test the exact limit.
+- A wrong result costs more than the extra time. The gate Spec shows the rules, the examples, and the source of each answer on one page, before code exists.
+- The tests must stay the contract. The lock and the hook stop an agent that changes a test to make it pass.
+- The item can miss facts. The skill stops and asks the PO. Without the skill, the model guesses and builds.
+- You need a record of the work: examples, decisions, and a report.
+
+Do not use it when:
+
+- The change is small and clear, for example a typo, a config value, or a bug with a known cause. Plain Claude Code gives the same result faster and at a lower cost.
+- You explore or make a prototype. The gates slow you down, and the tests get thrown away. Use `product-flow:product-prototype` or plain Claude Code.
+- Nobody reads the gate Spec. Its value is the human check. A model does not see each word with two meanings, and it can take a related decision as the answer. Without a reader, you pay about 2 times the cost for a small gain.
+- There is no item and no PO. Make the item first with `product-flow`.
+
 ## Test results
 
 24 runs in round 1 and 30 runs in rounds 2 to 5, on the orders-api fixture, model Opus, headless, with an answer sheet. Cost is the median per run.
@@ -139,7 +156,7 @@ Each delivered run passes the build, the tests, the package policy, and each hid
 - The product question path is tested only unattended: no test posted a comment to a real tracker.
 - The hand-off to `dev-team` ran in one test run only.
 - On the synthetic fixture, a run without a plugin passes the same hidden tests at a lower cost. The value of the flow is in the gates, the lock, and the questions, not in a higher test score.
-- Example mapping finds a gap only when the run reads the criterion closely. Refer to the [zitten-kloten results](../../docs/work/flow-scale/zk-results.md).
+- Example mapping does not find each ambiguity. The human at the gate Spec still reads the examples and their sources.
 
 ## Documentation
 
