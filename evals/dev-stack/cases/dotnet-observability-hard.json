@@ -1,0 +1,42 @@
+{
+  "id": 262,
+  "name": "dotnet-observability-hard",
+  "skill": "dotnet-observability",
+  "kind": "write",
+  "fixture": "dotnet-observability-hard",
+  "human": "absent",
+  "request": "The warehouse says that dispatching a parcel sometimes fails with an error page, and nobody can tell why. Change POST /shipments/{id}/dispatch: when the carrier gateway refuses the booking, answer 409 with the reason code and the message of the gateway, and keep the shipment pending, so that the warehouse can correct the order and dispatch again. When the gateway has an error or does not answer, answer 502 and keep the shipment pending. Operations wants to follow the bookings: a dashboard with the number of bookings and the booking time, per carrier and per outcome (booked, refused, failed). In Application Insights they want to see each booking as a step of its dispatch request, with its outcome. When a booking is refused, support must find all log lines of that dispatch by the shipment id, as they do for the other shipment steps, and see the reason of the refusal. Approved packages: Microsoft.Extensions.Telemetry, Microsoft.Extensions.Compliance.Redaction and Microsoft.Extensions.Diagnostics.Testing.",
+  "traps": [
+    "Existing code, quiet default, version fact: Program.cs sets options.SamplingRatio = 1.0F on UseAzureMonitor with the comment 'OPS-20: keep every trace'. Since Azure.Monitor.OpenTelemetry.AspNetCore 1.5.0 the default sampler is RateLimitedSampler with 5 traces per second, and TracesPerSecond wins over SamplingRatio when both have a value. So the service keeps about 5 traces per second, and the trace-based log sampler drops the logs of the other traces. Checked: with SamplingRatio = 1.0F alone, 0 of 50 root activities were recorded; with TracesPerSecond = null, 50 of 50. Fix: TracesPerSecond = null.",
+    "Existing code, quiet default: the dispatch opens a BeginScope with ShipmentId and OrderId, and README says that support filters on customDimensions.ShipmentId. OpenTelemetryLoggerOptions.IncludeScopes is false by default (the distro README: scopes are off by default), so no scope value reaches Application Insights. The new refusal log depends on the same scope.",
+    "Existing code, quiet: the ActivitySource and the Meter 'Orders.Shipping' are never registered with the distro (no AddSource or AddMeter). StartActivity returns null and the counters record nothing in production, so the existing dispatch span and the dashboard metrics never reach Application Insights. A new booking span on the same source stays invisible too.",
+    "Existing code, touched by the feature: HttpCarrierGateway logs the full answer of the gateway on a refusal. The 422 answer echoes the recipient (name, street, postal code, phone, email), so personal data goes to the logs. The new refusal log must keep only the reason code and message.",
+    "Existing code, touched by the feature: ShippingMetrics.Dispatched tags the counter with orders.customer_id (one time series per customer, and personal data in metrics). New booking metrics copied from it carry the same tag.",
+    "New code, version fact: CA1848 is off in .editorconfig, but CA1873 (AnalysisLevel latest-recommended) warns on each LogInformation, LogDebug or LogTrace call with arguments. The existing code has only LogWarning and LogError calls. A new 'booked' LogInformation with arguments fails 'dotnet build -warnaserror'. [LoggerMessage] methods build clean.",
+    "Existing code, judge: the dispatch logs CarrierBookingException with ex.Message and no exception argument, then rethrows, so the exception handler logs the same failure again."
+  ],
+  "assertions": [
+    {"id": "C1", "check": "build_warnaserror", "trap": "CA1873 on a LogInformation call with arguments, also when CA1848 is off."},
+    {"id": "C2", "check": "tests_pass"},
+    {"id": "C3", "check": "package_policy", "approved": ["Microsoft.Extensions.Telemetry", "Microsoft.Extensions.Compliance.Redaction", "Microsoft.Extensions.Diagnostics.Testing"]},
+    {"id": "C4", "check": "probe_tests", "probe": "dotnet-observability-hard", "tests": ["Dispatch_Booked_StoresTrackingNumber", "Dispatch_Refused_Returns409WithReason_ShipmentStaysPending", "Dispatch_GatewayError_Returns502_ShipmentStaysPending"]},
+    {"id": "C5", "check": "probe_tests", "probe": "dotnet-observability-hard", "tests": ["Refusal_LogNamesReasonAndShipment"]},
+    {"id": "C6", "check": "probe_tests", "probe": "dotnet-observability-hard", "tests": ["Refusal_LogsHoldNoRecipientData"], "trap": "The existing refusal log writes the gateway answer, which echoes the recipient."},
+    {"id": "C7", "check": "probe_tests", "probe": "dotnet-observability-hard", "tests": ["Booking_SpansHoldNoRecipientData"], "trap": "Span attributes are not redacted: the gateway answer or the address on a span."},
+    {"id": "C8", "check": "probe_tests", "probe": "dotnet-observability-hard", "tests": ["BookingMetrics_PerCarrierAndOutcome"]},
+    {"id": "C9", "check": "probe_tests", "probe": "dotnet-observability-hard", "tests": ["Metrics_HaveNoIdOrPersonalTags"], "trap": "The existing orders.customer_id tag, or an id on a new booking metric."},
+    {"id": "C10", "check": "probe_tests", "probe": "dotnet-observability-hard", "tests": ["Sampling_KeepsEveryTrace"], "trap": "SamplingRatio = 1.0F alone keeps 5 traces per second (TracesPerSecond default, Azure Monitor distro 1.5.0 and later)."},
+    {"id": "C11", "check": "probe_tests", "probe": "dotnet-observability-hard", "tests": ["LogScopes_AreExported"], "trap": "IncludeScopes is false by default: the ShipmentId scope never reaches Application Insights."},
+    {"id": "C12", "check": "probe_tests", "probe": "dotnet-observability-hard", "tests": ["AppSourcesAndMeters_AreExported"], "trap": "The Orders.Shipping source and meter are not registered with the distro."},
+    {"id": "C13", "check": "grep_absent", "value": ["\\bnew\\s+Meter\\s*\\(", "\\.AddConsoleExporter\\s*\\(", "InstrumentationKey", "TelemetryConfiguration\\.Active", "\\.Host\\s*\\.\\s*UseSerilog\\s*\\(", "UseMicrosoftOpenTelemetry"], "files": ["src/**/*.cs", "src/**/appsettings*.json"], "trap": "A meter created with new, a console exporter, an instrumentation key, a classic API, a second distro."},
+    {"id": "C14", "check": "file_exists", "files": ["tests/**/*.cs"], "contains": "AddFakeLogging|GetFakeLogCollector|FakeLogCollector", "trap": "No test proves the log of a refusal (reason, no personal data)."},
+    {"id": "C15", "check": "file_exists", "files": ["tests/**/*.cs"], "contains": "MetricCollector<", "trap": "No test proves the booking metric and its tags."},
+    {"id": "J1", "judge": "The final message says that the existing sampling setting did not keep all traces: with the Azure Monitor distro, TracesPerSecond (default 5) wins over SamplingRatio, so TracesPerSecond must be null. It says that this is fixed, or names it as an open point."},
+    {"id": "J2", "judge": "The final message says that log scopes did not reach Application Insights before (IncludeScopes was off), so the ShipmentId filter of support did not work. It says that this is fixed, or names it as an open point."},
+    {"id": "J3", "judge": "The final message says that the existing Orders.Shipping source and meter were not registered, so the dispatch spans and the dashboard metrics were not exported. It says that this is fixed, or names it as an open point."},
+    {"id": "J4", "judge": "The existing counter orders.shipments.dispatched no longer has a customer id tag, or the final message reports the tag as an open point (high cardinality, personal data in metrics)."},
+    {"id": "J5", "judge": "The final message reports that the existing refusal log wrote the gateway answer with the personal data of the recipient, and that the new log keeps only the reason (code and message)."},
+    {"id": "J6", "judge": "A refused or failed booking is logged one time, with the exception as the exception argument where an exception is logged. The dispatch no longer logs and rethrows the same failure."},
+    {"id": "J7", "judge": "The final message marks the open team decisions as assumed: at least the logging style or pipeline (OPS-23) and the data classification of the recipient data (SEC-14)."}
+  ]
+}
