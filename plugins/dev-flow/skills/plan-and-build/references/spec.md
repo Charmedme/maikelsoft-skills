@@ -24,11 +24,11 @@ Find the place first: the project guide, or an acceptance folder that exists. El
 
 ## Steps
 
-1. **Map the examples.** List each example of the item (Given/When/Then, or a row of an example table) with its acceptance criterion. An example that is not clear is a product question (`po-questions.md`).
+1. **Take the examples.** Take each example of `examples.md` that has an answer. One acceptance test for each row. A row with the source `open: P<n>` gets no test yet.
 2. **Write the test cases.** One test for each example. The test name says the example in domain words. The body calls only the DSL.
 3. **Write the DSL and the driver.** Only what the test cases need.
 4. **Run them: red.** Each new test case must fail, for the right reason (for example 404 because the endpoint does not exist yet). A test that passes before the change tests nothing new. Change it, or tell the human that the behaviour exists already.
-5. **Gate Spec.** Show the human each test case: the file, the test name, the body, and the example that it checks. Ask: "Do these tests say what the item means?"
+5. **Gate Spec.** First show `examples.md`: the words with more than one meaning, the answers from decisions, and the open questions. Then show each test case: the file, the test name, the body, and the example row that it checks. Ask: "Do these tests say what the item means?"
 6. **Lock.** After the approval, run:
 
    ```
