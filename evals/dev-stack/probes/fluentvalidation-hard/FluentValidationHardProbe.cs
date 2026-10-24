@@ -68,6 +68,14 @@ public sealed class FluentValidationHardProbe
     }
 
     [TestMethod]
+    public async Task CreateOrder_DuplicateSkuOtherCase_Returns400()
+    {
+        var (status, body) = await PostOrderAsync(Order(Line("SKU-2", 1), Line(" sku-2", 2)));
+
+        Assert.AreEqual(400, status, $"The catalog stores SKUs trimmed and in upper case, so \"SKU-2\" and \" sku-2\" are one product. Body: {body}");
+    }
+
+    [TestMethod]
     public async Task CreateOrder_NullLines_Returns400()
     {
         var (status, body) = await PostOrderAsync(new { customerId = Guid.CreateVersion7(), lines = (object?)null });
@@ -99,6 +107,16 @@ public sealed class FluentValidationHardProbe
         var (status, body) = await SendAsync(client, "/orders", new StringContent("null", Encoding.UTF8, "application/json"), idempotency: true);
 
         Assert.AreEqual(400, status, $"A JSON null body must give 400. Body: {body}");
+    }
+
+    [TestMethod]
+    public async Task CreateReturn_NullBodyInProduction_Returns400()
+    {
+        await using var factory = Factory("Production");
+        using var client = factory.CreateClient();
+        var (status, body) = await SendAsync(client, "/returns", new StringContent("null", Encoding.UTF8, "application/json"), idempotency: false);
+
+        Assert.AreEqual(400, status, $"A JSON null body on POST /returns must give 400. Body: {body}");
     }
 
     [TestMethod]

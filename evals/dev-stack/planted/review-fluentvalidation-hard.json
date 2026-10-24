@@ -1,0 +1,94 @@
+{
+  "skill": "fluentvalidation",
+  "planted": [
+    {
+      "id": "P1",
+      "file": "src/Orders.Api/Customers/CreateCustomerRequestValidator.cs",
+      "line": 29,
+      "description": "RuleFor(x => x.Address).SetValidator(addressValidator) without NotNull(). SetValidator skips a null child, so \"address\": null passes the validator, and DeliveryAddress.From(request.Address) in CreateAsync throws: a 500 (checked). The address is required on create; add .NotNull().WithErrorCode(\"customer.address_required\") before SetValidator.",
+      "severity": "high"
+    },
+    {
+      "id": "P2",
+      "file": "src/Orders.Api/Customers/CreateCustomerRequestValidator.cs",
+      "line": 16,
+      "description": "WithErrorCode(\"customer.email_invalid\") applies only to MaximumLength. An empty email gets the code NotEmptyValidator and an invalid email gets EmailValidator (checked), which are not a contract. Put a WithErrorCode after each validator, as UpdateCustomerRequestValidator does.",
+      "severity": "medium"
+    },
+    {
+      "id": "P3",
+      "file": "src/Orders.Api/Customers/CustomerEndpoints.cs",
+      "line": 33,
+      "description": "The change removes the catch of the unique violation in CreateAsync and relies on the MustAsync email check in CreateCustomerRequestValidator (line 17). Two requests with the same email can both pass the check; the second SaveChangesAsync then throws: a 500 instead of 409. The duplicate email also changes from 409 customer.email_taken to 400 (the test was changed to match), which breaks clients. Keep the catch and the 409; the validator check can only be an early message.",
+      "severity": "high"
+    },
+    {
+      "id": "P4",
+      "file": "src/Orders.Api/Customers/CustomerContracts.cs",
+      "line": 10,
+      "description": "UpdateCustomerRequest keeps its DataAnnotations (Required, EmailAddress, StringLength) while Program.cs calls AddValidation(). The built-in filter answers first for these fields with a 400 without errorCodes (checked: an empty name gives \"The Name field is required.\" and no codes), so UpdateCustomerRequestValidator does not run for them. Remove the attributes, as the change did for CreateCustomerRequest, or call DisableValidation() on the endpoint.",
+      "severity": "medium"
+    },
+    {
+      "id": "P5",
+      "file": "src/Orders.Api/Customers/AddressRequestValidator.cs",
+      "line": 16,
+      "description": "The validator allows an address line of 200 characters, but CustomerConfiguration (line 15) and the migration make the column character varying(120). A line of 121 to 200 characters passes validation and SaveChangesAsync throws: a 500 (checked). Use one limit (120) from one place.",
+      "severity": "medium"
+    },
+    {
+      "id": "P6",
+      "file": "src/Orders.Api/Customers/CreateCustomerRequestValidator.cs",
+      "line": 13,
+      "description": "ClassLevelCascadeMode = CascadeMode.Stop stops the whole validator after the first rule that fails, not each field. The customer gets one error at a time (checked: an invalid email and an empty name give only the email error). The comment asks for one message for each field: RuleLevelCascadeMode = Stop already does that. Remove the ClassLevelCascadeMode line.",
+      "severity": "low"
+    },
+    {
+      "id": "P7",
+      "file": "src/Orders.Api/Customers/AddressRequestValidator.cs",
+      "line": 30,
+      "description": "The CountryCode rule has NotEmpty() and then Must(code => ... code.Trim() ...) without .Cascade(CascadeMode.Stop) (the other rules of this validator have it) and without RuleLevelCascadeMode. For \"countryCode\": null the Must runs too and throws NullReferenceException: a 500 (checked). Add .Cascade(CascadeMode.Stop) (rule FV-CASCADE-DEPENDENT).",
+      "severity": "high"
+    },
+    {
+      "id": "P8",
+      "file": "src/Orders.Api/Infrastructure/ValidationFilter.cs",
+      "line": 10,
+      "description": "Existing code next to the change: the filter takes the argument with .Single() and has no null check. The change puts the filter on POST and PUT /customers. In Production a JSON null body reaches the filter as null, Single() (or ValidateAsync(null)) throws: a 500 (checked). Return a 400 ProblemDetails when context.Arguments.OfType<T>().FirstOrDefault() is null.",
+      "severity": "medium"
+    },
+    {
+      "id": "P9",
+      "file": "src/Orders.Api/Customers/Customer.cs",
+      "line": 54,
+      "description": "Customer.Update stores the email with Trim() only, while the constructor (line 21) stores Trim().ToLowerInvariant(). The unique index is case-sensitive, so a PUT can store \"Anna@Example.com\" next to another customer's \"anna@example.com\", and the email check of create (which compares lower case) no longer finds it. Normalize the email in Update the same way.",
+      "severity": "medium"
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "src/Orders.Api/Customers/UpdateCustomerRequestValidator.cs",
+      "line": 21,
+      "description": "RuleFor(x => x.Address!).SetValidator(addressValidator) without NotNull() is correct here: on update the address is optional, and null keeps the current address (Customer.Update, the test UpdateCustomer_NewNameWithoutAddress_KeepsAddress). The ! only satisfies the nullable annotation of SetValidator. A finding that asks for NotNull() here is a false positive."
+    },
+    {
+      "id": "D2",
+      "file": "src/Orders.Api/Customers/UpdateCustomerRequestValidator.cs",
+      "line": 18,
+      "description": ".MaximumLength(100).WithMessage(...).WithErrorCode(...) is correct: WithMessage and WithErrorCode both apply to the last validator (MaximumLength), in any order. A finding that the code attaches to the message or to the whole chain is a false positive."
+    },
+    {
+      "id": "D3",
+      "file": "src/Orders.Api/Customers/AddressRequestValidator.cs",
+      "line": 14,
+      "description": ".Cascade(CascadeMode.Stop) on a single rule is a supported FluentValidation 12 API. Version 12 removed CascadeMode.StopOnFirstFailure and the validator-level CascadeMode property, not the rule-level Cascade method. A finding that calls it removed or deprecated, or that asks to replace it, is a false positive."
+    },
+    {
+      "id": "D4",
+      "file": "tests/Orders.Api.Tests/ValidationFilterTests.cs",
+      "line": 16,
+      "description": "new InlineValidator<UpdateCustomerRequest>() in the filter test is the recommended way to give a consumer a validator that fails. It is not a mock of IValidator<T>. A finding that asks to replace it with the real validator or calls it a mock is a false positive."
+    }
+  ]
+}
