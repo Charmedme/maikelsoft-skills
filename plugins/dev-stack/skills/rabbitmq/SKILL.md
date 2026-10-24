@@ -86,7 +86,7 @@ await channel.BasicPublishAsync("orders.events", "order.placed.v1", mandatory: t
 ### Consuming
 
 10. Consume with `autoAck: false`. Ack after the work and the database commit. An early ack turns a crash into data loss.
-11. Set a prefetch per consumer: `BasicQosAsync(0, n, global: false)`. Start between 10 and 100 and measure. Global QoS fails on quorum queues and RabbitMQ 4.3 denies it by default.
+11. Set a prefetch per consumer: `BasicQosAsync(0, n, global: false)`. Start between 10 and 100 and measure. Global QoS is a deprecated feature (`global_qos`), and quorum queues do not support it. Do not depend on an error: on 4.3.6 the call with `global: true` did not fail.
 12. Deserialize or copy `ea.Body` inside `ReceivedAsync`. The client reuses that memory after the handler returns.
 13. Classify failures (principle 7). Permanent (validation, unknown type): `BasicNackAsync(requeue: false)`, so that the dead-letter exchange takes it. Transient: retry with a delay (DLX plus TTL, or the quorum delayed retry of 4.3). Keep `delivery-limit` at 20. From 4.3, `BasicNackAsync(requeue: true)` does not count toward it: requeue with `BasicRejectAsync(requeue: true)`. Use `dead-letter-strategy=at-least-once` with `overflow=reject-publish` for a queue whose dead letters must not get lost (MSG-08).
 14. Expect no global order. For order with failover, use `x-single-active-consumer`. Raise `ConsumerDispatchConcurrency` above 1 (the default) only when order does not matter. Keep a handler shorter than the consumer timeout (30 minutes, enforced on quorum queues). Send a reference instead of a body above 16 MiB.

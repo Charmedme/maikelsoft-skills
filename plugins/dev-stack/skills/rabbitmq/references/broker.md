@@ -62,7 +62,7 @@ Wolverine and EasyNetQ have their own scheduling (`dev-stack:wolverine`, `easyne
 
 - Consumer timeout: 30 minutes by default, enforced on quorum queues. A delivery that is not acked in that time closes the channel, and the message comes again. Keep handlers short, or move long work to a job with its own state.
 - Message size: the default maximum is 16 MiB. Send a reference (a blob URL) for larger content.
-- Global QoS (`global: true`) is not supported on quorum queues and is denied by default in 4.3.
+- Global QoS (`global: true`) is not supported on quorum queues. The deprecated feature `global_qos` is denied by default in 4.3, but on 4.3.6 `BasicQosAsync(0, 10, true)` did not fail: the consumer got a prefetch of 10. Use `global: false`.
 - Use a prefetch per consumer between 10 and 100. Measure. A large prefetch holds many unacked messages in one consumer.
 
 ## Order
