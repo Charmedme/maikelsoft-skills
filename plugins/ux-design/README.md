@@ -75,6 +75,8 @@ Version 0.1.0 on Sonnet, against Sonnet without the plugin (30 votes for each cr
 - Without a design system, the plugin always makes a shared foundation (token and component files). Without the plugin, the styles stay inside each mockup.
 - A run costs about 2.4 times a run without the plugin ($1.47 against $0.60 on Sonnet).
 
+On Opus, version 0.1.0 wins each design criterion and the states against Opus without the plugin. It does not win the other mockup criteria: Opus without the plugin is strong on product detail. Opus with the plugin beats Sonnet with the plugin on 6 of 9 criteria, at about 2.2 times the cost. Thus the agent uses Opus by default. To use Sonnet, set `model: sonnet` in the agent file.
+
 ## Limits
 
 - The agent cannot do user research. It writes the questions and the research backlog. Real users answer them.

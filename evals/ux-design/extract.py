@@ -36,7 +36,17 @@ Questions (name: options):
 Reply with only one JSON object: {{"<name>": "<option>", ...}}. No other text."""
 
 
-def extract(run, model):
+def extract(run, model, tries=2):
+    """Ask the fixed questions. Try again once when the reply is not valid JSON."""
+    for _ in range(tries):
+        run, ans = extract_once(run, model)
+        if "_error" not in ans:
+            break
+    (run / "extract.json").write_text(json.dumps(ans, indent=2), encoding="utf-8")
+    return run, ans
+
+
+def extract_once(run, model):
     case = CASES[run.parts[-3]]
     work = f"docs/work/{case['slug']}"
     qs = "\n".join(f"- {k}: {' | '.join(v)}" for k, v in case["questions"].items())
@@ -57,7 +67,6 @@ def extract(run, model):
         ans = json.loads(re.search(r"\{.*\}", text, re.S).group(0))
     except (json.JSONDecodeError, AttributeError):
         ans = {"_error": (r.stdout + r.stderr)[-500:]}
-    (run / "extract.json").write_text(json.dumps(ans, indent=2), encoding="utf-8")
     return run, ans
 
 
