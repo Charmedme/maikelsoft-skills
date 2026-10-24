@@ -1,0 +1,110 @@
+{
+  "skill": "postgresql",
+  "base": "postgresql-hard",
+  "planted": [
+    {
+      "id": "P1",
+      "file": "src/Orders.Api/Customers/CustomerEndpoints.cs",
+      "line": 88,
+      "description": "SQL injection: the query string 'sort' (line 79) goes into the SQL text as an identifier (ORDER BY \"{orderBy}\") and runs through SqlQueryRaw (line 91). Building the string in a variable first hides it from the EF1002 analyzer. A value with a double quote breaks out of the identifier. Map 'sort' through an allow list (PlacedAt, Subtotal) to a fixed SQL fragment, and send the values as parameters with SqlQuery.",
+      "severity": "high",
+      "subtle": false
+    },
+    {
+      "id": "P2",
+      "file": "src/Orders.Api/Picking/PickingQueries.cs",
+      "line": 20,
+      "description": "Existing code that the change edits, over two files: 'SELECT ... FOR UPDATE SKIP LOCKED' runs through SqlQuery in autocommit mode, so the row lock ends with the SELECT. PickingEndpoints.cs (line 32 to 40) then loads the order and saves it in a second statement. Two workers at the start of a shift can get the same order (or one gets a 500 from StartPicking). The express change keeps the bug. Claim in one statement: UPDATE orders SET \"Status\" = 'Picking', ... WHERE \"Id\" = (SELECT \"Id\" ... ORDER BY \"Express\" DESC, \"PlacedAt\", \"Id\" LIMIT 1 FOR UPDATE SKIP LOCKED) RETURNING \"Id\", read with ToListAsync; or put both statements in one transaction.",
+      "severity": "high",
+      "subtle": true
+    },
+    {
+      "id": "P3",
+      "file": "src/Orders.Api/Reports/SalesReports.cs",
+      "line": 36,
+      "description": "date_trunc('month', o.\"PlacedAt\") on timestamptz uses the session TimeZone (UTC on the server), and the WHERE clause uses UTC midnight (line 33). An order at 00:30 on 1 November in Amsterdam (23:30Z on 31 October) counts in October, and the month starts at UTC midnight. The README says Dutch calendar periods. The new report copies the pattern of the existing daily report (line 17, o.\"PlacedAt\"::date), which has the same bug. Use date_trunc('month', o.\"PlacedAt\" AT TIME ZONE 'Europe/Amsterdam') and filter on the bare column with ({from}::timestamp AT TIME ZONE 'Europe/Amsterdam'); fix the daily report too.",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P4",
+      "file": "src/Orders.Api/Data/OrderConfiguration.cs",
+      "line": 45,
+      "description": "DDL on a live table: the new check constraint makes the migration run ALTER TABLE order_lines ADD CONSTRAINT ... CHECK (migration line 67) without NOT VALID. PostgreSQL takes an ACCESS EXCLUSIVE lock and scans all 152 million rows while it holds it, so all reads and writes of order_lines (each order placement) wait for minutes. The lock_timeout of line 15 only limits the wait for the lock, not the time the lock is held. Add the constraint as NOT VALID in raw SQL, and run VALIDATE CONSTRAINT in a later step (it takes a lock that allows writes).",
+      "severity": "high",
+      "subtle": true
+    },
+    {
+      "id": "P5",
+      "file": "src/Orders.Api/Stock/StockEndpoints.cs",
+      "line": 39,
+      "description": "Race: the old stock level is read in one statement and the upsert runs in another (line 43 to 47), without a transaction or a row lock. With two updates at the same time (or a reservation between them), 'before' is stale: an alert is missed (5 -> 0 -> 5 with both calls reading 5) or sent when the SKU was not out of stock. Use one statement: on PostgreSQL 18, INSERT ... ON CONFLICT ... DO UPDATE ... RETURNING old.\"Available\" gives the previous value atomically (or SELECT ... FOR UPDATE and the upsert in one transaction).",
+      "severity": "low",
+      "subtle": true
+    },
+    {
+      "id": "P6",
+      "file": "src/Orders.Api/Products/AlertEndpoints.cs",
+      "line": 32,
+      "description": "MERGE is not a safe concurrent upsert. Under READ COMMITTED, two calls for the same customer and SKU (a double click) both see no row, both try the INSERT, and the second fails with 23505 on the unique index (checked on postgres:18.6) and returns 500. The comment promises an idempotent call. Use INSERT ... ON CONFLICT (\"Sku\", \"CustomerId\") DO NOTHING, or catch 23505.",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P7",
+      "file": "src/Orders.Api/Reports/SalesReports.cs",
+      "line": 54,
+      "description": "NOT IN (SELECT o.\"CouponCode\" FROM orders) on a nullable column: most orders have no coupon, so the subquery returns NULL and NOT IN returns no rows. The unused-coupons report is always empty. Use NOT EXISTS (SELECT 1 FROM orders o WHERE o.\"CouponCode\" = c.\"Code\").",
+      "severity": "medium",
+      "subtle": false
+    },
+    {
+      "id": "P8",
+      "file": "src/Orders.Api/Stock/StockEndpoints.cs",
+      "line": 52,
+      "description": "Instant stored as a wall-clock time: NotifiedAt is a DateTime in a 'timestamp without time zone' column (ProductConfiguration.cs line 29), filled from time.GetLocalNow().DateTime. The value depends on the zone of the machine that runs the request, and the zone is lost, so the mail job cannot compare it with UTC instants. It also breaks the accepted decision DATA-10. Use DateTimeOffset? with timestamptz and time.GetUtcNow().",
+      "severity": "medium",
+      "subtle": false
+    },
+    {
+      "id": "P9",
+      "file": "src/Orders.Api/Orders/OrderEndpoints.cs",
+      "line": 46,
+      "description": "Over two files: a SERIALIZABLE transaction without a retry. Two orders at the same time that read the same rows fail with 40001 (serialization failure), and Program.cs (line 36) has no EnableRetryOnFailure and the code no execution strategy, so the customer gets a 500. The whole order placement (coupon, stock) now runs at SERIALIZABLE, so busy SKUs fail too. Keep READ COMMITTED and enforce one use for each customer with a unique partial index on orders (\"CustomerId\", \"CouponCode\") WHERE \"CouponCode\" IS NOT NULL (built concurrently) and map 23505, or retry the whole transaction on 40001 and 40P01.",
+      "severity": "medium",
+      "subtle": true
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "src/Orders.Api/Products/ProductEndpoints.cs",
+      "line": 67,
+      "description": "LIKE on a column with a nondeterministic ICU collation works on PostgreSQL 18 (checked on postgres:18.6: 'Café Crème Mug' matches '%cafe creme%'). Before PostgreSQL 18 it failed with 'nondeterministic collations are not supported for LIKE'. The fixture pins postgres:18.6 (DATA-01). The pattern escapes %, _ and the backslash and names the escape character, and the test Search_PercentSign_IsLiteral proves it."
+    },
+    {
+      "id": "D2",
+      "file": "src/Orders.Api/Data/ProductConfiguration.cs",
+      "line": 27,
+      "description": "HasDefaultValueSql(\"uuidv7()\") is correct on PostgreSQL 18, which has the built-in function uuidv7() (checked on postgres:18.6). It gives ordered keys to the MERGE insert, which does not go through EF. No extension is needed."
+    },
+    {
+      "id": "D3",
+      "file": "src/Orders.Api/Data/Migrations/20261020140000_AddExpressAlertsAndSearch.cs",
+      "line": 36,
+      "description": "ADD COLUMN \"Express\" boolean NOT NULL DEFAULT false on the big orders table does not rewrite the table: since PostgreSQL 11 a constant default is stored in the catalog. Only a volatile default (gen_random_uuid(), clock_timestamp()) rewrites."
+    },
+    {
+      "id": "D4",
+      "file": "src/Orders.Api/Data/OrderConfiguration.cs",
+      "line": 25,
+      "description": "IsCreatedConcurrently on the picking index: EF Core (Npgsql) runs CREATE INDEX CONCURRENTLY outside the migration transaction (migration line 65), and the partial filter on 'Placed' with (Express DESC, PlacedAt, Id) serves the new ORDER BY. It is correct."
+    },
+    {
+      "id": "D5",
+      "file": "src/Orders.Api/Jobs/PickingTimeoutJob.cs",
+      "line": 23,
+      "description": "The timeout job is one conditional UPDATE (ExecuteUpdateAsync with the status in the WHERE clause). It is atomic next to a picker that ships the order, and it needs no row lock, no SKIP LOCKED and no transaction. Each instance can run it; the statement is idempotent."
+    }
+  ]
+}
