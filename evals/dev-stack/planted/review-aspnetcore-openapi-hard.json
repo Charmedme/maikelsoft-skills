@@ -1,0 +1,117 @@
+{
+  "skill": "aspnetcore-openapi",
+  "planted": [
+    {
+      "id": "P1",
+      "file": "src/Orders.Api/appsettings.json",
+      "line": 14,
+      "subtle": true,
+      "description": "MigrateOnStartup is now false in the base settings, so Production no longer migrates the database. DatabaseOptions.cs (line 7) says that the deploy pipeline has no migration step, so the next deploy with a new migration runs against an old schema. The build-time document starts the app (entry assembly GetDocument.Insider, environment Production): skip the StartupMigrator only in that mode and keep MigrateOnStartup true.",
+      "severity": "high"
+    },
+    {
+      "id": "P2",
+      "file": "src/Orders.Api/Orders.Api.csproj",
+      "line": 10,
+      "subtle": true,
+      "description": "OpenApiDocumentsDirectory is $(MSBuildProjectDirectory)/../docs/openapi, which is src/docs/openapi, not docs/openapi at the root. The build never updates the committed docs/openapi/Orders.Api.json, and the CI step git diff --exit-code -- docs/openapi (.github/workflows/contract.yml) always passes, so the partner contract goes stale without a signal. Use ../../docs/openapi.",
+      "severity": "medium"
+    },
+    {
+      "id": "P3",
+      "file": "src/Orders.Api/Invoices/InvoiceEndpoints.cs",
+      "line": 13,
+      "subtle": true,
+      "description": "Produces(200, contentType: \"application/pdf\") without a response type writes a 200 with no content in the document (checked: the committed document has an empty 200). The generated client does not know that the invoice is a PDF file. Use Produces<byte[]>(200, \"application/pdf\") or a typed FileContentHttpResult.",
+      "severity": "medium"
+    },
+    {
+      "id": "P4",
+      "file": "src/Orders.Api/Returns/ReturnEndpoints.cs",
+      "line": 18,
+      "subtle": true,
+      "description": "POST /returns documents 409, but the handler answers 422 (Problems.UnprocessableEntity, line 47) when the return policy refuses the return; the existing test CreateReturn_MoreThanOrdered_Returns422 shows it. The document has a status that never comes and misses the 422. Replace ProducesProblem(409) with ProducesProblem(422).",
+      "severity": "medium"
+    },
+    {
+      "id": "P5",
+      "file": "src/Orders.Api/OpenApi/IdempotencyKeyHeader.cs",
+      "line": 20,
+      "subtle": true,
+      "description": "The Idempotency-Key header is documented with Required = false, but IdempotencyFilter rejects a request without the header with 400. The generated client makes the header optional, so a partner call without it fails. Set Required = true.",
+      "severity": "medium"
+    },
+    {
+      "id": "P6",
+      "file": "src/Orders.Api/Orders.Api.csproj",
+      "line": 7,
+      "subtle": true,
+      "description": "GenerateDocumentationFile is on and the comment says that the XML comments become summaries, but every handler is a private static method. The OpenAPI source generator skips comments on private methods and lambdas, so no operation has a summary (checked in the committed document). Make the handlers internal, or add WithSummary.",
+      "severity": "low"
+    },
+    {
+      "id": "P7",
+      "file": "src/Orders.Api/Orders/OrderEndpoints.cs",
+      "line": 29,
+      "subtle": false,
+      "description": "Produces<ProblemDetails>(404) documents the 404 as application/json, but the handler returns TypedResults.Problem with application/problem+json. Clients that select the body by content type do not match. Use ProducesProblem(StatusCodes.Status404NotFound), as CancelOrder does.",
+      "severity": "low"
+    },
+    {
+      "id": "P8",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 22,
+      "subtle": false,
+      "description": "A global JsonStringEnumConverter changes the existing wire format: ReturnResponse.Reason and Status change from numbers to names for every existing client, and the test was changed to hide it (TestData.Json). This is decision API-11 (not accepted in docs/dev-team/decisions.md) and a breaking change. Ask the human first, or keep the current JSON options.",
+      "severity": "high"
+    },
+    {
+      "id": "P9",
+      "file": "src/Orders.Api/Orders/OrderEndpoints.cs",
+      "line": 22,
+      "subtle": true,
+      "description": "WithOpenApi is deprecated in .NET 10 (ASPDEPR002), and the csproj (line 8) hides the warning with NoWarn. The description does not reach the document (checked: ListOrders has no description). Use WithDescription(...) or AddOpenApiOperationTransformer(...) and remove ASPDEPR002 from NoWarn.",
+      "severity": "low"
+    },
+    {
+      "id": "P10",
+      "file": "src/Orders.Api/Customers/CustomerEndpoints.cs",
+      "line": 13,
+      "subtle": false,
+      "description": "POST /customers is validated by AddValidation (DataAnnotations on CreateCustomerRequest), but the automatic 400 is not in the document. POST /returns has ProducesValidationProblem, this endpoint does not. Add .ProducesValidationProblem().",
+      "severity": "medium"
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "src/Orders.Api/Customers/CustomerEndpoints.cs",
+      "line": 16,
+      "description": "GET /customers/{id} has no ProducesProblem. Correct: the handler returns Results<Ok<CustomerResponse>, NotFound>, and the typed NotFound documents the 404 itself."
+    },
+    {
+      "id": "D2",
+      "file": "src/Orders.Api/Orders/OrderEndpoints.cs",
+      "line": 16,
+      "description": "POST /orders has no ProducesValidationProblem. Correct: its union has ValidationProblem, so the document already has a 400 with application/problem+json."
+    },
+    {
+      "id": "D3",
+      "file": "src/Orders.Api/OpenApi/IdempotencyKeyHeader.cs",
+      "line": 1,
+      "description": "using Microsoft.OpenApi; with JsonSchemaType.String, ParameterLocation.Header, and operation.Parameters ??= []. Correct: these are the Microsoft.OpenApi 2.x types that Microsoft.AspNetCore.OpenApi 10 uses. Microsoft.OpenApi.Models and a string Type do not compile."
+    },
+    {
+      "id": "D4",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 53,
+      "description": "MapOpenApi and MapScalarApiReference only in Development, so the partner cannot read the live document in Production. Correct: the partner uses the committed file, and the document must not be public."
+    },
+    {
+      "id": "D5",
+      "file": "src/Orders.Api/Admin/AdminEndpoints.cs",
+      "line": 14,
+      "description": "ExcludeFromDescription on the admin group also hides POST /admin/orders/{id}/ship, which ShippingEndpoints maps into that group. Correct: shipping is a staff action, and the admin endpoints must stay out of the partner contract."
+    }
+  ]
+}

@@ -23,7 +23,7 @@ namespace Orders.Api.Data.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ToAddress = table.Column<string>(type: "character varying(254)", maxLength: 254, nullable: false),
+                    ToAddress = table.Column<string>(type: "character varying(1600)", maxLength: 1600, nullable: false),
                     ToName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     Subject = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     TextBody = table.Column<string>(type: "character varying(20000)", maxLength: 20000, nullable: false),

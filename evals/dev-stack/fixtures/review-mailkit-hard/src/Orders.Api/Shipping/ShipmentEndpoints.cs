@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Orders.Api.Data;
+using Orders.Api.Mail;
 using Orders.Api.Orders;
 
 namespace Orders.Api.Shipping;
@@ -77,10 +78,13 @@ public static class ShipmentEndpoints
             return TypedResults.Conflict("The shipment is already dispatched.");
         }
 
-        var order = await db.Orders.FirstAsync(o => o.Id == shipment.OrderId, ct);
-        shipment.Dispatch(carrier.Code, request.TrackingNumber, time.GetUtcNow());
+        var order = await db.Orders.Include(o => o.Lines).FirstAsync(o => o.Id == shipment.OrderId, ct);
+        var customer = await db.Customers.AsNoTracking().FirstAsync(c => c.Id == order.CustomerId, ct);
+        var now = time.GetUtcNow();
+        shipment.Dispatch(carrier.Code, request.TrackingNumber, now);
         order.MarkShipped();
-        await db.SaveChangesAsync(ct);
+        db.OutboxMails.Add(ShippingNoticeMail.Create(customer, order, shipment, carrier, now));
+        await db.SaveChangesAsync(ct); // shipment, order and notices in one transaction
 
         return TypedResults.Ok(shipment.ToResponse());
     }

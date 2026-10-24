@@ -1,5 +1,4 @@
 using System.Globalization;
-using MimeKit;
 using Orders.Api.Customers;
 using Orders.Api.Returns;
 
@@ -9,12 +8,8 @@ public static class ReturnReceivedMail
 {
     public const string Subject = "We received your return request";
 
-    public static MimeMessage Create(Customer customer, ReturnRequest request)
+    public static OutboxMail Create(Customer customer, ReturnRequest request, DateTimeOffset now)
     {
-        var message = new MimeMessage();
-        message.To.Add(new MailboxAddress(customer.Name, customer.Email));
-        message.Subject = Subject;
-
         var text = string.Create(CultureInfo.InvariantCulture, $"""
             Dear {customer.Name},
 
@@ -32,7 +27,6 @@ public static class ReturnReceivedMail
             <p>We will send you a return label within two working days.</p>
             </body></html>
             """);
-        message.Body = new BodyBuilder { TextBody = text, HtmlBody = html }.ToMessageBody();
-        return message;
+        return new OutboxMail(customer.Email, customer.Name, Subject, text, html, now);
     }
 }

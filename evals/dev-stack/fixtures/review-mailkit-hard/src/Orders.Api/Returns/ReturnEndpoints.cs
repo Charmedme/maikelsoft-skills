@@ -20,8 +20,6 @@ public static class ReturnEndpoints
         CreateReturnRequest request,
         OrdersDbContext db,
         TimeProvider time,
-        IMailSender mail,
-        ILoggerFactory loggerFactory,
         CancellationToken ct)
     {
         var order = await db.Orders.AsNoTracking().FirstOrDefaultAsync(o => o.Id == orderId, ct);
@@ -48,16 +46,10 @@ public static class ReturnEndpoints
         db.Returns.Add(returnRequest);
         await db.SaveChangesAsync(ct);
 
-        // The customer gets a confirmation. A mail problem must not fail the return request.
+        // The confirmation goes through the outbox: the sender retries it when the relay is down.
         var customer = await db.Customers.AsNoTracking().FirstAsync(c => c.Id == order.CustomerId, ct);
-        try
-        {
-            await mail.SendAsync(ReturnReceivedMail.Create(customer, returnRequest), ct);
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            loggerFactory.CreateLogger(typeof(ReturnEndpoints)).LogWarning(ex, "The return confirmation for return {ReturnId} was not sent.", returnRequest.Id);
-        }
+        db.OutboxMails.Add(ReturnReceivedMail.Create(customer, returnRequest, now));
+        await db.SaveChangesAsync(ct);
 
         return TypedResults.Created($"/returns/{returnRequest.Id}", returnRequest.ToResponse());
     }

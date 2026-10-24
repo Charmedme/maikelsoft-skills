@@ -1,6 +1,9 @@
 using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Orders.Api.Data;
 using Orders.Api.Returns;
 using Orders.Api.Shipping;
 
@@ -53,6 +56,8 @@ public sealed class ReturnEndpointsTests
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         (await response.Content.ReadFromJsonAsync<ReturnResponse>(TestContext.CancellationToken))!.Status.Should().Be("Requested");
-        s_factory.Mail.Sent.Should().Contain(m => m.Subject == "We received your return request" && m.To.Mailboxes.Any(b => b.Address == customer.Email));
+        await using var scope = s_factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<OrdersDbContext>();
+        (await db.OutboxMails.AnyAsync(m => m.ToAddress == customer.Email && m.Subject == "We received your return request", TestContext.CancellationToken)).Should().BeTrue();
     }
 }

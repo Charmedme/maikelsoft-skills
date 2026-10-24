@@ -11,7 +11,7 @@ internal sealed class OutboxMailConfiguration : IEntityTypeConfiguration<OutboxM
         builder.ToTable("outbox_mails");
         builder.HasKey(mail => mail.Id);
         builder.Property(mail => mail.Id).ValueGeneratedOnAdd();
-        builder.Property(mail => mail.ToAddress).HasMaxLength(254);
+        builder.Property(mail => mail.ToAddress).HasMaxLength(1600); // up to 6 addresses
         builder.Property(mail => mail.ToName).HasMaxLength(200);
         builder.Property(mail => mail.Subject).HasMaxLength(200);
         builder.Property(mail => mail.TextBody).HasMaxLength(20000);

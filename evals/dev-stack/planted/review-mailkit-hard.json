@@ -1,0 +1,110 @@
+{
+  "skill": "mailkit",
+  "base": "mailkit-hard",
+  "planted": [
+    {
+      "id": "P1",
+      "file": "Directory.Build.props",
+      "line": 14,
+      "description": "Version fact, over two files: the change upgrades MailKit to 4.15.1 (Directory.Packages.props line 10) and keeps the suppression of GHSA-9j88-vvj5-vhgr. That advisory (CVE-2026-41319, STARTTLS response injection, a man in the middle can downgrade the SASL mechanism) covers MailKit below 4.16.0, so 4.15.1 is still vulnerable. 'We only talk to the internal relay' does not remove a man in the middle, and the reason of the old suppression (only addresses from our own records) is gone. Upgrade MailKit to 4.16.0 or later (4.18.1, the Pkcs 10.0.13 pin stays) and remove the NuGetAuditSuppress.",
+      "severity": "high",
+      "subtle": true
+    },
+    {
+      "id": "P2",
+      "file": "src/Orders.Api/Mail/SmtpOptions.cs",
+      "line": 17,
+      "description": "Existing code next to the change: the new outbox sender connects with smtp.Security, and the default (and appsettings.json line 19) is StartTlsWhenAvailable on port 587. When the relay does not offer STARTTLS (or a man in the middle strips it), MailKit sends AUTH and the mails in plain text. Use StartTls on 587 (or SslOnConnect on 465), and allow None only for a local test relay.",
+      "severity": "high",
+      "subtle": true
+    },
+    {
+      "id": "P3",
+      "file": "src/Orders.Api/Mail/ShippingNoticeMail.cs",
+      "line": 23,
+      "description": "One outbox row with the customer and all notification addresses in To (the sender parses the list with InternetAddressList.Parse, OutboxMailSender.cs line 132). When the relay rejects one address (550 on RCPT TO), MailKit throws SmtpCommandException RecipientNotAccepted and nobody gets the notice. Each recipient also sees the other addresses. Add one outbox row for each recipient.",
+      "severity": "high",
+      "subtle": false
+    },
+    {
+      "id": "P4",
+      "file": "src/Orders.Api/Mail/OutboxMailSender.cs",
+      "line": 83,
+      "description": "Every SmtpCommandException is retried, also a 5xx (a rejected address or message). The row is sent again every 30 seconds for one day and then fails. Retry only 4xx; mark the row failed on 5xx.",
+      "severity": "medium",
+      "subtle": false
+    },
+    {
+      "id": "P5",
+      "file": "src/Orders.Api/Mail/OutboxMailSender.cs",
+      "line": 91,
+      "description": "SaveChangesAsync runs only when the whole batch succeeds. When the connection breaks in the middle of a batch (or the relay is down, or an exception that is not caught occurs), the catch blocks postpone the rows but never save: the mails already sent in the batch lose their SentAt and go out again, Attempts and NextAttemptAt are not stored (no backoff, a retry every 5 seconds), and MarkFailed after one day is never stored. Save in a finally block (with CancellationToken.None), as the batch result.",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P6",
+      "file": "src/Orders.Api/Returns/ReturnEndpoints.cs",
+      "line": 47,
+      "description": "Existing code that the change moves to the outbox: the return is saved first, and the outbox row in a second SaveChangesAsync (line 52). When the second save fails (or the customer read throws), the return exists and the confirmation is lost. Add the outbox row before the one SaveChangesAsync, so that the return and its mail are in one transaction.",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P7",
+      "file": "src/Orders.Api/Mail/ReturnReceivedMail.cs",
+      "line": 26,
+      "description": "Existing code that the change touches: the return confirmation puts the customer comment (and the customer name, line 24) into the HTML body without encoding (HTML injection). The new ShippingNoticeMail encodes its values; this mail does not. Use HtmlEncoder.Default.Encode or a Razor component.",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P8",
+      "file": "src/Orders.Api/Mail/OutboxMailSender.cs",
+      "line": 80,
+      "description": "Each sent mail logs the recipient list and the full text body at Information level (personal data: addresses, delivery instructions, order lines). Log the outbox ID and the SMTP status only.",
+      "severity": "low",
+      "subtle": false
+    },
+    {
+      "id": "P9",
+      "file": "src/Orders.Api/Customers/CustomerEndpoints.cs",
+      "line": 84,
+      "description": "Notification addresses are for business customers, but the endpoint does not check the customer kind: a consumer can also store 5 extra addresses that get its shipping notices. Return a validation problem (or 409) when the customer is not a business customer.",
+      "severity": "low",
+      "subtle": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "src/Orders.Api/Customers/CustomerContracts.cs",
+      "line": 15,
+      "description": "[MaxLength(5)] on IReadOnlyList<string> is correct: MaxLengthAttribute counts the items of a collection, and the .NET 10 minimal API validation (AddValidation) runs it. The test NotificationAddresses_SixAddresses_ReturnsValidationProblem proves it."
+    },
+    {
+      "id": "D2",
+      "file": "src/Orders.Api/Mail/ShippingNoticeMail.cs",
+      "line": 51,
+      "description": "HtmlEncoder.Default.Encode on the tracking URL inside href is correct: an attribute value must have & encoded as &amp;. The browser decodes it, so the link is not broken. The tracking number is already escaped with Uri.EscapeDataString in CarrierCatalog."
+    },
+    {
+      "id": "D3",
+      "file": "src/Orders.Api/Data/CustomerConfiguration.cs",
+      "line": 20,
+      "description": "PrimitiveCollection with the backing field _notificationAddresses and field access maps the list to a PostgreSQL text[] column (EF Core 8 and later, Npgsql). No join table, value converter or value comparer is needed, and the migration has no pending model changes."
+    },
+    {
+      "id": "D4",
+      "file": "src/Orders.Api/Mail/OutboxMailSender.cs",
+      "line": 134,
+      "description": "The Message-ID is made from the outbox row ID and the own sender domain. It is stable, so a mail that is sent again after a crash has the same Message-ID and mail clients can drop the duplicate. It is correct."
+    },
+    {
+      "id": "D5",
+      "file": "src/Orders.Api/Mail/OutboxMail.cs",
+      "line": 63,
+      "description": "The retry delay is 5 s, 10 s, 20 s, then 30 s (Attempts is incremented first, so the first delay is 5 * 2^0). The cap and the give-up after one day in the sender match the skill. It is correct."
+    }
+  ]
+}

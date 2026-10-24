@@ -173,8 +173,8 @@ namespace Orders.Api.Data.Migrations
 
                     b.Property<string>("ToAddress")
                         .IsRequired()
-                        .HasMaxLength(254)
-                        .HasColumnType("character varying(254)");
+                        .HasMaxLength(1600)
+                        .HasColumnType("character varying(1600)");
 
                     b.Property<string>("ToName")
                         .IsRequired()

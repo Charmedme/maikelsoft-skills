@@ -41,7 +41,7 @@ builder.Services.AddHttpClient<IPaymentGateway, HttpPaymentGateway>((services, h
     http.BaseAddress = payments.BaseUrl;
     http.Timeout = TimeSpan.FromSeconds(payments.TimeoutSeconds);
 });
-builder.Services.AddScoped<IMailSender, SmtpMailSender>();
+builder.Services.AddHostedService<OutboxMailSender>();
 builder.Services.AddScoped<PaymentService>();
 builder.Services.AddScoped<StockReservationService>();
 builder.Services.AddScoped<SalesReportService>();

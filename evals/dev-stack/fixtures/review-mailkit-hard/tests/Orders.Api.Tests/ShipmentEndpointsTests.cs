@@ -1,6 +1,10 @@
 using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Orders.Api.Data;
+using Orders.Api.Mail;
 using Orders.Api.Orders;
 using Orders.Api.Shipping;
 
@@ -82,5 +86,21 @@ public sealed class ShipmentEndpointsTests
         var response = await s_client.PostAsJsonAsync("/shipments", new CreateShipmentRequest(order.Id), TestContext.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+    }
+
+    [TestMethod]
+    public async Task Dispatch_AddsShippingNoticeToOutbox()
+    {
+        var customer = await s_client.CreateCustomerAsync(TestContext.CancellationToken);
+        var order = await s_client.CreateOrderAsync(customer.Id, TestContext.CancellationToken);
+        var shipment = await s_client.CreateShipmentAsync(order.Id, TestContext.CancellationToken);
+
+        var response = await s_client.PostAsJsonAsync($"/shipments/{shipment.Id}/dispatch", new DispatchShipmentRequest("dpd", "DPD0002"), TestContext.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        await using var scope = s_factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<OrdersDbContext>();
+        var notice = await db.OutboxMails.SingleAsync(m => m.ToAddress == customer.Email && m.Subject == ShippingNoticeMail.Subject, TestContext.CancellationToken);
+        notice.HtmlBody.Should().Contain("DPD0002");
     }
 }

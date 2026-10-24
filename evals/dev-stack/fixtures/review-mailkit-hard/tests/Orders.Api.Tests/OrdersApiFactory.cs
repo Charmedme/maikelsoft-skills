@@ -16,7 +16,6 @@ public sealed class OrdersApiFactory : WebApplicationFactory<Program>
 
     public FakePaymentGateway Payments { get; } = new();
 
-    public RecordingMailSender Mail { get; } = new();
 
     public async Task MigrateAsync(CancellationToken ct)
     {
@@ -35,8 +34,9 @@ public sealed class OrdersApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<TimeProvider>(Time);
             services.RemoveAll<IPaymentGateway>();
             services.AddSingleton<IPaymentGateway>(Payments);
-            services.RemoveAll<IMailSender>();
-            services.AddSingleton<IMailSender>(Mail);
+            // The outbox tests read the outbox table. The sender has its own tests.
+            var sender = services.Single(d => d.ImplementationType == typeof(OutboxMailSender));
+            services.Remove(sender);
         });
     }
 }

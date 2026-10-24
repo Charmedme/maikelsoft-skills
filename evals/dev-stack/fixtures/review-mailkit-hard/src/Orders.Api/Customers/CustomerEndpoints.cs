@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Orders.Api.Data;
+using Orders.Api.Mail;
 
 namespace Orders.Api.Customers;
 
@@ -12,6 +13,7 @@ public static class CustomerEndpoints
         group.MapPost("/", CreateAsync);
         group.MapGet("/{id:guid}", GetAsync);
         group.MapPut("/{id:guid}/email", ChangeEmailAsync);
+        group.MapPut("/{id:guid}/notification-addresses", ReplaceNotificationAddressesAsync);
         return app;
     }
 
@@ -54,6 +56,32 @@ public static class CustomerEndpoints
         }
 
         customer.ChangeEmail(request.Email);
+        await db.SaveChangesAsync(ct);
+        return TypedResults.Ok(customer.ToResponse());
+    }
+
+    private static async Task<Results<Ok<CustomerResponse>, NotFound, ValidationProblem>> ReplaceNotificationAddressesAsync(
+        Guid id,
+        NotificationAddressesRequest request,
+        OrdersDbContext db,
+        CancellationToken ct)
+    {
+        var invalid = request.Addresses.Where(a => !MailAddresses.IsValid(a)).ToList();
+        if (invalid.Count > 0)
+        {
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [nameof(request.Addresses)] = ["Each notification address must be a valid email address."],
+            });
+        }
+
+        var customer = await db.Customers.FirstOrDefaultAsync(c => c.Id == id, ct);
+        if (customer is null)
+        {
+            return TypedResults.NotFound();
+        }
+
+        customer.ReplaceNotificationAddresses(request.Addresses.Select(a => a.Trim()).Distinct(StringComparer.OrdinalIgnoreCase));
         await db.SaveChangesAsync(ct);
         return TypedResults.Ok(customer.ToResponse());
     }

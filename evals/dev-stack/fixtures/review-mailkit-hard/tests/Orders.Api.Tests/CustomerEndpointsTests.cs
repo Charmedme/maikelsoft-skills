@@ -76,4 +76,38 @@ public sealed class CustomerEndpointsTests
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         (await response.Content.ReadFromJsonAsync<CustomerResponse>(TestContext.CancellationToken))!.Email.Should().Be("new@example.com");
     }
+
+    [TestMethod]
+    public async Task NotificationAddresses_Replace_ReturnsList()
+    {
+        var customer = await s_client.CreateCustomerAsync(TestContext.CancellationToken, CustomerKind.Business);
+        await s_client.PutAsJsonAsync($"/customers/{customer.Id}/notification-addresses", new NotificationAddressesRequest(["old@example.com"]), TestContext.CancellationToken);
+
+        var response = await s_client.PutAsJsonAsync($"/customers/{customer.Id}/notification-addresses", new NotificationAddressesRequest(["goods-in@example.com", "planning@example.com"]), TestContext.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await response.Content.ReadFromJsonAsync<CustomerResponse>(TestContext.CancellationToken))!.NotificationAddresses
+            .Should().Equal("goods-in@example.com", "planning@example.com");
+    }
+
+    [TestMethod]
+    public async Task NotificationAddresses_SixAddresses_ReturnsValidationProblem()
+    {
+        var customer = await s_client.CreateCustomerAsync(TestContext.CancellationToken, CustomerKind.Business);
+        var addresses = Enumerable.Range(1, 6).Select(i => $"team{i}@example.com").ToList();
+
+        var response = await s_client.PutAsJsonAsync($"/customers/{customer.Id}/notification-addresses", new NotificationAddressesRequest(addresses), TestContext.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [TestMethod]
+    public async Task NotificationAddresses_WithCrLf_ReturnsValidationProblem()
+    {
+        var customer = await s_client.CreateCustomerAsync(TestContext.CancellationToken, CustomerKind.Business);
+
+        var response = await s_client.PutAsJsonAsync($"/customers/{customer.Id}/notification-addresses", new NotificationAddressesRequest(["\"x\r\nRCPT TO:<spy@evil.test>\"@example.com"]), TestContext.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
 }
