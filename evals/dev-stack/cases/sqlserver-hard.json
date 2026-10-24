@@ -1,0 +1,37 @@
+{
+  "id": 248,
+  "name": "sqlserver-hard",
+  "skill": "sqlserver",
+  "kind": "write",
+  "fixture": "sqlserver-hard",
+  "human": "absent",
+  "request": "Marketing starts voucher campaigns. Add PUT /vouchers/{code} with the body {\"percentOff\": 10, \"maxUses\": 500}. It creates the voucher or changes it, and returns the voucher. The marketing tool sends the call again when it gets no answer within 2 seconds. Add GET /vouchers/{code}, which returns {\"code\": \"SUMMER25\", \"percentOff\": 10, \"maxUses\": 500, \"usesLeft\": 497}. POST /orders gets an optional \"voucherCode\". The order then gets percentOff of its total as a discount, rounded to cents. A voucher can be used maxUses times in total, and once by each customer. When the voucher is used up, or the customer used it before, POST /orders returns 409 and places nothing. An unknown code gives 400. A campaign starts with a newsletter to all customers. Marketing also wants GET /reports/vouchers?from=2026-07-01&to=2026-07-31 (both days included): one row for each voucher code and day in Amsterdam time, with the number of orders and the total discount, as [{\"code\": \"SUMMER25\", \"day\": \"2026-07-02\", \"orders\": 3, \"discount\": 12.50}]. Add the EF Core migration. Approved packages: none.",
+  "traps": [
+    "Existing code, quiet: Orders.PlacedAt is datetime2 in UTC (a value converter on a DateTimeOffset property, for the BI team). The existing sales report groups by CAST(o.PlacedAt AT TIME ZONE 'W. Europe Standard Time' AS date) and filters on UTC midnights. SQL Server reads a datetime2 without offset as a time in the named zone, so the report counts UTC days: an order at 22:30 UTC is on the wrong Amsterdam day. No error, and the existing test (09:00 UTC) passes. The voucher report copies the pattern. Fix: AT TIME ZONE 'UTC' AT TIME ZONE 'W. Europe Standard Time', and Amsterdam midnights as UTC bounds (skill rule 12).",
+    "Existing code, quiet: StockReservationService and the receipt MERGE use EF raw SQL with an interpolated string on the varchar(32) Sku column. EF sends nvarchar(4000), and under the default SQL_Latin1_General_CP1_CI_AS collation SQL Server converts the column (CONVERT_IMPLICIT) and scans the unique index on each reservation of POST /orders. A voucher code lookup or update in the same style does the same. Fix: LINQ (the mapping sends varchar(32)) or SqlParameter with SqlDbType.VarChar (skill rule 10).",
+    "New code, quiet under load: a tracked read of the voucher, a check in C# and SaveChanges lose updates under parallel orders: more orders than maxUses get the discount. Use one conditional UPDATE (ExecuteUpdateAsync with Used < MaxUses) in the order transaction and check the row count (skill rule 5).",
+    "New code: 'once by each customer' with AnyAsync before the insert lets parallel orders of one customer all pass. A unique index on (voucher, customer) is needed, and the unique key error (2601, 2627) must become 409 with a rollback of the voucher use and the stock reservations, not a 500 (skill rule 8).",
+    "Existing code copied, quiet default: the receipt endpoint upserts with MERGE without HOLDLOCK. The same MERGE for PUT /vouchers fails with 2627 when the marketing tool repeats a call for a new code at the same time (skill rule 6).",
+    "Existing code and team decision, version fact: DATA-07 asks for time-ordered keys, and Shipment sets Id = Guid.CreateVersion7() with the comment that UUIDv7 goes to the end of the clustered index. SQL Server sorts uniqueidentifier by its last 6 bytes first, so UUIDv7 values are random there. The receipt MERGE inserts NEWID(). New tables must use the EF sequential generator or NEWSEQUENTIALID() (skill rule 15).",
+    "The fixture turns on EnableRetryOnFailure. The voucher use, the stock reservations and the order must stay in one transaction inside CreateExecutionStrategy().ExecuteAsync, as the existing POST /orders does."
+  ],
+  "assertions": [
+    {"id": "C1", "check": "build_warnaserror"},
+    {"id": "C2", "check": "tests_pass"},
+    {"id": "C3", "check": "package_policy", "approved": []},
+    {"id": "C4", "check": "migration_ok", "trap": "Snapshot matches the model (has-pending-model-changes)."},
+    {"id": "C5", "check": "probe_tests", "probe": "sqlserver-hard", "tests": ["Voucher_PutGetAndOrder_UsesOneUse", "Voucher_UnknownCode_Returns400", "PutVoucher_Again_ChangesSettingsAndKeepsUses"]},
+    {"id": "C6", "check": "probe_tests", "probe": "sqlserver-hard", "tests": ["Voucher_ParallelOrders_NeverMoreThanMaxUses"], "trap": "A tracked read, a check in C# and SaveChanges: more orders than maxUses get the voucher."},
+    {"id": "C7", "check": "probe_tests", "probe": "sqlserver-hard", "tests": ["Voucher_SameCustomerParallel_OneOrderOthersConflict", "Voucher_UsedBefore_Returns409AndReservesNothing"], "trap": "Check-then-insert for 'once by each customer', or 2627 not mapped to 409 with a rollback."},
+    {"id": "C8", "check": "probe_tests", "probe": "sqlserver-hard", "tests": ["PutVoucher_ParallelSameNewCode_NoServerError"], "trap": "MERGE without HOLDLOCK (copied from the receipt endpoint), or check-then-insert: 2627 on a repeated call."},
+    {"id": "C9", "check": "probe_tests", "probe": "sqlserver-hard", "tests": ["VoucherReport_OrderAt2230Utc_CountsOnNextAmsterdamDay"], "trap": "AT TIME ZONE on the datetime2 column reads UTC as Amsterdam time (copied from the sales report)."},
+    {"id": "C10", "check": "probe_tests", "probe": "sqlserver-hard", "tests": ["SalesReport_OrderAt2230Utc_CountsOnNextAmsterdamDay"], "trap": "The existing sales report counts UTC days."},
+    {"id": "C11", "check": "probe_tests", "probe": "sqlserver-hard", "tests": ["Orders_SqlPlans_HaveNoImplicitConversionOfColumns"], "trap": "An interpolated string on a varchar column sends nvarchar(4000): CONVERT_IMPLICIT and an index scan (existing reservation and receipt SQL, or new voucher SQL)."},
+    {"id": "C12", "check": "grep_absent", "value": ["Guid\\.CreateVersion7\\s*\\(", "\\bNEWID\\s*\\(\\s*\\)"], "files": ["src/**/*.cs", "src/**/*.sql"], "trap": "UUIDv7 or NEWID() for a new clustered key: random order in SQL Server."},
+    {"id": "J1", "judge": "The existing sales report counts an order on the correct Amsterdam day (the datetime2 value is converted from UTC first, and the range uses Amsterdam midnights), or the final message reports this bug of SalesReportService as an open point."},
+    {"id": "J2", "judge": "The existing receipt upsert (MERGE without HOLDLOCK in InventoryEndpoints) gets HOLDLOCK, or the final message reports it as an open point."},
+    {"id": "J3", "judge": "The voucher use is one conditional UPDATE (or ExecuteUpdateAsync with a condition on the uses) with a check of the row count, in the same transaction as the stock reservations and the order, inside the execution strategy."},
+    {"id": "J4", "judge": "The final message says that Guid.CreateVersion7 is not ordered in SQL Server (so the existing Shipment key and the wording of DATA-07 do not give time-ordered keys there), and the new tables use the EF sequential generator or NEWSEQUENTIALID()."},
+    {"id": "J5", "judge": "The final message lists DATA-26 (RCSI) as an assumed decision or an open point, because the new report reads the Orders table while orders are placed, and the code has no NOLOCK or READ UNCOMMITTED."}
+  ]
+}

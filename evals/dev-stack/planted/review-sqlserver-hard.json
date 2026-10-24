@@ -1,0 +1,118 @@
+{
+  "skill": "sqlserver",
+  "base": "sqlserver-hard",
+  "planted": [
+    {
+      "id": "P1",
+      "file": "src/Orders.Api/Picking/PickingEndpoints.cs",
+      "line": 89,
+      "description": "Over two files, next to existing code: DoneAsync loads each StockItem tracked and calls the existing StockItem.Ship, and SaveChanges writes the absolute values (SET OnHand = @p0, Reserved = @p1). StockItem has no concurrency token, and POST /orders changes Reserved at the same time with a conditional UPDATE (StockReservationService). The tracked write overwrites a reservation that committed after the read: lost update, Reserved goes too low and the shop oversells. With RCSI on (DATA-26) the read never waits for the writer. Change the stock in one statement per line (ExecuteUpdateAsync with SetProperty(x => x.OnHand, x => x.OnHand - q) and Reserved - q, WHERE Reserved >= q), check the row count, or add a rowversion token and retry.",
+      "severity": "high",
+      "subtle": true
+    },
+    {
+      "id": "P2",
+      "file": "src/Orders.Api/Picking/PickingEndpoints.cs",
+      "line": 71,
+      "description": "Over two files: Program.cs turns on EnableRetryOnFailure. BeginTransactionAsync outside CreateExecutionStrategy().ExecuteAsync throws InvalidOperationException (the retrying execution strategy does not support user-initiated transactions), so every POST /picking/{id}/done fails with 500. The tests do not call the endpoint. Run the unit of work inside db.Database.CreateExecutionStrategy().ExecuteAsync, as POST /orders does.",
+      "severity": "high",
+      "subtle": true
+    },
+    {
+      "id": "P3",
+      "file": "src/Orders.Api/Picking/PickingEndpoints.cs",
+      "line": 122,
+      "description": "MERGE dbo.PickZones without HOLDLOCK. When the warehouse system sends the zone of a new SKU twice at the same time, both sessions see no row and both insert: error 2627, a 500. Write MERGE dbo.PickZones WITH (HOLDLOCK) AS t (or UPDATE WITH (UPDLOCK, HOLDLOCK) then INSERT in one transaction). The stock count MERGE in the same change has HOLDLOCK.",
+      "severity": "medium",
+      "subtle": false
+    },
+    {
+      "id": "P4",
+      "file": "src/Orders.Api/Reporting/PickReportService.cs",
+      "line": 21,
+      "description": "Over two files: PickingConfiguration maps PickedAt to datetime2 in UTC (value converter). AT TIME ZONE reads a datetime2 without offset as a time in the named zone, so CAST(p.PickedAt AT TIME ZONE 'W. Europe Standard Time' AS date) is the UTC date: a pick at 22:30 UTC (00:30 in Amsterdam in summer) is on the previous day, and the GROUP BY on line 26 has the same error. No error shows. Use p.PickedAt AT TIME ZONE 'UTC' AT TIME ZONE 'W. Europe Standard Time' on both lines. The range bounds in C# are correct.",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P5",
+      "file": "src/Orders.Api/Picking/PickTaskClaims.cs",
+      "line": 18,
+      "description": "Over two files: Zone is varchar(8) (PickingConfiguration). The interpolated {zone} in FromSql goes as nvarchar(4000), so under the default SQL_Latin1_General_CP1_CI_AS collation SQL Server converts the column (CONVERT_IMPLICIT) and cannot seek the index (Zone, Status, CreatedAt). Each claim scans the open tasks of all zones with UPDLOCK. Pass new SqlParameter(\"@zone\", SqlDbType.VarChar, 8), as ListOpenAsync does. Check with the actual plan.",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P6",
+      "file": "src/Orders.Api/Picking/PickTask.cs",
+      "line": 16,
+      "description": "Version fact: Guid.CreateVersion7() is not time-ordered in SQL Server. SQL Server sorts uniqueidentifier by its last 6 bytes first, and those bytes of a UUIDv7 are random, so new rows go to random places of the clustered index (page splits). The comment and the copy from Shipment are wrong. Let EF generate the key (ValueGeneratedOnAdd, the sequential GUID generator) or use NEWSEQUENTIALID().",
+      "severity": "low",
+      "subtle": true
+    },
+    {
+      "id": "P7",
+      "file": "src/Orders.Api/Picking/PickingEndpoints.cs",
+      "line": 106,
+      "description": "The sort query parameter goes into the SQL text (ORDER BY {orderBy}) through FromSqlRaw: SQL injection. The local variable also hides the EF1003 analyzer warning. Map the value to a column with an allow list (CreatedAt, OrderId) and sort with LINQ, or use QUOTENAME on an allowed name.",
+      "severity": "high",
+      "subtle": false
+    },
+    {
+      "id": "P8",
+      "file": "src/Orders.Api/Reporting/PickReportService.cs",
+      "line": 24,
+      "description": "WITH (NOLOCK): dirty reads, and a scan can read a row twice or miss it while pages split. The same change turns on RCSI (DATA-26), so the report does not block the pickers without the hint. Remove it.",
+      "severity": "medium",
+      "subtle": false
+    },
+    {
+      "id": "P9",
+      "file": "src/Orders.Api/Picking/PickingEndpoints.cs",
+      "line": 50,
+      "description": "Check-then-insert for the pick task of an order: AnyAsync (line 41) and then SaveChanges. Two parallel calls for one order both pass the check, and the unique index on PickTasks.OrderId makes the second insert fail with 2601. The DbUpdateException is not caught, so the caller gets 500 instead of 409. Catch DbUpdateException with SqlException number 2601 or 2627 and return 409.",
+      "severity": "medium",
+      "subtle": false
+    },
+    {
+      "id": "P10",
+      "file": "src/Orders.Api/Inventory/InventoryEndpoints.cs",
+      "line": 32,
+      "description": "Existing code next to the change: the change edits this file and makes the stock count MERGE use HOLDLOCK because receipts run at the same time, but the receipt MERGE itself (line 32) has no HOLDLOCK. Two receipts for one new SKU both insert: 2627, a 500. Its INSERT also passes NEWID() (line 38), which overrides the new NEWSEQUENTIALID() default of StockItems.Id, so the keys stay random. Its {normalized} parameter (line 33) is nvarchar on the varchar(32) Sku. Add WITH (HOLDLOCK), drop Id from the INSERT, and pass the SKU as SqlDbType.VarChar 32.",
+      "severity": "medium",
+      "subtle": true
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "src/Orders.Api/Data/Migrations/20261020100000_AddPicking.cs",
+      "line": 17,
+      "description": "ALTER DATABASE CURRENT SET READ_COMMITTED_SNAPSHOT ON WITH ROLLBACK IMMEDIATE with suppressTransaction: true is correct. ALTER DATABASE cannot run in a transaction (error 226), and suppressTransaction runs it outside the migration transaction. DATA-26 is accepted in docs/dev-team/decisions.md, and the test database gets the same setting through the migration."
+    },
+    {
+      "id": "D2",
+      "file": "src/Orders.Api/Picking/PickTaskClaims.cs",
+      "line": 16,
+      "description": "The queue claim is correct: one UPDATE of a CTE with TOP (1) ... ORDER BY CreatedAt, WITH (UPDLOCK, READPAST, ROWLOCK) and OUTPUT inserted.*. UPDLOCK makes the read and the update one unit, and READPAST skips a task that another picker is taking. It does not lose tasks. The test TakeNext_TwoPickersAtOnce_GetDifferentTasks proves it."
+    },
+    {
+      "id": "D3",
+      "file": "src/Orders.Api/Inventory/StockCountImport.cs",
+      "line": 22,
+      "description": "MERGE dbo.StockItems WITH (HOLDLOCK) from OPENJSON is correct. The JSON parameter is nvarchar(max), which OPENJSON needs, and the WITH clause types Sku as varchar(32), so the join on t.Sku = s.Sku has no implicit conversion of the column. Duplicate SKUs are removed in C# first, so MERGE never matches one target row twice. The INSERT has no Id because the same change gives StockItems.Id the default NEWSEQUENTIALID()."
+    },
+    {
+      "id": "D4",
+      "file": "src/Orders.Api/Reporting/PickReportService.cs",
+      "line": 11,
+      "description": "TimeZoneInfo.FindSystemTimeZoneById(\"Europe/Amsterdam\") in C# is correct: .NET 6 and later accept IANA ids on Linux and on Windows. Only AT TIME ZONE in T-SQL needs the Windows name. The bounds are the UTC instants of Amsterdam midnights, which is right for a datetime2 column in UTC."
+    },
+    {
+      "id": "D5",
+      "file": "src/Orders.Api/Data/PickingConfiguration.cs",
+      "line": 30,
+      "description": "The index (Zone, Status, CreatedAt) serves the claim and the open list: the two equality columns first, then the sort column. It is not redundant with the unique index on OrderId."
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "id": 249,
+  "name": "sqlserver-review-hard",
+  "skill": "sqlserver",
+  "kind": "review",
+  "fixture": "review-sqlserver-hard",
+  "base": "sqlserver-hard",
+  "planted": "planted/review-sqlserver-hard.json",
+  "human": "absent",
+  "request": "Review this change before we merge it. The warehouse starts to pick from the order service: each placed order gets a pick task, a picker takes the next task of a zone and marks it picked, the warehouse system sends the zone of each SKU, and the nightly stock count sets the stock levels. The shift leaders get a report of the picks for each day and zone.",
+  "assertions": [
+    {"id": "C1", "check": "files_unchanged"},
+    {"id": "J1", "judge": "The review finds at least 7 of the 10 planted mistakes."},
+    {"id": "J2", "judge": "The review finds every planted mistake with severity 'high' (P1, P2, P7)."},
+    {"id": "J3", "judge": "The review finds at least 3 of the 6 planted mistakes marked 'subtle' (P1, P2, P4, P5, P6, P10)."},
+    {"id": "J4", "judge": "The review flags none of the decoys (D1 to D5), and has at most 2 other false positives. A false positive is a claim that is wrong, or a fix that would break the code or that uses an API that does not exist or is outdated (for example AT TIME ZONE 'Europe/Amsterdam' in T-SQL, or removing READPAST from the claim). A real problem that is not on the answer sheet is not a false positive."},
+    {"id": "J5", "judge": "For P4, the review says that the datetime2 column holds UTC and must be converted with AT TIME ZONE 'UTC' first (AT TIME ZONE 'UTC' AT TIME ZONE 'W. Europe Standard Time'). For P6, it says that UUIDv7 is not ordered in SQL Server and proposes the EF sequential generator or NEWSEQUENTIALID()."},
+    {"id": "J6", "judge": "Each finding gives the file and the line (or quotes the code) and a concrete fix."},
+    {"id": "J7", "judge": "The review separates blocking issues from minor ones and ends with a clear merge verdict that does not approve the change as it is."}
+  ]
+}
