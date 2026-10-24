@@ -56,7 +56,8 @@ Give the profile to the checker: `backlogcheck.py <file> --profile <profile.md>`
 
 | Setting | Effect |
 |---------|--------|
-| `criteria: scenarios` | The checker accepts Given/When/Then (rule A5 is off). |
+| `criteria: scenarios` | The checker accepts Given/When/Then in the checklist (rule A5 is off). |
+| `examples: no` | The stories have no examples section (rule A10 is off). |
 | `epic-criteria: yes` | An epic can have acceptance criteria (rule E7 is off). |
 | `title-pattern: <regex>` | Each title must match. Else: warning TP. |
 | `title-pattern-<type>: <regex>` | The same, for one item type. It wins over `title-pattern`. |

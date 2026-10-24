@@ -43,6 +43,8 @@ CLICK_WORDS = re.compile(r"\b(clicks?|clicking|press(es)?|taps?|klikt|klik|drukt
 # A5: a Gherkin line starts with Given/Gegeven, or has the full Given ... when ... then form.
 GHERKIN = re.compile(r"^\s*(?:[-*]\s*(?:\[[ xX]\]\s*)?)?\**(given|gegeven)\b|\bgiven\b.+\bwhen\b.+\bthen\b|"
                      r"\bgegeven\b.+\bwanneer\b.+\bdan\b|^\s*\**(then|and)\**\s", re.I)
+EXAMPLES_HEAD = re.compile(r"^#{2,6}\s*(examples|voorbeelden)\s*$", re.I)
+AC_LABEL = re.compile(r"\bAC\s?(\d+)\b", re.I)
 CRITERIA_HEAD = re.compile(r"^#{2,6}\s*(acceptance criteria|acceptatiecriteria)\s*$", re.I)
 HEADING = re.compile(r"^(#{1,6})\s+(.*)$")
 TYPE_LINE = re.compile(r"^\*\*(type|soort):\*\*\s*(.+)$", re.I)
@@ -167,6 +169,18 @@ def check_item(start, title, block):
             f.append(Finding(ln, "warning", "A4", "Steps in the screen. Write the result for the user.", raw))
         if not re.match(r"^\s*[-*]\s+\[[ xX]\]", raw) and not GHERKIN.match(text):
             f.append(Finding(ln, "warning", "A5", "Write the criterion as a checklist item (- [ ]).", raw))
+    # A10: each criterion has one or more concrete examples, the base of the acceptance tests.
+    if criteria and not special:
+        examples = section(block, EXAMPLES_HEAD)
+        if not examples or not any(l.strip() for l in examples):
+            f.append(Finding(start, "error", "A10", "No examples. Give each criterion one or more concrete examples "
+                             "(Given/When/Then with real values, or a table), under \"Examples\".", title))
+        else:
+            labels = {int(n) for l in examples for n in AC_LABEL.findall(l)}
+            for n in range(1, len(criteria) + 1):
+                if n not in labels:
+                    f.append(Finding(criteria[n - 1][0], "warning", "A10", f"AC{n} has no example. "
+                                     f"Label each example with its criterion (AC{n}).", criteria[n - 1][2]))
     return f
 
 
@@ -370,6 +384,8 @@ def check_file(path, profile=None):
             goals.setdefault(text, title)
     if profile.get("criteria", "").lower() == "scenarios":
         findings = [x for x in findings if x.rule != "A5"]
+    if profile.get("examples", "").lower() == "no":
+        findings = [x for x in findings if x.rule != "A10"]
     if profile.get("epic-criteria", "").lower() == "yes":
         findings = [x for x in findings if x.rule != "E7"]
     return items, findings

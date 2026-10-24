@@ -1,6 +1,6 @@
-# Phase 5: Build
+# Build
 
-After gate G3, set the status of each ticket to `todo`. Then build the tickets one by one.
+Medium tier: after the gate Spec, set the status of each ticket to `todo`. Then build the tickets one by one, until the approved acceptance tests of the ticket pass. Patch and small tier: use "Before the first ticket" and the test-first steps, and commit with the item key and title.
 
 ## Before the first ticket
 
@@ -10,8 +10,8 @@ After gate G3, set the status of each ticket to `todo`. Then build the tickets o
 ## For each ticket
 
 1. Run `workcheck.py <work folder> --next`. Take the first ticket that it gives. Set its status to `doing`.
-2. If you have sub-agents, give the ticket to a new sub-agent. Give it the ticket, the spec, `decisions.md`, the test commands, and these steps. One sub-agent for each ticket keeps each context small.
-3. Use test-driven development at the seams of the spec:
+2. If you have sub-agents, give the ticket to a new sub-agent. Give it the ticket, the item (acceptance criteria and PO decisions from `plan.md`), `decisions.md`, the test commands, and these steps. One sub-agent for each ticket keeps each context small.
+3. Use test-driven development at the seams of `decisions.md`:
    1. Write one test for one acceptance criterion. Run it. It must fail.
    2. Write the smallest code that makes the test pass. Run the test.
    3. Clean the code. Run the type check and the test file.
@@ -24,8 +24,9 @@ Do not stop between tickets.
 
 ## Stop and ask the human only when
 
-- A ticket needs a decision that is not in the spec or in `decisions.md`.
-- A test cannot pass without a change to the spec.
+- A ticket needs a technical decision that is not in `decisions.md`.
+- A ticket needs a product decision that is not in the item. Read `po-questions.md`.
+- A test cannot pass without a change to an acceptance criterion. That is a product question.
 - A step changes data or a system outside the project, or cannot be undone.
 
 Then set the ticket status to `blocked`, write the reason in the ticket, and ask the human. Continue with other tickets that the checker gives, when they do not depend on it.
@@ -34,4 +35,4 @@ Then set the ticket status to `blocked`, write the reason in the ticket, and ask
 
 Run the full test suite one time. Fix each failure.
 
-Remove `prototype/` from the branch in a separate commit, unless the project guide says to keep it. The commit message says where the prototype is in the history: `Remove prototype (see <commit>)`.
+Remove `spike/` from the branch in a separate commit, unless the project guide says to keep it. The commit message says where the spike is in the history: `Remove spike (see <commit>)`.

@@ -33,11 +33,12 @@ The criteria tell when the product owner accepts the story. They come from the v
 - **A2 One result, checkable.** Each criterion is one result that a person or a test can check with yes or no. (checker: warning for "and")
 - **A3 Measurable words.** Replace "fast", "easy", "clear", "short", "main", "user-friendly", or "etc." with a number, a list, or an example. "The main parts" becomes the list of parts. When nobody knows the list, ask for it as an open question in the "Notes". Example: "The list shows in less than 2 seconds for 10,000 orders". (checker: warning)
 - **A4 Behaviour, not clicks.** Write what the user sees or gets, not the steps in the screen. "The user sees the orders of today", not "The user clicks the Orders button". (checker: warning)
-- **A5 Rule list.** Write the criteria as a checklist (`- [ ]`). Do not use Given/When/Then. Put constraints and quality requirements in the same list, with a label: "Security:", "Performance:", "Accessibility:". (checker)
+- **A5 Rules, then examples.** Write the criteria as a checklist of rules (`- [ ]`). Put constraints and quality requirements in the same list, with a label: "Security:", "Performance:", "Accessibility:". Do not put Given/When/Then in the checklist: examples go under "Examples" (A10). (checker)
 - **A6 Edge cases and errors.** Include the most important edge case and what the user sees when it fails. Example: "When no order matches, the user sees 'No orders found'."
 - **A7 Enough, not more.** 3 to 7 criteria is normal. More than 8 means the story is too large: read `split.md`. (checker: warning)
 - **A8 No open question.** An acceptance criterion is a result that a tester can check. An open question goes in the "Notes", or in "Open questions" of the context file. Refer to it by its number when it has one: "Open question: O3". (checker)
 - **A9 Source or assumption.** Each fact in a story comes from a source, a decision, or the human. A conclusion of your own is an "Assumption:" in the "Notes", also when a human is present.
+- **A10 Examples.** Give each criterion one or more concrete examples under "Examples": Given/When/Then with real values, or a table with one row for each example. Label each example with its criterion (AC1, AC2). Include the edge case of A6, and a value on each side of a limit. The team turns the examples into acceptance tests, so an example must have one clear result. (checker)
 
 ## Size and scope
 

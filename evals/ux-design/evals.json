@@ -1,0 +1,395 @@
+{
+  "cases": [
+    {
+      "name": "assign-unplanned",
+      "story": "stories/assign-unplanned.md",
+      "slug": "fl-31-assign-unplanned",
+      "kind": "list with filters and a bulk action",
+      "questions": {
+        "list_display": [
+          "table",
+          "cards",
+          "simple list",
+          "board or calendar",
+          "other"
+        ],
+        "assign_place": [
+          "side panel",
+          "dialog",
+          "bulk bar with inline controls",
+          "separate page",
+          "inline in the row",
+          "other"
+        ],
+        "technician_control": [
+          "select",
+          "combobox with search",
+          "list of technicians with free places",
+          "calendar or slot grid",
+          "other"
+        ],
+        "partial_failure": [
+          "result list per work order",
+          "summary message only",
+          "errors in the table rows",
+          "not designed"
+        ],
+        "undo": [
+          "toast with undo",
+          "undo button on the page",
+          "confirm dialog before, no undo",
+          "not designed"
+        ],
+        "filters": [
+          "chips above the list",
+          "filter panel",
+          "dropdowns in a toolbar",
+          "not designed"
+        ],
+        "density": [
+          "compact",
+          "comfortable",
+          "not stated"
+        ]
+      },
+      "fixture": "strong"
+    },
+    {
+      "name": "callback-request",
+      "story": "stories/callback-request.md",
+      "slug": "fl-38-callback-request",
+      "kind": "form under time pressure",
+      "questions": {
+        "structure": [
+          "one page form",
+          "step-by-step flow",
+          "dialog",
+          "side panel",
+          "other"
+        ],
+        "customer_lookup": [
+          "one search field with a result list",
+          "separate fields for name, postcode, phone",
+          "combobox with suggestions",
+          "other"
+        ],
+        "installation_control": [
+          "radio buttons",
+          "select",
+          "cards or tiles",
+          "other"
+        ],
+        "urgent_control": [
+          "checkbox",
+          "toggle switch",
+          "radio or select with reasons",
+          "other"
+        ],
+        "validation_timing": [
+          "on blur",
+          "on save",
+          "while typing",
+          "not stated"
+        ],
+        "duplicate_warning": [
+          "alert in the form before save",
+          "dialog on save",
+          "not designed"
+        ],
+        "success": [
+          "confirmation page with the ID",
+          "toast with the ID",
+          "message in place with the ID",
+          "other"
+        ]
+      },
+      "fixture": "strong"
+    },
+    {
+      "name": "parts-status",
+      "story": "stories/parts-status.md",
+      "slug": "fl-44-parts-status",
+      "kind": "status that waits on an external system",
+      "questions": {
+        "placement": [
+          "side panel of the work order",
+          "section on a work order page",
+          "separate parts page",
+          "dialog",
+          "other"
+        ],
+        "part_display": [
+          "table",
+          "list or cards per part",
+          "timeline per part",
+          "other"
+        ],
+        "stale_warning": [
+          "alert banner",
+          "inline text or badge",
+          "not designed"
+        ],
+        "date_change": [
+          "old and new date shown",
+          "alert message",
+          "badge only",
+          "not designed"
+        ],
+        "plan_next_visit": [
+          "button that opens a panel or dialog",
+          "link to the planning board",
+          "inline form",
+          "not designed"
+        ],
+        "last_update": [
+          "one time for the whole order",
+          "a time per part",
+          "not shown"
+        ]
+      },
+      "fixture": "strong"
+    },
+    {
+      "name": "empty-assign-unplanned",
+      "story": "stories/assign-unplanned.md",
+      "slug": "fl-31-assign-unplanned",
+      "kind": "list with filters and a bulk action",
+      "questions": {
+        "list_display": [
+          "table",
+          "cards",
+          "simple list",
+          "board or calendar",
+          "other"
+        ],
+        "assign_place": [
+          "side panel",
+          "dialog",
+          "bulk bar with inline controls",
+          "separate page",
+          "inline in the row",
+          "other"
+        ],
+        "technician_control": [
+          "select",
+          "combobox with search",
+          "list of technicians with free places",
+          "calendar or slot grid",
+          "other"
+        ],
+        "partial_failure": [
+          "result list per work order",
+          "summary message only",
+          "errors in the table rows",
+          "not designed"
+        ],
+        "undo": [
+          "toast with undo",
+          "undo button on the page",
+          "confirm dialog before, no undo",
+          "not designed"
+        ],
+        "filters": [
+          "chips above the list",
+          "filter panel",
+          "dropdowns in a toolbar",
+          "not designed"
+        ],
+        "density": [
+          "compact",
+          "comfortable",
+          "not stated"
+        ],
+        "base_font_size": [
+          "13px or less",
+          "14px",
+          "15px",
+          "16px or more"
+        ],
+        "accent_color": [
+          "teal or green",
+          "blue",
+          "other"
+        ],
+        "spacing_base": [
+          "4px steps",
+          "8px steps",
+          "no fixed steps"
+        ],
+        "style_files": [
+          "separate token and component CSS files",
+          "one shared CSS file",
+          "styles inside each mockup"
+        ],
+        "status_display": [
+          "badge with a word",
+          "colored dot with a word",
+          "color only"
+        ]
+      },
+      "fixture": "empty",
+      "extra_criteria": {
+        "design": {
+          "foundation": "Which design sets up a clearer, more consistent, and more accessible visual foundation (colors, type, spacing, components) for a product that had no design system?"
+        }
+      }
+    },
+    {
+      "name": "empty-callback-request",
+      "story": "stories/callback-request.md",
+      "slug": "fl-38-callback-request",
+      "kind": "form under time pressure",
+      "questions": {
+        "structure": [
+          "one page form",
+          "step-by-step flow",
+          "dialog",
+          "side panel",
+          "other"
+        ],
+        "customer_lookup": [
+          "one search field with a result list",
+          "separate fields for name, postcode, phone",
+          "combobox with suggestions",
+          "other"
+        ],
+        "installation_control": [
+          "radio buttons",
+          "select",
+          "cards or tiles",
+          "other"
+        ],
+        "urgent_control": [
+          "checkbox",
+          "toggle switch",
+          "radio or select with reasons",
+          "other"
+        ],
+        "validation_timing": [
+          "on blur",
+          "on save",
+          "while typing",
+          "not stated"
+        ],
+        "duplicate_warning": [
+          "alert in the form before save",
+          "dialog on save",
+          "not designed"
+        ],
+        "success": [
+          "confirmation page with the ID",
+          "toast with the ID",
+          "message in place with the ID",
+          "other"
+        ],
+        "base_font_size": [
+          "13px or less",
+          "14px",
+          "15px",
+          "16px or more"
+        ],
+        "accent_color": [
+          "teal or green",
+          "blue",
+          "other"
+        ],
+        "spacing_base": [
+          "4px steps",
+          "8px steps",
+          "no fixed steps"
+        ],
+        "style_files": [
+          "separate token and component CSS files",
+          "one shared CSS file",
+          "styles inside each mockup"
+        ],
+        "status_display": [
+          "badge with a word",
+          "colored dot with a word",
+          "color only"
+        ]
+      },
+      "fixture": "empty",
+      "extra_criteria": {
+        "design": {
+          "foundation": "Which design sets up a clearer, more consistent, and more accessible visual foundation (colors, type, spacing, components) for a product that had no design system?"
+        }
+      }
+    },
+    {
+      "name": "faulty-assign-unplanned",
+      "story": "stories/assign-unplanned.md",
+      "slug": "fl-31-assign-unplanned",
+      "kind": "list with filters and a bulk action",
+      "questions": {
+        "list_display": [
+          "table",
+          "cards",
+          "simple list",
+          "board or calendar",
+          "other"
+        ],
+        "assign_place": [
+          "side panel",
+          "dialog",
+          "bulk bar with inline controls",
+          "separate page",
+          "inline in the row",
+          "other"
+        ],
+        "technician_control": [
+          "select",
+          "combobox with search",
+          "list of technicians with free places",
+          "calendar or slot grid",
+          "other"
+        ],
+        "partial_failure": [
+          "result list per work order",
+          "summary message only",
+          "errors in the table rows",
+          "not designed"
+        ],
+        "undo": [
+          "toast with undo",
+          "undo button on the page",
+          "confirm dialog before, no undo",
+          "not designed"
+        ],
+        "filters": [
+          "chips above the list",
+          "filter panel",
+          "dropdowns in a toolbar",
+          "not designed"
+        ],
+        "density": [
+          "compact",
+          "comfortable",
+          "not stated"
+        ],
+        "status_display": [
+          "badge with a word",
+          "colored dot with a word",
+          "color only"
+        ]
+      },
+      "fixture": "faulty",
+      "extra_criteria": {
+        "design": {
+          "system_faults": "The design system of this project has faults. Which design finds them, reports them with a fix, and does not copy them into the screens?"
+        }
+      },
+      "faults": "faults.json"
+    }
+  ],
+  "fixtures": {
+    "strong": "fixtures/fieldline",
+    "empty": "fixtures/fieldline-empty",
+    "faulty": "fixtures/fieldline-faulty"
+  },
+  "css_line": {
+    "strong": "Link `design-system/tokens.css` and `design-system/components.css` with a relative path.",
+    "faulty": "Link `design-system/tokens.css` and `design-system/components.css` with a relative path.",
+    "empty": "The project has no design system files yet."
+  }
+}
