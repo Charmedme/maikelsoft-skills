@@ -16,9 +16,10 @@ Each skill of a plugin that has a plugins/<plugin>/shared/ folder also gets
 the files of that folder that its SKILL.md names: a .py file in scripts/, any
 other file in references/.
 
-Each skill whose SKILL.md names one of these files also gets it in references/:
+Each skill whose SKILL.md names one of these files also gets it (a .py file in scripts/, else in references/):
     shared/po-questions.md
     shared/example-mapping.md
+    shared/examplecheck.py
 
 A SKILL.md that has these two marker lines also gets shared/workflow.md between them:
     <!-- BEGIN shared/workflow.md -->
@@ -41,7 +42,7 @@ PLUGIN_COPIES = {
     "dev-build": {SHARED / "grill.md": pathlib.Path("references") / "grill.md"},
 }
 # Shared files for each skill that names the file in its SKILL.md.
-NAMED_COPIES = [SHARED / "po-questions.md", SHARED / "example-mapping.md"]
+NAMED_COPIES = [SHARED / "po-questions.md", SHARED / "example-mapping.md", SHARED / "examplecheck.py"]
 BLOCK = re.compile(r"(<!-- BEGIN shared/workflow\.md -->\n).*?(<!-- END shared/workflow\.md -->)", re.DOTALL)
 
 
@@ -60,7 +61,8 @@ def expected_files(skill: pathlib.Path) -> dict:
     text = (skill / "SKILL.md").read_text(encoding="utf-8")
     for src in NAMED_COPIES:
         if src.name in text:
-            files[skill / "references" / src.name] = src.read_text(encoding="utf-8")
+            folder = "scripts" if src.suffix == ".py" else "references"
+            files[skill / folder / src.name] = src.read_text(encoding="utf-8")
     plugin_shared = skill.parents[1] / "shared"
     if plugin_shared.is_dir():
         for src in sorted(plugin_shared.iterdir()):

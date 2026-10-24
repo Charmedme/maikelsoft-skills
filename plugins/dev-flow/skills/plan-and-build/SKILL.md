@@ -1,7 +1,7 @@
 ---
 name: plan-and-build
 description: Builds one approved work item (user story, bug, task, or chore) from the tracker to tested commits, in one session. Turns the examples of the item into acceptance tests first, locks them after the human approves them, and builds with TDD until they pass. Sets a tier from the size and the risk of the change, and runs only the steps of that tier. Sends product questions back to the product owner on the item. Use when the user wants an item, a ticket, a bug fix, or a story built, says "plan and build", or wants to continue a run that has a docs/work/<slug>/plan.md. Not for a new idea without an item (product-flow:idea-to-backlog).
-allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/speclock.py *), Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/mutate.py *), Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/workcheck.py *), Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/doccheck.py *)
+allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/examplecheck.py *), Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/speclock.py *), Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/mutate.py *), Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/workcheck.py *), Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/doccheck.py *)
 ---
 
 # Plan and build
@@ -28,6 +28,7 @@ This skill builds one approved work item. The examples on the item are the speci
 
 | Step | Patch | Small | Medium | Large |
 |------|-------|-------|--------|-------|
+| Examples | The steps to reproduce | `examples.md` from example mapping (`references/example-mapping.md`), checked with `examplecheck.py` | The same | The same |
 | Specification | One test that fails because of the bug | Acceptance tests from the examples (`references/spec.md`) | The same | The same |
 | Gate Spec | No | Yes | Yes, with the ticket list | Yes, after a gate Design |
 | Plan | None | None | `plan.md`, `research.md`, tickets (`references/plan.md`) | The same |
@@ -48,6 +49,7 @@ Move the tier up when the facts show more work or a risk of `references/tiers.md
 
 ## Checkers
 
+- `python3 ${CLAUDE_SKILL_DIR}/scripts/examplecheck.py <examples.md>`: the rules, the examples at each limit, and the open questions of example mapping.
 - `python3 ${CLAUDE_SKILL_DIR}/scripts/speclock.py approve|check|unlock`: the lock of the approved acceptance tests (`references/spec.md`).
 - `python3 ${CLAUDE_SKILL_DIR}/scripts/mutate.py --base <commit> --test "<command>"`: the boundary mutation check, which finds rules without an example (`references/spec.md`, step 8).
 - `python3 ${CLAUDE_SKILL_DIR}/scripts/workcheck.py <work folder>`: the structure of a medium work folder. With `--next`, it gives the tickets that can start now.

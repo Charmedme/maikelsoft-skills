@@ -6,11 +6,11 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
-## [0.3.0] - 2026-10-23
+## [0.3.0] - 2026-10-24
 
 ### Changed
 
-- `deliver-story` is for a large or risky item. `dev-flow:plan-and-build` sets the tier and starts `deliver-story` for a large item. A patch, a small, or a medium item runs in one session with dev-flow.
+- `deliver-story` is for an item that the human wants the team to build. `dev-flow:plan-and-build` builds each item in one session, and starts the team only when the human asks.
 - At the design step, the team lead sorts the questions of the senior. Product questions go to the product owner as a comment on the item (`references/po-questions.md`). Technical questions go to the human.
 - No agent and no team decision changes an acceptance criterion or a decision of the PO.
 

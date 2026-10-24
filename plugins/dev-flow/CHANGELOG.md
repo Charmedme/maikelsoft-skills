@@ -6,27 +6,31 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
-## [2.0.0] - 2026-10-23
+## [2.0.0] - 2026-10-24
 
 ### Changed
 
 - **Breaking.** `plan-and-build` starts from an approved work item (user story, bug, task, or chore), not from an idea. An idea without an item goes to `product-flow:idea-to-backlog` first. The item is the only source of product decisions.
-- **Breaking.** Four tiers replace the size check: patch, small, medium, and large. Each tier has its own steps and gates: Done for patch and small, Plan and Done for medium. A large item runs with `dev-team:deliver-story`. A risk sets the tier to medium or higher. Examples: a schema change, authorization, a new package, money.
-- The type of the change (bug, refactor, feature, chore) changes the steps of the tier.
-- The gates Design (large without dev-team), Plan, and Done replace G1 to G4.
-- `decisions.md` holds only technical decisions, with the item key on each row.
-- A new team decision goes through `dev-team:team-decisions` when the repository has a team decision index.
-- `workcheck.py` checks the tier, the gates of the tier, and the AC coverage of the tickets. It also checks that the gate Plan is not "assumed" while a question waits for the PO.
+- **Breaking.** Four tiers replace the size check: patch, small, medium, and large.
+- A risk sets the tier to medium or higher, for example a schema change, authorization, a new package, or money. A large item needs two counted signals. Each item runs in one session. `dev-team:deliver-story` starts only when the human asks for the team.
+- **Breaking.** The specification is executable. Example mapping writes `examples.md`. It holds the rules, the examples below, at, and above each limit, and the words with more than one meaning. It also holds the answers from existing decisions and the open questions. The examples become acceptance tests in four layers (test case, DSL, protocol driver, system).
+- The acceptance tests fail before the build starts.
+- The gates Spec and Done replace G1 to G4. At the gate Spec, the human approves `examples.md` and the acceptance tests. Large items also have a gate Design. Small items write no `plan.md`.
+- After the gate Spec, the skill builds one scenario at a time: red, green, a review of the step, a commit.
+- `decisions.md` holds only technical decisions. A new team decision goes through `dev-team:team-decisions` in the medium and large tier.
+- The review sub-agent runs on Sonnet and gets only the diff. The skill asks for quiet build and test output.
 
 ### Added
 
-- Product questions go to the PO as a comment on the item (`references/po-questions.md`). The skill drafts the comment, the human approves the exact text, and the skill posts it.
-- In an unattended run, the skill never assumes a new package or a new external service. It also never assumes a fact that only the human or the PO knows.
-- A technical spike replaces the prototype. A UI or flow prototype is a product question (`product-flow:product-prototype`).
+- `speclock.py` locks the approved test cases and watches the DSL. A PreToolUse hook (`hooks/guard.py`) blocks each edit of a locked test, also through Bash.
+- `mutate.py`, a boundary mutation check: it flips each comparison in the changed code and runs the acceptance tests. A mutation that survives is a rule without an example. When the project has Stryker, the skill runs it too.
+- `examplecheck.py` checks `examples.md`: each rule has an example, each limit has the cases below, at, and above, and each open source has a question. A word with more than one meaning in a criterion cannot have a technical or assumed answer.
+- Product questions go to the PO as a comment on the item (`references/po-questions.md`), after the human approves the exact text. The skill first searches the existing decisions. In solo work, an answer that cites an existing decision counts as approved.
+- In an unattended run, the skill never assumes a new package or a new external service. It also never assumes a fact that only the human or the PO knows. While a question waits, it does not start the build.
 
 ### Removed
 
-- The product grill (the need, the users, the scope), the questionnaire for a third person, the spec files, and the UI prototype. These are the job of `product-flow`.
+- The product grill, the questionnaire for a third person, the spec files, and the UI prototype. These are the job of `product-flow`.
 
 ## [1.0.0] - 2026-10-09
 

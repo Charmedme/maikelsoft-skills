@@ -1,6 +1,6 @@
 # dev-flow
 
-dev-flow is a Claude Code plugin for developers who build an approved work item: a user story, a bug, a task, or a chore. Its skill `plan-and-build` reads the item and sets a tier from the size and the risk of the change. Then it runs only the steps and gates of that tier. The product owner (PO) keeps the product decisions on the item. You make the technical decisions.
+dev-flow is a Claude Code plugin for developers who build an approved work item: a user story, a bug, a task, or a chore. Its skill `plan-and-build` reads the item and sets a tier from the size and the risk of the change. It turns the examples of the item into acceptance tests first. After you approve the tests, it locks them and builds until they pass. The product owner (PO) keeps the product decisions on the item. You make the technical decisions.
 
 English output follows ASD-STE100 Simplified Technical English. Dutch output follows Begrijpelijk Nederlands (taalniveau B1).
 
@@ -13,7 +13,7 @@ claude plugin marketplace add Charmedme/maikelsoft-skills
 claude plugin install dev-flow@maikelsoft-skills
 ```
 
-For a large item, the skill starts `dev-team:deliver-story`. Install `dev-team` too when you want that path.
+The skill starts `dev-team:deliver-story` only when you ask for the team. Install `dev-team` too when you want that path.
 
 ## Quick start
 
@@ -36,9 +36,11 @@ Do you have an idea, and no item yet? Make the item first with `product-flow:ide
 | Tier | Signal | Gates |
 |------|--------|-------|
 | Patch | One file, a clear cause, no contract or data change | Done |
-| Small | One behaviour, up to about 3 files, one layer | Done |
-| Medium | One feature over more than one layer | Plan, Done |
-| Large | More than one feature, or more than 10 tickets | Runs with `dev-team:deliver-story` |
+| Small | One behaviour, up to about 3 files, one layer | Spec, Done |
+| Medium | One feature over more than one layer | Spec (with the ticket list), Done |
+| Large | Two or more counted signals, for example more than one feature and a schema change | Design, Spec, Done |
+
+Each tier runs in one session.
 
 A risk sets the tier to medium or higher, whatever the size. The risks are:
 
@@ -54,29 +56,49 @@ The type of the change also changes the steps. A bug starts with a test that fai
 
 The skill moves the tier up when the facts show more work. It moves the tier down only when you say so.
 
+### Spec first
+
+For a small, medium, or large item, the skill does these steps before it writes code:
+
+1. **Example mapping.** It writes `examples.md` with the rules of each criterion. Each limit gets an example below, at, and above it. The file also lists the words with more than one meaning. It searches the existing decisions first, for example a Decisions table in the backlog context file. Each rule without an answer becomes a question for the PO. `examplecheck.py` checks the file.
+2. **Acceptance tests.** It turns the answered examples into tests. The tests have four layers: the test case, a DSL, a protocol driver, and the system. The tests fail first.
+3. **Gate Spec.** You approve `examples.md` and the tests. `speclock.py` then locks the test cases and watches the DSL. A PreToolUse hook blocks each edit of a locked test, also through Bash.
+4. **Build.** One scenario at a time: red, green, a review of the step, a commit.
+5. **Review.** `speclock.py check` must show 0 changes. `mutate.py` flips each comparison in the changed code. A mutation that survives is a rule without an example. When the project has Stryker, the skill runs it too. In the medium and large tier, a review sub-agent on Sonnet reads the diff.
+
 ### Product questions go to the PO
 
 A question about the user, the value, the scope, or the visible behaviour is a product question. The skill does not decide it, and it does not ask you to decide it unless you are the PO. It drafts one comment for the item, with a recommended answer for each question. After you approve the exact text, it posts the comment with the tracker tool. The work that depends on an answer waits. The technical decision record (`decisions.md`) holds only technical decisions, so a dev decision cannot change a PO decision.
 
 ### The work folder
 
-Small and medium items get a work folder, by default `docs/work/<slug>/`:
+Small, medium, and large items get a work folder, by default `docs/work/<slug>/`:
 
 ```
 docs/work/<slug>/
-  plan.md                 the item, the tier, the plan, the questions for the PO, the gates
+  examples.md             rules, examples, words with more than one meaning, open questions
+  plan.md                 medium and large: the plan, the questions for the PO, the gates
   research.md             medium
   decisions.md            medium: technical decisions only
   tickets/NN-<slug>.md    medium: one file for each ticket
 ```
 
-A patch has no work folder: the report holds the result. To continue later, ask the skill to continue the run. It reads `plan.md` and starts at the first open step.
+A patch has no work folder. For a patch and a small item, the report holds the plan and the result. To continue later, ask the skill to continue the run. It reads `plan.md` and starts at the first open step.
 
 When the repository has a team decision index (`docs/dev-team/decisions.md`), the skill records a new team decision with `dev-team:team-decisions`, with an ADR.
 
-### The checker
+### The checkers
 
-`scripts/workcheck.py` checks the work folder. It uses only the Python standard library.
+The scripts use only the Python standard library.
+
+| Script | Checks |
+|--------|--------|
+| `examplecheck.py` | Each rule has an example, each limit has the cases below, at, and above, and each open example has a question |
+| `speclock.py` | The approved test cases and the DSL did not change |
+| `mutate.py` | Each changed comparison is caught by an acceptance test |
+| `workcheck.py` | The structure of a medium or large work folder |
+
+`workcheck.py` examples:
 
 ```sh
 python3 workcheck.py docs/work/ord-45           # check the folder
@@ -86,7 +108,7 @@ python3 workcheck.py docs/work/ord-45 --next    # which tickets can start now?
 The exit code is 1 when there is one or more errors. The checker finds these errors:
 
 - A missing or wrong tier, or a gate out of order.
-- A gate Plan that is "assumed" while a question waits for the PO.
+- A gate that is "assumed" while a question waits for the PO.
 - An acceptance criterion that is in no ticket.
 - A missing blocker, or a cycle of blockers.
 - A ticket table that does not agree with the ticket files.
@@ -115,13 +137,17 @@ Each delivered run passes the build, the tests, the package policy, and each hid
 - The skill uses sub-agents for the review of a small item and for each ticket of a medium item, when Claude Code has them.
 - The checker checks the structure of the work folder. It does not check if a plan is good.
 - The product question path is tested only unattended: no test posted a comment to a real tracker.
-- The hand-off to `dev-team` ran in one test run only. The tier of the large story was not stable (medium in 2 of 3 runs).
+- The hand-off to `dev-team` ran in one test run only.
+- On the synthetic fixture, a run without a plugin passes the same hidden tests at a lower cost. The value of the flow is in the gates, the lock, and the questions, not in a higher test score.
+- Example mapping finds a gap only when the run reads the criterion closely. Refer to the [zitten-kloten results](../../docs/work/flow-scale/zk-results.md).
 
 ## Documentation
 
 - [Changelog](CHANGELOG.md)
 - [Credits](CREDITS.md)
 - [Concept](../../docs/work/flow-scale/concept.md): the reasons for the tiers and for one product front end.
+- [Executable specifications](../../docs/work/flow-scale/executable-specs-concept.md) and [BA and small steps](../../docs/work/flow-scale/ba-and-small-steps-concept.md): the reasons for spec first and example mapping.
+- [Cost analysis](../../docs/work/flow-scale/cost-analysis.md).
 - [Test results of 1.0.0](../../evals/dev-flow/results-2026-10-09.md).
 
 ## License

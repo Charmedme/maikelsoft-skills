@@ -4,7 +4,7 @@ dev-team is a Claude Code plugin that delivers one user story with a small team 
 
 English output follows ASD-STE100 Simplified Technical English. Dutch output follows Begrijpelijk Nederlands (taalniveau B1).
 
-Status: version 0.3.0, preview. Since 0.3.0, `dev-flow:plan-and-build` sets the tier of an item and starts dev-team for a large item. Product questions of the senior go to the product owner as a comment on the item. Read the test results below before you use it on real work.
+Status: version 0.3.0, preview. Since 0.3.0, `dev-flow:plan-and-build` builds each item in one session and starts dev-team only when you ask for the team. Product questions of the senior go to the product owner as a comment on the item. Read the test results below before you use it on real work.
 
 ## Install
 
