@@ -1,0 +1,64 @@
+/* Fieldline design tokens. Source of truth for color, type, space, radius, elevation. */
+:root {
+  /* Neutrals (slate, slight blue bias) */
+  --fl-color-bg: #f5f7fa;
+  --fl-color-surface: #ffffff;
+  --fl-color-surface-sunken: #eef1f5;
+  --fl-color-border: #d8dee6;
+  --fl-color-border-strong: #b6c0cc;
+  --fl-color-text: #1b2430;
+  --fl-color-text-muted: #9aa5b1;
+  --fl-color-text-inverse: #ffffff;
+
+  /* Brand accent: primary action, selection, focus only */
+  --fl-color-accent: #2fbfa8;
+  --fl-color-accent-hover: #27a893;
+  --fl-color-accent-soft: #dff2ef;
+
+  /* Status: status only, never decoration */
+  --fl-color-success: #1d7a3a;
+  --fl-color-success-soft: #e3f4e8;
+  --fl-color-warning: #d29b2e;
+  --fl-color-warning-soft: #fdf1d8;
+  --fl-color-danger: #b42318;
+  --fl-color-danger-soft: #fde8e6;
+  --fl-color-info: #1f5fa8;
+  --fl-color-info-soft: #e4eefa;
+
+  /* Type: one family, fixed scale (px) */
+  --fl-font: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --fl-font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --fl-size-xxs: 11px;
+  --fl-size-xs: 12px;
+  --fl-size-sm: 13px;
+  --fl-size-md: 14px;
+  --fl-size-md2: 15px;
+  --fl-size-lg: 16px;
+  --fl-size-lg2: 17px;
+  --fl-size-xl: 20px;
+  --fl-size-xl2: 22px;
+  --fl-size-2xl: 26px;
+  --fl-weight-regular: 400;
+  --fl-weight-medium: 500;
+  --fl-weight-bold: 600;
+
+  /* Space: 4px base */
+  --fl-space-1: 4px;
+  --fl-space-2: 8px;
+  --fl-space-3: 12px;
+  --fl-space-4: 16px;
+  --fl-space-5: 24px;
+  --fl-space-6: 32px;
+  --fl-space-7: 48px;
+
+  /* Shape and elevation */
+  --fl-radius-sm: 4px;
+  --fl-radius-md: 6px;
+  --fl-shadow-panel: 0 1px 2px rgba(27, 36, 48, 0.08), 0 4px 16px rgba(27, 36, 48, 0.08);
+  --fl-shadow-overlay: 0 8px 32px rgba(27, 36, 48, 0.24);
+
+  /* Density: compact is the default for planner screens (UXD-002) */
+  --fl-row-height-compact: 36px;
+  --fl-row-height-comfortable: 44px;
+  --fl-control-height: 32px;
+}
