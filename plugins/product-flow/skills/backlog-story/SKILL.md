@@ -59,6 +59,19 @@ As a <specific role>, I want <goal>, so that <value>.
 - [ ] <One result that a person or a test can check.>
 - [ ] <...>
 
+### Examples
+
+**AC1** <short name>
+- Given <the start state, with real values>
+- When <the action>
+- Then <the result, with real values>
+
+**AC2** <a table also works when the examples share one form>
+
+| <input> | <input> | Result |
+|---------|---------|--------|
+| <value> | <value> | <value> |
+
 ### Notes
 
 - Out of scope: <item>

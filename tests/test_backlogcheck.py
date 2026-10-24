@@ -21,6 +21,20 @@ As a customer service agent, I want to find an order by its number, so that I ca
 - [ ] A full order number shows the order.
 - [ ] When no order matches, the agent sees "No orders found".
 - [ ] Performance: the result shows in less than 2 seconds.
+
+### Examples
+
+**AC1** Full number
+- Given order 2026-0042 exists
+- When the agent searches for "2026-0042"
+- Then the agent sees order 2026-0042
+
+**AC2** No match
+- Given no order 2026-9999 exists
+- When the agent searches for "2026-9999"
+- Then the agent sees "No orders found"
+
+**AC3** Load: 10,000 orders, search for "2026-0042": the result shows in 1.8 seconds or less.
 """
 
 BAD = """## Build the search API endpoint
@@ -46,6 +60,13 @@ Als klantenservicemedewerker wil ik een order op nummer vinden, zodat ik de klan
 ### Acceptatiecriteria
 
 - [ ] Als geen order past, ziet de medewerker "Geen orders gevonden".
+
+### Voorbeelden
+
+**AC1** Geen order
+- Gegeven er is geen order 2026-9999
+- Wanneer de medewerker zoekt op "2026-9999"
+- Dan ziet de medewerker "Geen orders gevonden"
 """
 
 
@@ -112,6 +133,23 @@ class BacklogCheckTest(unittest.TestCase):
         self.assertIn("A5", {x.rule for x in plain})
         self.assertNotIn("A5", {x.rule for x in profiled})
         self.assertIn("TP", {x.rule for x in profiled})
+
+    def test_story_without_examples(self):
+        text = GOOD.split("### Examples")[0]
+        _, found = run(text)
+        self.assertIn(("error", "A10"), found)
+
+    def test_criterion_without_example(self):
+        text = GOOD.replace("**AC3** Load", "**Load**")
+        _, found = run(text)
+        self.assertIn(("warning", "A10"), found)
+
+    def test_profile_turns_examples_off(self):
+        text = GOOD.split("### Examples")[0]
+        with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False, encoding="utf-8") as f:
+            f.write(text)
+        _, findings = bc.check_file(pathlib.Path(f.name), {"examples": "no"})
+        self.assertNotIn("A10", {x.rule for x in findings})
 
     def test_bad_story(self):
         _, found = run(BAD)
