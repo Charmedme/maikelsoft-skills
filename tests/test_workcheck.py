@@ -54,7 +54,7 @@ def make(folder, tickets, gates=("approved", "open"), tier="medium"):
         (root / "tickets" / f"{n}-t.md").write_text(
             TICKET.format(n=n, blocked=blocked, status=status, mark=mark), encoding="utf-8")
         rows.append(f"| {n} | [Ticket {n}](tickets/{n}-t.md) | AC1 | {blocked} | {status} |")
-    names = workcheck.TIERS.get(tier, ("Plan", "Done"))
+    names = workcheck.TIERS.get(tier, ("Spec", "Done"))
     gate_lines = "\n".join(f"- {g}: {s}" for g, s in zip(names, gates))
     (root / "plan.md").write_text(PLAN.format(rows="\n".join(rows), tier=tier, gate_lines=gate_lines), encoding="utf-8")
     return root
@@ -80,9 +80,9 @@ class Valid(unittest.TestCase):
 
 
 class Tiers(unittest.TestCase):
-    def test_small_needs_only_done(self):
+    def test_small_needs_spec_and_done(self):
         with tempfile.TemporaryDirectory() as d:
-            errors, _ = messages(make(d, [], ("open",), tier="small"))
+            errors, _ = messages(make(d, [], ("open", "open"), tier="small"))
             self.assertEqual(errors, [])
 
 
@@ -100,7 +100,7 @@ class Errors(unittest.TestCase):
     def test_build_before_plan_gate(self):
         with tempfile.TemporaryDirectory() as d:
             errors, _ = messages(make(d, [("01", "None", "todo")], ("open", "open")))
-            self.assertTrue(any("gate Plan is not passed" in e for e in errors))
+            self.assertTrue(any("gate Spec is not passed" in e for e in errors))
 
     def test_done_cannot_be_assumed(self):
         with tempfile.TemporaryDirectory() as d:

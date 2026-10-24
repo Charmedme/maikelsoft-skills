@@ -19,11 +19,11 @@ PO decisions that the work touches:
 
 ## Research
 
-<Small tier: the code that the change touches and the facts that you found, max 5 lines, each with its source. Medium tier: a link to [research.md](research.md).>
+A link to [research.md](research.md).
 
 ## Plan
 
-<Small tier: max 5 lines: the change, the test that shows it, the checks. Medium tier: the ticket table below and a link to [decisions.md](decisions.md).>
+The ticket table and a link to [decisions.md](decisions.md). The acceptance tests are in `<path of the Specs folder>`.
 
 | No | Ticket | AC | Blocked by | Status |
 |----|--------|----|------------|--------|
@@ -37,10 +37,10 @@ Status: draft | todo | doing | blocked | done
 
 ## Gates
 
-- Plan: open
+- Spec: open
 - Done: open
 
-Gate: open | waiting | approved | assumed. Small tier has the gate Done only. Large tier without dev-team also has the gate Design before the gate Plan.
+Gate: open | waiting | approved | assumed. Large tier without dev-team also has the gate Design before the gate Spec.
 
 Add the date and one line of reason when a gate changes.
 

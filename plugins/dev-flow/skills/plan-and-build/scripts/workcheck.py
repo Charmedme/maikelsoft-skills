@@ -6,8 +6,8 @@ Usage:
 
 The script checks:
   - plan.md exists, has a valid tier, and its local links point to files that exist.
-  - The gates of the tier exist and are in order: Design (large) before Plan
-    (medium, large) before Done, and Plan before the build of a ticket.
+  - The gates of the tier exist and are in order: Design (large) before Spec
+    before Done, and Spec before the build of a ticket.
   - Each ticket file has a number, an "Item" line with the AC numbers that it
     covers, "Blocked by", a status, and acceptance criteria. A done ticket has
     all criteria checked.
@@ -33,8 +33,8 @@ from dataclasses import asdict, dataclass
 STATUSES = ("draft", "todo", "doing", "blocked", "done")
 BUILD_STATUSES = ("todo", "doing", "blocked", "done")
 GATE_STATES = ("open", "waiting", "approved", "assumed")
-TIERS = {"small": ("Done",), "medium": ("Plan", "Done"), "large": ("Design", "Plan", "Done")}
-GATES = ("Design", "Plan", "Done")
+TIERS = {"small": ("Spec", "Done"), "medium": ("Spec", "Done"), "large": ("Design", "Spec", "Done")}
+GATES = ("Design", "Spec", "Done")
 
 TICKET_NAME = re.compile(r"^(\d{2,3})-[a-z0-9][a-z0-9-]*\.md$")
 TITLE = re.compile(r"^#\s+(\d{2,3}):\s+\S")
@@ -44,7 +44,7 @@ PLAN_AC = re.compile(r"^\s*[-*]\s+(AC\d+)\s*:", re.MULTILINE)
 AC_REF = re.compile(r"\bAC\d+\b")
 CRITERION = re.compile(r"^\s*[-*]\s+\[([ xX])\]\s+\S", re.MULTILINE)
 LINK = re.compile(r"\[[^\]]*\]\(([^)\s#]+)(?:#[^)]*)?\)")
-GATE_LINE = re.compile(r"^\s*[-*]\s+(Design|Plan|Done)\b[^:\n]*:\s*([A-Za-z]+)", re.MULTILINE)
+GATE_LINE = re.compile(r"^\s*[-*]\s+(Design|Spec|Done)\b[^:\n]*:\s*([A-Za-z]+)", re.MULTILINE)
 ROW = re.compile(r"^\|\s*(\d{2,3})\s*\|(.*)\|\s*$", re.MULTILINE)
 
 
@@ -178,15 +178,15 @@ def check(folder: pathlib.Path) -> tuple:
     def passed(gate):
         return gate not in needed or gates.get(gate) in ("approved", "assumed")
 
-    if gates.get("Plan") in ("approved", "assumed") and not passed("Design"):
-        out.append(Finding("error", "plan.md", "Plan is passed, but Design is not"))
-    if gates.get("Done") in ("approved", "assumed") and not passed("Plan"):
-        out.append(Finding("error", "plan.md", "Done is passed, but Plan is not"))
+    if gates.get("Spec") in ("approved", "assumed") and not passed("Design"):
+        out.append(Finding("error", "plan.md", "Spec is passed, but Design is not"))
+    if gates.get("Done") in ("approved", "assumed") and not passed("Spec"):
+        out.append(Finding("error", "plan.md", "Done is passed, but Spec is not"))
     if gates.get("Done") == "assumed":
         out.append(Finding("error", "plan.md", "Done cannot be assumed: only a human closes the work"))
     waiting = re.search(r"(?ims)^##\s+Waiting for the PO\s*\n(.*?)(?=^##\s|\Z)", plan)
-    if waiting and gates.get("Plan") == "assumed" and waiting.group(1).strip().rstrip(".").lower() not in ("", "none"):
-        out.append(Finding("error", "plan.md", "Plan cannot be assumed while a question waits for the PO"))
+    if waiting and gates.get("Spec") == "assumed" and waiting.group(1).strip().rstrip(".").lower() not in ("", "none"):
+        out.append(Finding("error", "plan.md", "Spec cannot be assumed while a question waits for the PO"))
     if not re.search(r"(?im)^##\s+Waiting for the PO", plan):
         out.append(Finding("warning", "plan.md", 'No "Waiting for the PO" section'))
 
@@ -209,8 +209,8 @@ def check(folder: pathlib.Path) -> tuple:
                 out.append(Finding("error", t.path, "The ticket blocks itself"))
             elif t.status in ("doing", "done") and tickets[b].status != "done":
                 out.append(Finding("error", t.path, f"Status is {t.status}, but blocker {b} is {tickets[b].status}"))
-        if t.status in BUILD_STATUSES and not passed("Plan"):
-            out.append(Finding("error", t.path, f"Status is {t.status}, but gate Plan is not passed"))
+        if t.status in BUILD_STATUSES and not passed("Spec"):
+            out.append(Finding("error", t.path, f"Status is {t.status}, but gate Spec is not passed"))
     cycle = find_cycle(tickets)
     if cycle:
         out.append(Finding("error", "tickets/", "Blocker cycle: " + " -> ".join(cycle)))

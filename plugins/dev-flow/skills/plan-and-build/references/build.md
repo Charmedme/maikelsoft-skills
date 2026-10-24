@@ -1,6 +1,6 @@
 # Build
 
-Medium tier: after the gate Plan, set the status of each ticket to `todo`. Then build the tickets one by one. Patch and small tier: use "Before the first ticket" and the test-first steps for the one change, and commit with the item key and title.
+Medium tier: after the gate Spec, set the status of each ticket to `todo`. Then build the tickets one by one, until the approved acceptance tests of the ticket pass. Patch and small tier: use "Before the first ticket" and the test-first steps, and commit with the item key and title.
 
 ## Before the first ticket
 

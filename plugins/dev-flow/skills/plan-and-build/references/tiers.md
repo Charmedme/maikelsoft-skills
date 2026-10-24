@@ -9,9 +9,20 @@ The tier sets the steps and the gates. Set it from facts in the item and in the 
 | Patch | One file. The cause is clear. No change to a contract, the data, or the configuration of another system. Examples: a typo, a config value, a bug with a clear repro in one method. |
 | Small | One behaviour, up to about 3 files, one layer. |
 | Medium | One feature over more than one layer (for example an endpoint, its logic, and its storage). |
-| Large | More than one feature, more than 10 tickets, or work that needs more than one person or agent at the same time. |
+| Large | Count the signals below. Two or more: large. |
 
 When two tiers fit, take the higher one.
+
+### The large signals
+
+Count them from the item and the code. Do not guess.
+
+1. Three or more endpoints, screens, or message handlers are new or change.
+2. The schema changes, or the data must be migrated.
+3. The item has more than 8 acceptance criteria or examples.
+4. The plan has more than 10 tickets.
+
+Write the count in the tier line, for example: "Tier: large feature. Signals 1 (3 endpoints) and 2 (new columns)."
 
 ## Risk
 

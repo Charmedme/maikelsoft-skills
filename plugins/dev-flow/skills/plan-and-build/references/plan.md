@@ -30,9 +30,9 @@ Use `templates/ticket.md`. Number the tickets from `01`, with the blockers first
 - **Prepare first.** When a change to the existing code makes the work easier, put that change in the first ticket.
 - **Blocked by.** Add a blocker only when the ticket really needs it.
 - **Wide changes.** A rename or type change over the full codebase takes three steps. Add the new form next to the old form. Move the callers in batches. Remove the old form.
-- **Acceptance criteria.** Each ticket names the AC numbers of the item that it covers. Each AC of the item is in one ticket or more. A ticket can add technical criteria, for example "the migration keeps existing rows valid".
+- **Acceptance criteria.** Each ticket names the AC numbers of the item that it covers, and the acceptance tests that it makes pass. Each AC of the item is in one ticket or more. A ticket can add technical criteria, for example "the migration keeps existing rows valid".
 
-Set the status of each ticket to `draft`. After the gate Plan, set it to `todo`.
+Set the status of each ticket to `draft`. After the gate Spec, set it to `todo`.
 
 ## Check
 
