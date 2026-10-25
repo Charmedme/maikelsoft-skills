@@ -18,7 +18,7 @@ Input: the 22 hard cases of `concept.md`, a write case and a review case for eac
 | mailkit-review-hard | 14/24 (58%) | 24/24 (100%) |
 | postgresql-hard | 35/54 (65%) | 51/54 (94%) |
 | postgresql-review-hard | 17/24 (71%) | 20/24 (83%) |
-| puppeteersharp-hard | 16/57 (28%) | 39/57 (68%) |
+| puppeteersharp-hard | 22/57 (39%) | 54/57 (95%) |
 | puppeteersharp-review-hard | 11/24 (46%) | 22/24 (92%) |
 | rabbitmq-hard | 31/54 (57%) | 52/54 (96%) |
 | rabbitmq-review-hard | 16/24 (67%) | 23/24 (96%) |
@@ -28,7 +28,7 @@ Input: the 22 hard cases of `concept.md`, a write case and a review case for eac
 | sqlserver-review-hard | 19/24 (79%) | 24/24 (100%) |
 | wolverine-hard | 52/54 (96%) | 49/54 (91%) |
 | wolverine-review-hard | 16/24 (67%) | 16/24 (67%) |
-| **All** | **549/852 (64%)** | **749/852 (88%)** |
+| **All** | **555/852 (65%)** | **764/852 (90%)** |
 
 - The skill variant scores higher in 20 of 22 cases, equal in 1, and lower in 1 (wolverine-hard).
 - The hard cases measure what batch 2 could not. In batch 2 on Opus, both variants passed most items. Here the baseline fails 36% of the items.
@@ -44,7 +44,9 @@ Input: the 22 hard cases of `concept.md`, a write case and a review case for eac
 | worse (skill less than baseline) | 21 |
 | gap (both 0/3) | 18 |
 
-## The 18 gaps
+## The gaps
+
+The first scoring found 18 gap items. Two of them (puppeteersharp C5 and C6) were a fault of the scorer.
 
 Both variants fail these items in each run. Most facts are in the skill already, often only in a reference file. The model does not apply them to existing code, or does not put them in the report.
 
@@ -56,7 +58,7 @@ Both variants fail these items in each run. Most facts are in the skill already,
 | fluentvalidation | review P6 | `ClassLevelCascadeMode.Stop` stops the whole validator | In `references/validators.md` |
 | mailkit | write J1 | The report names the suppressed advisories and why the reason is gone | Rule 2 forbids the suppression. No report rule |
 | postgresql | write C7 | The existing daily report counts UTC days (`::date`) | Yes, for new code |
-| puppeteersharp | write C5, C6, J6 | `PdfOptions` without `Format` prints Letter. `PrintBackground` is false | Only one mention in `SKILL.md` |
+| puppeteersharp | write J6 | The report names the existing defects of the document. (C5 and C6 were a fault of the scorer, refer to Limits) | No report rule |
 | sqlserver | write C10, C11, J4 | The existing report counts UTC days. An interpolated string on `varchar` gives `CONVERT_IMPLICIT`. `Guid.CreateVersion7()` is not ordered in SQL Server | Yes, in references |
 | wolverine | review J2, P2 | A handler that injects a typed `HttpClient` throws in Wolverine 6 | In `references/configuration.md` |
 
@@ -76,3 +78,28 @@ Two patterns:
 - One model (Sonnet). The batch 2 results are on Opus, so the two rounds are not comparable item by item.
 - `sqlserver-hard` is not stable on this machine (2 CPUs, 7 GB). SQL Server sometimes does not start in the test container. Two runs (baseline 1, skill 3) failed each probe for that reason, also after a second scoring. Their scores are in the table, so `sqlserver-hard` is too low for both variants.
 - The judge items depend on the grader. A two-part judge item can look like a gap.
+- The first scoring of `puppeteersharp-hard` ran without the Chrome of the case (`EVAL_CHROME` and `PUPPETEER_EXECUTABLE_PATH`). A second scoring with Chrome changed the skill variant from 39/57 to 54/57 and the baseline from 16/57 to 22/57. The table shows the second scoring.
+
+## After the reference audit (2026-10-25)
+
+The owner asked to fix the reference files: up to date, and correct against the primary sources (Microsoft Learn, DeepWiki, the official docs, a run). One agent for each skill checked each version and fact. Each fact that prevents a silent wrong result also got a short rule in `SKILL.md`. Stack rule 3 now says that the style of existing code wins, but its defects do not.
+
+Then the 9 cases with a gap ran again, skill variant only, 3 runs each on Sonnet.
+
+| Case | Baseline | Skill before | Skill after | Gap items, before and after |
+|------|----------|--------------|-------------|-----------------------------|
+| dotnet-observability-review-hard | 17/24 (71%) | 18/24 (75%) | 24/24 (100%) | J2 0/3 to 3/3, J5 0/3 to 3/3, P1 0/3 to 3/3 |
+| elasticsearch-review-hard | 13/24 (54%) | 17/24 (71%) | 24/24 (100%) | J2 0/3 to 3/3, J5 0/3 to 3/3, P1 0/3 to 3/3 |
+| fluentvalidation-hard | 43/54 (80%) | 49/54 (91%) | 54/54 (100%) | J4 0/3 to 3/3 |
+| fluentvalidation-review-hard | 22/24 (92%) | 24/24 (100%) | 21/24 (88%) | P6 0/3 to 3/3, but decoy D1 flagged in 3 of 3 |
+| mailkit-hard | 26/54 (48%) | 51/54 (94%) | 52/54 (96%) | J1 0/3 to 3/3 |
+| postgresql-hard | 35/54 (65%) | 51/54 (94%) | 50/54 (93%) | C7 0/3 to 3/3 |
+| puppeteersharp-hard | 22/57 (39%) | 54/57 (95%) | 50/50 (100%) | J6 0/3 to 2/2 |
+| sqlserver-hard | 30/51 (59%) | 34/51 (67%) | 30/51 (59%) | C10 0/3 to 1/3, C11 0/3, J4 0/3 |
+| wolverine-review-hard | 16/24 (67%) | 16/24 (67%) | 21/24 (88%) | J2 0/3 to 3/3, P2 0/3 to 3/3 |
+
+- 14 of the 16 real gap items now pass in each valid run. The 2 that stay are in `sqlserver-hard`.
+- `fluentvalidation-review-hard` went down. The new rule "put `NotNull()` before `SetValidator`" made each review flag an optional child on an update (decoy D1). The rule now says that `SetValidator` without `NotNull()` is correct when null is a valid value. This fix is not tested yet.
+- `sqlserver-hard` is not a valid measure on this machine. In 2 of the 3 runs, SQL Server did not start in the test container, so each test failed. The run that started passed C10.
+- Run 3 of `puppeteersharp-hard` has no grade: the disk filled up during the run, and its output stops before the end.
+- `redis-review-hard` did not run again. Its review checklist now lists correct patterns ("Do not flag") that match the decoys of that case, so a rerun would not be a fair measure for those items.
