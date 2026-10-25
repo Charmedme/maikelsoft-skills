@@ -17,6 +17,7 @@ BRAND = UX / "shared" / "brandcheck.py"
 HTML2DC = UX / "skills" / "claude-design" / "scripts" / "html2dc.py"
 FIGMAMAP = UX / "skills" / "figma" / "scripts" / "figmamap.py"
 SETUPSCAN = UX / "skills" / "ux-setup" / "scripts" / "setupscan.py"
+OPIMPORT = UX / "skills" / "openpencil" / "scripts" / "opimport.py"
 UXCHECK = UX / "skills" / "ux-practice" / "scripts" / "uxcheck.py"
 
 
@@ -216,6 +217,14 @@ class SetupscanTests(unittest.TestCase):
         self.assertIn("nl", facts["languages"])
         self.assertIn("react ^19.0.0", facts["ui_stack"])
         self.assertIn(".: npm run dev", facts["run"])
+
+
+class OpimportTests(unittest.TestCase):
+    def test_missing_cli_is_a_setup_error(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            code, out = run(OPIMPORT, "x.html", "--out", tmp, "--op", "op-does-not-exist")
+        self.assertEqual(code, 2)
+        self.assertIn("not found", out)
 
 
 PAGE = """<!doctype html><html lang="en"><head><title>T</title><style>

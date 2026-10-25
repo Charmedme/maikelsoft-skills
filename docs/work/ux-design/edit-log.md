@@ -230,6 +230,14 @@ This log records each change to a skill or to an eval case, the test that measur
 - Verdict: helped
 - Evidence: `evals/ux-design/results-2026-10-25-b3.md`
 
+### E27: openpencil: Import the checked mockups with browser snapshots (opimport.py)
+- Date and version: 2026-10-25, ux-design 0.3.1
+- Change: Import the checked mockups with browser snapshots (opimport.py).
+- Test: FL-31 mockup (22 states), a real headless OpenPencil 0.8.4 server, 0.3.0 against 0.3.1, 2 runs each, Sonnet.
+- Observed: 22 of 22 frames in all runs. Pixels that differ: 5.3% and 5.4% with the script, 5.3% and 15.8% without it. Cost $0.32 and $0.60 against $1.01 and $1.43.
+- Verdict: helped
+- Evidence: `evals/ux-design/results-2026-10-25-b3.md`
+
 ## Lesson of batch 1
 
 - Cue: a design skill adds completeness rules (more states, more failure paths).

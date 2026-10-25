@@ -6,6 +6,12 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-10-25
+
+### Changed
+
+- The `openpencil` skill imports the checked HTML mockups with `opimport.py`. For each state, the script measures the rendered mockup in a browser with the snapshot extractor of OpenPencil, and imports it with `op import:snapshot`. It names each frame `<screen> / <state>` and exports a PNG of each frame. Before, the skill only loaded `openpencil-design`, and each run made its own workaround. The HTML import of OpenPencil breaks CSS tables.
+
 ## [0.3.0] - 2026-10-25
 
 ### Added
