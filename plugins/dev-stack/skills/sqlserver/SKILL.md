@@ -2,8 +2,8 @@
 name: sqlserver
 description: SQL Server and Azure SQL engine rules and T-SQL for .NET services. Use when code or a review touches T-SQL (a .sql script, a stored procedure, FromSql, SqlQuery, ExecuteSql, migrationBuilder.Sql, Dapper, or SqlClient code), column types, keys, indexes, isolation levels, RCSI, optimized locking, lock hints such as NOLOCK or UPDLOCK, deadlocks, MERGE or another upsert, a queue table, AT TIME ZONE, SqlBulkCopy, or SQL Server 2025 features. Not for EF Core mapping, LINQ, or generated EF migrations (dev-stack:efcore), PostgreSQL (dev-stack:postgresql), or server administration (backup, Always On, instance settings).
 metadata:
-  verified: "2026-10-19"
-  versions: "SQL Server 2025 (17.x, CU9), compatibility level 170, Azure SQL Database, Microsoft.Data.SqlClient 6.1 and 7.1, Dapper 2.1, EF Core 10.0, .NET 10"
+  verified: "2026-10-25"
+  versions: "SQL Server 2025 (17.x, CU10), compatibility level 170, Azure SQL Database, Microsoft.Data.SqlClient 6.1.7 and 7.1.1, Dapper 2.1.89, EF Core 10.0.13, .NET 10.0.13"
 ---
 
 # SQL Server
@@ -15,7 +15,7 @@ Write all output except code in the rules of `references/language.md`.
 ## First
 
 1. Read `references/stack-rules.md`.
-2. Find the engine and the compatibility level: the image tag (`mcr.microsoft.com/mssql/server:2025-CU9-ubuntu-24.04`), `UseCompatibilityLevel(...)` or `UseAzureSql`, or `SELECT @@VERSION, compatibility_level FROM sys.databases WHERE name = DB_NAME();`.
+2. Find the engine and the compatibility level: the image tag (`mcr.microsoft.com/mssql/server:2025-CU10-ubuntu-24.04`), `UseCompatibilityLevel(...)` or `UseAzureSql`, or `SELECT @@VERSION, compatibility_level FROM sys.databases WHERE name = DB_NAME();`.
    - SQL Server 2025 or Azure SQL at level 170: use this file.
    - Level 160 or lower: no `REGEXP_LIKE` and no regex table functions (rule 17).
    - SQL Server 2022 or older: no optimized locking, no `json` type, no regex functions.
@@ -28,8 +28,15 @@ Write all output except code in the rules of `references/language.md`.
 
    A new SQL Server database has all three off. Azure SQL Database has all three on.
 4. Find the SqlClient version: 6.1 (with EF Core 10) or 7.1. Both pull a vulnerable `System.Security.Cryptography.Pkcs`. Pin Pkcs 10.0.x (standing rule, stack rule 5).
+5. Read the existing data code that the change edits, calls, or copies: raw SQL, reports, upserts, and key generators. These defects give wrong results without an error, and the existing tests pass:
+   - `AT TIME ZONE '<zone>'` on a `datetime2` column without `AT TIME ZONE 'UTC'` first: the report counts UTC days (rule 12).
+   - An interpolated string or `AddWithValue` on a `varchar` column: `nvarchar(4000)`, `CONVERT_IMPLICIT`, and an index scan (rule 10).
+   - `Guid.CreateVersion7()` or `NEWID()` for a clustered key: random order in SQL Server, also when a comment or a decision says otherwise (rule 15).
+   - `MERGE` without `HOLDLOCK`, or a check before an insert (rule 6).
 
-Done when you can name the engine, the compatibility level, the RCSI and optimized locking settings, and the SqlClient version.
+   Fix the defect when the change edits, calls, or copies that code, and list the fix under Changes. Otherwise report it as an open point. Stack rule 3 keeps the style of existing code, not its defects.
+
+Done when you can name the engine, the compatibility level, the RCSI and optimized locking settings, and the SqlClient version. Also name the defects in the existing code that the change touches.
 
 ## Defaults for new code
 
@@ -173,7 +180,7 @@ Detail on SqlClient, Dapper, procedures, and bulk copy: `references/sqlclient-da
    ```
 
    Pass: `Build succeeded` with 0 warnings. With SqlClient 6.1.7 or 7.1.1, the build fails with NU1902 and NU1903 until the project pins `System.Security.Cryptography.Pkcs` 10.0.x.
-2. Run the tests against `mcr.microsoft.com/mssql/server:2025-CU9-ubuntu-24.04`, with the production settings of the database (RCSI, compatibility level). Pass: all tests green. A test of a counter, a claim, or an upsert runs parallel calls.
+2. Run the tests against `mcr.microsoft.com/mssql/server:2025-CU10-ubuntu-24.04`, with the production settings of the database (RCSI, compatibility level). Pass: all tests green. A test of a counter, a claim, or an upsert runs parallel calls.
 3. Check the database settings in each environment:
 
    ```sql
@@ -209,6 +216,7 @@ The full list is in `references/review-checklist.md`.
 11. Explicit transactions with retries on run inside the execution strategy. Deadlocks retry the whole unit. judge
 12. Each index serves a query. Foreign keys have an index. No filter on `nvarchar(max)`. judge
 13. New functions of SQL Server 2025 match the compatibility level. judge
+14. Existing code that the change edits, calls, or copies has none of the defects of First, step 5. judge
 
 ## Report
 

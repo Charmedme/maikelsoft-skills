@@ -1,10 +1,11 @@
 # Sources
 
-Checked on 2026-10-19. The facts of this skill come from these primary sources. Look them up again when `metadata.verified` in `SKILL.md` is older than 6 months.
+Checked on 2026-10-19. On 2026-10-25, a second audit checked the versions again and added the section "Checked on 2026-10-25". The facts of this skill come from these primary sources. Look them up again when `metadata.verified` in `SKILL.md` is older than 6 months.
 
 ## Contents
 
 - Versions
+- Checked on 2026-10-25
 - Microsoft Learn: engine
 - Microsoft Learn: T-SQL
 - SqlClient and Dapper
@@ -13,16 +14,27 @@ Checked on 2026-10-19. The facts of this skill come from these primary sources. 
 
 ## Versions
 
-| Item | Version on 2026-10-19 | Source |
+| Item | Version on 2026-10-25 | Source |
 |------|-----------------------|--------|
-| SQL Server 2025 (17.x) | CU9 17.0.5005.3 (2026-09-15), CU9 + GDR 17.0.5015.4 (2026-10-13), compatibility level 170 | [SQL Server 2025 build versions](https://learn.microsoft.com/troubleshoot/sql/releases/sqlserver-2025/build-versions) |
-| Container image | `mcr.microsoft.com/mssql/server:2025-CU9-ubuntu-24.04` (17.0.5005.3, pulled 2026-10-19) | [mcr.microsoft.com](https://mcr.microsoft.com/product/mssql/server/about) |
+| SQL Server 2025 (17.x) | CU10 17.0.5035.5 (2026-10-22), compatibility level 170. Before: CU9 17.0.5005.3, CU9 + GDR 17.0.5015.4 (2026-10-13) | [SQL Server 2025 build versions](https://learn.microsoft.com/troubleshoot/sql/releases/sqlserver-2025/build-versions) |
+| Container image | `mcr.microsoft.com/mssql/server:2025-CU10-ubuntu-24.04` (tag in the MCR tag list on 2026-10-25). The runs below used `2025-CU9-ubuntu-24.04` | [mcr.microsoft.com](https://mcr.microsoft.com/product/mssql/server/about) |
 | Microsoft.Data.SqlClient | 7.1.1, and 6.1.7 (the version of EF Core 10.0.13) | [nuget.org](https://www.nuget.org/packages/Microsoft.Data.SqlClient) |
 | Microsoft.Data.SqlClient.Extensions.Azure | 7.1.1 | [nuget.org](https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) |
 | Microsoft.EntityFrameworkCore.SqlServer | 10.0.13 | [nuget.org](https://www.nuget.org/packages/Microsoft.EntityFrameworkCore.SqlServer) |
 | System.Security.Cryptography.Pkcs | 10.0.13 (the pin) | [nuget.org](https://www.nuget.org/packages/System.Security.Cryptography.Pkcs) |
 | Dapper | 2.1.89 (Apache-2.0) | [nuget.org](https://www.nuget.org/packages/Dapper) |
 | Testcontainers.MsSql | 4.16.0 | [nuget.org](https://www.nuget.org/packages/Testcontainers.MsSql) |
+
+## Checked on 2026-10-25
+
+| Fact | Version | Source |
+|------|---------|--------|
+| Latest stable packages: SqlClient 7.1.1, and 6.1.7 for EF Core 10.0.13. Extensions.Azure 7.1.1, EF Core SqlServer 10.0.13, Pkcs 10.0.13. Dapper 2.1.89, Testcontainers.MsSql 4.16.0. No change since 2026-10-19 | nuget.org | [nuget.org](https://www.nuget.org/packages/Microsoft.Data.SqlClient) |
+| .NET 10 latest runtime 10.0.13 (2026-10-13), SDK 10.0.402 | .NET 10 | [releases.json](https://builds.dotnet.microsoft.com/dotnet/release-metadata/10.0/releases.json) |
+| SQL Server 2025 CU10 is 17.0.5035.5, released 2026-10-22 | SQL Server 2025 | [Build versions](https://learn.microsoft.com/troubleshoot/sql/releases/sqlserver-2025/build-versions) |
+| SQL Server sorts `uniqueidentifier` with the last 6 bytes as most significant. `SqlGuid.CompareTo` has the same order | SQL Server, .NET 10 | [Comparing GUID and uniqueidentifier values](https://learn.microsoft.com/sql/connect/ado-net/sql/compare-guid-uniqueidentifier-values), [SqlGuid.CompareTo](https://learn.microsoft.com/dotnet/api/system.data.sqltypes.sqlguid.compareto) |
+| 1000 values of `Guid.CreateVersion7()` with growing timestamps: in order with `Guid` sort, not in order with `SqlGuid` sort (run with SDK 10.0.402) | .NET 10.0.13 | Run in the workspace |
+| Three defects in existing code: UTC days with `AT TIME ZONE` on `datetime2`, `nvarchar(4000)` on `varchar`, and UUIDv7 keys. The skill runs fixed or reported them in 0 of 3 runs, because the rules were only for new code. `SKILL.md` now has First, step 5 | Hard-case round 1.1.0 | `docs/work/dev-stack/hard-cases/results.md` (C10, C11, J4) |
 
 ## Microsoft Learn: engine
 
