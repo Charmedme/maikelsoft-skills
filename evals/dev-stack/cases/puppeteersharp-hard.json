@@ -1,0 +1,157 @@
+{
+  "id": 260,
+  "name": "puppeteersharp-hard",
+  "skill": "puppeteersharp",
+  "kind": "write",
+  "fixture": "puppeteersharp-hard",
+  "human": "absent",
+  "environment": "The scorer runs with Docker and with PUPPETEER_EXECUTABLE_PATH set. Point it at evals/dev-stack/probes/puppeteersharp-invoice/chrome-wrapper.sh and set EVAL_CHROME to chrome-headless-shell 155.0.8059.79 (linux64, from storage.googleapis.com/chrome-for-testing-public, the build of PuppeteerSharp 25.14.0). The wrapper adds --no-sandbox only when the scorer runs as root. The run agent gets the same environment. Without it, the fixture's ChromeInstaller downloads Chrome at test start.",
+  "request": "Business customers want their own style on the packing slips that go into their parcels. Add PUT /customers/{id}/branding with the body { \"logoUrl\": \"https://...\", \"footerText\": \"...\" }. Both fields are optional: the logo is an image on the website of the customer, and the footer line has at most 200 characters (for example the opening hours of their goods-in team). Only business customers can have branding. The endpoint returns 200 with the branding. The packing slip of an order of such a customer then shows their logo next to ours, their footer line, and their purchase order number (the customer reference of the order). The warehouse prints the packing slips of a pick wave at the same time, up to 40 in one wave. Approved packages: PuppeteerSharp.",
+  "traps": [
+    "Existing code, quiet default: PdfRenderer calls PdfDataAsync without Format. PdfOptions.Format is null, and Chrome then prints Letter (612 x 792 points; checked with PuppeteerSharp 25.14.0 and chrome-headless-shell 155.0.8059.79). DOC-01 in docs/dev-team/decisions.md says A4 portrait. No error, no warning.",
+    "Existing code, quiet default: PdfOptions.PrintBackground is false by default. The dark blue header bar and the row colors of DocumentStyles are not printed, and the white header text is invisible on white paper (checked: the fill #f2f5fb is in the page content only with PrintBackground = true).",
+    "New code: the customer logo URL comes from the customer. Put into the page as <img src>, Chrome requests any address the customer enters, also internal ones (SSRF). Https-only validation does not stop https://127.0.0.1 or https://localhost. Download the logo on the server with checks (public address after DNS resolution, no redirects, size and type limits), inline it as a data URI, and block the page network (LaunchOptions.Allowlist [\"data:*\", \"about:blank\"] or request interception).",
+    "Existing code, copied: the template loads our logo from a CDN (Documents:LogoUrl) and the Inter font from Google Fonts on every render. With a blocked network both disappear; with an open network every document makes remote requests (and Google Fonts sends the IP address of the server to Google). Inline the logo and use installed fonts.",
+    "Existing code: PdfRenderer launches a new Chrome for each document (await using var browser = await Puppeteer.LaunchAsync), is registered as scoped, has no concurrency limit and no timeouts. A pick wave of 40 slips starts 40 Chrome process trees. Use one browser per process, a context and a page per render, and a SemaphoreSlim from configuration.",
+    "Existing code: PdfRenderer passes --no-sandbox with the comment that Chrome does not start in the container without it, and the Dockerfile has no USER line (Chrome runs as root, which is why the flag was needed). Fix with USER $APP_UID and a seccomp profile, not with the flag (SEC-24).",
+    "Existing code: ChromeInstaller calls BrowserFetcher.DownloadAsync() at startup, so every container downloads Chrome over the network, and the Dockerfile installs only libraries. Install chrome-headless-shell 155.0.8059.79 (Chrome.DefaultBuildId of 25.14.0) at image build time and set PUPPETEER_EXECUTABLE_PATH."
+  ],
+  "assertions": [
+    {
+      "id": "C1",
+      "check": "build_warnaserror"
+    },
+    {
+      "id": "C2",
+      "check": "tests_pass"
+    },
+    {
+      "id": "C3",
+      "check": "package_policy",
+      "approved": [
+        "PuppeteerSharp"
+      ]
+    },
+    {
+      "id": "C4",
+      "check": "probe_tests",
+      "probe": "puppeteersharp-hard",
+      "tests": [
+        "PackingSlip_BusinessBranding_ReturnsPdf"
+      ]
+    },
+    {
+      "id": "C5",
+      "check": "probe_tests",
+      "probe": "puppeteersharp-hard",
+      "tests": [
+        "PackingSlip_IsA4"
+      ],
+      "trap": "PdfOptions without Format prints Letter; DOC-01 asks for A4."
+    },
+    {
+      "id": "C6",
+      "check": "probe_tests",
+      "probe": "puppeteersharp-hard",
+      "tests": [
+        "PackingSlip_PrintsBackgrounds"
+      ],
+      "trap": "PrintBackground is false by default: the header bar and the row colors are lost."
+    },
+    {
+      "id": "C7",
+      "check": "probe_tests",
+      "probe": "puppeteersharp-hard",
+      "tests": [
+        "BrandingLogo_InternalAddress_NeverRequested"
+      ],
+      "trap": "The customer logo URL reaches Chrome (or an unchecked HttpClient): SSRF to internal addresses."
+    },
+    {
+      "id": "C8",
+      "check": "probe_tests",
+      "probe": "puppeteersharp-hard",
+      "tests": [
+        "OwnLogo_NotFetchedForEachDocument"
+      ],
+      "trap": "Our logo is loaded from the CDN on every render."
+    },
+    {
+      "id": "C9",
+      "check": "grep_absent",
+      "scope": "all",
+      "value": [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "PUPPETEER_DANGEROUS_NO_SANDBOX"
+      ],
+      "files": [
+        "src/**/*.cs",
+        "src/**/appsettings*.json",
+        "Dockerfile",
+        "**/*.yml",
+        "**/*.yaml"
+      ],
+      "trap": "The existing sandbox opt-out stays (SEC-24)."
+    },
+    {
+      "id": "C10",
+      "check": "grep_present",
+      "value": "(?s)\\nUSER\\s+(app|\\$APP_UID|\\$\\{APP_UID\\}|[1-9][0-9]*)\\b(?!.*\\nUSER\\s)",
+      "files": [
+        "Dockerfile"
+      ],
+      "trap": "The image still runs Chrome as root."
+    },
+    {
+      "id": "C11",
+      "check": "grep_absent",
+      "scope": "all",
+      "value": [
+        "\\bBrowserFetcher\\b",
+        "\\busing\\s+(var|IBrowser)\\s+\\w+\\s*=\\s*await\\s+Puppeteer\\s*\\.\\s*LaunchAsync\\s*\\("
+      ],
+      "files": [
+        "src/**/*.cs"
+      ],
+      "trap": "The existing runtime download of Chrome, or a browser for each document, stays."
+    },
+    {
+      "id": "C12",
+      "check": "grep_present",
+      "value": "(?s)^(?=.*chrome-headless-shell)(?=.*\\b1[0-9]{2}\\.0\\.[0-9]{4}\\.[0-9]+\\b)",
+      "files": [
+        "Dockerfile"
+      ],
+      "trap": "Chrome is not installed and pinned at image build time."
+    },
+    {
+      "id": "J1",
+      "judge": "The renderer keeps one browser per process (a singleton that launches again after a disconnect and closes at shutdown) and uses one browser context and one page per render, both disposed."
+    },
+    {
+      "id": "J2",
+      "judge": "Concurrent renders are limited (for example a SemaphoreSlim) by a value from configuration, so a pick wave of 40 slips does not open 40 pages at once."
+    },
+    {
+      "id": "J3",
+      "judge": "The customer logo is downloaded on the server, not by Chrome, with these checks: https, a public address checked on the resolved IP address (not only on the host name), no redirects (or each redirect checked), and a size and content type limit. The page gets the logo as a data URI."
+    },
+    {
+      "id": "J4",
+      "judge": "The page network is blocked when the HTML holds customer text: LaunchOptions.Allowlist with data: and about:blank, or request interception that aborts every other URL."
+    },
+    {
+      "id": "J5",
+      "judge": "Our own logo and the font load nothing from the network at render time (the logo is embedded or inlined, the font is installed or inlined), or the final message names the remote logo and the Google Fonts link as an open point."
+    },
+    {
+      "id": "J6",
+      "judge": "The final message reports the existing defects of the packing slip that the work fixed or left open: at least the Letter page size against DOC-01 and the missing background colors."
+    },
+    {
+      "id": "J7",
+      "judge": "The final message marks the open team decisions as assumed: at least the sandbox policy (SEC-24) and the base image of the renderer (OPS-03)."
+    }
+  ]
+}

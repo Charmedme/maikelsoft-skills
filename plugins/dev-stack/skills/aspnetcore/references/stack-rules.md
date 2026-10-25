@@ -39,6 +39,11 @@ Your trained knowledge is older than the project. The skill text is also older: 
 
 Read the code near the change before you write. Follow its style: names, folders, patterns, and libraries. When the project style differs from this skill, the project style wins in existing code. Say so in your output. When `docs/dev-team/conventions.md` exists, read it first.
 
+The style of existing code wins. Its defects do not. Check the existing code that the change calls, copies, or edits. Use the review checklist of the skill: version facts, quiet defaults, and the rules of the skill. Do not copy a defect into new code.
+
+- When the change depends on the defect, fix it, and name the fix under "Changes".
+- Else, report it under "Open points": the file, the line, the defect, and the fix.
+
 ## 4. Decisions for new code
 
 Each skill has a list of team decisions in `references/decisions.md`, with an ID such as `API-01`.
@@ -56,7 +61,7 @@ Before you add a package (NuGet, npm, container image, tool):
 
 These packages are not allowed: MediatR, AutoMapper. Use direct handler classes and manual mapping. For large mappings, use Mapperly.
 
-One pin has standing approval. SqlClient 6.1 and 7.1 and MimeKit 4.18 pull a vulnerable `System.Security.Cryptography.Pkcs`. Then add a direct `PackageVersion` for Pkcs 10.0.x with `CentralPackageTransitivePinningEnabled`. Name the pin and the reason in the report. Do not ask again.
+One pin has standing approval. SqlClient 6.1 and 7.1 and MimeKit 4.15.1 to 4.18.1 pull a vulnerable `System.Security.Cryptography.Pkcs`. Then add a direct `PackageVersion` for Pkcs 10.0.x with `CentralPackageTransitivePinningEnabled`. Name the pin and the reason in the report. Do not ask again.
 
 ## 6. Check with tools first
 
@@ -111,10 +116,11 @@ Cause: <only when the change fixes a problem that is not obvious (a build or tes
 
 ## Packages
 <None. Or one line for each package: name, version, license, reason, "waiting for approval".
-For a vulnerable package: name, advisory ID, the fixed version, and how you fixed it (upgrade, pin of the transitive package).>
+For a vulnerable package: name, advisory ID, the fixed version, and how you fixed it (upgrade, pin of the transitive package).
+For each advisory that the project hides (NuGetAuditSuppress, NoWarn NU190x, NuGetAuditLevel): the advisory, the reason in the code, and if the reason still holds.>
 
 ## Open points
-<None. Or one line each: what the human must do or check.>
+<None. Or one line each: what the human must do or check, and each defect of existing code that the change did not fix (rule 3).>
 ```
 
 ### Report after a review

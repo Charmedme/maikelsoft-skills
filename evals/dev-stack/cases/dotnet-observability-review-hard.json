@@ -1,0 +1,21 @@
+{
+  "id": 263,
+  "name": "dotnet-observability-review-hard",
+  "skill": "dotnet-observability",
+  "kind": "review",
+  "fixture": "review-dotnet-observability-hard",
+  "base": "dotnet-observability-hard",
+  "planted": "planted/review-dotnet-observability-hard.json",
+  "human": "absent",
+  "request": "Review this change before we merge it. The warehouse could not see why a dispatch failed. Now a refused booking answers 409 with the reason of the carrier gateway and the shipment stays pending, and a gateway error answers 502. Operations gets the number of bookings and the booking time per carrier and outcome on their dashboard, and each booking shows as a step of its dispatch request in Application Insights.",
+  "assertions": [
+    {"id": "C1", "check": "files_unchanged"},
+    {"id": "J1", "judge": "The review finds at least 7 of the 10 planted mistakes."},
+    {"id": "J2", "judge": "The review finds every planted mistake with severity 'high' (P1, P4)."},
+    {"id": "J3", "judge": "The review finds at least 3 of the 6 planted mistakes marked 'subtle' (P1, P2, P3, P4, P9, P10)."},
+    {"id": "J4", "judge": "The review flags none of the decoys (D1 to D5), and has at most 2 other false positives. A false positive is a claim that is wrong, or a fix that would break the code or that uses an API that does not exist or is outdated (for example UseMicrosoftOpenTelemetry next to UseAzureMonitor, EnableAdaptiveSampling, or an instrumentation key). A real problem that is not on the answer sheet is not a false positive."},
+    {"id": "J5", "judge": "For P1, the review says that SamplingRatio = 1.0F alone does not keep all traces, because the distro default TracesPerSecond (5) wins, and recommends TracesPerSecond = null."},
+    {"id": "J6", "judge": "Each finding gives the file and the line (or quotes the code) and a concrete fix."},
+    {"id": "J7", "judge": "The review separates blocking issues from minor ones and ends with a clear merge verdict that does not approve the change as it is."}
+  ]
+}

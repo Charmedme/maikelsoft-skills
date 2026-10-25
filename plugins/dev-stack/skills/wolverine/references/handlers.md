@@ -29,7 +29,7 @@ After the message, a handler can take:
 - Services from the container: a `DbContext` (registered as in rule 4 of `SKILL.md`), `TimeProvider`, `IOptions<T>`, own services registered with `AddScoped<IFoo, Foo>()`.
 - `CancellationToken`, `ILogger<T>`, `Envelope` (the metadata), `IMessageContext`.
 
-A lambda registration (`AddScoped<IFoo>(sp => new Foo(...))`) forces service location. Wolverine 6 refuses it on the first message.
+A lambda registration (`AddScoped<IFoo>(sp => new Foo(...))`) and a typed `HttpClient` (`AddHttpClient<IFoo, Foo>()`) force service location. Wolverine 6 refuses them on the first message. The table of registrations is in `configuration.md`, section Code generation.
 
 ## Return values and cascading
 
@@ -91,7 +91,7 @@ public static async Task<StockResult> CheckAsync(IMessageBus bus, CancellationTo
 
 ## Contracts and forwarders
 
-Pin the wire name of each contract. The default name is the full CLR type name, so a rename or a namespace move breaks the consumers.
+Pin the wire name of each contract. The default name is the full CLR type name, so a rename or a namespace move breaks the consumers. `[MessageIdentity]` is in the namespace `Wolverine.Attributes`.
 
 ```csharp
 [MessageIdentity("orders.order-placed", Version = 1)]
@@ -107,5 +107,6 @@ public sealed record OrderPlacedV2(Guid OrderId, Guid CustomerId);
 opts.RegisterMessageForwarder<OrderPlacedV1, OrderPlacedV2>();
 ```
 
-- A handler for `OrderPlacedV2` then also receives `OrderPlacedV1` messages from old publishers.
+- A handler for `OrderPlacedV2` then also receives `OrderPlacedV1` messages from old publishers. Without the registration, a version 1 message has no handler (`IndeterminateRoutesException`).
+- Keep a test that sends the old version while old publishers exist. A test that sends only the new version does not find a missing forwarder.
 - `opts.UseAutomaticForwarderDiscovery()` brings back the scan of version 5. It is obsolete and goes away in version 7.

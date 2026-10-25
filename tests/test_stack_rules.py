@@ -28,7 +28,13 @@ class StackRulesTest(unittest.TestCase):
                         self.assertTrue(rule.get("nomatch"), "needs nomatch examples")
                         for line in rule["match"]:
                             self.assertRegex(line, pattern)
+                        unless = re.compile(rule["unless"], re.MULTILINE) if rule.get("unless") else None
+                        for line in rule["match"]:
+                            if unless:
+                                self.assertNotRegex(line, unless, "a match example must not contain the unless pattern")
                         for line in rule["nomatch"]:
+                            if unless and unless.search(line):
+                                continue
                             self.assertNotRegex(line, pattern)
                     if rule.get("kind") == "detect":
                         self.assertRegex(rule.get("decision", ""), r"^[A-Z]+-\d{2}$")

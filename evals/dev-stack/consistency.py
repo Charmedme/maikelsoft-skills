@@ -25,6 +25,8 @@ import re
 import statistics
 import sys
 from collections import defaultdict
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import cases
 
 HERE = pathlib.Path(__file__).resolve().parent
 
@@ -119,7 +121,7 @@ def main(argv=None):
     parser.add_argument("--map", type=pathlib.Path, help="JSON map {id: '<case>/<variant>/<n>'}")
     parser.add_argument("--json", type=pathlib.Path, help="write the table as JSON to this file")
     args = parser.parse_args(argv)
-    evals = {e["name"]: e for e in json.loads((HERE / "evals.json").read_text(encoding="utf-8"))["evals"]}
+    evals = cases.load()
     found = load_found(args.runs, args.graded, args.map)
 
     groups = defaultdict(list)

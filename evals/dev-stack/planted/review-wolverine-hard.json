@@ -1,0 +1,110 @@
+{
+  "skill": "wolverine",
+  "base": "wolverine-hard",
+  "planted": [
+    {
+      "id": "P1",
+      "file": "src/Orders.Api/Payments/PaymentCapturedHandler.cs",
+      "line": 14,
+      "description": "Version fact, over two files: the handler now takes PaymentCapturedV2 only, and the comment (line 11) relies on IForwardsTo in the contract. Wolverine 6 does not scan for forwarders: Program.cs has no opts.RegisterMessageForwarder<PaymentCaptured, PaymentCapturedV2>(), so a version 1 event (they arrive until 2026-11-15, docs/payment-events.md) has no handler and the order is never paid or shipped. The change also rewrote PaymentCapturedHandlerTests from version 1 to version 2, which hides it. Register the forwarder and keep a test that sends version 1.",
+      "severity": "high",
+      "subtle": true
+    },
+    {
+      "id": "P2",
+      "file": "src/Orders.Api/Shipping/BookParcelHandler.cs",
+      "line": 13,
+      "description": "Version fact, over two files: the handler injects ICarrierClient, which Program.cs (line 54) registers with AddHttpClient<ICarrierClient, HttpCarrierClient>(lambda), a factory registration. Wolverine 6 forbids service location by default, so the first BookParcel throws InvalidServiceLocationException and every booking ends in the error queue. The tests do not see it, because OrdersApiFactory replaces ICarrierClient with a singleton fake. Add opts.CodeGeneration.AlwaysUseServiceLocationFor<ICarrierClient>() with a reason (not RestoreV5Defaults), and test once with the real registration.",
+      "severity": "high",
+      "subtle": true
+    },
+    {
+      "id": "P3",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 92,
+      "description": "Over two files (docs/warehouse.md): the warehouse team declares and owns warehouse.pick-orders (quorum, x-dead-letter-exchange warehouse.dlx), and our user cannot configure it. With AutoProvision() Wolverine declares the queue with its own x-dead-letter-exchange (wolverine-dead-letter-queue): RabbitMQ refuses with PRECONDITION_FAILED (or ACCESS_REFUSED), and Wolverine logs an error and retries the broker start at each start. Mark the subscriber .ExternallyOwned(), or match the arguments exactly.",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P4",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 99,
+      "description": "The policy for the parcel platform retries for about 1.3 seconds (50 ms, 250 ms, 1 s) and then moves the message to the error queue. docs/carrier-api.md says outages of a few minutes happen several times a month, so each paid order in an outage ends in the dead-letter queue without a parcel. Add scheduled retries with jitter (for example 1, 5 and 15 minutes) before the error queue (MSG-08).",
+      "severity": "medium",
+      "subtle": false
+    },
+    {
+      "id": "P5",
+      "file": "src/Orders.Api/Shipping/BookParcelHandler.cs",
+      "line": 36,
+      "description": "The reference (the idempotency key of the platform) changes with each attempt (envelope.Attempts). When the platform books the parcel but the response is lost (a timeout, TaskCanceledException, which the policy retries), the retry sends a new key and the platform books a second parcel. Use the shipment id alone as the reference, as the endpoint does (ShipmentEndpoints.cs line 90) and as the comment in PaymentCapturedHandler.cs line 38 says.",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P6",
+      "file": "src/Orders.Api/Shipping/ShipmentEndpoints.cs",
+      "line": 104,
+      "description": "Existing code next to the change: the manual booking saves with SaveChangesAsync and then calls bus.PublishAsync (line 106) and the new bus.SendAsync of the PickOrder (line 107) outside a transaction. When the process stops between the save and the sends, the shipment is booked and the warehouse never gets the pick order. Use IDbContextOutbox<OrdersDbContext>: PublishAsync and SendAsync, then SaveChangesAndFlushMessagesAsync.",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P7",
+      "file": "src/Orders.Api/Payments/PaymentCapturedHandler.cs",
+      "line": 48,
+      "description": "Existing code that the change keeps: the catch of every exception logs and returns an empty result. Wolverine then sees a success and acknowledges the capture. A database read error or a timeout loses the payment: the order is never paid, no shipment, no parcel. Remove the catch and let the error policies retry.",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P8",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 111,
+      "description": "Configuration fact, over two places: production uses TypeLoadMode.Static with AssertAllPreGeneratedTypesExist = true (MSG-13), but the change deletes src/Orders.Api/Internal/Generated (the stale PaymentCapturedHandler file did not compile) and does not regenerate it. The tests run in Development (Dynamic) and pass. The production start throws MissingPreBuiltTypesException. Run 'dotnet run -- codegen write', commit Internal/Generated, and check it in CI.",
+      "severity": "high",
+      "subtle": true
+    },
+    {
+      "id": "P9",
+      "file": "tests/Orders.Api.Tests/ParcelBookingTests.cs",
+      "line": 99,
+      "description": "The test that should prove the retry of a platform outage uses InvokeMessageAndWaitAsync. Invoke runs the handler inline and throws to the caller: error policies (retries, scheduled retries, the error queue) apply only to messages from a queue. The test passes with any policy, also with none. Use SendMessageAndWaitAsync and assert on the attempts or on session.MovedToErrorQueue.",
+      "severity": "low",
+      "subtle": true
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "src/Orders.Api/Payments/PaymentCapturedHandler.cs",
+      "line": 40,
+      "description": "db.Shipments.Add without SaveChangesAsync, and BookParcel with shipment.Id (line 45), is correct: EF Core sets the Guid key at Add (client-side UUIDv7 of the provider), AutoApplyTransactions commits the order and the shipment, and Wolverine sends the cascaded BookParcel after the commit."
+    },
+    {
+      "id": "D2",
+      "file": "src/Orders.Api/Shipping/BookParcelHandler.cs",
+      "line": 38,
+      "description": "The handler changes the shipment and never calls SaveChangesAsync. That is correct: AutoApplyTransactions with the EF Core integration saves the change and the outgoing messages in one transaction."
+    },
+    {
+      "id": "D3",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 76,
+      "description": "UseDurableLocalQueues() is correct and needed: BookParcel goes through a local queue, and only a durable local queue keeps it (and its scheduled retries) in the message store over a restart."
+    },
+    {
+      "id": "D4",
+      "file": "src/Orders.Api/Shipping/BookParcelHandler.cs",
+      "line": 40,
+      "description": "Catching CarrierAddressRejectedException and marking the shipment AddressProblem is correct: a 422 is a business answer (the same request gives the same answer), so the message must succeed and not be retried. It is not the catch-and-log anti-pattern of P7."
+    },
+    {
+      "id": "D5",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 79,
+      "description": "Publisher confirms without UseQuorumQueues() is correct here: the existing queues (orders-api.payment-captured, orders-api.carrier-events) exist as classic queues on the broker, and a declaration as quorum fails with PRECONDITION_FAILED. A move to quorum queues needs its own migration plan. The confirms are safe to turn on."
+    }
+  ]
+}

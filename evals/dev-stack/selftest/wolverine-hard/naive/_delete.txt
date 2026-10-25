@@ -1,0 +1,3 @@
+src/Orders.Api/Internal/Generated/WolverineHandlers/GeneratedHandlerRegistry.cs
+src/Orders.Api/Internal/Generated/WolverineHandlers/ParcelDeliveredHandler1169421115.cs
+src/Orders.Api/Internal/Generated/WolverineHandlers/PaymentCapturedHandler673806722.cs

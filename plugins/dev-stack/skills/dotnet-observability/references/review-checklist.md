@@ -21,7 +21,7 @@ Each check is `tool (<rule ID>)` when a tool finds it, or `judge` when a reviewe
 | 4 | No instrumentation key, in code or in `appsettings*.json`. | tool (OBS-IKEY) |
 | 5 | No classic API: `TelemetryConfiguration.Active`, `AddApplicationInsights()` on logging, `WriteTo.ApplicationInsights`. | tool (OBS-AI-CLASSIC) |
 | 6 | No `Microsoft.Extensions.Logging.ApplicationInsights`, no SDK 2.x, no `Serilog.Sinks.ApplicationInsights`. | tool (OBS-PKG-MEL-AI, OBS-PKG-AI-2X, OBS-PKG-SERILOG-AI-SINK) |
-| 7 | Sampling is set in code or configuration (OPS-20). | judge |
+| 7 | Sampling is set in code or configuration (OPS-20). Each `SamplingRatio` has `TracesPerSecond = null` next to it: alone it keeps 5 traces per second (`appinsights.md`). | judge |
 | 8 | Own sources and meters are registered by name (`AddSource`, `AddMeter`, or the `ConfigureOpenTelemetry...Provider` calls). | judge |
 | 9 | One OTLP exporter call (`UseOtlpExporter`), no endpoint in code. | judge |
 | 10 | No console exporter outside development. | tool (OBS-CONSOLE-EXPORTER) |
@@ -35,7 +35,7 @@ Each check is `tool (<rule ID>)` when a tool finds it, or `judge` when a reviewe
 | 13 | The exception is the exception argument, not `ex.Message`. | judge |
 | 14 | A failure is logged one time, at the boundary that handles it. No log and rethrow. | judge |
 | 15 | Levels fit: Error for a failure that needs action, Warning for a recovered problem, Information for business events, Debug for detail. | judge |
-| 16 | `IncludeScopes = true` when the code uses `BeginScope` with the OpenTelemetry log exporter. | judge |
+| 16 | `IncludeScopes = true` when code or support depends on a `BeginScope` value, with a distro or the OpenTelemetry log exporter. Scopes are off by default. | judge |
 
 ## Personal data and secrets
 

@@ -1,0 +1,21 @@
+{
+  "id": 245,
+  "name": "fluentvalidation-review-hard",
+  "skill": "fluentvalidation",
+  "kind": "review",
+  "fixture": "review-fluentvalidation-hard",
+  "base": "fluentvalidation-hard",
+  "planted": "planted/review-fluentvalidation-hard.json",
+  "human": "absent",
+  "request": "This branch lets customers register with a delivery address and change their profile (PUT /customers/{id}), and moves the customer requests to FluentValidation. Review it before we merge it.",
+  "assertions": [
+    {"id": "C1", "check": "files_unchanged"},
+    {"id": "J1", "judge": "The review finds at least 7 of the 9 planted mistakes."},
+    {"id": "J2", "judge": "The review finds every planted mistake with severity 'high' (P1, P3, P7)."},
+    {"id": "J3", "judge": "The review flags none of the decoys (D1 to D4) as a problem and asks to change none of them."},
+    {"id": "J4", "judge": "At most 3 findings are false positives. A false positive is a claim that is wrong, a finding on a decoy, or a fix that would break the code or that uses an API that does not exist or is outdated. A real problem that is not on the planted list is not a false positive."},
+    {"id": "J5", "judge": "Each finding gives the file and the line (or quotes the code) and a concrete fix."},
+    {"id": "J6", "judge": "The review separates blocking issues from minor ones and ends with a clear merge verdict."},
+    {"id": "J7", "judge": "The fixes use FluentValidation 12 APIs: NotNull() before SetValidator, WithErrorCode after each validator, RuleLevelCascadeMode or .Cascade(CascadeMode.Stop) (not CascadeMode.StopOnFirstFailure), and ValidateAsync with the token. The review does not recommend FluentValidation.AspNetCore or another auto-validation package."}
+  ]
+}

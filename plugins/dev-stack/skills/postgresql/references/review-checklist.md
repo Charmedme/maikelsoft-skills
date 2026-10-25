@@ -39,7 +39,7 @@ Each check is `tool (<rule ID>)` when a tool finds it, or `judge` when a reviewe
 |---|-------|------|
 | 10 | Instants are `timestamptz`. | tool (PG-TIMESTAMP-NO-TZ) |
 | 11 | Parameters for instants are UTC (`DateTimeOffset` with offset 0, or `DateTime` with `Kind = Utc`). No `DateTime.Now`. | judge, `dev-stack:csharp` rules |
-| 12 | A local day uses `AT TIME ZONE '<IANA zone>'`, not `::date` in the session zone. | judge |
+| 12 | A local day, week, or month uses `AT TIME ZONE '<IANA zone>'`, not `::date` or `date_trunc` in the session zone. Check the existing report that new code copies too. | tool (PG-LOCAL-DATE-NO-ZONE), judge |
 | 13 | Keys are `bigint GENERATED ALWAYS AS IDENTITY` or `uuid`. No `serial`. | tool (PG-SERIAL) |
 | 14 | Amounts are `numeric(p,s)`. No `money`, no `float8`. No `char(n)`. | judge |
 | 15 | Case-insensitive columns use a collation (DATA-24), not `lower()` in each query. | judge |
@@ -72,7 +72,7 @@ Each check is `tool (<rule ID>)` when a tool finds it, or `judge` when a reviewe
 | 27 | The migration sets `lock_timeout` before DDL on a live table. | tool (squawk `require-lock-timeout`), judge |
 | 28 | Indexes on live tables use `CREATE INDEX CONCURRENTLY`, outside a transaction. | tool (squawk `require-concurrent-index-creation`), judge |
 | 29 | No column with a volatile default in one step on a live table. | tool (squawk `adding-field-with-default`) |
-| 30 | Foreign keys and checks on live tables use `NOT VALID`, then `VALIDATE CONSTRAINT`. | tool (squawk `constraint-missing-not-valid`) |
+| 30 | Foreign keys and checks on live tables use `NOT VALID`, then `VALIDATE CONSTRAINT`. `lock_timeout` does not make a check without `NOT VALID` safe: the scan runs under the `ACCESS EXCLUSIVE` lock. | tool (squawk `constraint-missing-not-valid`), judge |
 | 31 | Renames and type changes follow expand and contract (OPS-15). | judge |
 | 32 | An idempotent EF script has no `CREATE INDEX CONCURRENTLY` in a `DO` block (`dev-stack:efcore` rule 32a). | judge |
 

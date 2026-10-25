@@ -1,0 +1,21 @@
+{
+  "id": 247,
+  "name": "postgresql-review-hard",
+  "skill": "postgresql",
+  "kind": "review",
+  "fixture": "review-postgresql-hard",
+  "base": "postgresql-hard",
+  "planted": "planted/review-postgresql-hard.json",
+  "human": "absent",
+  "request": "Review this change before we merge it. Customers can now order with express delivery, and the warehouse picks express orders first; an order that a picker does not finish in two hours goes back to the queue. Customers can search products by name and ask for a mail when a product is back in stock. A coupon can be used once per customer. Customers see their order history on the account page, and finance gets a monthly sales report and a list of coupons that nobody used. The migration is included.",
+  "assertions": [
+    {"id": "C1", "check": "files_unchanged"},
+    {"id": "J1", "judge": "The review finds at least 7 of the 9 planted mistakes."},
+    {"id": "J2", "judge": "The review finds every planted mistake with severity 'high' (P1, P2, P4)."},
+    {"id": "J3", "judge": "The review finds at least 4 of the 6 planted mistakes marked 'subtle' (P2, P3, P4, P5, P6, P9)."},
+    {"id": "J4", "judge": "The review flags none of the decoys (D1 to D5), and has at most 2 other false positives. A false positive is a claim that is wrong, or a fix that would break the code or that uses an API or a server feature that does not exist (for example 'uuidv7() does not exist, use gen_random_uuid()' or 'LIKE does not work with a nondeterministic collation' on PostgreSQL 18). A real problem that is not on the answer sheet is not a false positive."},
+    {"id": "J5", "judge": "For P4, the review says that the check constraint is added without NOT VALID, so PostgreSQL scans order_lines under an ACCESS EXCLUSIVE lock, and that lock_timeout does not shorten the time the lock is held. It recommends NOT VALID and a later VALIDATE CONSTRAINT."},
+    {"id": "J6", "judge": "Each finding gives the file and the line (or quotes the code) and a concrete fix."},
+    {"id": "J7", "judge": "The review separates blocking issues from minor ones and ends with a clear merge verdict that does not approve the change as it is."}
+  ]
+}

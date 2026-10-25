@@ -3,8 +3,8 @@
 
 For each eval, variant, and run number, this script makes <runs>/<eval>/<variant>/<n>/repo:
 a git repository with the fixture. A write case has its fixture (the 'fixture' field, for example
-orders-api or aspnetcore-trap) as one commit on main. A review case has the clean fixture
-(orders-api) on main and the review fixture as one commit on the branch 'feature', so that the
+orders-api or aspnetcore-trap) as one commit on main. A review case has its base fixture (the
+'base' field, default orders-api) on main and the review fixture as one commit on the branch 'feature', so that the
 reviewer can see the change with 'git diff main...feature'.
 
 Usage:
@@ -13,8 +13,11 @@ Usage:
 import argparse
 import json
 import pathlib
+import sys
 import shutil
 import subprocess
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import cases
 
 HERE = pathlib.Path(__file__).resolve().parent
 FIXTURES = HERE / "fixtures"
@@ -36,7 +39,7 @@ def copy_tree(src, dst):
 def make_repo(ev, repo):
     repo.mkdir(parents=True)
     git(repo, "init", "-q", "-b", "main")
-    copy_tree(FIXTURES / ("orders-api" if ev["kind"] == "review" else ev["fixture"]), repo)
+    copy_tree(FIXTURES / (ev.get("base", "orders-api") if ev["kind"] == "review" else ev["fixture"]), repo)
     git(repo, "add", "-A")
     git(repo, "commit", "-q", "-m", "Orders API")
     if ev["kind"] == "review":
@@ -52,7 +55,7 @@ def main():
     parser.add_argument("--eval", action="append", help="limit to these eval names")
     parser.add_argument("--runs-per-variant", type=int, default=3)
     args = parser.parse_args()
-    evals = json.loads((HERE / "evals.json").read_text(encoding="utf-8"))["evals"]
+    evals = cases.load_list()
     for ev in evals:
         if args.eval and ev["name"] not in args.eval:
             continue

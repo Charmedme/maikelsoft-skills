@@ -34,6 +34,8 @@ import tempfile
 import time
 import xml.etree.ElementTree as ET
 from collections import defaultdict
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import cases  # noqa: E402
 
 HERE = pathlib.Path(__file__).resolve().parent
 FIXTURES = HERE / "fixtures"
@@ -590,7 +592,7 @@ def score_run(ev, repo, variant=None, only=None):
 
 
 def load_evals():
-    return {e["name"]: e for e in json.loads((HERE / "evals.json").read_text(encoding="utf-8"))["evals"]}
+    return cases.load()
 
 
 def main(argv=None):

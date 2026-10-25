@@ -64,6 +64,36 @@
        "var bytes = await page.PdfDataAsync(options);",
        "await using var stream = await page.PdfStreamAsync(options);"
      ]},
+    {"id": "PPTR-PDF-FORMAT", "kind": "regex", "severity": "warning",
+     "files": ["**/*.cs"],
+     "pattern": "\\bnew\\s+PdfOptions\\s*(?:\\(\\s*\\)\\s*)?(?:\\{(?!(?:[^{}]|\\{[^{}]*\\})*\\b(?:Format|Width)\\s*=)(?:[^{}]|\\{[^{}]*\\})*\\}|(?=[;),]))|\\.Pdf(?:Data|Stream)Async\\s*\\(\\s*\\)",
+     "message": "PdfOptions without Format (or Width): PuppeteerSharp prints Letter (612 x 792 points), not A4. No error, no warning.",
+     "fix": "Set Format = PaperFormat.A4 (or the page size of the team). A CSS @page size counts only with PreferCSSPageSize = true.",
+     "match": [
+       "var pdf = await page.PdfDataAsync();",
+       "return await page.PdfDataAsync(new PdfOptions { PrintBackground = true, Timeout = 30_000 });",
+       "var options = new PdfOptions();"
+     ],
+     "nomatch": [
+       "return await page.PdfDataAsync(new PdfOptions { Format = PaperFormat.A4, PrintBackground = true, Timeout = 30_000 });",
+       "var options = new PdfOptions { MarginOptions = new MarginOptions { Top = \"1cm\" }, Width = \"210mm\", Height = \"297mm\" };",
+       "var bytes = await page.PdfDataAsync(options);"
+     ]},
+    {"id": "PPTR-PDF-BACKGROUND", "kind": "regex", "severity": "warning",
+     "files": ["**/*.cs"],
+     "pattern": "\\bnew\\s+PdfOptions\\s*(?:\\(\\s*\\)\\s*)?(?:\\{(?!(?:[^{}]|\\{[^{}]*\\})*\\b(?:PrintBackground)\\s*=)(?:[^{}]|\\{[^{}]*\\})*\\}|(?=[;),]))|\\.Pdf(?:Data|Stream)Async\\s*\\(\\s*\\)",
+     "message": "PdfOptions without PrintBackground: the default is false, so background colors and images (header bars, row colors) are not printed.",
+     "fix": "Set PrintBackground = true when the template has a background color or image. Else add // stackcheck: ignore PPTR-PDF-BACKGROUND <reason>.",
+     "match": [
+       "var pdf = await page.PdfDataAsync();",
+       "return await page.PdfDataAsync(new PdfOptions { Format = PaperFormat.A4, Timeout = 30_000 });",
+       "var options = new PdfOptions();"
+     ],
+     "nomatch": [
+       "return await page.PdfDataAsync(new PdfOptions { Format = PaperFormat.A4, PrintBackground = true, Timeout = 30_000 });",
+       "var options = new PdfOptions { MarginOptions = new MarginOptions { Top = \"1cm\" }, PrintBackground = true };",
+       "var bytes = await page.PdfDataAsync(options);"
+     ]},
     {"id": "PPTR-DET-SEC-24", "kind": "detect", "decision": "SEC-24",
      "files": ["**/*.cs"],
      "pattern": "\\bPuppeteer\\s*\\.\\s*LaunchAsync\\s*\\(|\\bnew\\s+LaunchOptions\\b",

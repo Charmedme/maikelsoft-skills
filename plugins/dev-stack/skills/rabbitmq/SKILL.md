@@ -1,14 +1,14 @@
 ---
 name: rabbitmq
-description: Messaging code on RabbitMQ 4.3 with RabbitMQ.Client 7, and the messaging principles that all message flows share (at-least-once delivery, idempotent consumers, outbox, contracts, names, dead letters). Use when code or a review touches a broker, an exchange, a queue, a routing key, a publisher or a consumer, IChannel, ConnectionFactory, BasicPublishAsync, BasicConsumeAsync, acks, prefetch, publisher confirms, quorum queues, dead-letter exchanges, an outbox table with a background publisher, EasyNetQ, or a RabbitMQ test container. Not for Wolverine handlers, its outbox, or its transport settings (dev-stack:wolverine), Kafka or Azure Service Bus, or broker users, vhosts and TLS (dev-stack:secure-coding).
+description: Messaging code on RabbitMQ 4.3 and 4.4 with RabbitMQ.Client 7, and the messaging principles that all message flows share (at-least-once delivery, idempotent consumers, outbox, contracts, names, dead letters). Use when code or a review touches a broker, an exchange, a queue, a routing key, a publisher or a consumer, IChannel, ConnectionFactory, BasicPublishAsync, BasicConsumeAsync, acks, prefetch, publisher confirms, quorum queues, dead-letter exchanges, an outbox table with a background publisher, EasyNetQ, or a RabbitMQ test container. Not for Wolverine handlers, its outbox, or its transport settings (dev-stack:wolverine), Kafka or Azure Service Bus, or broker users, vhosts and TLS (dev-stack:secure-coding).
 metadata:
-  verified: "2026-10-19"
-  versions: "RabbitMQ 4.3.6, RabbitMQ.Client 7.2.2, EasyNetQ 8.1.11, Testcontainers.RabbitMq 4.16.0, .NET 10"
+  verified: "2026-10-25"
+  versions: "RabbitMQ 4.4.0 and 4.3.7, RabbitMQ.Client 7.2.2, EasyNetQ 8.1.11, Testcontainers.RabbitMq 4.16.0, .NET 10.0.13"
 ---
 
 # RabbitMQ
 
-The messaging principles, the RabbitMQ 4.3 broker, and the raw RabbitMQ.Client 7 API. Wolverine handlers and the Wolverine RabbitMQ transport are in `dev-stack:wolverine`. Broker users, vhosts, and TLS are in `dev-stack:secure-coding`. Test containers in general are in `dev-stack:dotnet-testing`.
+The messaging principles, the RabbitMQ 4.3 and 4.4 broker, and the raw RabbitMQ.Client 7 API. Wolverine handlers and the Wolverine RabbitMQ transport are in `dev-stack:wolverine`. Broker users, vhosts, and TLS are in `dev-stack:secure-coding`. Test containers in general are in `dev-stack:dotnet-testing`.
 
 ## First
 
@@ -30,7 +30,7 @@ Ask the human before you apply a default that has no accepted decision (stack ru
 | Area | Default | ID |
 |------|---------|----|
 | In process or broker | In process inside one deployable. A broker only between services, or for work that must survive a restart. | MSG-01 |
-| Broker | RabbitMQ 4.3 with quorum queues. | MSG-03 |
+| Broker | RabbitMQ 4.4 with quorum queues for a new broker. An existing broker keeps its minor version. | MSG-03 |
 | Library | Wolverine 6. Raw RabbitMQ.Client 7 only for interop or infrastructure code. EasyNetQ 8 only where it exists. | MSG-04 |
 | Contracts | `<Service>.Contracts`, records, pinned wire names, additive changes, JSON sample tests. | MSG-05 |
 | Names | Exchange `{publisher}.events` (topic). Routing key `{entity}.{event}.v{n}`. Queue `{consumer}.{purpose}`. Dead letters `{service}.dlq`. | MSG-06 |
@@ -86,20 +86,31 @@ await channel.BasicPublishAsync("orders.events", "order.placed.v1", mandatory: t
 ### Consuming
 
 10. Consume with `autoAck: false`. Ack after the work and the database commit. An early ack turns a crash into data loss.
-11. Set a prefetch per consumer: `BasicQosAsync(0, n, global: false)`. Start between 10 and 100 and measure. Global QoS fails on quorum queues and RabbitMQ 4.3 denies it by default.
+11. Set a prefetch per consumer: `BasicQosAsync(0, n, global: false)`. Start between 10 and 100 and measure. Without a `BasicQosAsync` call, the prefetch is 0 (no limit), and one consumer can hold the full backlog unacked. Global QoS is a deprecated feature (`global_qos`), and quorum queues do not support it. Do not depend on an error: on 4.3.6 the call with `global: true` did not fail.
 12. Deserialize or copy `ea.Body` inside `ReceivedAsync`. The client reuses that memory after the handler returns.
-13. Classify failures (principle 7). Permanent (validation, unknown type): `BasicNackAsync(requeue: false)`, so that the dead-letter exchange takes it. Transient: retry with a delay (DLX plus TTL, or the quorum delayed retry of 4.3). Keep `delivery-limit` at 20. Use `dead-letter-strategy=at-least-once` with `overflow=reject-publish` for a queue whose dead letters must not get lost (MSG-08).
-14. Expect no global order. For order with failover, use `x-single-active-consumer`. Raise `ConsumerDispatchConcurrency` above 1 (the default) only when order does not matter. Keep a handler shorter than the consumer timeout (30 minutes, enforced on quorum queues). Send a reference instead of a body above 16 MiB.
+13. Classify failures (principle 7). Permanent (validation, unknown type): `BasicNackAsync(requeue: false)`, so that the dead-letter exchange takes it. Transient: retry with a delay (DLX plus TTL, or the quorum delayed retry of 4.3). Keep `delivery-limit` at 20. On 4.3 and later, `BasicNackAsync(requeue: true)` does not count toward it: requeue with `BasicRejectAsync(requeue: true)`. Use `dead-letter-strategy=at-least-once` with `overflow=reject-publish` for a queue whose dead letters must not get lost (MSG-08).
+14. Expect no global order. For order with failover, use `x-single-active-consumer`. Raise `ConsumerDispatchConcurrency` above 1 (the default) only when order does not matter. Keep a handler shorter than the consumer timeout (30 minutes, enforced on quorum queues). On 4.3 and later, the broker then cancels the consumer. RabbitMQ.Client 7 does not consume again by itself: handle `UnregisteredAsync`. The timeout does not count toward the `delivery-limit`. Send a reference instead of a body above 16 MiB.
+15. Do not wait with `Task.Delay` inside `ReceivedAsync` before a retry. With `ConsumerDispatchConcurrency` 1, the client awaits each handler, so the wait stops all other deliveries of the channel. Let the broker delay the message (rule 13, `references/broker.md`, section "Delayed retry").
 
 The full consumer and the topology code are in `references/client.md`.
 
+### Existing consumers
+
+16. Before a new consumer uses an existing consumer base class, check it for these defects. Each one loses or blocks messages without an error:
+    - `BasicNackAsync(requeue: true)` for each error: on 4.3 and later, a failing message loops forever (rule 13).
+    - No `BasicQosAsync`: prefetch 0 (rule 11).
+    - Deserialization outside the `try`: when the JSON is not valid, the exception leaves `ReceivedAsync`, and the message stays unacked until the channel closes.
+    - Default `JsonSerializerOptions` (case-sensitive): a camelCase producer gives empty fields, without an error. `JsonSerializerDefaults.Web` reads both.
+    - A domain rule violation (for example an `ArgumentException` of the entity) treated as transient: the message waits through 20 retries before the dead-letter queue. It is permanent.
+    - Shared queue arguments that the change extends: the redeclaration of an existing queue fails with `PRECONDITION_FAILED` (rule 5).
+
 ### EasyNetQ
 
-15. EasyNetQ 8: register with `services.AddEasyNetQ("host=...;publisherConfirms=true;consumerDispatcherConcurrency=1")`. Set both values. By default, the dispatch concurrency follows `prefetchCount` (50). Then 50 messages run in parallel and out of order. Use `WithQueueType(QueueType.Quorum)`. EasyNetQ has no built-in retry. Detail: `references/easynetq.md`.
+17. EasyNetQ 8: register with `services.AddEasyNetQ("host=...;publisherConfirms=true;consumerDispatcherConcurrency=1")`. Set both values. By default, the dispatch concurrency follows `prefetchCount` (50). Then 50 messages run in parallel and out of order. Use `WithQueueType(QueueType.Quorum)`. EasyNetQ has no built-in retry. Detail: `references/easynetq.md`.
 
 ### Tests
 
-16. Test against a real broker of the production major version: `new RabbitMqBuilder("rabbitmq:4.3-management-alpine")`. Wait for a message with a `TaskCompletionSource` and a timeout, not with `Task.Delay`. Do not mock `IChannel`. Test the broker-down path: stop the container, act, start it again, and assert that the event arrives. Detail: `references/testing.md`.
+18. Test against a real broker of the production minor version, for example `new RabbitMqBuilder("rabbitmq:4.3-management-alpine")`. Wait for a message with a `TaskCompletionSource` and a timeout, not with `Task.Delay`. Do not mock `IChannel`. Test the broker-down path: stop the container, act, start it again, and assert that the event arrives. Detail: `references/testing.md`.
 
 ## Never write
 
@@ -113,7 +124,7 @@ The full consumer and the topology code are in `references/client.md`.
 | `["x-queue-mode"] = "lazy"`, `ha-mode` policy | `["x-queue-type"] = "quorum"` |
 | `BasicQosAsync(0, 20, global: true)` | `BasicQosAsync(0, 20, global: false)` |
 | `BasicConsumeAsync(queue, autoAck: true, ...)` | `autoAck: false` and `BasicAckAsync` after the commit |
-| `catch { await ch.BasicNackAsync(tag, false, requeue: true); }` for each error | Classify. `requeue: false` for permanent errors, plus a dead-letter policy |
+| `catch { await ch.BasicNackAsync(tag, false, requeue: true); }` for each error | Classify. `requeue: false` for permanent errors, plus a dead-letter policy. On 4.3 and later this nack never reaches the `delivery-limit` |
 | `RabbitHutch.CreateBus("host=...")` | `services.AddEasyNetQ("host=...;publisherConfirms=true")` |
 | `UseDelayedExchangeScheduler()`, `"x-delayed-type"` | The default DLX plus TTL scheduler, or the quorum delayed retry |
 | `new RabbitMqBuilder().Build()` | `new RabbitMqBuilder("rabbitmq:4.3-management-alpine").Build()` |
@@ -170,10 +181,21 @@ The full list is in `references/review-checklist.md`.
 12. Contracts have pinned wire names and change only by addition. judge
 13. Tests use a pinned 4.x broker image and wait with a signal, not `Task.Delay`. tool (RMQ-TC-OLD-IMAGE, CS0618), judge
 14. No delayed message exchange plugin. tool (RMQ-DELAYED-PLUGIN)
+15. No `BasicNackAsync` with `requeue: true`: on 4.3 and later it does not count toward the `delivery-limit`. tool (RMQ-NACK-REQUEUE)
+16. The existing consumer code that the change uses has none of the defects of rule 16. judge
+
+Do not flag these correct patterns (detail in `references/review-checklist.md`):
+
+- `ea.Body.ToArray()` before the first `await`.
+- `BasicNackAsync(requeue: false)` for JSON that is not valid.
+- One channel that a `SemaphoreSlim` guards.
+- A unique index on a nullable business key on PostgreSQL.
 
 ## Report
 
 End with the report of stack rule 8 (`references/stack-rules.md`): the same headings in the same order on each run.
+
+In the open points, name the owner of each dead-letter queue (this service, or a named team) and the replay step.
 
 ## References
 

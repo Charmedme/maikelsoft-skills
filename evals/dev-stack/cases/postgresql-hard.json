@@ -1,0 +1,39 @@
+{
+  "id": 246,
+  "name": "postgresql-hard",
+  "skill": "postgresql",
+  "kind": "write",
+  "fixture": "postgresql-hard",
+  "human": "absent",
+  "request": "Three changes for the shop and the warehouse. First: customers can choose express delivery when they place an order. POST /orders takes \"express\": true or false (default false), and the order JSON shows it. The warehouse picks express orders before all normal orders; in each group the oldest order goes first. Second: customers keep asking where their order is, so we want a public tracking page. Each order gets a tracking code, and GET /track/{code} returns the order status, the time the order was placed, and the shipments (carrier, tracking number, shipped and delivered time), or 404. The page has no login, so a code must not be easy to guess and must not be the order id. The order JSON shows the code as trackingCode. Orders that exist today need a code too, because next week we mail the link to every customer with an open order. Third: finance wants GET /reports/weekly-sales?from=2026-06-01&to=2026-06-30, the same as the daily sales report but with one row per week (Monday to Sunday): weekStart (the Monday), orders, and revenue. Add the EF Core migration. No new packages.",
+  "traps": [
+    "Existing code, quiet: PickingQueries runs 'SELECT ... FOR UPDATE SKIP LOCKED' through SqlQuery in autocommit mode, and PickingEndpoints then loads the order and saves it with a second statement. The row lock ends with the SELECT, so two workers can get the same order. The comment says that SKIP LOCKED makes the workers skip each other, and the sequential tests pass. The express change edits this query; the agent must make the claim one UPDATE ... WHERE \"Id\" = (SELECT ... FOR UPDATE SKIP LOCKED) RETURNING, or one transaction.",
+    "Existing code, quiet: SalesReports.DailyAsync groups by o.\"PlacedAt\"::date and filters on UTC midnight. ::date uses the session TimeZone (UTC on the server), so an order at 22:30Z on 2026-07-01 counts on 2026-07-01, not on the Dutch day 2026-07-02 (the README and the doc comment say Dutch days). The fixture tests use midday orders and pass. The request says the weekly report is 'the same as the daily sales report'.",
+    "New code, quiet: date_trunc('week', o.\"PlacedAt\") on timestamptz also uses the session TimeZone, so an order at 00:30 on Monday in Amsterdam (22:30Z on Sunday in summer) counts in the week before, and each week starts at UTC midnight. Use date_trunc('week', o.\"PlacedAt\" AT TIME ZONE 'Europe/Amsterdam'), and filter on the bare column with the UTC instants of local midnight.",
+    "New code, DDL on a live table: a tracking code column with a volatile default (HasDefaultValueSql(\"gen_random_uuid()\"), so EF writes ADD COLUMN ... DEFAULT gen_random_uuid()) gives each existing order a code in one statement, but PostgreSQL rewrites the 41-million-row orders table and its indexes under an ACCESS EXCLUSIVE lock. No error, no warning. Add the column without a default, fill it in batches, then add the default or generate new codes in C#.",
+    "New code, DDL on a live table: EF writes CREATE INDEX for the unique index on the tracking code and for the picking index. On orders this blocks all writes for the whole build. Use IsCreatedConcurrently (CREATE INDEX CONCURRENTLY, outside a transaction).",
+    "New code: the existing orders must get distinct, non-empty codes. A nullable column without a backfill leaves them without a code (the mail next week links nowhere), and a constant default ('' or an empty Guid) fails the unique index or gives all old orders the same code.",
+    "New code, quiet: a backfill of all existing orders with one UPDATE inside the migration transaction holds row locks on 41 million rows until the commit, and pickers and order updates wait. Fill in batches with a commit after each batch (a DO block with COMMIT and suppressTransaction, or a separate post-deploy step).",
+    "New code: the picking query gets a new sort (\"Express\" DESC, \"PlacedAt\", \"Id\"). The index that serves it is a partial index on placed orders, built concurrently. An index on (Express, PlacedAt) without the filter, built in a blocking way, is the default that a model writes."
+  ],
+  "assertions": [
+    {"id": "C1", "check": "build_warnaserror"},
+    {"id": "C2", "check": "tests_pass"},
+    {"id": "C3", "check": "package_policy", "approved": []},
+    {"id": "C4", "check": "migration_ok", "trap": "Snapshot matches the model (has-pending-model-changes)."},
+    {"id": "C5", "check": "probe_tests", "probe": "postgresql-hard", "tests": ["Picking_ExpressOrderBeforeOlderNormalOrder"]},
+    {"id": "C6", "check": "probe_tests", "probe": "postgresql-hard", "tests": ["TwentyWorkers_TenOrders_EachOrderOnce"], "trap": "The existing claim: SKIP LOCKED in autocommit, then a second statement. Two workers get the same order."},
+    {"id": "C7", "check": "probe_tests", "probe": "postgresql-hard", "tests": ["DailySales_OrderAt2230Utc_CountsOnNextAmsterdamDay"], "trap": "The existing daily report counts UTC days (::date in the session time zone)."},
+    {"id": "C8", "check": "probe_tests", "probe": "postgresql-hard", "tests": ["WeeklySales_SundayEveningUtc_CountsInNextAmsterdamWeek"], "trap": "date_trunc('week', timestamptz) uses the session time zone, not Amsterdam."},
+    {"id": "C9", "check": "probe_tests", "probe": "postgresql-hard", "tests": ["Migration_ExistingOrders_GetDistinctTrackingCodes"], "trap": "Existing orders get no code, the same code, or an empty code."},
+    {"id": "C10", "check": "probe_tests", "probe": "postgresql-hard", "tests": ["MigrationScript_NoTableRewriteOnLiveTables"], "trap": "ADD COLUMN with a volatile default rewrites the orders table under an ACCESS EXCLUSIVE lock."},
+    {"id": "C11", "check": "probe_tests", "probe": "postgresql-hard", "tests": ["MigrationScript_IndexesOnLiveTablesAreConcurrent"], "trap": "A plain CREATE INDEX on orders blocks writes for the whole build."},
+    {"id": "C12", "check": "grep_absent", "value": ["DateTime(Offset)?\\.(Now|UtcNow)", "(FromSqlRaw|ExecuteSqlRaw|SqlQueryRaw)\\s*(<[^>]+>)?\\(\\s*\\$", "EnableLegacyTimestampBehavior", "IsolationLevel\\.(Serializable|RepeatableRead)", "new\\s+Random\\s*\\(|Random\\.Shared"], "files": ["src/**/*.cs"], "exclude": ["**/Migrations/**"], "trap": "Clock outside TimeProvider, raw SQL built from strings, a stricter isolation level without a retry, or a guessable tracking code from Random."},
+    {"id": "J1", "judge": "The final message reports that the existing picking query lost its row lock at the end of the SELECT (FOR UPDATE SKIP LOCKED in autocommit), so two workers could get the same order, and says that it is fixed or names it as an open point."},
+    {"id": "J2", "judge": "The final message reports that the existing daily sales report counted days in UTC (the session time zone) instead of Dutch days, and says that it is fixed or names it as an open point."},
+    {"id": "J3", "judge": "The migration (or the deploy step that the final message describes) sets lock_timeout before the DDL on the orders table."},
+    {"id": "J4", "judge": "The existing orders get their tracking code in batches with a commit after each batch (or in a separate step outside the migration transaction), not in one UPDATE of the whole table inside the migration transaction."},
+    {"id": "J5", "judge": "The tracking code comes from a cryptographic random source (RandomNumberGenerator, gen_random_uuid, or gen_random_bytes), not from Random, the order id, a sequence, or a hash of the order id."},
+    {"id": "J6", "judge": "The final message marks the open team decisions as assumed: at least how DDL on the live orders table is done (DATA-25: lock_timeout, concurrent index, batches) and the format of the tracking code."}
+  ]
+}

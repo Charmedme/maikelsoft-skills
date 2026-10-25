@@ -2,8 +2,8 @@
 name: mailkit
 description: Outgoing mail code with MailKit 4 and MimeKit 4 in .NET. Use when code or a review sends email over SMTP, for example MailKit SmtpClient, MimeMessage, BodyBuilder, SecureSocketOptions, SMTP settings and the SMTP password, a mail outbox or a background mail sender, retries after a relay failure, mail templates, OAuth2 SMTP for Microsoft 365 or Gmail, the Pkcs audit warning after MailKit is added, or mail tests with Mailpit. Not for reading mail (IMAP, POP3), Microsoft Graph sendMail, the Azure Communication Services Email SDK, or messages between services (dev-stack:rabbitmq, dev-stack:wolverine).
 metadata:
-  verified: "2026-10-19"
-  versions: "MailKit 4.18.1, MimeKit 4.18.1, System.Security.Cryptography.Pkcs 10.0.13, Mailpit v1.31.6, Testcontainers.Mailpit 4.16.0, .NET 10"
+  verified: "2026-10-25"
+  versions: "MailKit 4.18.2, MimeKit 4.18.2, System.Security.Cryptography.Pkcs 10.0.13, Mailpit v1.32.0, Testcontainers.Mailpit 4.16.0, .NET 10"
 ---
 
 # MailKit
@@ -14,13 +14,14 @@ How to send mail from a .NET service with MailKit and MimeKit: settings, TLS, th
 
 1. Read `references/stack-rules.md`.
 2. Find the version: `MailKit` and `MimeKit` in `Directory.Packages.props` or `*.csproj`.
-   - 4.15.1 to 4.x: use this file.
-   - Below 4.15.1: MimeKit has CVE-2026-30227 (SMTP command injection). Tell the human, and upgrade when the task touches mail.
-   - 5.x: not released on 2026-10-19. Look up the breaking changes before you write code (stack rule 2).
+   - MailKit 4.16.0 and MimeKit 4.15.1 to 4.x: use this file.
+   - Lower: MailKit below 4.16.0 has CVE-2026-41319 (STARTTLS response injection). MimeKit below 4.15.1 has CVE-2026-30227 (SMTP command injection). Tell the human, and upgrade when the task touches mail.
+   - 5.x: not released on 2026-10-25 (the release notes list 5.0.0 as unreleased). Look up the breaking changes before you write code (stack rule 2).
    - `System.Net.Mail.SmtpClient`: existing code keeps it until a task changes the sender. New code uses MailKit (rule 1).
 3. Find the send path: an outbox table, Wolverine (`UseWolverine`), a job library, or a send inside the request.
+4. Find the advisories that the project hides (rule 2): search `*.props`, `*.csproj` and `*.targets` for `NuGetAuditSuppress`, `NU190`, `NuGetAuditLevel` and `NuGetAudit`. Then run `dotnet package list --vulnerable --include-transitive`. It ignores these settings and shows each hidden advisory.
 
-Done when you can name the MailKit version, the TLS mode and port, and the send path.
+Done when you can name the MailKit version, the TLS mode and port, the send path, and each hidden advisory with its reason.
 
 ## Defaults for new code
 
@@ -42,10 +43,13 @@ Existing code keeps its style (stack rule 3).
 ### Packages
 
 1. Use MailKit. Microsoft does not recommend `System.Net.Mail.SmtpClient` for new code (DE0005): it has no modern authentication and weak TLS control.
-2. Use MailKit and MimeKit 4.15.1 or later. MimeKit 4.18.1 pulls `System.Security.Cryptography.Pkcs` 10.0.0 (NU1902, NU1903), so `dotnet build -warnaserror` fails. Add a direct `PackageVersion` for Pkcs 10.0.13 or later with `CentralPackageTransitivePinningEnabled`. This pin has standing approval (stack rule 5). Name it in the report. Do not hide the warnings with `NoWarn` or `NuGetAudit=false`.
+2. Use MailKit and MimeKit 4.18.2 or later. The minimum is MailKit 4.16.0 (CVE-2026-41319) and MimeKit 4.15.1 (CVE-2026-30227).
+   - Pkcs: MimeKit 4.18.2 depends on `System.Security.Cryptography.Pkcs` 10.0.13, so it needs no pin. MimeKit 4.18.1 and lower pull a vulnerable Pkcs (10.0.0 for `net10.0`, 8.0.1 for `net8.0`), so `dotnet build -warnaserror` fails with NU1902 and NU1903. When you cannot upgrade to 4.18.2, add a direct `PackageVersion` for Pkcs 10.0.13 or later with `CentralPackageTransitivePinningEnabled`. This pin has standing approval (stack rule 5). Name it in the report.
+   - Hidden advisories: `NuGetAuditSuppress`, `NoWarn` with NU1901 to NU1904, `NuGetAuditLevel` `high` or `critical`, and `NuGetAudit` `false` give a clean build with a vulnerable MailKit. The MailKit and MimeKit advisories are moderate (NU1902), so `NuGetAuditLevel` `high` hides them. Do not add such a setting. Remove it after the upgrade (MAIL-AUDIT-HIDDEN).
+   - The reason of an existing suppression: check it against the change. "Mail goes only to addresses from our own records" is false when users can enter an address (CVE-2026-30227). "We use only an internal relay" does not stop a man in the middle (CVE-2026-41319). Name each hidden advisory in the report (section Report).
 
 ```xml
-<!-- MimeKit 4.18.1 pulls Pkcs 10.0.0 (GHSA-2fmv-rv2c-59x7, GHSA-846f-f764-76mx). Transitive pinning lifts it. -->
+<!-- Only for MimeKit 4.18.1 and lower, which pull a vulnerable Pkcs (GHSA-2fmv-rv2c-59x7, GHSA-846f-f764-76mx). -->
 <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
 ```
 
@@ -161,7 +165,7 @@ await client.DisconnectAsync(true, ct);
 16. Test the message builder as a plain unit. Use a fake sender port in business tests. Test the sender against Mailpit (MAIL-04). Do not mock `SmtpClient`. Do not use MailHog: it is not maintained.
 
 ```csharp
-s_mailpit = new MailpitBuilder("axllent/mailpit:v1.31.6")
+s_mailpit = new MailpitBuilder("axllent/mailpit:v1.32.0")
     .WithSmtpAuthCredentials(new NetworkCredential("orders", "test-password"), allowInsecure: true)
     .Build();
 await s_mailpit.StartAsync(context.CancellationToken);
@@ -182,12 +186,14 @@ The full test and a fake relay for the TLS test are in `references/testing.md`.
 | `await mail.SendAsync(...)` after `SaveChangesAsync` in the endpoint | The outbox row in the same `SaveChangesAsync` |
 | `await using var client = new SmtpClient();`, `SendResult r = await client.SendAsync(...)` | MailKit 4: `using var client`, and `string response = await client.SendAsync(message, ct)` |
 | `<NoWarn>NU1903</NoWarn>` after you add MailKit | `<PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />` |
+| `<NuGetAuditSuppress Include="https://github.com/advisories/GHSA-9j88-vvj5-vhgr" />` | MailKit 4.18.2, and no suppression |
+| `<NuGetAuditLevel>high</NuGetAuditLevel>` | The default level `low`. The MailKit and MimeKit advisories are moderate |
 | `HtmlBody = $"<p>Hello {name}</p>"` | A Razor component, or `HtmlEncoder.Default.Encode(name)` |
 | `message.From.Add(MailboxAddress.Parse(form.Email))` | `From` from your own domain, `message.ReplyTo.Add(address)` |
 | `message.Headers.Add("Subject", input)` | `message.Subject = input;` |
 | One message with all customers in `To` | One message for each recipient |
-| `image: mailhog/mailhog` | `image: axllent/mailpit:v1.31.6`, or Testcontainers.Mailpit |
-| `new MailpitBuilder().Build()` | `new MailpitBuilder("axllent/mailpit:v1.31.6").Build()` (the parameterless constructor is obsolete) |
+| `image: mailhog/mailhog` | `image: axllent/mailpit:v1.32.0`, or Testcontainers.Mailpit |
+| `new MailpitBuilder().Build()` | `new MailpitBuilder("axllent/mailpit:v1.32.0").Build()` (the parameterless constructor is obsolete) |
 
 ## Check
 
@@ -205,7 +211,7 @@ The full test and a fake relay for the TLS test are in `references/testing.md`.
    dotnet package list --vulnerable --include-transitive
    ```
 
-   Pass: no vulnerable package.
+   Pass: no vulnerable package. This list ignores `NuGetAuditSuppress`, `NoWarn` and `NuGetAuditLevel`, so it also shows the advisories that the build hides.
 
 3. Run the rules of this skill:
 
@@ -216,13 +222,13 @@ The full test and a fake relay for the TLS test are in `references/testing.md`.
    Pass: 0 errors. For each warning, fix it or add `// stackcheck: ignore <RULE-ID> <reason>`.
 
 4. With `Microsoft.CodeAnalysis.BannedApiAnalyzers` (`dev-stack:dotnet-analyzers`): `T:System.Net.Mail.SmtpClient` in `BannedSymbols.txt` gives RS0030.
-5. Run the tests. The sender test runs against Mailpit. Pass: all tests green.
+5. Run the tests. Pass: all tests green. Also, one test or more sends a mail through Mailpit (`Testcontainers.Mailpit`, pinned tag) and checks the captured mail. When no such test exists, write it before the report.
 
 ## Review checklist
 
 The full list is in `references/review-checklist.md`.
 
-1. MailKit and MimeKit 4.15.1 or later, Pkcs pinned, no audit warning hidden. tool (MAIL-PKG-MIMEKIT-CVE, NU1902, NU1903, SC-NUGETAUDIT-OFF)
+1. MailKit 4.16.0 and MimeKit 4.15.1 or later, Pkcs pinned below MimeKit 4.18.2. No advisory hidden, and the reason of each old suppression checked against the change. tool (MAIL-PKG-MIMEKIT-CVE, MAIL-AUDIT-HIDDEN, NU1902, NU1903), judge
 2. No `System.Net.Mail.SmtpClient` in new code. tool (MAIL-SYSTEM-NET-MAIL, RS0030)
 3. TLS mode `StartTls` or `SslOnConnect`, never `Auto` or `StartTlsWhenAvailable`. tool (MAIL-TLS-DOWNGRADE)
 4. No accept-all certificate callback, and no suppressed CA5359. tool (MAIL-CERT-BYPASS, CA5359)
@@ -240,6 +246,8 @@ The full list is in `references/review-checklist.md`.
 ## Report
 
 End with the report of stack rule 8 (`references/stack-rules.md`): the same headings in the same order on each run.
+
+Under "Packages", also name each advisory that the project hides (rule 2), also when the upgrade removed it. Give the advisory ID, the package and version, and the reason in the code. Then say why the reason no longer holds, or why it still holds. In a review, give each one a row under "Findings".
 
 ## References
 

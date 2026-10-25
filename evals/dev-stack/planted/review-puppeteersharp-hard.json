@@ -1,0 +1,118 @@
+{
+  "skill": "puppeteersharp",
+  "base": "puppeteersharp-hard",
+  "planted": [
+    {
+      "id": "P1",
+      "file": "src/Orders.Api/Documents/PackingSlipTemplate.cs",
+      "line": 31,
+      "description": "The purchase order number (CustomerReference, free text from the webshop) goes into the HTML without HtmlEncoder, while every other value of the template is encoded. Markup in it changes the layout (hide lines, add pages, fake text) and, with the prefix allow list of PdfRenderer (P7), can load images from https://cdn.example.com.<any host>. Use e.Encode(order.CustomerReference).",
+      "severity": "high",
+      "subtle": false
+    },
+    {
+      "id": "P2",
+      "file": "src/Orders.Api/Customers/CustomerLogoFetcher.cs",
+      "line": 26,
+      "description": "Over two files: the fetcher checks the addresses of the host with Dns.GetHostAddressesAsync (line 18), and then HttpClient connects with its own DNS lookup and the default handler (Program.cs line 36 configures no primary handler). AllowAutoRedirect is true by default, so a public https URL that redirects to an internal https host is followed without a check, and a host with a short DNS TTL can resolve to a public address for the check and to 10.x or 127.0.0.1 for the connect (DNS rebinding). Check the address at connect time (SocketsHttpHandler.ConnectCallback that refuses non-public addresses) and set AllowAutoRedirect = false.",
+      "severity": "high",
+      "subtle": true
+    },
+    {
+      "id": "P3",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 35,
+      "description": "Existing code next to the change, over two files: ChromeInstaller stays registered, and the Dockerfile still installs no browser (line 8: 'ChromeInstaller downloads the browser at the first start'). Each container downloads Chrome at startup (not pinned, needs egress). With the new USER $APP_UID (Dockerfile line 19), the download also fails: BrowserFetcher writes to the app folder (its CacheDir is AppContext.BaseDirectory, /app), which COPY made root-owned, so the host does not start. Install chrome-headless-shell 155.0.8059.79 (Chrome.DefaultBuildId of PuppeteerSharp 25.14.0) at image build time, set PUPPETEER_EXECUTABLE_PATH, and remove ChromeInstaller.",
+      "severity": "high",
+      "subtle": true
+    },
+    {
+      "id": "P4",
+      "file": "src/Orders.Api/Documents/PdfRenderer.cs",
+      "line": 52,
+      "description": "Version fact: the pragma hides CS0618 on SetContentAsync(string, NavigationOptions). In PuppeteerSharp 25 this overload is obsolete: 'The networkidle0 and networkidle2 wait conditions never worked reliably with SetContent.' Networkidle0 also makes each render wait for the remote logo and the web font. Use SetContentAsync(html, new SetContentOptions { Timeout = ... }) and remove the pragma.",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P5",
+      "file": "src/Orders.Api/Documents/PdfRenderer.cs",
+      "line": 61,
+      "description": "Quiet default in the rewritten PdfOptions: PrintBackground is not set and is false by default, so the dark blue header bar and the row colors of DocumentStyles are not printed, and the white header text is invisible. The change fixes the page size (Format = A4) but keeps this defect. Set PrintBackground = true.",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P6",
+      "file": "src/Orders.Api/Documents/PdfRenderer.cs",
+      "line": 19,
+      "description": "The browser is a Lazy<Task<IBrowser>>. When Chrome crashes or disconnects (IsConnected false), or the first launch fails, the Lazy keeps the dead browser or the faulted task, and every later render fails until the process restarts. Check IsConnected and launch again under a SemaphoreSlim(1, 1), disposing the old browser.",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P7",
+      "file": "src/Orders.Api/Documents/PdfRenderer.cs",
+      "line": 42,
+      "description": "The request interception allows a URL when it starts with an origin string (DocumentOptions.cs line 19): 'https://cdn.example.com' also matches https://cdn.example.com.attacker.test/ and https://cdn.example.com@attacker.test/. It also keeps Google Fonts open, so each render sends the server IP to Google. Compare the scheme and host of the parsed Uri, and better: inline the logo and the font, and allow only data: and about:blank (LaunchOptions.Allowlist).",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P8",
+      "file": "compose.yaml",
+      "line": 11,
+      "description": "cap_add SYS_ADMIN for the Chrome sandbox gives the container a far wider capability than the sandbox needs (mount, namespaces, and more). Docker's default seccomp profile blocks clone with namespace flags and unshare without CAP_SYS_ADMIN; the fix is a seccomp profile that also allows clone, clone3 and unshare (security_opt: [\"seccomp=chrome.json\"]), not SYS_ADMIN.",
+      "severity": "medium",
+      "subtle": false
+    },
+    {
+      "id": "P9",
+      "file": "src/Orders.Api/Customers/CustomerLogoFetcher.cs",
+      "line": 33,
+      "description": "ReadAsByteArrayAsync reads the whole logo with no size limit (HttpClient buffers up to 2 GB by default). A customer URL that serves a very large file costs memory, a database row, and a huge data URI in every packing slip. Check Content-Length and stop reading above a limit (for example 256 KB).",
+      "severity": "medium",
+      "subtle": false
+    },
+    {
+      "id": "P10",
+      "file": "src/Orders.Api/Documents/PdfRenderer.cs",
+      "line": 36,
+      "description": "Each render opens a page in the default browser context of the shared browser. Cookies, cache and storage are shared between the documents of different customers. Use one IBrowserContext per render (CreateBrowserContextAsync with await using) and the page inside it.",
+      "severity": "low",
+      "subtle": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "src/Orders.Api/Documents/PackingSlipEndpoints.cs",
+      "line": 36,
+      "description": "catch (TimeoutException) is correct here: in PuppeteerSharp 25.14.0, SetContentAsync and PdfDataAsync throw System.TimeoutException when their Timeout runs out (ran with chrome-headless-shell 155). Only the WaitFor* methods throw WaitTaskTimeoutException, and the change calls none."
+    },
+    {
+      "id": "D2",
+      "file": "src/Orders.Api/Documents/PdfRenderer.cs",
+      "line": 32,
+      "description": "The CancellationToken goes only to _pages.WaitAsync. That is correct: SetContentAsync, NewPageAsync and PdfDataAsync take no CancellationToken in PuppeteerSharp 25, and the timeouts bound them."
+    },
+    {
+      "id": "D3",
+      "file": "src/Orders.Api/Documents/PackingSlipTemplate.cs",
+      "line": 24,
+      "description": "The customer logo data URI goes into src without HtmlEncoder. It is safe: the value is 'data:' plus a media type that the fetcher allows only as image/png or image/jpeg, plus base64 text, which has no quote, < or & character."
+    },
+    {
+      "id": "D4",
+      "file": "src/Orders.Api/Documents/PdfRenderer.cs",
+      "line": 24,
+      "description": "ExecutablePath = _options.ChromePath, which is null by default, is correct: with a null ExecutablePath PuppeteerSharp reads PUPPETEER_EXECUTABLE_PATH. It does not download a browser by itself (the download is ChromeInstaller, P3)."
+    },
+    {
+      "id": "D5",
+      "file": "src/Orders.Api/Documents/PdfRenderer.cs",
+      "line": 21,
+      "description": "HeadlessMode = HeadlessMode.Shell is correct for chrome-headless-shell in PuppeteerSharp 25. It is not the Node option headless: 'new', and Headless = true is not needed."
+    }
+  ]
+}

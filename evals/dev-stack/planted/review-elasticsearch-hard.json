@@ -1,0 +1,110 @@
+{
+  "skill": "elasticsearch",
+  "base": "elasticsearch-hard",
+  "planted": [
+    {
+      "id": "P1",
+      "file": "src/Orders.Api/Search/ProductIndex.cs",
+      "line": 36,
+      "description": "Client fact: in Elastic.Clients.Elasticsearch 9.5.3 one IndexUpdateAliasesActionDescriptor holds one action. RemoveIndex and then Add on the same descriptor sends only the add action. In production the concrete index 'products' of the previous release exists, so Elasticsearch answers 400 invalid_alias_name_exception (checked on 9.5.5), EnsureValid throws, and the worker stays in its EnsureCurrentAsync retry loop: no product is indexed after the deploy. Tests with a fresh container do not see it (no legacy index). Pass one descriptor for each action: a.Actions(act => act.RemoveIndex(...), act => act.Add(...)). The remove_index action itself is correct.",
+      "severity": "high",
+      "subtle": true
+    },
+    {
+      "id": "P2",
+      "file": "src/Orders.Api/Search/ProductIndex.cs",
+      "line": 31,
+      "description": "The alias moves to the new physical index products_v2, but nothing fills it: no rebuild from the database (backfill of the outbox, or a reindex). After the move the live search shows no products until each of the 400,000 products changes. Fill products_v2 from the database before the alias move (all product ids into the outbox, or a bulk load with replicas 0 and refresh -1), then move the alias.",
+      "severity": "high",
+      "subtle": true
+    },
+    {
+      "id": "P3",
+      "file": "src/Orders.Api/Catalog/ProductEndpoints.cs",
+      "line": 76,
+      "description": "Dual write: the descriptions endpoint writes to Elasticsearch in the request after SaveChangesAsync, with Refresh.WaitFor, and does not check the response (the client does not throw). A failed call is lost without a log, the request waits for a refresh, and the outbox already indexes the same change. Remove the call and keep the outbox and the worker (the tests then poll the search).",
+      "severity": "high",
+      "subtle": false
+    },
+    {
+      "id": "P4",
+      "file": "src/Orders.Api/Search/ProductDocument.cs",
+      "line": 33,
+      "description": "Over two files: the external version adds StockItem.Version, which is the PostgreSQL xmin (IsRowVersion on a uint, CatalogConfiguration.cs line 35). xmin is a 32-bit transaction id that wraps around. After a wraparound the sum is smaller than the stored version, so each change of the product is a 409 and is dropped as stale. Use a long counter on StockItem that each save increments (or let a stock change increase Product.Version).",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P5",
+      "file": "src/Orders.Api/Search/ProductIndex.cs",
+      "line": 60,
+      "description": "Existing code that the change keeps: IndexAsync checks only the HTTP status of the bulk call, and the worker then deletes the outbox rows. A bulk response with failed items is 200 (checked on 9.5.5: 400 strict_dynamic_mapping_exception items, 429 items while the index has the flood-stage read_only_allow_delete block). These products are lost without a log. Loop over ItemsWithErrors: skip 409, keep the batch for 429 and 5xx, log 400.",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P6",
+      "file": "src/Orders.Api/Search/ProductIndex.cs",
+      "line": 81,
+      "description": "The German description has no analyzer, so it uses the standard analyzer: 'Fahrrad' does not find 'Fahrräder' (no stemming, also not with fuzziness AUTO). Use Analyzer(\"german\"), as the Dutch field uses \"dutch\". The test covers only Dutch.",
+      "severity": "medium",
+      "subtle": false
+    },
+    {
+      "id": "P7",
+      "file": "src/Orders.Api/Search/ProductSearchEndpoints.cs",
+      "line": 53,
+      "description": "Existing code next to the change: the search response is used without a check of IsValidResponse (the new EnsureValid helper is not used here). A failed search (cluster down, a mapping error) looks like 'no products' with 200. Call EnsureValid() on the response.",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P8",
+      "file": "src/Orders.Api/Search/ProductSearchEndpoints.cs",
+      "line": 79,
+      "description": "The stock clause is in must: it scores and is not cached. It does not change the score in a useful way. Put it in bool.filter with the active clause.",
+      "severity": "low",
+      "subtle": false
+    },
+    {
+      "id": "P9",
+      "file": "tests/Orders.Api.Tests/ProductSearchTests.cs",
+      "line": 129,
+      "description": "The new stock test waits with fixed Task.Delay calls of 2 seconds and then searches once. On a slow CI machine the worker is not done and the test fails (or passes for the wrong reason after the reservation). Poll until the expected state with a timeout (SearchUntilAsync), as the other tests do.",
+      "severity": "low",
+      "subtle": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "src/Orders.Api/Search/ProductSearchEndpoints.cs",
+      "line": 29,
+      "description": "page * PageSize > MaxResults is the correct cap: page 500 has from 9,980 + size 20 = 10,000, which index.max_result_window allows. Page 501 is refused. It is not off by one."
+    },
+    {
+      "id": "D2",
+      "file": "src/Orders.Api/Search/ProductDocument.cs",
+      "line": 30,
+      "description": "stock is { Available: > 0 } is correct although CatalogConfiguration ignores Available: Available is a C# property (OnHand - Reserved), and both columns are mapped and loaded."
+    },
+    {
+      "id": "D3",
+      "file": "src/Orders.Api/Search/ProductIndex.cs",
+      "line": 17,
+      "description": "ExistsAliasAsync(Name, a => a.Indices(PhysicalName)) sends HEAD /products_v2/_alias/products: it checks that the alias points to the current physical index. It is the correct check."
+    },
+    {
+      "id": "D4",
+      "file": "src/Orders.Api/Data/OrdersDbContext.cs",
+      "line": 53,
+      "description": "The outbox rows for a stock change are added inside the SaveChangesAsync override before base.SaveChangesAsync, so they are written in the same transaction as the stock change. The product query before the save is a read only. It is correct."
+    },
+    {
+      "id": "D5",
+      "file": "src/Orders.Api/Search/ProductSearchEndpoints.cs",
+      "line": 91,
+      "description": "Fuzziness AUTO on a field with the dutch analyzer is correct: the query text is analyzed (stemmed) first, and the fuzzy match runs on the stemmed terms."
+    }
+  ]
+}

@@ -36,9 +36,9 @@ Each check is `tool (<rule ID>)` when a tool finds it, or `judge` when a reviewe
 | # | Check | Type |
 |---|-------|------|
 | 11 | Each validator that a client acts on has its own `WithErrorCode` in the API-04 format. | judge |
-| 12 | `RuleLevelCascadeMode = CascadeMode.Stop` (or `.Cascade(CascadeMode.Stop)`) where a check needs an earlier one. | judge |
+| 12 | `RuleLevelCascadeMode = CascadeMode.Stop` (or `.Cascade(CascadeMode.Stop)`) where a check needs an earlier one. No `ClassLevelCascadeMode = CascadeMode.Stop`: it stops the whole validator, and the client gets one field error at a time. | tool (FV-CASCADE-DEPENDENT, FV-CLASS-CASCADE-STOP) |
 | 13 | Child validators come from the constructor and `SetValidator`. No `InjectValidator`, `Transform`, or `CascadeMode =`. | tool (CS1061, CS0103, CS0118) |
-| 14 | A required child or collection has `NotNull()` or `NotEmpty()`. | judge |
+| 14 | A required child or collection has `NotNull()` or `NotEmpty()`. A `RuleForEach` with `SetValidator` has `NotNull()` when an item can be null. | judge |
 | 15 | No state rule or uniqueness check as the only guard. The domain or a unique index guards it. | judge |
 | 16 | Limits come from the options class. | judge |
 | 17 | No rule sets for two contracts. | judge |

@@ -1,0 +1,40 @@
+{
+  "id": 244,
+  "name": "fluentvalidation-hard",
+  "skill": "fluentvalidation",
+  "kind": "write",
+  "fixture": "fluentvalidation-hard",
+  "human": "absent",
+  "request": "The webshop places orders through POST /orders, and the sales team loads its orders with the CSV import. Today the webshop gets fewer checks than the import. Give POST /orders the same order rules as the import, and add two rules for both: each order line must be a product that we still sell, and a product can be on an order only once. The webshop shows the customer a text for each problem, chosen from a code, so each rejected order must say which field is wrong and why, with a code. The import report keeps its codes. Approved packages: FluentValidation and FluentValidation.DependencyInjectionExtensions.",
+  "traps": [
+    "Existing code, version fact: OrderImportService calls the sync validator.Validate. A product rule that reads the catalog is a MustAsync rule, and FluentValidation 12 then throws AsyncValidatorInvokedSynchronouslyException on Validate. Each import gives a 500. The fixture has no HTTP test of the import, so no existing test shows it.",
+    "Existing code, version fact: the line validator has .NotEmpty().MaximumLength(32).WithErrorCode(\"order.sku_invalid\"). WithErrorCode applies only to MaximumLength, so an empty SKU has the default code NotEmptyValidator, which is not a contract. The import report already shows it.",
+    "Existing code: ValidationFilter<T> (used by POST /returns) takes the argument with .Single() and no null check, and returns ToDictionary() without the codes. Put on POST /orders as it is, the webshop gets no codes, and in Production a JSON null body reaches the filter as null: a 500 (also on POST /returns).",
+    "Existing code, quiet: Program.cs calls AddValidation(), and CreateOrderRequest keeps its DataAnnotations. The built-in filter answers first for those fields with its own 400 without codes (an empty SKU, no lines), so the validator never runs for them.",
+    "Quiet default: without RuleLevelCascadeMode = CascadeMode.Stop each check of a rule chain runs. An empty SKU gets two errors (required and not sold) and the catalog is called with an empty or null SKU (Product.Normalize(null) throws: a 500). A null Lines list reaches .Must(lines => lines.Count ...) and throws.",
+    "Quiet default: RuleForEach(...).SetValidator(...) skips a null item. \"lines\": [null] passes the validator, and the handler throws on line.Sku: a 500.",
+    "Existing code: IProductCatalog has FindAsync and IsActiveAsync. A deactivated product (SKU-OLD) exists in the catalog. A rule with FindAsync(...) is not null accepts a product that we no longer sell.",
+    "Quiet: the catalog stores SKUs trimmed and in upper case (Product.Normalize). A duplicate check with Distinct() or an ordinal compare accepts \"SKU-2\" and \" sku-2\" as two products.",
+    "Existing code: CreateAsync checks MaxLinesPerOrder again after the validator has the same rule. The limit then has two places."
+  ],
+  "assertions": [
+    {"id": "C1", "check": "build_warnaserror"},
+    {"id": "C2", "check": "tests_pass"},
+    {"id": "C3", "check": "package_policy", "approved": ["FluentValidation", "FluentValidation.DependencyInjectionExtensions"]},
+    {"id": "C4", "check": "probe_tests", "probe": "fluentvalidation-hard", "tests": ["CreateOrder_ValidOrder_Returns201", "CreateOrder_InactiveSku_Returns400"], "trap": "FindAsync(...) is not null accepts a deactivated product."},
+    {"id": "C5", "check": "probe_tests", "probe": "fluentvalidation-hard", "tests": ["CreateOrder_UnknownSku_Returns400WithSkuCode", "CreateOrder_DuplicateSku_Returns400WithCode"], "trap": "The existing ValidationFilter returns ToDictionary() without the error codes."},
+    {"id": "C6", "check": "probe_tests", "probe": "fluentvalidation-hard", "tests": ["CreateOrder_DuplicateSkuOtherCase_Returns400"], "trap": "The duplicate check compares SKUs that the catalog normalizes (trim, upper case) with an ordinal compare."},
+    {"id": "C7", "check": "probe_tests", "probe": "fluentvalidation-hard", "tests": ["CreateOrder_EmptySku_HasOneErrorWithSkuCode"], "trap": "The built-in AddValidation filter answers first, the existing WithErrorCode covers only MaximumLength, or no cascade gives two errors."},
+    {"id": "C8", "check": "probe_tests", "probe": "fluentvalidation-hard", "tests": ["CreateOrder_NullLines_Returns400", "CreateOrder_NullSku_Returns400", "CreateOrder_NullLine_Returns400"], "trap": "No cascade: Must and the catalog get null. SetValidator skips a null item, and the handler throws."},
+    {"id": "C9", "check": "probe_tests", "probe": "fluentvalidation-hard", "tests": ["CreateOrder_NullBodyInProduction_Returns400", "CreateReturn_NullBodyInProduction_Returns400"], "trap": "The existing ValidationFilter has no null check. In Production a JSON null body reaches it as null."},
+    {"id": "C10", "check": "probe_tests", "probe": "fluentvalidation-hard", "tests": ["Import_ValidOrder_IsImported", "Import_UnknownSku_IsRejectedWithSkuCode"], "trap": "The existing import calls the sync Validate on a validator that now has a MustAsync rule."},
+    {"id": "C11", "check": "grep_absent", "scope": "all", "value": ["\\b_?\\w*[vV]alidator\\s*\\.\\s*Validate\\s*\\(", "\\bAddFluentValidation", "\\bInjectValidator\\s*\\(", "CascadeMode\\.StopOnFirstFailure", "AddValidatorsFrom[^;]*ServiceLifetime\\.Singleton"], "files": ["src/**/*.cs"], "trap": "A sync Validate call stays (rule FV-SYNC-VALIDATE), or a removed or deprecated API."},
+    {"id": "C12", "check": "grep_absent", "value": ["(Mock|Substitute\\.For)\\s*<\\s*IValidator\\s*<"], "files": ["tests/**/*.cs"], "trap": "A mocked validator hides the sync call and the missing codes (rule FV-MOCK-VALIDATOR)."},
+    {"id": "J1", "judge": "The final message says that the existing CSV import called the sync Validate and that it would fail (a 500) once the validator has an async catalog rule, and the code calls ValidateAsync there."},
+    {"id": "J2", "judge": "The order line limit (MaxLinesPerOrder) is checked in one place: the second check in the POST /orders handler is removed, or the final message names the double check as an open point."},
+    {"id": "J3", "judge": "No existing error code changes its meaning: a SKU longer than 32 characters still gives order.sku_invalid in the import report, or the final message names the changed code as a change for the clients of the import report."},
+    {"id": "J4", "judge": "The final message lists the error codes that the webshop can get from POST /orders, and how they reach the response (field and code)."},
+    {"id": "J5", "judge": "The final message marks the shape of the codes in the 400 response (decision API-20, not in decisions.md) as an assumed decision."},
+    {"id": "J6", "judge": "An HTTP test asserts the 400 and the code of at least one new rule (a product that is not sold, or a product twice)."}
+  ]
+}

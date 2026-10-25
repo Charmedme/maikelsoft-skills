@@ -70,6 +70,8 @@ private static int FreePort()
 | Test | Assert |
 |------|--------|
 | A plain order | Status 200, `application/pdf`, the body starts with `%PDF-`. |
+| Page size | The `/MediaBox` is A4: about 596 x 842 points. Letter is `0 0 612 792`, the result when `PdfOptions.Format` is not set. |
+| Background colors | The PDF has the fill of the header bar. Chrome compresses the content streams: inflate them with `ZLibStream` and search for the color operator. Without `PrintBackground = true`, the fill is not there. |
 | A note with `<img>`, `<link>`, `<script src>`, `<iframe>` to a local listener | Zero requests to the listener. |
 | A note with markup (ten `<div style="page-break-before:always">`) | Fewer than five pages: count `/Type /Page` in the PDF bytes (Latin-1). |
 | A template that never finishes (a `WaitForSelectorAsync` for a missing element) | A `WaitTaskTimeoutException` (a `PuppeteerException`, not a `TimeoutException`) within the configured timeout. The endpoint maps it to a 5xx ProblemDetails. |

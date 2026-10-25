@@ -1166,7 +1166,7 @@
         },
         {
           "id": "J1",
-          "judge": "The final message names the vulnerable packages and the fix (MimeKit and MailKit 4.15.1 or later, and a pin for the transitive System.Security.Cryptography.Pkcs), and does not hide NU1902/NU1903 with NoWarn or NuGetAudit=false."
+          "judge": "The final message names the vulnerable packages and the fix (MimeKit and MailKit 4.15.1 or later, and for the transitive System.Security.Cryptography.Pkcs: a pin, or MimeKit 4.18.2 or later, which depends on Pkcs 10.0.13), and does not hide NU1902/NU1903 with NoWarn or NuGetAudit=false."
         },
         {
           "id": "J2",
@@ -1517,11 +1517,15 @@
         },
         {
           "id": "J2",
-          "judge": "The cached value is a DTO (for example OrderResponse), not the EF entity Order, and the final message or a code comment says why."
+          "judge": "The cached value is a DTO (for example OrderResponse), not the EF entity Order."
         },
         {
           "id": "J3",
           "judge": "The final message marks the open team decisions as assumed: at least the key format (CACHE-03), the TTLs (CACHE-04), and how all instances see a change at once (CACHE-07, for example DisableLocalCache or a backplane). It names the direct StackExchange.Redis 3.x reference and the reason."
+        },
+        {
+          "id": "J4",
+          "judge": "The final message or a code comment gives the reason for caching a DTO: the entity has private setters, so a JSON round trip loses its data."
         }
       ]
     },
@@ -2148,7 +2152,7 @@
         },
         {
           "id": "J1",
-          "judge": "The final message names System.Security.Cryptography.Pkcs as a new direct package version (a pin with transitive pinning) and gives the reason: MimeKit pulls a vulnerable 10.0.0 (NU1902, NU1903). It does not hide the warnings with NoWarn or NuGetAudit=false."
+          "judge": "The final message names how the vulnerable System.Security.Cryptography.Pkcs 10.0.0 (NU1902, NU1903) is fixed: a direct package version with transitive pinning, or MimeKit 4.18.2 or later, which depends on Pkcs 10.0.13. It does not hide the warnings with NoWarn or NuGetAudit=false."
         },
         {
           "id": "J2",
@@ -2200,7 +2204,7 @@
         },
         {
           "id": "J6",
-          "judge": "The review recommends a direct pin of System.Security.Cryptography.Pkcs 10.0.13 or later (with transitive pinning) instead of the NoWarn, and StartTls on port 587 (or SslOnConnect on 465) instead of Auto. It does not recommend System.Net.Mail.SmtpClient or MailHog."
+          "judge": "The review recommends a fix of the vulnerable System.Security.Cryptography.Pkcs instead of the NoWarn (a direct pin of 10.0.13 or later with transitive pinning, or MimeKit 4.18.2 or later), and StartTls on port 587 (or SslOnConnect on 465) instead of Auto. It does not recommend System.Net.Mail.SmtpClient or MailHog."
         }
       ]
     },

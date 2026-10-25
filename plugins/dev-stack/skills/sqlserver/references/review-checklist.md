@@ -13,6 +13,7 @@ Each check is `tool (<rule ID>)` when a tool finds it, or `judge` when a reviewe
 - SqlClient and Dapper
 - Tests
 - Decisions
+- Existing code
 
 ## Security
 
@@ -56,7 +57,7 @@ Each check is `tool (<rule ID>)` when a tool finds it, or `judge` when a reviewe
 | 21 | Instants are `datetimeoffset` or UTC `datetime2`. No `datetime`, no `GETDATE()`. | tool (SQL-DATETIME-TYPE), judge |
 | 22 | Amounts are `decimal(p,s)`. No `money`, no `float`. | judge |
 | 23 | `nvarchar(n)` for user text, `varchar(n)` for codes. No filter on `nvarchar(max)`. | judge |
-| 24 | Clustered `uniqueidentifier` keys are sequential (`NEWSEQUENTIALID()` or EF). No `NEWID()`. | judge |
+| 24 | Clustered `uniqueidentifier` keys are sequential (`NEWSEQUENTIALID()` or EF). No `NEWID()`, no `Guid.CreateVersion7()`: SQL Server sorts the last 6 bytes first. | judge |
 | 25 | SQL Server 2025 functions match the compatibility level. No `=` on a `json` column. | judge |
 
 ## Indexes and plans
@@ -102,3 +103,9 @@ Each check is `tool (<rule ID>)` when a tool finds it, or `judge` when a reviewe
 | # | Check | Type |
 |---|-------|------|
 | 44 | New code that needs DATA-26, DATA-27, DATA-28, or DATA-29 has an accepted decision, or the report marks it as assumed. | judge |
+
+## Existing code
+
+| # | Check | Type |
+|---|-------|------|
+| 45 | Existing code that the change edits, calls, or copies has no defect of `SKILL.md` (First, step 5). The change fixes the defect. When the change does not touch that code, the report names the defect as an open point. | judge |

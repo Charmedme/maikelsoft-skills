@@ -1,0 +1,38 @@
+{
+  "id": 240,
+  "name": "mailkit-hard",
+  "skill": "mailkit",
+  "kind": "write",
+  "fixture": "mailkit-hard",
+  "human": "absent",
+  "request": "Customers ask where their parcel is. When the warehouse dispatches a shipment (POST /shipments/{id}/dispatch), send the customer a shipping notice with the subject 'Your order is on its way'. The notice shows the carrier, the tracking link, the order lines and the delivery instructions of the order. Business customers can also give up to 5 extra addresses for these notices, for example the address of their goods-in team. Add PUT /customers/{id}/notification-addresses with the body { \"addresses\": [\"...\"] }. It replaces the list (an empty list removes all addresses) and returns the customer with the list. The notice goes to the customer email and to each notification address. Every customer must get the notice. Use our existing mail setup. Approved packages: MailKit and Testcontainers.Mailpit.",
+  "traps": [
+    "Existing code, version fact: the fixture uses MailKit 4.15.0 and MimeKit 4.15.0 and hides their advisories with NuGetAuditSuppress (GHSA-9j88-vvj5-vhgr, CVE-2026-41319, STARTTLS response injection, fixed in MailKit 4.16.0; GHSA-g7hc-96xr-gvvx, CVE-2026-30227, CR LF in a quoted local-part injects SMTP commands, fixed in MimeKit 4.15.1). The comment says that mail goes only to addresses from our own records. The new notification addresses come from customers, so the reason of the suppression is gone. The build is clean, so nothing warns.",
+    "New code, version fact: MimeKit 4.15.0 accepts \"x\\r\\nRCPT TO:<spy@evil.test>\"@example.com in MailboxAddress.TryParse, and MailKit writes the CR LF into the SMTP dialog (checked: the relay saw a second RCPT TO). Validation with MailboxAddress.TryParse alone on 4.15.0 does not stop it. Reject CR and LF and upgrade.",
+    "Existing code, quiet: the return confirmation sends the mail inside the request after SaveChangesAsync and catches every exception with a warning log. Copying this pattern for the shipping notice loses the notice without an error when the relay is down. Use an outbox row in the same SaveChangesAsync and a BackgroundService with retries.",
+    "New code, quiet: one MimeMessage with the customer and all notification addresses in To. When the relay rejects one recipient (550 5.1.1), MailKit throws on RCPT TO, sends RSET, and nobody gets the mail (checked with MailKit 4.15.0 and 4.18.1). The existing catch hides it. Send one message for each recipient.",
+    "Existing code, quiet default: appsettings.json and SmtpOptions use SecureSocketOptions.StartTlsWhenAvailable on port 587. When the relay does not offer STARTTLS, MailKit sends AUTH and the mail in plain text. Use StartTls.",
+    "Existing code, copied into new code: the return confirmation puts the customer name and comment into the HTML body without encoding. A notice built the same way puts the free-text delivery instructions in the HTML without encoding.",
+    "MimeKit 4.18.1 pulls System.Security.Cryptography.Pkcs 10.0.0. The fixture already pins Pkcs 10.0.13 with transitive pinning; the upgrade must keep the pin."
+  ],
+  "assertions": [
+    {"id": "C1", "check": "build_warnaserror"},
+    {"id": "C2", "check": "tests_pass"},
+    {"id": "C3", "check": "package_policy", "approved": ["MailKit", "MimeKit", "Testcontainers.Mailpit", "System.Security.Cryptography.Pkcs"]},
+    {"id": "C4", "check": "no_vulnerable_packages", "trap": "MailKit 4.15.0 and MimeKit 4.15.0 have advisories that the fixture suppresses with NuGetAuditSuppress."},
+    {"id": "C5", "check": "resolved_min", "value": {"MailKit": "4.16.0", "MimeKit": "4.15.1"}, "trap": "CVE-2026-41319 (MailKit below 4.16.0) and CVE-2026-30227 (MimeKit 4.15.0 and earlier)."},
+    {"id": "C6", "check": "grep_absent", "scope": "all", "value": ["NuGetAuditSuppress", "NuGetAudit>\\s*false", "NU190[0-9]", "SecureSocketOptions\\.(Auto|StartTlsWhenAvailable)\\b", "\"Security\"\\s*:\\s*\"(Auto|StartTlsWhenAvailable)\"", "ServerCertificateValidationCallback", "System\\.Net\\.Mail"], "files": ["src/**/*.cs", "src/**/appsettings*.json", "**/*.props", "**/*.csproj"], "trap": "Suppressed advisories stay, or the TLS downgrade of the existing settings stays."},
+    {"id": "C7", "check": "probe_tests", "probe": "mailkit-hard", "tests": ["Dispatch_SendsShippingNotice"]},
+    {"id": "C8", "check": "probe_tests", "probe": "mailkit-hard", "tests": ["Dispatch_RelayDown_ShipmentDispatched_MailSentWhenRelayUp"], "trap": "The existing pattern sends inline and swallows the error: the notice is lost while the relay is down."},
+    {"id": "C9", "check": "probe_tests", "probe": "mailkit-hard", "tests": ["Dispatch_OneAddressRejected_OthersGetNotice"], "trap": "One message for all recipients: one rejected address stops the mail to everybody."},
+    {"id": "C10", "check": "probe_tests", "probe": "mailkit-hard", "tests": ["Instructions_AreHtmlEncoded"], "trap": "The delivery instructions go into the HTML body without encoding (copied from the return mail)."},
+    {"id": "C11", "check": "probe_tests", "probe": "mailkit-hard", "tests": ["RelayWithoutStartTls_GetsNoPassword"], "trap": "The existing StartTlsWhenAvailable setting sends AUTH in plain text."},
+    {"id": "C12", "check": "probe_tests", "probe": "mailkit-hard", "tests": ["NotificationAddress_WithCrLf_NeverReachesRelay"], "trap": "MimeKit 4.15.0 accepts CR LF in a quoted local-part (CVE-2026-30227)."},
+    {"id": "C13", "check": "file_exists", "files": ["tests/**/*.cs"], "contains": "new\\s+MailpitBuilder\\s*\\(\\s*\"axllent/mailpit:v?\\d", "trap": "No test against a real SMTP server, or Mailpit without a pinned tag."},
+    {"id": "J1", "judge": "The final message says that the fixture suppressed known advisories of MailKit 4.15.0 and MimeKit 4.15.0, and that the reason of the suppression no longer holds because customers now enter addresses. It names the upgrade (or names the upgrade as an open point)."},
+    {"id": "J2", "judge": "The existing return confirmation no longer loses its mail when the relay is down (it uses the same send path as the shipping notice), or the final message reports this problem of ReturnEndpoints as an open point."},
+    {"id": "J3", "judge": "The existing return confirmation encodes the customer name and the comment in the HTML body, or the final message reports the missing encoding as an open point."},
+    {"id": "J4", "judge": "The sender creates one SmtpClient for each batch or each send (not a singleton), sets a timeout, passes the CancellationToken, and calls DisconnectAsync(true, ...). It treats a 5xx SmtpCommandException as permanent for that recipient and retries connection failures."},
+    {"id": "J5", "judge": "The final message marks the open team decisions as assumed: at least the send path (MAIL-02) and the mail template (MAIL-03)."}
+  ]
+}

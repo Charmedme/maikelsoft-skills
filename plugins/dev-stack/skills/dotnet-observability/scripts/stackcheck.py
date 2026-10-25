@@ -168,6 +168,8 @@ def check(root, files, rules, detect):
     require_rules = [r for r in rules if r["kind"] == "require"]
     package_rules = [r for r in rules if r["kind"] == "package"]
     compiled = {id(r): re.compile(r["pattern"], re.MULTILINE) for r in regex_rules + require_rules}
+    # "unless": a regex rule does not apply to a file that contains this pattern anywhere.
+    unless = {id(r): re.compile(r["unless"], re.MULTILINE) for r in regex_rules if r.get("unless")}
 
     for path in sorted(files):
         rel = path.relative_to(root).as_posix()
@@ -178,6 +180,8 @@ def check(root, files, rules, detect):
             text = read_text(path) if text is None else text
             if text is None:
                 break
+            if id(rule) in unless and unless[id(rule)].search(text):
+                continue
             lines = text.splitlines()
             for m in compiled[id(rule)].finditer(text):
                 index = text.count("\n", 0, m.start())

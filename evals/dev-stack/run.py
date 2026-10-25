@@ -29,6 +29,7 @@ HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 sys.path.insert(0, str(HERE))
 import prepare  # noqa: E402
+import cases
 
 # Variables of a parent Claude Code session. A child run that inherits them shares the session id
 # of the parent and sends foreground agents to the background.
@@ -111,7 +112,7 @@ def main(argv=None):
     parser.add_argument("--max-minutes", type=float, default=25, help="stop a run after this wall time")
     parser.add_argument("--stall-minutes", type=float, default=6, help="stop a run without output for this time")
     args = parser.parse_args(argv)
-    evals = json.loads((HERE / "evals.json").read_text(encoding="utf-8"))["evals"]
+    evals = cases.load_list()
     jobs = []
     for ev in evals:
         if args.eval and ev["name"] not in args.eval:

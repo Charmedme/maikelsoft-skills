@@ -1,0 +1,140 @@
+{
+  "id": 252,
+  "name": "elasticsearch-hard",
+  "skill": "elasticsearch",
+  "kind": "write",
+  "fixture": "elasticsearch-hard",
+  "human": "absent",
+  "request": "Shoppers in the Netherlands and Germany must find products in their own language. Merchandisers add a Dutch and a German description to a product: add PUT /products/{sku}/descriptions with the body { \"nl\": \"...\", \"de\": \"...\" } (null removes that description). GET /products/search gets the parameter lang (nl or de, default nl) and finds products by their name and by the description in that language. Shoppers complain that the search shows products that they cannot order: it must show only products with available stock. Shoppers keep the brand and category filters and the paging of 20 per page. The product search is live with about 400,000 products. Add tests. Approved packages: Elastic.Clients.Elasticsearch and Testcontainers.Elasticsearch.",
+  "traps": [
+    "Existing code, quiet: ProductIndex.EnsureCreatedAsync creates the index only when the name does not exist, and the physical index is named 'products' without an alias. In production the index of the previous release exists, so a new mapping in that method never reaches it. With dynamic: strict, each document with a new field (descriptions, stock) fails with 400 strict_dynamic_mapping_exception. Tests with a fresh container pass. A type change (brand) cannot be done in place either: a new physical index, a fill from the database, and an alias move (remove_index plus add in one _aliases call, checked on 9.5.5).",
+    "Existing code, quiet: the worker checks only the HTTP status of the bulk call and then deletes the outbox rows. A bulk response with failed items is HTTP 200 (checked on 9.5.5: strict mapping 400 items, and 429 items while the index has the read_only_allow_delete block that Elasticsearch sets at the flood-stage disk watermark). The failed products never reach the index, and nothing logs it.",
+    "Existing code, quiet: the brand filter is a term query on 'brand', which is mapped as text. The term 'Gazelle' does not match the analyzed term 'gazelle' (checked on 9.5.5: 0 hits). The filter never finds anything.",
+    "Existing code: the search response is not checked, and from + size has no cap. Page 501 (from 10,000 + size 20) fails in Elasticsearch with 400 (index.max_result_window, checked on 9.5.5), and the endpoint returns an empty page with 200.",
+    "Existing code: the bulk call uses Refresh.True on each batch (a forced refresh per write makes many small segments).",
+    "New code, quiet default: a text field without an analyzer uses the standard analyzer. 'fiets' does not match 'fietsen' and 'Fahrrad' does not match 'Fahrräder', also not with fuzziness AUTO (edit distance 2 and 3). The dutch and german analyzers stem both to the same term (checked with _analyze on 9.5.5).",
+    "New code, quiet: stock is in another aggregate (StockItem). Indexing a stock change with the external version of the product (Product.Version, which does not change) gets 409 and is skipped as stale, so a product without stock stays in the results. StockItem.Version is xmin (uint, 32 bits, wraps around) and is not a safe external version either."
+  ],
+  "assertions": [
+    {
+      "id": "C1",
+      "check": "build_warnaserror"
+    },
+    {
+      "id": "C2",
+      "check": "tests_pass"
+    },
+    {
+      "id": "C3",
+      "check": "package_policy",
+      "approved": [
+        "Elastic.Clients.Elasticsearch",
+        "Testcontainers.Elasticsearch"
+      ]
+    },
+    {
+      "id": "C4",
+      "check": "grep_absent",
+      "scope": "all",
+      "value": [
+        "\\bRefresh\\s*\\.\\s*True\\b",
+        "[?&]refresh=true\\b",
+        "\\.\\s*QueryString\\s*\\(|\\bnew\\s+QueryStringQuery\\b",
+        "\\bMaxResultWindow\\s*\\(|max_result_window\"?\\s*[:=]\\s*\\d",
+        "CertificateValidations\\s*\\.\\s*AllowAll|ServerCertificateValidationCallback\\s*\\(\\s*\\([^)]*\\)\\s*=>\\s*true"
+      ],
+      "files": [
+        "src/**/*.cs",
+        "src/**/*.json"
+      ],
+      "trap": "The existing Refresh.True on each bulk call stays, or new code adds query_string, a larger max_result_window, or TLS off."
+    },
+    {
+      "id": "C5",
+      "check": "probe_tests",
+      "probe": "elasticsearch-hard",
+      "tests": [
+        "Search_FindsNewProductByName"
+      ]
+    },
+    {
+      "id": "C6",
+      "check": "probe_tests",
+      "probe": "elasticsearch-hard",
+      "tests": [
+        "Search_DutchAndGermanDescriptions_MatchOtherWordForms"
+      ],
+      "trap": "The descriptions use the standard analyzer: no stemming."
+    },
+    {
+      "id": "C7",
+      "check": "probe_tests",
+      "probe": "elasticsearch-hard",
+      "tests": [
+        "Search_BrandFilter_FindsProductsOfThatBrand"
+      ],
+      "trap": "The existing brand filter is a term query on a text field."
+    },
+    {
+      "id": "C8",
+      "check": "probe_tests",
+      "probe": "elasticsearch-hard",
+      "tests": [
+        "Search_ProductWithoutAvailableStock_IsNotShown"
+      ],
+      "trap": "The stock change is indexed with the version of the product and dropped as a 409."
+    },
+    {
+      "id": "C9",
+      "check": "probe_tests",
+      "probe": "elasticsearch-hard",
+      "tests": [
+        "Search_PageBeyondResultWindow_ReturnsValidationProblem"
+      ],
+      "trap": "The unchecked search response hides the 400 of a page beyond 10,000 hits as an empty page."
+    },
+    {
+      "id": "C10",
+      "check": "probe_tests",
+      "probe": "elasticsearch-hard",
+      "tests": [
+        "IndexWriteBlocked_ChangeArrivesAfterBlockIsLifted"
+      ],
+      "trap": "The existing worker deletes outbox rows of failed bulk items (429 while the index is blocked)."
+    },
+    {
+      "id": "C11",
+      "check": "probe_tests",
+      "probe": "elasticsearch-hard",
+      "tests": [
+        "LiveIndexFromThePreviousRelease_IsUpgraded"
+      ],
+      "trap": "The new mapping goes only into the create-if-missing code, so the live index keeps the old mapping and rejects the new fields."
+    },
+    {
+      "id": "C12",
+      "check": "tests_added_min",
+      "value": 2
+    },
+    {
+      "id": "J1",
+      "judge": "The change fills the new index (or the changed mapping) with all existing products from the database (a backfill of the outbox, a rebuild job, or a reindex step), so the live products get their descriptions and stock state, or the final message names this rebuild as a deploy step."
+    },
+    {
+      "id": "J2",
+      "judge": "The external version of a product document grows with each change of the product and of its stock (for example Product.Version plus a long counter on StockItem, or a version that a stock change also increases). It is not built from StockItem.Version (xmin) or from a timestamp."
+    },
+    {
+      "id": "J3",
+      "judge": "The search puts the non-scoring clauses (active, stock, brand, category) in bool.filter, sends the user text through match, multi_match or simple_query_string, and keeps from + size at or below 10,000."
+    },
+    {
+      "id": "J4",
+      "judge": "The final message names at least two problems of the existing search code that the change touches, and says what it did with each: the brand filter on a text field, the bulk item errors that the worker drops, the index that is created only when it is missing, Refresh.True on each bulk call, or the search response that is not checked."
+    },
+    {
+      "id": "J5",
+      "judge": "The final message marks the open team decisions as assumed: at least the analyzers for Dutch and German text (SEARCH-06) and the index name and alias (SEARCH-03)."
+    }
+  ]
+}

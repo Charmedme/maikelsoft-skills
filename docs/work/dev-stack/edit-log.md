@@ -82,41 +82,79 @@ This log records each change to a skill or to an eval case, the test that measur
 - Date and version: proposed for dev-stack 1.1.1
 - Change: move checklist item 12 from "judge" to a tool rule in `rules.json`.
 - Test: fluentvalidation-review, skill variant, 5 runs. The rule test cases in `rules.json`.
-- Observed: before, P7 found in 2 of 3 skill runs.
-- Verdict: proposed
+- Observed: before, P7 found in 2 of 3 skill runs. After (1.1.1 round, 2026-10-24): P7 found in 5 of 5 skill runs. Each review found all 8 planted mistakes, with 0 false positives.
+- Verdict: helped
 - Evidence: `docs/work/dev-stack/batch2/divergence.md`
 
 ### E8: rabbitmq report line: the owner of each dead-letter queue
 - Date and version: proposed for dev-stack 1.1.1
 - Change: one line in the report section of `SKILL.md`.
 - Test: rabbitmq-interop-trap, skill variant, 5 runs.
-- Observed: before, J1 passed in 2 of 3 skill runs.
-- Verdict: proposed
+- Observed: before, J1 passed in 2 of 3 skill runs. After: J1 passed in 5 of 5 skill runs.
+- Verdict: helped
 - Evidence: as E7.
 
 ### E9: sqlserver report line: how a database setting change is deployed
 - Date and version: proposed for dev-stack 1.1.1
 - Change: one line in the report section of `SKILL.md`.
 - Test: sqlserver-trap, skill variant, 5 runs.
-- Observed: before, J4 passed in 2 of 3 skill runs.
-- Verdict: proposed
+- Observed: before, J4 passed in 2 of 3 skill runs. After: J4 passed in 4 of 5 skill runs. The failed run ended with a message about a background command, not with its report.
+- Verdict: helped (one run did not give a report)
 - Evidence: as E7.
 
 ### E10: mailkit check step: a test through Mailpit
 - Date and version: proposed for dev-stack 1.1.1
 - Change: one item in the check step of `SKILL.md`.
 - Test: mailkit-confirmation-trap, skill variant, 5 runs.
-- Observed: before, C12 passed in 2 of 3 skill runs.
-- Verdict: proposed
+- Observed: before, C12 passed in 2 of 3 skill runs. After: C12 passed in 4 of 5 skill runs.
+- Verdict: neutral (4 of 5 is within the noise of 2 of 3)
 - Evidence: as E7.
 
 ### E11: eval redis-trap J2: split code and reason
 - Date and version: proposed for the eval set
 - Change: J2 becomes two items: "caches a DTO" and "the report says why".
 - Test: grade the 6 existing redis-trap runs again.
-- Observed: before, J2 failed in 6 of 6 runs. All 6 runs cache a DTO.
-- Verdict: proposed
+- Observed: before, J2 failed in 6 of 6 runs. All 6 runs cache a DTO. After the split: J2 (caches a DTO) passed in 3 of 3 runs of each variant. J4 (says why) passed in 0 of 3 runs of each variant.
+- Verdict: helped (the eval item now tests one thing). The skill does not bring the reason into the report: refer to E13.
 - Evidence: as E7.
+
+### E12: rabbitmq fact: basic.nack with requeue does not count toward the delivery-limit on 4.3
+- Date and version: 2026-10-23, proposed for dev-stack 1.1.1
+- Change: the transient path of `references/client.md` uses `BasicRejectAsync(requeue: true)`. `broker.md`, `SKILL.md`, and review checklist item 19 state the 4.3 rule. The new tool rule RMQ-NACK-REQUEUE finds `BasicNackAsync(..., requeue: true)`.
+- Test: the rule test cases in `rules.json`. No eval run yet.
+- Observed: the old text said that the `delivery-limit` stops a nack loop. A hard-case agent saw 2,877 redeliveries in 5 seconds on 4.3. The RabbitMQ docs confirm it: from 4.3 the limit uses `delivery-count`, and `basic.nack` only increments `acquired-count`.
+- Verdict: proposed (the fact is verified in the docs, the effect on runs is not tested)
+- Evidence: https://www.rabbitmq.com/docs/quorum-queues, https://www.rabbitmq.com/blog/2026/04/23/rabbitmq-4.3-release
+
+### E13: redis report line: why each cached type is a DTO
+- Date and version: 2026-10-24, dev-stack 1.1.1
+- Change: one sentence in the report section of `SKILL.md`.
+- Test: redis-trap, skill variant. Not run yet.
+- Observed: before, J4 passed in 0 of 3 runs of each variant. Rule 11 has the reason, but the report does not state it.
+- Verdict: proposed
+
+### E14: mailkit facts: CVE-2026-41319 and MimeKit 4.18.2
+- Date and version: 2026-10-24, dev-stack 1.1.1
+- Change: the version rule, MAIL-PKG-MIMEKIT-CVE, the review checklist, and `sources.md`. MailKit below 4.16.0 has CVE-2026-41319. MimeKit 4.18.2 depends on Pkcs 10.0.13, so the Pkcs pin is only for MimeKit 4.15.1 to 4.18.1. Three judge items of the eval accept the upgrade to 4.18.2 as a fix.
+- Test: the rule test cases, and a build of MailKit 4.18.2 without a pin (0 warnings, Pkcs 10.0.13).
+- Observed: a hard-case agent found the advisory. The skill knew only CVE-2026-30227.
+- Verdict: helped (a missing fact, verified at the source)
+- Evidence: https://github.com/advisories/GHSA-9j88-vvj5-vhgr, the NuGet nuspec of MimeKit 4.18.2
+
+### E15: rabbitmq fact: global QoS does not fail on 4.3.6
+- Date and version: 2026-10-24, dev-stack 1.1.1
+- Change: rule 11 and `broker.md` no longer say that global QoS fails. The rule (a prefetch per consumer) stays.
+- Test: a run on RabbitMQ 4.3.6 by a hard-case agent: `BasicQosAsync(0, 10, true)` did not fail.
+- Observed: the old text said that 4.3 denies global QoS.
+- Verdict: helped (a wrong fact is gone)
+
+### E16: reference audit of the 11 batch 2 skills, and stack rule 3 for existing code
+- Date and version: 2026-10-25, dev-stack 1.2.0
+- Change: each skill was checked against the primary sources (Microsoft Learn, DeepWiki, the official docs, a run). Facts that prevent a silent wrong result got a rule in `SKILL.md`. Stack rule 3: the style of existing code wins, its defects do not.
+- Test: the 9 hard cases with a gap item, skill variant, 3 runs each on Sonnet.
+- Observed: 14 of the 16 gap items went from 0/3 to a pass in each valid run. `fluentvalidation-review-hard` went down: the new null rule flagged a correct optional child (decoy D1) in 3 of 3 reviews. The rule is narrowed, not tested yet. `sqlserver-hard` failed for a reason of the machine in 2 of 3 runs.
+- Verdict: helped (14 gap items), hurt (one decoy, fixed and not tested)
+- Evidence: `docs/work/dev-stack/hard-cases/results.md`
 
 ## Lessons
 
@@ -124,4 +162,4 @@ This log records each change to a skill or to an eval case, the test that measur
 - Cue: a rule is in the skill, and the model applies it in some runs only.
 - Lesson: move the rule to the form that the model cannot skip. A pattern that a regex can find goes to `rules.json`. A fact that the report must hold goes to the report section of `SKILL.md`, not to a reference file.
 - Evidence: the analysis of E7 to E10 (the rule exists in each case). Not tested yet.
-- Confidence: low, until E7 to E10 have a verdict.
+- Confidence: medium. E7 to E9 and E16 support it.

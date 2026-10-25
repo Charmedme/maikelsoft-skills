@@ -1,6 +1,6 @@
 # Sources: aspnetcore-openapi
 
-The author checked all facts on 2026-10-19, unless a line says otherwise. Look them up again when `metadata.verified` in `SKILL.md` is older than 6 months.
+The author checked all facts on 2026-10-19, unless a line says otherwise. The author checked the versions again on 2026-10-25 on nuget.org and in the .NET release metadata. Look them up again when `metadata.verified` in `SKILL.md` is older than 6 months.
 
 ## Contents
 
@@ -12,17 +12,17 @@ The author checked all facts on 2026-10-19, unless a line says otherwise. Look t
 
 ## Versions
 
-| Item | Version on 2026-10-19 | Source |
+| Item | Version on 2026-10-25 | Source |
 |------|-----------------------|--------|
-| Microsoft.AspNetCore.OpenApi | 10.0.13 (11.0.0-rc.2 is a preview) | https://www.nuget.org/packages/Microsoft.AspNetCore.OpenApi |
-| Microsoft.OpenApi | 2.12.2 is the line of .NET 10 (`[2.12.2, 3.0.0)`). 3.10.2 is the newest | https://www.nuget.org/packages/Microsoft.OpenApi |
+| Microsoft.AspNetCore.OpenApi | 10.0.13 (11.0.0-rc.2 is a preview). Depends on Microsoft.OpenApi `[2.12.2, 3.0.0)` | https://www.nuget.org/packages/Microsoft.AspNetCore.OpenApi |
+| Microsoft.OpenApi | 2.12.2 is the minimum of .NET 10 (`[2.12.2, 3.0.0)`), 2.13.0 is the newest 2.x. 3.11.0 is the newest | https://www.nuget.org/packages/Microsoft.OpenApi |
 | Microsoft.Extensions.ApiDescription.Server | 10.0.13 | https://www.nuget.org/packages/Microsoft.Extensions.ApiDescription.Server |
 | Asp.Versioning.Http and Asp.Versioning.OpenApi | 10.2.3. `.OpenApi` depends on Microsoft.OpenApi `[2.7.5, 3.0.0)` | https://www.nuget.org/packages/Asp.Versioning.OpenApi |
 | Asp.Versioning.Mvc and Asp.Versioning.Mvc.ApiExplorer | 10.2.1 | https://www.nuget.org/packages/Asp.Versioning.Mvc.ApiExplorer |
-| Scalar.AspNetCore | 2.18.0 | https://www.nuget.org/packages/Scalar.AspNetCore |
-| Swashbuckle.AspNetCore | 10.3.0, depends on Microsoft.OpenApi 2.7.5 or later | https://www.nuget.org/packages/Swashbuckle.AspNetCore |
+| Scalar.AspNetCore | 2.18.3 | https://www.nuget.org/packages/Scalar.AspNetCore |
+| Swashbuckle.AspNetCore | 10.3.1, depends on Microsoft.OpenApi 2.7.5 or later | https://www.nuget.org/packages/Swashbuckle.AspNetCore |
 | NSwag.AspNetCore | 14.7.1 | https://www.nuget.org/packages/NSwag.AspNetCore |
-| .NET | 10.0.13 (LTS to 2028-11-14), 11.0.0-rc.2 | https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core |
+| .NET | 10.0.13 (SDK 10.0.402, released 2026-10-13, LTS to 2028-11-14), 11.0.0-rc.2 | https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core |
 
 ## Documentation
 
@@ -58,7 +58,15 @@ The author compiled and ran these on 2026-10-19 with SDK 10.0.402, in the `order
 - At build time, the document tool runs the app in `Production`: code after `builder.Build()` and `StartAsync` of a hosted service ran. The entry assembly name is `GetDocument.Insider`, with the argument `--applicationName=<Project>`.
 - Two hand-written `AddOpenApi("v1")` and `AddOpenApi("v2")` with Asp.Versioning give AV0029 (also in a generated file) and AV0030 as warnings. The setup with `.AddOpenApi()` on the versioning builder and `WithDocumentPerVersion()` gives no warning.
 - URL segment without `SubstituteApiVersionInUrl`: the document path is `/api/v{version}/orders/{id}`. With `AssumeDefaultVersionWhenUnspecified = true`, `/api/orders/{id}` gives 404.
-- From the concept lab of 2026-10-19: in Production, `MapOpenApi` and Scalar inside the environment check return 404. A deprecated version with a sunset policy sends `api-deprecated-versions`, `Sunset`, and `Link` headers.
+- From the concept lab of 2026-10-19: in Production, `MapOpenApi` and Scalar return 404 when they are inside the environment check. A deprecated version with a sunset policy sends `api-deprecated-versions`, `Sunset`, and `Link` headers.
+
+### Checked on 2026-10-25
+
+SDK 10.0.402, Microsoft.AspNetCore.OpenApi 10.0.13, a small lab project, `/openapi/v1.json` read at run time:
+
+- `.WithOpenApi(op => { op.Summary = ...; op.Description = ...; return op; })` compiles (with ASPDEPR002) and runs, but the summary and the description are not in the document. `WithSummary` and `AddOpenApiOperationTransformer` on the same kind of endpoint are in the document. Microsoft Learn says only that the call "still compiles and executes": https://learn.microsoft.com/aspnet/core/breaking-changes/10/withopenapi-deprecated
+- An `IResult` handler with `.Produces(200, contentType: "application/pdf")` gives a 200 with no content. A handler that returns `TypedResults.File(...)` gives the same. `Results<FileContentHttpResult, NotFound>` gives only the 404.
+- `.Produces<Stream>(200, "application/pdf")` and `.Produces<IFormFile>(...)` give `type: string, format: binary`. `.Produces<byte[]>(...)` gives `format: byte`. `.Produces(200, typeof(FileContentHttpResult), ...)` gives an object schema with the properties of the result class.
 
 ## Credits
 

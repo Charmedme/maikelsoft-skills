@@ -2,22 +2,23 @@
 name: puppeteersharp
 description: HTML to PDF and page screenshots in .NET with PuppeteerSharp and headless Chrome. Use when code or a review renders an invoice, a report, or another HTML page to PDF, or touches PuppeteerSharp, Puppeteer.LaunchAsync, BrowserFetcher, chrome-headless-shell, PdfDataAsync, SetContentAsync, GoToAsync, --no-sandbox, Chrome in a Docker image, or user text in rendered HTML. Not for end-to-end UI tests with Playwright (dev-stack:dotnet-testing), PDF libraries without a browser (QuestPDF, PdfPig), or Node Puppeteer.
 metadata:
-  verified: "2026-10-19"
-  versions: "PuppeteerSharp 25.14 (Chrome.DefaultBuildId 155.0.8059.79), chrome-headless-shell 155, .NET 10, aspnet:10.0 (Ubuntu 24.04) images"
+  verified: "2026-10-25"
+  versions: "PuppeteerSharp 25.15.0 (Chrome.DefaultBuildId 155.0.8059.84), chrome-headless-shell 155, .NET 10.0.13 (SDK 10.0.402), aspnet:10.0 (Ubuntu 24.04) images"
 ---
 
 # PuppeteerSharp
 
-HTML to PDF with PuppeteerSharp and headless Chrome: the browser lifetime, pages, concurrency, PDF options, untrusted content, the container image, and the sandbox. The Dockerfile base rules are in the Docker skill. The secure coding rules (SSRF, output encoding) are in `dev-stack:secure-coding`. This skill adds what Chrome needs.
+HTML to PDF with PuppeteerSharp and headless Chrome: the browser lifetime, pages, concurrency, the PDF options, untrusted content, the container image, and the sandbox. The Dockerfile base rules are in the Docker skill. The secure coding rules (SSRF, output encoding) are in `dev-stack:secure-coding`. This skill adds what Chrome needs.
 
 ## First
 
 1. Read `references/stack-rules.md`.
-2. Find the `PuppeteerSharp` version in `*.csproj` or `Directory.Packages.props`. Each version has one Chrome build: `PuppeteerSharp.BrowserData.Chrome.DefaultBuildId` (155.0.8059.79 for 25.14.0). Upgrade the package and the Chrome build together.
+2. Find the `PuppeteerSharp` version in `*.csproj` or `Directory.Packages.props`. Each version has one Chrome build: `PuppeteerSharp.BrowserData.Chrome.DefaultBuildId` (155.0.8059.84 for 25.15.0, 155.0.8059.79 for 25.14.0). Upgrade the package and the Chrome build together.
 3. Find where Chrome comes from: `ExecutablePath`, the environment variable `PUPPETEER_EXECUTABLE_PATH`, or `BrowserFetcher`. Without the first two, PuppeteerSharp looks in `<app folder>/ChromeHeadlessShell/Linux-<build>/`.
 4. Find the content: own templates only, or text from users (a note, a name, an address). Text from users makes the HTML untrusted.
+5. Find each `PdfOptions` in the existing code that the change touches. Find the page size of the team (for example a decision such as DOC-01). Check both against rules 15 and 16.
 
-Done when you can name the PuppeteerSharp version, the Chrome build and its source, and whether the HTML holds user text.
+Done when you can name the PuppeteerSharp version, the Chrome build and its source, and whether the HTML holds user text. You can also name the page size and `PrintBackground` of each existing `PdfOptions`.
 
 ## Defaults for new code
 
@@ -137,6 +138,16 @@ Detail, the interception code, and the logo: `references/untrusted-content.md`.
 
 The Dockerfile, the seccomp profile, and Kubernetes settings: `references/container.md`.
 
+### PDF options
+
+These defaults give a wrong PDF with no error. Existing code often has them.
+
+15. Set `Format` (or `Width` and `Height`) in each `PdfOptions`. Without it, PuppeteerSharp prints Letter (612 x 792 points), not A4. A CSS `@page { size: A4 }` counts only with `PreferCSSPageSize = true`.
+16. Set `PrintBackground = true` when the template has a background color or image. The default is `false`: header bars and row colors disappear, and white text on a dark bar becomes invisible.
+17. Name each `PdfOptions` defect of existing code in the report (stack rule 3). Put a fixed defect under "Changes" and a defect that stays under "Open points".
+
+The checked facts: `references/sources.md`.
+
 ## Never write
 
 | Wrong | Correct |
@@ -149,6 +160,7 @@ The Dockerfile, the seccomp profile, and Kubernetes settings: `references/contai
 | `page.WaitForXPathAsync("//h1")` | `page.WaitForSelectorAsync("xpath///h1")` (CS0618) |
 | `SetContentAsync(html, new NavigationOptions { WaitUntil = [Networkidle0] })` | `SetContentAsync(html, new SetContentOptions { Timeout = 15_000 })` (CS0618) |
 | `await page.PdfAsync("invoice.pdf");` then read the file | `await page.PdfDataAsync(options)` |
+| `await page.PdfDataAsync();` or `new PdfOptions { Timeout = 30_000 }` | `new PdfOptions { Format = PaperFormat.A4, PrintBackground = true, Timeout = 30_000 }` |
 | `$"<p>{order.CustomerNote}</p>"` | `$"<p>{HtmlEncoder.Default.Encode(note)}</p>"` and a blocked network |
 | `<img src="https://cdn.example.com/logo.png">` with a blocked network | The logo as a data URI or an embedded resource |
 | `await page.GoToAsync(request.Url);` | Your own template, or an allow list of `https` hosts |
@@ -165,7 +177,7 @@ The Dockerfile, the seccomp profile, and Kubernetes settings: `references/contai
 
    Pass: `Build succeeded` with 0 warnings.
 
-2. Run the integration tests with `PUPPETEER_EXECUTABLE_PATH` set to the pinned `chrome-headless-shell`: `dotnet test`. Pass: the PDF starts with `%PDF-`. A local HTTP listener gets no request from a note with `<img src="http://127.0.0.1:<port>/x">`. Content that never ends fails within the timeout. Test setup: `references/testing.md`.
+2. Run the integration tests with `PUPPETEER_EXECUTABLE_PATH` set to the pinned `chrome-headless-shell`: `dotnet test`. Pass: the PDF starts with `%PDF-`, and its `/MediaBox` is A4 (about 596 x 842 points, not 612 x 792). A local HTTP listener gets no request from a note with `<img src="http://127.0.0.1:<port>/x">`. Content that never ends fails within the timeout. Test setup: `references/testing.md`.
 
 3. Lint the Dockerfile: `hadolint Dockerfile`. Pass: no DL3002 (the last user is not root).
 
@@ -197,6 +209,7 @@ The full list is in `references/review-checklist.md`.
 12. Headless in all non-local settings. tool (PPTR-HEADFUL)
 13. The image has fonts, `LANG`, and an init process, on full `aspnet:10.0`. judge
 14. An integration test proves the PDF, the blocked network, and the timeout. judge
+15. Each `PdfOptions` sets the page size and `PrintBackground`, also in existing code that the change touches. tool (PPTR-PDF-FORMAT, PPTR-PDF-BACKGROUND), judge
 
 ## Report
 

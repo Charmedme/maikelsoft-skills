@@ -79,7 +79,7 @@ When the request records move from DataAnnotations to this validator, remove the
 - `WithErrorCode` sets the code of the validator just before it. In `.NotEmpty().MaximumLength(5).WithErrorCode("x")`, an empty value still has the code `NotEmptyValidator` (tested). Put a code after each validator.
 - The default code is the validator class name (`NotEmptyValidator`, `PredicateValidator`, `AsyncPredicateValidator`). It is not a contract: a client must not read it.
 - Use the format of decision API-04: `<area>.<problem>` in lowercase with underscores (`order.sku_unknown`).
-- List the codes in the final message of the task or in the API documentation. A client team builds on them.
+- List the codes in the report of the task (the table of codes, section Report of `SKILL.md`) and in the API documentation. For each code, give the field, the status, and the place in the response. A client team builds on them.
 - A changed code breaks clients like a renamed field (`dev-stack:aspnetcore-openapi`, breaking changes).
 
 ## Cascade mode
@@ -88,18 +88,21 @@ When the request records move from DataAnnotations to this validator, remove the
 |---|---|
 | `RuleLevelCascadeMode = CascadeMode.Stop` in the constructor | Each rule chain stops at its first failure |
 | `.Cascade(CascadeMode.Stop)` on one rule | The same for that rule only |
-| `ClassLevelCascadeMode = CascadeMode.Stop` | The validator stops after the first rule that fails. Clients then see one error at a time. Use it rarely |
+| `ClassLevelCascadeMode = CascadeMode.Stop` | The whole validator stops after the first rule that fails, for all properties. An invalid email and an empty name give only the email error. It does not set the rule level. Do not use it for "one message for each field" |
 | `ValidatorOptions.Global.DefaultRuleLevelCascadeMode` | A global default. Prefer the setting in each validator, so that a reader sees it |
 
 Without `Stop`, an empty SKU gives "must not be empty" and "is not a known product", and the async catalog call runs with an empty value.
 
+In a `RuleForEach` rule, `Stop` ends the rule at the first item that fails: the other items are not checked (`CollectionPropertyRule`, tested). For an error on each item, add `.Cascade(CascadeMode.Continue)` to the `RuleForEach` rule. The child validator keeps its own cascade mode.
+
 ## Child and collection validators
 
 - `RuleForEach(x => x.Lines).SetValidator(lineValidator)` validates each item. The property name of an error is `Lines[0].Sku`.
-- `RuleFor(x => x.Address).SetValidator(addressValidator)` validates a child object. It skips a null child; add `NotNull()` when the child is required.
+- `RuleFor(x => x.Address).SetValidator(addressValidator)` validates a child object. It skips a null child. Add `NotNull()` when the child must have a value.
 - Take the child validator from the constructor (`IValidator<T>`), so that its dependencies come from DI.
 - `ChildRules(...)` is fine for a small inline rule set that no other validator uses.
 - A null collection gives no item errors. Add `NotEmpty()` or `NotNull()` on the collection.
+- `RuleForEach(...).SetValidator(...)` skips a null item: `"lines": [null]` passes. Put `.NotNull().WithErrorCode(...)` before `SetValidator`. The error has the property name `Lines[0]`.
 
 ## Async rules
 

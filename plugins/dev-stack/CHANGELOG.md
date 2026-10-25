@@ -6,6 +6,47 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-25
+
+### Added
+
+- Stack rule 3: the style of existing code wins, its defects do not. The agent checks the existing code that the change calls, copies, or edits. It fixes a defect that the change depends on and reports the others as open points.
+- The report names each advisory that the project hides (`NuGetAuditSuppress`, `NoWarn` NU190x, `NuGetAuditLevel`) and says if its reason still holds.
+- Skill rules for defects in existing code:
+  - `sqlserver`: UTC days in a report, `nvarchar(4000)` on a `varchar` column, unordered GUID keys, and `MERGE` without `HOLDLOCK`.
+  - `postgresql`: a table of defects.
+  - `redis`: cache defects.
+  - `rabbitmq`: consumer base classes.
+- New tool rules: `PG-LOCAL-DATE-NO-ZONE`, `MAIL-AUDIT-HIDDEN`, `FV-CLASS-CASCADE-STOP`, `PPTR-PDF-FORMAT`, `PPTR-PDF-BACKGROUND`, `WOLV-TYPED-HTTPCLIENT`, and `RDS-PKG-SER2`.
+- `wolverine`: a Review section (follow each handler parameter to its registration, missing forwarders, generated code in `Static` mode).
+- `fluentvalidation`: the report gives a table of the error codes of the endpoint.
+- Eval set: 22 hard cases (a write case and a review case for each batch 2 skill), with probes, planted mistakes, decoys, and a self-test. Results in `docs/work/dev-stack/hard-cases/results.md`.
+
+### Changed
+
+- Each skill has `verified: 2026-10-25`. New versions:
+  - SQL Server 2025 CU10, and RabbitMQ 4.4 for a new broker.
+  - PuppeteerSharp 25.15.0, WolverineFx 6.53.0, StackExchange.Redis 3.4.20, and MailKit and MimeKit 4.18.2.
+  - Mailpit v1.32.0, OpenTelemetry .NET 1.20.1, Scalar.AspNetCore 2.18.3, and Swashbuckle.AspNetCore 10.3.1.
+- Facts that prevent a silent wrong result moved from `references/` into a short rule in `SKILL.md`.
+- `mailkit`: MimeKit 4.18.2 depends on Pkcs 10.0.13, so the Pkcs pin is only for MimeKit 4.18.1 and older.
+- `elasticsearch`: an 8.x client works with a 9.x server. The 8-to-9 table now covers 8.18 and older.
+- `rabbitmq`: the report names the owner of each dead-letter queue.
+- `sqlserver`: the report says how a database setting change is deployed.
+- `redis`: the report says why each cached type is a DTO, and how a write decision gets its data.
+
+### Fixed
+
+- `mailkit`: MailKit below 4.16.0 has CVE-2026-41319. The version rule and `MAIL-PKG-MIMEKIT-CVE` now check it.
+- `dotnet-observability`: `SamplingRatio = 1.0F` alone keeps about 5 traces per second with the Azure Monitor distro 1.5.0 and later, because `TracesPerSecond` wins. Log scopes are off by default with both distros.
+- `elasticsearch`: one alias descriptor holds one action, so `RemoveIndex` and `Add` on one descriptor send only the add.
+- `puppeteersharp`: `PdfOptions` without `Format` prints Letter, and `PrintBackground` is false by default.
+- `fluentvalidation`: `ClassLevelCascadeMode.Stop` stops the whole validator. `SetValidator` skips a null item.
+- `aspnetcore-openapi`: a file response needs `Produces<Stream>(200, "application/pdf")`. The `WithOpenApi` delegate does not reach the document in .NET 10.
+- `wolverine`: a handler that injects a typed `HttpClient` throws `InvalidServiceLocationException`.
+- `rabbitmq`: `basic.nack` with requeue does not count toward the 4.3 delivery limit. Global QoS did not fail on 4.3.6. A consumer timeout cancels the consumer.
+- `fluentvalidation` tool rule `FV-CASCADE-DEPENDENT`: `NotEmpty()` then `Matches(` without a cascade.
+
 ## [1.1.0] - 2026-10-20
 
 ### Added

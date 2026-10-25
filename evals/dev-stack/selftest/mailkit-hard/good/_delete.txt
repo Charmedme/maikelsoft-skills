@@ -1,0 +1,3 @@
+src/Orders.Api/Mail/IMailSender.cs
+src/Orders.Api/Mail/SmtpMailSender.cs
+tests/Orders.Api.Tests/RecordingMailSender.cs

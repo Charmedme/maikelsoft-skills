@@ -1,0 +1,156 @@
+{
+  "id": 256,
+  "name": "wolverine-hard",
+  "skill": "wolverine",
+  "kind": "write",
+  "fixture": "wolverine-hard",
+  "human": "absent",
+  "request": "Today customer service books every parcel by hand. Automate it: when the payments service reports that the money of an order is captured, book the parcel with our parcel platform right away, with the shipping speed that the customer picked on the payment page, and give the warehouse its pick order so that it can pack the parcel. When the carrier cannot deliver to the address, the shipment waits for customer service with the status AddressProblem. Customer service corrects the address and books the parcel with the existing POST /shipments/{id}/book. The warehouse must then get its pick order too. Each paid order gets one parcel. Approved packages: WolverineFx, WolverineFx.EntityFrameworkCore, WolverineFx.Postgresql, WolverineFx.RabbitMQ, WolverineFx.RuntimeCompilation and Testcontainers.RabbitMq.",
+  "traps": [
+    "Existing code, version fact: Program.cs registers ICarrierClient with AddHttpClient<ICarrierClient, HttpCarrierClient>(...), a factory lambda. Wolverine 6 forbids service location by default (ServiceLocationPolicy.NotAllowed), so a handler that injects ICarrierClient throws InvalidServiceLocationException on its first message (checked with WolverineFx 6.51.0). The endpoint POST /shipments/{id}/book injects it without a problem, and OrdersApiFactory replaces ICarrierClient with a singleton fake, so the tests of the run do not show it. Fix: AlwaysUseServiceLocationFor<ICarrierClient>() with a reason, or a registration that the code generator can see through. Not RestoreV5Defaults or a relaxed ServiceLocationPolicy.",
+    "Existing contract, version fact: the payments team added PaymentCapturedV2 (with ShippingSpeed) and PaymentCaptured (version 1) implements IForwardsTo<PaymentCapturedV2>. Version 1 events still arrive until 2026-11-15 (docs/payment-events.md). Wolverine 6 does not scan for forwarders: without opts.RegisterMessageForwarder<PaymentCaptured, PaymentCapturedV2>() (or a version 1 handler that also books) a version 1 event has no handler (IndeterminateRoutesException, checked). The existing PaymentCapturedHandlerTests send version 1; a run that rewrites them to version 2 hides the gap.",
+    "Existing code, quiet: PaymentCapturedHandler catches every exception and logs it, and Program.cs has one policy for all exceptions: RetryWithCooldown(50 ms, 250 ms, 1 s), then the error queue. A parcel platform outage of a few seconds (the docs say outages of minutes) loses the booking quietly: swallowed by the catch, or in the dead-letter queue after 1.3 s. Fix: no catch-and-log, and a transient policy with cooldown and scheduled retries.",
+    "Existing code, quiet default: Order.MarkPaid ignores a second capture, and the durable inbox removes duplicates only by envelope id. The payments service sends the same capture again with a new envelope (docs/payment-events.md). A handler that creates a shipment and books after MarkPaid books a second parcel (a new shipment id is a new idempotency key at the platform) or ends in the error queue on the unique index of shipments.order_id.",
+    "New code: the address refusal (CarrierAddressRejectedException, HTTP 422) is a business answer. Under the existing catch-all policy a thrown refusal is sent to the platform 4 times and never sets AddressProblem.",
+    "Existing configuration, version fact: production uses TypeLoadMode.Static with AssertAllPreGeneratedTypesExist (MSG-13), and the generated code is in src/Orders.Api/Internal/Generated with a GeneratedHandlerRegistry. Development (and so every test) uses Dynamic. A new or changed handler without 'dotnet run -- codegen write' builds and passes the tests, but the production start throws MissingPreBuiltTypesException (checked). A changed handler signature also breaks the build of the stale generated file; deleting it without regenerating hides the problem until production.",
+    "Quiet default of the RabbitMQ transport: with AutoProvision(), Wolverine declares a ToRabbitQueue target, and adds x-dead-letter-exchange=wolverine-dead-letter-queue (classic). The warehouse team owns warehouse.pick-orders (quorum, x-dead-letter-exchange warehouse.dlx, no configure permission for us, docs/warehouse.md). The declaration fails with PRECONDITION_FAILED, Wolverine logs 'Error trying to start message broker' and retries the broker start (checked with RabbitMQ 4.3). Fix: ExternallyOwned() on the subscriber, or arguments that match exactly.",
+    "Existing code: POST /shipments/{id}/book calls SaveChangesAsync and then IMessageBus.PublishAsync (two transactions). The new pick order copied into this endpoint is lost when the process stops between the two. Use IDbContextOutbox<OrdersDbContext> (PublishAsync/SendAsync, then SaveChangesAndFlushMessagesAsync)."
+  ],
+  "assertions": [
+    {
+      "id": "C1",
+      "check": "build_warnaserror"
+    },
+    {
+      "id": "C2",
+      "check": "tests_pass"
+    },
+    {
+      "id": "C3",
+      "check": "package_policy",
+      "approved": [
+        "WolverineFx",
+        "WolverineFx.EntityFrameworkCore",
+        "WolverineFx.Postgresql",
+        "WolverineFx.RabbitMQ",
+        "WolverineFx.RuntimeCompilation",
+        "Testcontainers.RabbitMq"
+      ]
+    },
+    {
+      "id": "C4",
+      "check": "probe_tests",
+      "probe": "wolverine-hard",
+      "tests": [
+        "PaymentCaptured_BooksParcelAndSendsPickOrder"
+      ],
+      "trap": "A handler that injects the typed HttpClient ICarrierClient throws InvalidServiceLocationException in Wolverine 6."
+    },
+    {
+      "id": "C5",
+      "check": "probe_tests",
+      "probe": "wolverine-hard",
+      "tests": [
+        "PaymentCapturedV1_StillBooksParcel"
+      ],
+      "trap": "Wolverine 6 does not scan for IForwardsTo: version 1 events have no handler without RegisterMessageForwarder."
+    },
+    {
+      "id": "C6",
+      "check": "probe_tests",
+      "probe": "wolverine-hard",
+      "tests": [
+        "DuplicateCapture_BooksOneParcel"
+      ],
+      "trap": "The inbox removes duplicates only by envelope id; MarkPaid ignores a second capture, so the booking runs twice."
+    },
+    {
+      "id": "C7",
+      "check": "probe_tests",
+      "probe": "wolverine-hard",
+      "tests": [
+        "CarrierOutage_ParcelBookedAfterOutage"
+      ],
+      "trap": "The existing catch-and-log and the 1.3 s catch-all retry lose the booking during a short platform outage."
+    },
+    {
+      "id": "C8",
+      "check": "probe_tests",
+      "probe": "wolverine-hard",
+      "tests": [
+        "AddressRejected_WaitsForCustomerService"
+      ],
+      "trap": "A thrown address refusal is retried by the catch-all policy and never sets AddressProblem."
+    },
+    {
+      "id": "C9",
+      "check": "probe_tests",
+      "probe": "wolverine-hard",
+      "tests": [
+        "AddressCorrected_ManualBooking_SendsPickOrder"
+      ]
+    },
+    {
+      "id": "C10",
+      "check": "probe_tests",
+      "probe": "wolverine-hard",
+      "tests": [
+        "ManualBooking_PendingShipment_SendsPickOrder"
+      ]
+    },
+    {
+      "id": "C11",
+      "check": "probe_tests",
+      "probe": "wolverine-hard",
+      "tests": [
+        "Production_StaticCode_BooksParcel"
+      ],
+      "trap": "Production uses TypeLoadMode.Static: a new handler without codegen write throws MissingPreBuiltTypesException at the start."
+    },
+    {
+      "id": "C12",
+      "check": "probe_tests",
+      "probe": "wolverine-hard",
+      "tests": [
+        "ZWarehouseQueue_GetsPickOrder"
+      ],
+      "trap": "AutoProvision declares the warehouse-owned quorum queue with Wolverine's dead-letter argument: PRECONDITION_FAILED and broker start retries."
+    },
+    {
+      "id": "C13",
+      "check": "grep_absent",
+      "value": [
+        "RestoreV5Defaults\\s*\\(",
+        "ServiceLocationPolicy\\s*=\\s*ServiceLocationPolicy\\.(AllowedButWarn|AlwaysAllowed)",
+        "Production\\s*\\.\\s*GeneratedCodeMode\\s*=\\s*TypeLoadMode\\.(Dynamic|Auto)",
+        "AssertAllPreGeneratedTypesExist\\s*=\\s*false",
+        "await\\s+Task\\.Delay\\s*\\(\\s*(\\d{4,}|TimeSpan\\.FromSeconds)"
+      ],
+      "files": [
+        "src/**/*.cs",
+        "tests/**/*.cs"
+      ],
+      "trap": "The host is made to start by turning Wolverine 6 checks off, or tests wait with fixed delays."
+    },
+    {
+      "id": "J1",
+      "judge": "The existing POST /shipments/{id}/book stores the booking and its outgoing messages in one transaction (IDbContextOutbox<T> with SaveChangesAndFlushMessagesAsync, or InvokeAsync to a handler), or the final message reports the SaveChangesAsync-then-PublishAsync gap of this endpoint as an open point."
+    },
+    {
+      "id": "J2",
+      "judge": "The catch-and-log in the existing PaymentCapturedHandler is gone (exceptions reach the error policies), or the final message reports it as an open point."
+    },
+    {
+      "id": "J3",
+      "judge": "The booking sends a reference to the parcel platform that stays the same for each retry of the same parcel (for example the shipment id that is stored before the call), so a retry after a lost response does not book a second parcel."
+    },
+    {
+      "id": "J4",
+      "judge": "The final message says how the generated Wolverine code of the new or changed handlers reaches production (codegen write, the files in Internal/Generated, a check in CI), because production uses TypeLoadMode.Static (MSG-13)."
+    },
+    {
+      "id": "J5",
+      "judge": "The final message marks the open team decisions as assumed: at least the retry policy (MSG-08) and the handling of business duplicates (MSG-10)."
+    }
+  ]
+}

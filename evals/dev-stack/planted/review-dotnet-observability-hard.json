@@ -1,0 +1,118 @@
+{
+  "skill": "dotnet-observability",
+  "base": "dotnet-observability-hard",
+  "planted": [
+    {
+      "id": "P1",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 70,
+      "description": "Version fact, existing code next to the change: the change edits the telemetry block but keeps options.SamplingRatio = 1.0F alone under the comment 'OPS-20: keep every trace'. Since Azure.Monitor.OpenTelemetry.AspNetCore 1.5.0 the default sampler is rate limited to 5 traces per second (TracesPerSecond = 5), and TracesPerSecond wins over SamplingRatio when both have a value. The service keeps about 5 traces per second, and the trace-based log sampler drops the logs of the other traces, so the new booking spans and refusal logs are mostly lost. Set options.TracesPerSecond = null (or OTEL_TRACES_SAMPLER=microsoft.fixed_percentage with 1.0).",
+      "severity": "high",
+      "subtle": true
+    },
+    {
+      "id": "P2",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 67,
+      "description": "Over two files: CarrierLog.cs (line 3) relies on the dispatch scope to add ShipmentId to the refusal log, and the Refused event has no shipment id of its own. OpenTelemetryLoggerOptions.IncludeScopes is false by default, so no scope value reaches Application Insights: support cannot find a refused booking by the shipment id (and the existing ShipmentId filter never worked). Set IncludeScopes = true (Configure<OpenTelemetryLoggerOptions>), or log the shipment id in the event.",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P3",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 65,
+      "description": "Over two files: the change registers the meter Orders.Carriers and the source Orders.Shipping, but not the meter Orders.Shipping of ShippingMetrics (ShippingTelemetry.cs line 22), which the change also edits. Its counters orders.shipments.dispatched and orders.shipments.delivered are never exported, so the operations dashboard stays empty for them. Add AddMeter(ShippingTelemetry.Name), or use one meter for both.",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P4",
+      "file": "src/Orders.Api/Shipping/Carriers/HttpCarrierGateway.cs",
+      "line": 63,
+      "description": "Existing code that the change keeps in the new refusal path: each non-success answer is logged in full. The 422 answer echoes the recipient (name, street, postal code, phone, email, see docs/carrier-gateway-api.md), so personal data goes to the logs and to Application Insights. The new CarrierLog.Refused event already holds the code and the message. Remove the raw answer from the log; log only the status code for other errors.",
+      "severity": "high",
+      "subtle": true
+    },
+    {
+      "id": "P5",
+      "file": "src/Orders.Api/Shipping/Carriers/CarrierMetrics.cs",
+      "line": 22,
+      "description": "Metric tag orders.postal_code with the full postal code: thousands of time series per carrier and outcome, and a postal code with the house number identifies a household (personal data in metrics). Keep metric tags low-cardinality (carrier, outcome, maybe the country). A refusal per region is a query on logs or spans.",
+      "severity": "medium",
+      "subtle": false
+    },
+    {
+      "id": "P6",
+      "file": "src/Orders.Api/Shipping/Carriers/CarrierMetrics.cs",
+      "line": 12,
+      "description": "The meter is created with new Meter in a static field, not through IMeterFactory. Nobody disposes it, DI cannot scope it, and tests cannot collect its measurements in isolation (the test needs a null scope and DoNotParallelize). Inject IMeterFactory into a registered metrics class, as ShippingMetrics does.",
+      "severity": "low",
+      "subtle": false
+    },
+    {
+      "id": "P7",
+      "file": "src/Orders.Api/Shipping/Carriers/HttpCarrierGateway.cs",
+      "line": 80,
+      "description": "The exception is passed as ex.Message in a string parameter (CarrierLog.cs line 14), not as the exception argument. The log loses the exception type, the inner exception and the stack trace. Give GatewayUnreachable an Exception parameter.",
+      "severity": "low",
+      "subtle": false
+    },
+    {
+      "id": "P8",
+      "file": "src/Orders.Api/Shipping/ShipmentEndpoints.cs",
+      "line": 122,
+      "description": "A failed booking is logged two times: the gateway already logs it (the warning on line 63 or GatewayUnreachable on line 80 of HttpCarrierGateway.cs), and the endpoint logs it again at Error. One failure gives two entries and two alerts. Log a failure one time, at the boundary that handles it.",
+      "severity": "low",
+      "subtle": false
+    },
+    {
+      "id": "P9",
+      "file": "src/Orders.Api/Shipping/Carriers/HttpCarrierGateway.cs",
+      "line": 22,
+      "description": "Over two files: the histogram declares the unit 's' (CarrierMetrics.cs line 14), but the gateway records elapsed.TotalMilliseconds. The dashboard shows booking times 1000 times too high, and the default histogram buckets do not fit. Record elapsed.TotalSeconds.",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P10",
+      "file": "tests/Orders.Api.Tests/HttpCarrierGatewayTests.cs",
+      "line": 38,
+      "description": "Over two files: the test that must prove 'no recipient data in the log' stubs a 422 answer without the recipient echo. The real gateway echoes the recipient, and the code logs the raw answer (HttpCarrierGateway.cs line 63), but the test passes. Stub the answer of docs/carrier-gateway-api.md, with the recipient.",
+      "severity": "low",
+      "subtle": true
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "src/Orders.Api/Shipping/Carriers/HttpCarrierGateway.cs",
+      "line": 16,
+      "description": "The shipment id as a span attribute is correct. IDs belong on spans and logs; only metric tags must be low-cardinality."
+    },
+    {
+      "id": "D2",
+      "file": "src/Orders.Api/Program.cs",
+      "line": 64,
+      "description": "ConfigureOpenTelemetryTracerProvider and ConfigureOpenTelemetryMeterProvider before UseAzureMonitor, inside the connection string check, are correct. The order of the calls does not matter, and the distro picks up the registrations. It is not a second distro or a second provider."
+    },
+    {
+      "id": "D3",
+      "file": "src/Orders.Api/Shipping/Carriers/HttpCarrierGateway.cs",
+      "line": 17,
+      "description": "TimeProvider.GetTimestamp and GetElapsedTime are correct for the duration (a monotonic clock, testable). There is no need for Stopwatch or DateTime."
+    },
+    {
+      "id": "D4",
+      "file": "src/Orders.Api/Shipping/Carriers/HttpCarrierGateway.cs",
+      "line": 78,
+      "description": "The catch filter is correct: it turns a connection failure and the HttpClient timeout (TaskCanceledException without a cancelled request token) into a failed booking, and lets a cancellation by the caller pass. It does not swallow other exceptions."
+    },
+    {
+      "id": "D5",
+      "file": "src/Orders.Api/Shipping/Carriers/CarrierLog.cs",
+      "line": 7,
+      "description": "A [LoggerMessage] method at Level Information with arguments is correct and builds clean: CA1873 warns on direct LogInformation calls, not on source-generated log methods."
+    }
+  ]
+}

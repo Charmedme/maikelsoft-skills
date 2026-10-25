@@ -1,0 +1,16 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <WarningsAsErrors>$(WarningsAsErrors);nullable</WarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Reviewed 2026-10-20 (security guild): GHSA-g7hc-96xr-gvvx is fixed by the MailKit 4.15.1 upgrade.
+         GHSA-9j88-vvj5-vhgr is a STARTTLS issue on the client side; we only talk to the internal relay.
+         Revisit at the next MailKit upgrade. -->
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-9j88-vvj5-vhgr" />
+  </ItemGroup>
+</Project>

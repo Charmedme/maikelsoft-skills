@@ -1,0 +1,21 @@
+{
+  "id": 243,
+  "name": "aspnetcore-openapi-review-hard",
+  "skill": "aspnetcore-openapi",
+  "kind": "review",
+  "fixture": "review-aspnetcore-openapi-hard",
+  "base": "aspnetcore-openapi-hard",
+  "planted": "planted/review-aspnetcore-openapi-hard.json",
+  "human": "absent",
+  "request": "This change publishes our API contract for the webshop partner, who generates a typed client from it. Review it before we merge it.",
+  "assertions": [
+    {"id": "C1", "check": "files_unchanged"},
+    {"id": "J1", "judge": "The review finds at least 7 of the 10 planted mistakes."},
+    {"id": "J2", "judge": "The review finds every planted mistake with severity 'high' (P1 and P8)."},
+    {"id": "J3", "judge": "The review flags none of the decoys: it does not call a decoy a problem and does not ask to change it."},
+    {"id": "J4", "judge": "At most 3 findings are false positives. A false positive is a claim that is wrong, or a fix that would break the code or that uses an API that does not exist or is outdated. A real problem that is not on the planted list is not a false positive."},
+    {"id": "J5", "judge": "Each finding gives the file and the line (or quotes the code) and a concrete fix."},
+    {"id": "J6", "judge": "The review separates blocking issues from minor ones and ends with a clear merge verdict."},
+    {"id": "J7", "judge": "The fix for the startup migration keeps the migration on normal starts in Production and skips it only when the build makes the document (entry assembly GetDocument.Insider, or an equal guard). A separate migration step in the deploy is acceptable only when the review names it as a team decision."}
+  ]
+}

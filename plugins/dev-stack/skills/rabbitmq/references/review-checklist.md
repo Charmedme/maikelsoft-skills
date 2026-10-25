@@ -11,6 +11,7 @@ Each check is `tool (<rule ID>)` when a tool finds it, or `judge` when a reviewe
 - Contracts and tracing
 - Tests
 - Decisions
+- Correct patterns that are not defects
 
 ## Delivery and outbox
 
@@ -49,10 +50,11 @@ Each check is `tool (<rule ID>)` when a tool finds it, or `judge` when a reviewe
 | 16 | `autoAck: false`. Ack after the work and the commit. | tool (RMQ-AUTOACK), judge |
 | 17 | Prefetch per consumer (`global: false`), between 10 and 100. | tool (RMQ-GLOBAL-QOS), judge |
 | 18 | `ea.Body` is read or copied inside `ReceivedAsync`. | judge |
-| 19 | Failures are classified: permanent errors with `requeue: false`, transient errors with a delayed retry. No catch-all with `requeue: true`. | judge |
+| 19 | Failures are classified: permanent errors with `requeue: false`, transient errors with a delayed retry. No catch-all with `requeue: true`. No `BasicNackAsync` with `requeue: true` (on 4.3 and later it does not count toward the `delivery-limit`). A domain rule violation is permanent. No `Task.Delay` in the handler before a retry. | tool (RMQ-NACK-REQUEUE), judge |
 | 20 | Each path of `ReceivedAsync` acks or nacks. No exception leaves the handler. | judge |
 | 21 | `ConsumerDispatchConcurrency` above 1 only where order does not matter. | judge |
-| 22 | Handlers end well inside the 30-minute consumer timeout. | judge |
+| 22 | Handlers end well inside the 30-minute consumer timeout. The consumer consumes again after the broker cancels it (`UnregisteredAsync`). | judge |
+| 22a | The existing consumer base class has none of the defects of `SKILL.md` rule 16. | judge |
 
 ## Contracts and tracing
 
@@ -77,3 +79,13 @@ Each check is `tool (<rule ID>)` when a tool finds it, or `judge` when a reviewe
 |---|-------|------|
 | 30 | New code follows the accepted MSG decisions, or the report marks them as assumed. | judge |
 | 31 | EasyNetQ only where it exists (MSG-04). No EasyNetQ 9 alpha. | tool (RMQ-PKG-EASYNETQ-ALPHA), judge |
+
+## Correct patterns that are not defects
+
+Do not report these as findings:
+
+- `ea.Body.ToArray()` before the first `await` in `ReceivedAsync`. It copies the body while the memory is valid. The client reuses the memory only after the handler returns.
+- `BasicNackAsync(requeue: false)` for a `JsonException`. JSON that is not valid never succeeds, and the nack sends the message to the dead-letter exchange at once. Only a nack with `requeue: true` is wrong.
+- One channel in a singleton publisher that a `SemaphoreSlim` guards. Two publishes never use it at the same time. RMQ-SINGLETON-CHANNEL is about a channel that concurrent publishers share without a guard.
+- A state check that returns without an error when the effect is already done (for example `MarkPaid` on a paid order). That is the idempotent consumer of principle 3.
+- A unique index on a nullable business key on PostgreSQL. PostgreSQL treats NULL values as distinct in a unique index (unless the index has `NULLS NOT DISTINCT`), so old rows without a value do not conflict. On SQL Server, a unique index allows only one NULL: there the index needs the filter `IS NOT NULL` (EF Core adds it for a nullable column).
