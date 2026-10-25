@@ -6,6 +6,17 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-10-25
+
+### Added
+
+- A UX review after the code review, for an item with UI work. It needs the `ux-design` plugin. The small tier gets a light review, the medium and large tier a full review. The agent runs on Sonnet, and its walk file stays in the repository.
+
+### Changed
+
+- Intake copies the approved UX design of an item into the work folder. An item with UI work but no approved design is a question for the product owner.
+- Example mapping adds one example for each state of the UX design, with the source `ux: <screen>/<state>`. `examplecheck.py` checks each such source against the states of `ux-design.md`.
+
 ## [2.0.0] - 2026-10-24
 
 ### Changed

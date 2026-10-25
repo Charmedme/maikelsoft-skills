@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Work orders · Fieldline</title>
+<link rel="stylesheet" href="design-system/tokens.css">
+<link rel="stylesheet" href="design-system/components.css">
+<link rel="stylesheet" href="design-system/ds-fixes.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div class="fl-shell">
+  <nav class="fl-nav" aria-label="Main">
+    <div class="fl-nav__brand">Fieldline</div>
+    <a class="fl-nav__item" href="/" aria-current="page">Work orders</a>
+    <a class="fl-nav__item" href="#planning-board">Planning board</a>
+    <a class="fl-nav__item" href="#technicians">Technicians</a>
+    <a class="fl-nav__item" href="#parts">Parts</a>
+    <a class="fl-nav__item" href="#customers">Customers</a>
+  </nav>
+  <main class="fl-main" id="main">
+    <header class="fl-page-header">
+      <div>
+        <h1>Work orders</h1>
+        <div class="fl-page-header__meta" id="meta" data-testid="meta">Region Central</div>
+      </div>
+      <div class="fl-page-header__actions">
+        <button class="fl-btn" type="button" id="btn-export">Export</button>
+        <button class="fl-btn fl-btn--primary" type="button" id="btn-new" data-testid="new-work-order">New work order</button>
+      </div>
+    </header>
+    <div class="fl-toolbar" role="group" aria-label="Status" id="status-chips"></div>
+    <div class="fl-toolbar" role="group" aria-label="Filters" id="filters"></div>
+    <div id="page-alerts"></div>
+    <div id="work-area"></div>
+  </main>
+</div>
+<div id="toast-region"></div>
+<script src="app.js"></script>
+</body>
+</html>

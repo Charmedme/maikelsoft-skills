@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Work orders · Fieldline</title>
+<link rel="stylesheet" href="../design-system/tokens.css">
+<link rel="stylesheet" href="../design-system/components.css">
+</head>
+<body>
+<div class="fl-shell">
+  <nav class="fl-nav" aria-label="Main">
+    <div class="fl-nav__brand">Fieldline</div>
+    <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+    <a class="fl-nav__item" href="#">Planning board</a>
+    <a class="fl-nav__item" href="#">Technicians</a>
+    <a class="fl-nav__item" href="#">Parts</a>
+    <a class="fl-nav__item" href="#">Customers</a>
+  </nav>
+  <main class="fl-main">
+    <header class="fl-page-header">
+      <div>
+        <h1>Work orders</h1>
+        <div class="fl-page-header__meta">Region Central · Updated 09:42</div>
+      </div>
+      <div class="fl-page-header__actions">
+        <button class="fl-btn">Export</button>
+        <button class="fl-btn fl-btn--primary">New work order</button>
+      </div>
+    </header>
+    <div class="fl-toolbar" role="group" aria-label="Filters">
+      <button class="fl-chip" aria-pressed="true">All open</button>
+      <button class="fl-chip" aria-pressed="false">Unplanned</button>
+      <button class="fl-chip" aria-pressed="false">Waiting for parts</button>
+      <button class="fl-chip" aria-pressed="false">Repairs</button>
+      <span class="fl-result-count">214 work orders</span>
+    </div>
+    <div class="fl-table-wrap">
+      <table class="fl-table">
+        <thead><tr><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer</th><th scope="col">Address</th><th scope="col">Status</th><th scope="col">Technician</th><th scope="col" class="fl-num">Due</th></tr></thead>
+        <tbody>
+          <tr><td>WO-24817</td><td>Repair</td><td>M. de Groot</td><td>Lindelaan 14, Amersfoort</td><td><span class="fl-badge fl-badge--neutral">Unplanned</span></td><td>-</td><td class="fl-num">24 Oct</td></tr>
+          <tr><td>WO-24811</td><td>Maintenance</td><td>Bakkerij Smit</td><td>Markt 3, Nijkerk</td><td><span class="fl-badge fl-badge--info">Planned</span></td><td>R. Hendriks</td><td class="fl-num">27 Oct</td></tr>
+          <tr><td>WO-24806</td><td>Repair</td><td>A. Yilmaz</td><td>Vondelstraat 88, Utrecht</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">23 Oct</td></tr>
+          <tr><td>WO-24799</td><td>Installation</td><td>Fam. Janssen</td><td>Brink 7, Baarn</td><td><span class="fl-badge fl-badge--info">In progress</span></td><td>K. Bos</td><td class="fl-num">23 Oct</td></tr>
+          <tr><td>WO-24790</td><td>Maintenance</td><td>Tandarts Molenaar</td><td>Stationsweg 120, Zeist</td><td><span class="fl-badge fl-badge--success">Done</span></td><td>R. Hendriks</td><td class="fl-num">22 Oct</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+</body>
+</html>

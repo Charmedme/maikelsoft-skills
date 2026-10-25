@@ -34,6 +34,7 @@ This skill builds one approved work item. The examples on the item are the speci
 | Plan | None | None | `plan.md`, `research.md`, tickets (`references/plan.md`) | The same |
 | Build | TDD | One scenario at a time | The same, ticket by ticket (`references/build.md`) | The same |
 | Review | The checks | The checks, `speclock.py check`, and `mutate.py` | The same, and a review sub-agent (`references/review.md`) | The same |
+| UX review | None | Light, when the item has UI work (`references/ux-review.md`) | Full, when the item has UI work | The same |
 | Gate Done | Yes | Yes | Yes | Yes |
 
 - **Patch.** Make the branch (`references/build.md`, "Before the first ticket"). Write the test that fails because of the bug. Fix the code. Run the checks and commit.
@@ -41,6 +42,7 @@ This skill builds one approved work item. The examples on the item are the speci
 - **Medium.** Do research and technical questions (`references/research.md`, `references/plan.md`). Follow `references/spec.md`. At the gate Spec, also show the ticket list (number, title, the acceptance tests that it makes pass). Then build the tickets.
 - **Large.** Run the medium steps in one session. Before the gate Spec, give a gate **Design**: the parts, the risks, and the order of the tickets. Start `dev-team:deliver-story` only when the human asks for the team. In the tests, one session passed the same hidden tests as the team at a third to a half of the cost.
 - **Team decisions.** When the repository has a team decision index (`docs/dev-team/decisions.md`): in the medium and large tier, record a new team decision with the `dev-team:team-decisions` skill. In the patch and small tier, do not change that index: list each new team decision in the report.
+- **UX review.** When the item has UI work and the `ux-design` plugin is installed, read `references/ux-review.md` after the review. Without the plugin, skip it and say so in the report.
 - **Gate Done.** Run `speclock.py check`: it must show 0 changes. Give the report. The human decides when to close the work.
 
 ## Change the tier

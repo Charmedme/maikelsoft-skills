@@ -6,6 +6,17 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-25
+
+### Added
+
+- Step 9 of `deliver-story`: a UX review when the run folder has `ux-design.md`, with the counters `ux-review` and `ux-fix` (limit 1 each). G2 shows the result.
+- `runcheck.py` needs the UX review before G2 when the run has `ux-design.md`.
+
+### Changed
+
+- `story-intake` of the run copies the approved UX design of the story. The senior fix mode also takes `ux-review.md`.
+
 ## [0.3.0] - 2026-10-24
 
 ### Changed

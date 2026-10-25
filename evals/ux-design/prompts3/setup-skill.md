@@ -1,0 +1,1 @@
+Use the skill in `<plugin>/skills/ux-setup/`: read its `SKILL.md` and follow it. Read its files by path. Its scripts are in `<plugin>/skills/ux-setup/scripts/`. The question step cannot ask in this run.

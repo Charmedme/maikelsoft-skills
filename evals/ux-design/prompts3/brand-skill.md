@@ -1,0 +1,1 @@
+Use the skill in `<plugin>/skills/brand-rules/`: read its `SKILL.md` and follow it. Read its files by path. Its scripts are in `<plugin>/skills/brand-rules/scripts/`. The `<ux-practice folder>` is `<plugin>/skills/ux-practice`.

@@ -6,6 +6,7 @@ Usage:
     python3 uxcheck.py mockup <file.html>... [--design <ux-design.md>] [--primary <css selector>]
                               [--shots <dir>] [--json]
     python3 uxcheck.py system <file.css>... [--json]
+    python3 uxcheck.py review <walk.json> --out <dir> [--axe <axe.min.js>] [--primary <css selector>] [--no-keys] [--json]
 
 design  checks the design spec (10 decisions with a source each), the source tags, the
         pattern and decision IDs, the states tables, and the options table.
@@ -16,6 +17,16 @@ mockup  renders each HTML mockup with Playwright and checks the tells: off-token
         font sizes, more than one primary action per frame, nested surfaces, gradients, emoji
         icons, centered body text, unnamed icon buttons, unlabeled inputs, font weights, and
         text contrast. With --design it also checks that each state has a frame.
+
+review  walks the built app with Playwright from a walk file. For each state of each flow, it
+        sets the routes, runs the steps, and then at 390, 820, and 1440 px it takes a
+        screenshot, runs the tell checks and axe-core (when axe.min.js is found), and checks
+        horizontal overflow. At 1440 px it also walks the focus with the Tab key: a focus that
+        does not show (RV-FOCUS-VISIBLE), a focus trap (RV-FOCUS-TRAP), a focus under a sticky or
+        fixed element (RV-FOCUS-OBSCURED), a focus order that jumps back (RV-FOCUS-ORDER), and
+        a tabindex above 0 (RV-TABINDEX).
+        With prefers-reduced-motion it finds animations that still run (RV-MOTION). --no-keys
+        skips these checks. It writes <out>/review.json and <out>/<flow>__<state>__<width>.png.
 
 A mockup frame is an element with data-screen and data-state attributes.
 Exit code: 0 no errors, 1 errors, 2 bad usage, 3 Playwright is missing.
@@ -227,7 +238,7 @@ MOCKUP_JS = r"""
   const alpha = (rgb) => { const m = rgb.match(/[\d.]+/g); return m && m.length > 3 ? Number(m[3]) : 1; };
   const bgOf = (el) => { for (let e = el; e; e = e.parentElement) { const cs = getComputedStyle(e); if (/gradient|url\(/.test(cs.backgroundImage)) return null; const b = cs.backgroundColor; if (alpha(b) > 0.5) return b; } return 'rgb(255, 255, 255)'; };
   const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
-  const visible = (el) => { const r = el.getBoundingClientRect(); const cs = getComputedStyle(el); return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none'; };
+  const visible = (el) => { const r = el.getBoundingClientRect(); const cs = getComputedStyle(el); return r.width > 1 && r.height > 1 && cs.visibility !== 'hidden' && cs.display !== 'none' && Number(cs.opacity) > 0 && !el.closest('[aria-hidden="true"]'); };
   const ownText = (el) => [...el.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('').trim();
   const emoji = /\p{Extended_Pictographic}/u;
   const frames = [...document.querySelectorAll('[data-screen][data-state]')];
@@ -349,6 +360,266 @@ def check_mockups(files, design, primary, shots, r):
     return None, stats
 
 
+WIDTHS = [(390, 844), (820, 1180), (1440, 900)]
+
+
+def find_axe(path):
+    """axe.min.js from --axe, or from node_modules in the current folder."""
+    for c in [path, "node_modules/axe-core/axe.min.js"]:
+        if c and Path(c).exists():
+            return Path(c).read_text(encoding="utf-8")
+    return None
+
+
+def run_steps(page, steps, base):
+    """Run the steps of one state. Return None, or the text of the step that failed."""
+    for n, st in enumerate(steps, 1):
+        try:
+            if "goto" in st:
+                page.goto(base.rstrip("/") + "/" + st["goto"].lstrip("/"))
+            elif "click" in st:
+                page.click(st["click"], timeout=5000, no_wait_after=bool(st.get("no_wait")))
+            elif "fill" in st:
+                page.fill(st["fill"][0], st["fill"][1], timeout=5000)
+            elif "select" in st:
+                page.select_option(st["select"][0], st["select"][1], timeout=5000)
+            elif "check" in st:
+                page.check(st["check"], timeout=5000)
+            elif "press" in st:
+                page.press(st["press"][0], st["press"][1], timeout=5000)
+            elif "wait" in st:
+                page.wait_for_selector(st["wait"], timeout=st.get("timeout", 5000))
+            elif "wait_ms" in st:
+                page.wait_for_timeout(st["wait_ms"])
+            elif "expect_text" in st:
+                sel, want = st["expect_text"]
+                got = page.inner_text(sel, timeout=5000)
+                if want not in got:
+                    return f"step {n}: {sel} shows {got[:80]!r}, expected {want!r}"
+            else:
+                return f"step {n}: unknown step {st}"
+        except Exception as e:  # a failed step is a finding, not a crash
+            return f"step {n} {json.dumps(st)}: {str(e).splitlines()[0][:160]}"
+    return None
+
+
+def add_routes(page, routes, held):
+    """Fake answers of the server, to make a state: an error status, a body, or a request that never ends."""
+    def make(rt):
+        def handler(route, request=None):
+            if rt.get("method") and route.request.method != rt["method"].upper():
+                return route.continue_()
+            if rt.get("hold"):
+                held.append(route)  # never answered: the page stays in its loading state
+                return None
+            if rt.get("abort"):
+                return route.abort()
+            return route.fulfill(status=rt.get("status", 200), body=rt.get("body", ""),
+                                 content_type=rt.get("content_type", "application/json"))
+        return handler
+    for rt in routes:
+        page.route(rt["url"], make(rt))
+
+
+FOCUS_JS = """() => {
+  const el = document.activeElement;
+  if (!el || el === document.body || el === document.documentElement) return null;
+  const sel = (n) => {
+    const parts = [];
+    while (n && n.nodeType === 1 && parts.length < 4) {
+      let p = n.tagName.toLowerCase();
+      if (n.id) { parts.unshift(p + '#' + n.id); break; }
+      const t = (n.getAttribute('aria-label') || n.textContent || '').trim().slice(0, 24);
+      if (parts.length === 0 && t) p += '[' + t.replace(/\\s+/g, ' ') + ']';
+      parts.unshift(p);
+      n = n.parentElement;
+    }
+    return parts.join(' > ');
+  };
+  const sig = (e) => { const c = getComputedStyle(e); return [c.outlineStyle, c.outlineWidth, c.outlineColor, c.boxShadow,
+    c.borderTopColor, c.borderBottomColor, c.backgroundColor, c.color, c.textDecorationLine].join('|'); };
+  const r = el.getBoundingClientRect();
+  const focused = sig(el);
+  el.blur();
+  const plain = sig(el);
+  el.focus({preventScroll: true});
+  let obscured = '';
+  const cx = r.left + r.width / 2, cy = r.top + Math.min(r.height / 2, 12);
+  if (cy >= 0 && cy < innerHeight && cx >= 0 && cx < innerWidth) {
+    const top = document.elementFromPoint(cx, cy);
+    if (top && !el.contains(top) && !top.contains(el)) {
+      for (let n = top; n && n !== document.body; n = n.parentElement) {
+        const pos = getComputedStyle(n).position;
+        if (pos === 'fixed' || pos === 'sticky') { obscured = sel(n); break; }
+      }
+    }
+  }
+  return {sel: sel(el), top: Math.round(r.top + scrollY), left: Math.round(r.left + scrollX),
+          visible: focused !== plain, obscured, modal: !!el.closest('[aria-modal="true"], dialog[open]')};
+}"""
+
+TABBABLE_JS = """() => [...document.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]):not([type=hidden]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])')]
+  .filter(e => { const r = e.getBoundingClientRect(), c = getComputedStyle(e);
+    return r.width > 1 && r.height > 1 && c.visibility !== 'hidden' && !e.closest('[inert], [aria-hidden="true"]'); }).length"""
+
+TABINDEX_JS = """() => [...document.querySelectorAll('[tabindex]')].filter(e => e.tabIndex > 0)
+  .map(e => e.tagName.toLowerCase() + (e.id ? '#' + e.id : '') + '[tabindex=' + e.getAttribute('tabindex') + '] ' +
+       (e.getAttribute('aria-label') || e.textContent || '').trim().slice(0, 24))"""
+
+MOTION_JS = """() => {
+  const out = [];
+  for (const e of document.querySelectorAll('*')) {
+    const c = getComputedStyle(e);
+    if (c.animationName && c.animationName !== 'none') {
+      const d = Math.max(...c.animationDuration.split(',').map(x => parseFloat(x) * (x.trim().endsWith('ms') ? 0.001 : 1)));
+      if (d > 0.01 && c.animationPlayState !== 'paused') out.push((e.className && String(e.className).split(' ')[0]) || e.tagName.toLowerCase());
+    }
+  }
+  return [...new Set(out)].slice(0, 5);
+}"""
+
+
+def check_keys(page, where, rec, r, stats):
+    """Walk the focus with Tab. Report focus that does not show, traps, obscured focus, and order jumps."""
+    positive = page.evaluate(TABINDEX_JS)
+    if positive:
+        rec["issues"].append({"rule": "RV-TABINDEX", "msg": f"{len(positive)} elements with tabindex above 0: {'; '.join(positive[:4])}"})
+        r.error("RV-TABINDEX", f"{where}: {len(positive)} elements with a tabindex above 0 get the focus before all other "
+                f"elements (WCAG 2.4.3): {'; '.join(positive[:4])}.")
+    total = page.evaluate(TABBABLE_JS)
+    if not total:
+        return
+    # Start the walk at the top of the document.
+    page.evaluate("""() => { const s = document.createElement('span'); s.id = '__ux_start'; s.tabIndex = -1;
+      document.body.prepend(s); s.focus(); window.scrollTo(0, 0); }""")
+    seq, stuck, looped = [], 0, False
+    for _ in range(min(80, total * 2 + 4)):
+        page.keyboard.press("Tab")
+        f = page.evaluate(FOCUS_JS)
+        if f is None:
+            continue
+        if seq and f["sel"] == seq[-1]["sel"]:
+            stuck += 1
+            if stuck >= 2:
+                break
+            continue
+        if any(f["sel"] == x["sel"] for x in seq):
+            looped = True
+            break
+        seq.append(f)
+    page.evaluate("() => { const s = document.getElementById('__ux_start'); if (s) s.remove(); }")
+    stats["focus_stops"] = stats.get("focus_stops", 0) + len(seq)
+    uniq = {f["sel"] for f in seq}
+    modal = any(f["modal"] for f in seq)
+
+    def add(rule, msg, level="error"):
+        rec["issues"].append({"rule": rule, "msg": msg})
+        (r.error if level == "error" else r.warn)(rule, f"{where}: {msg}")
+    if not modal and (stuck >= 2 or (looped and len(uniq) < max(2, total * 0.5))):
+        add("RV-FOCUS-TRAP", f"Tab reaches {len(uniq)} of {total} focusable elements, then stays in a loop "
+            f"({' -> '.join(f['sel'] for f in seq[-3:])}).")
+    hidden = [f["sel"] for f in seq if not f["visible"]]
+    if hidden:
+        add("RV-FOCUS-VISIBLE", f"no visible focus on {len(hidden)} of {len(seq)} focus stops (outline, shadow, border, "
+            f"and color do not change): {'; '.join(hidden[:4])}{' ...' if len(hidden) > 4 else ''}.")
+    for f in seq:
+        if f["obscured"]:
+            add("RV-FOCUS-OBSCURED", f"the focus on {f['sel']} is under {f['obscured']} (WCAG 2.4.11).")
+    back = [(a, b) for a, b in zip(seq, seq[1:]) if b["top"] < a["top"] - 40 and b["left"] <= a["left"] + 100]
+    if len(back) >= 2 or any(a["top"] - b["top"] > 200 for a, b in back):
+        a, b = back[0]
+        add("RV-FOCUS-ORDER", f"the focus jumps back up from {a['sel']} to {b['sel']} ({len(back)} jumps). "
+            "Check that the focus order follows the reading order.", "warn")
+
+
+def check_motion(page, where, rec, r):
+    page.emulate_media(reduced_motion="reduce")
+    page.wait_for_timeout(100)
+    moving = page.evaluate(MOTION_JS)
+    page.emulate_media(reduced_motion="no-preference")
+    if moving:
+        rec["issues"].append({"rule": "RV-MOTION", "msg": f"animations run with prefers-reduced-motion: {', '.join(moving)}"})
+        r.error("RV-MOTION", f"{where}: animations still run when the user asks for reduced motion ({', '.join(moving)}).")
+
+
+def check_review(walk_file, out, axe_path, primary, r, keys=True):
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        r.error("RV-PLAYWRIGHT", "Playwright for Python is missing: pip install playwright.")
+        return 3, {}
+    walk = json.loads(Path(walk_file).read_text(encoding="utf-8"))
+    base = walk.get("base_url", "")
+    out = Path(out)
+    out.mkdir(parents=True, exist_ok=True)
+    axe = find_axe(axe_path)
+    if not axe:
+        r.warn("RV-AXE", "axe-core not found (npm install axe-core, or --axe <axe.min.js>). The accessibility check is not complete.")
+    results, stats = [], {"states": 0, "shots": 0, "tells": 0, "axe": 0, "steps_failed": 0}
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        for flow in walk.get("flows", []):
+            fid = flow["id"]
+            for stt in flow.get("states", []):
+                state = stt["state"]
+                stats["states"] += 1
+                for w, h in WIDTHS:
+                    ctx = browser.new_context(viewport={"width": w, "height": h})
+                    page = ctx.new_page()
+                    console = []
+                    page.on("pageerror", lambda e, c=console: c.append(str(e)))
+                    held = []
+                    add_routes(page, flow.get("routes", []) + stt.get("routes", []), held)
+                    fail = run_steps(page, stt.get("steps", []), base)
+                    page.wait_for_timeout(stt.get("settle_ms", 300))
+                    rec = {"flow": fid, "state": state, "width": w, "issues": []}
+                    where = f"{fid}/{state} @{w}"
+                    if fail:
+                        stats["steps_failed"] += 1
+                        r.error("RV-STEP", f"{where}: {fail}")
+                        rec["issues"].append({"rule": "RV-STEP", "msg": fail})
+                    shot = out / f"{fid}__{re.sub(r'[^a-z0-9-]+', '-', state.lower())}__{w}.png"
+                    page.screenshot(path=str(shot), full_page=True)
+                    stats["shots"] += 1
+                    rec["shot"] = shot.name
+                    page.evaluate("([s, f]) => { document.body.dataset.screen = f; document.body.dataset.state = s; }", [state, fid])
+                    res = page.evaluate(MOCKUP_JS, [primary, []])
+                    for fr in res["frames"][:1]:
+                        for i in fr["issues"]:
+                            if i["rule"] == "MK-PROPOSED":
+                                continue
+                            stats["tells"] += 1
+                            rec["issues"].append(i)
+                            r.error(i["rule"], f"{where}: {i['msg']}")
+                    over = page.evaluate("() => document.documentElement.scrollWidth - document.documentElement.clientWidth")
+                    if over > 1:
+                        rec["issues"].append({"rule": "RV-OVERFLOW", "msg": f"{over}px horizontal scroll"})
+                        r.error("RV-OVERFLOW", f"{where}: the page scrolls {over}px to the side.")
+                    if axe:
+                        page.add_script_tag(content=axe)
+                        v = page.evaluate("async () => (await axe.run(document, {runOnly: ['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']})).violations.map(x => ({id: x.id, impact: x.impact, help: x.help, n: x.nodes.length, target: x.nodes[0] && x.nodes[0].target.join(' ')}))")
+                        for x in v:
+                            stats["axe"] += 1
+                            rec["issues"].append({"rule": f"RV-AXE-{x['id']}", "msg": f"{x['impact']}: {x['help']} ({x['n']} nodes, {x['target']})"})
+                            r.error(f"RV-AXE-{x['id']}", f"{where}: {x['impact']}: {x['help']} ({x['n']} nodes, first {x['target']})")
+                    if keys and w == WIDTHS[-1][0] and not fail:
+                        check_motion(page, where, rec, r)
+                        check_keys(page, where, rec, r, stats)
+                    for c in console:
+                        rec["issues"].append({"rule": "RV-JS", "msg": c[:160]})
+                        r.error("RV-JS", f"{where}: script error: {c[:160]}")
+                    results.append(rec)
+                    for route in held:
+                        try:
+                            route.abort()
+                        except Exception:
+                            pass
+                    ctx.close()
+        browser.close()
+    (out / "review.json").write_text(json.dumps({"stats": stats, "results": results}, indent=2), encoding="utf-8")
+    return None, stats
+
+
 NAMED = {"black": "#000000", "white": "#ffffff", "transparent": None}
 
 
@@ -454,7 +725,8 @@ def check_system(files, r):
 def main() -> int:
     argv = sys.argv[1:]
     as_json = "--json" in argv
-    argv = [a for a in argv if a != "--json"]
+    no_keys = "--no-keys" in argv
+    argv = [a for a in argv if a not in ("--json", "--no-keys")]
 
     def opt(name):
         if name in argv:
@@ -465,7 +737,7 @@ def main() -> int:
         return None
 
     r = Report()
-    if not argv or argv[0] not in ("design", "mockup", "system"):
+    if not argv or argv[0] not in ("design", "mockup", "system", "review"):
         print(__doc__, file=sys.stderr)
         return 2
     cmd = argv.pop(0)
@@ -484,6 +756,14 @@ def main() -> int:
             return 2
         extra = check_design(argv[0], patterns, decisions, r)
         return r.finish(as_json, extra)
+    if cmd == "review":
+        out, axe, primary = opt("--out"), opt("--axe"), opt("--primary") or PRIMARY
+        if len(argv) != 1 or not out:
+            print(__doc__, file=sys.stderr)
+            return 2
+        code, extra = check_review(argv[0], out, axe, primary, r, keys=not no_keys)
+        res = r.finish(as_json, extra)
+        return code if code is not None else res
     design, primary, shots = opt("--design"), opt("--primary") or PRIMARY, opt("--shots")
     if not argv:
         print(__doc__, file=sys.stderr)

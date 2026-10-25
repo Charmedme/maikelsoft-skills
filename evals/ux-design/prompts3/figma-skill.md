@@ -1,0 +1,1 @@
+Use the skill in `<plugin>/skills/figma/`: read its `SKILL.md` and follow its read mode. Read its files by path. Its scripts are in `<plugin>/skills/figma/scripts/`. The work folder is `docs/work/fl-31`.

@@ -1,0 +1,1839 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Work orders, parts status (FL-44 mockup) &middot; Fieldline</title>
+<link rel="stylesheet" href="../../../../design-system/tokens.css">
+<link rel="stylesheet" href="../../../../design-system/components.css">
+<link rel="stylesheet" href="ds-fixes.css">
+<style>
+/* Mockup layout only. All values come from the tokens. */
+.mk-frame { margin: 0 0 var(--fl-space-7); border-bottom: 1px solid var(--fl-color-border-strong); }
+.mk-frame__title { margin: 0; padding: var(--fl-space-3) var(--fl-space-6); font-size: var(--fl-size-lg); font-weight: var(--fl-weight-bold); background: var(--fl-color-surface-sunken); border-bottom: 1px solid var(--fl-color-border); }
+.mk-shell { min-height: 0; position: relative; }
+.mk-shell .fl-main { padding-bottom: var(--fl-space-7); }
+.mk-shell .fl-toast { position: absolute; align-items: center; }
+.mk-split { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: var(--fl-space-4); align-items: start; }
+strong { font-weight: var(--fl-weight-bold); }
+p { margin: 0; }
+.mk-h2 { font-size: var(--fl-size-xl); font-weight: var(--fl-weight-bold); margin: 0; }
+.mk-h3 { font-size: var(--fl-size-lg); font-weight: var(--fl-weight-bold); margin: 0; }
+.mk-panel__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--fl-space-1); }
+.mk-gap { margin-top: var(--fl-space-3); }
+.mk-block { margin-top: var(--fl-space-5); padding-top: var(--fl-space-4); border-top: 1px solid var(--fl-color-border); }
+.mk-titlerow { display: flex; align-items: baseline; justify-content: space-between; gap: var(--fl-space-3); }
+.mk-summary { margin-top: var(--fl-space-3); margin-bottom: var(--fl-space-2); font-weight: var(--fl-weight-medium); }
+.mk-panel .fl-table-wrap { margin: var(--fl-space-2) 0; }
+.mk-panel .fl-table td { padding-top: var(--fl-space-1); padding-bottom: var(--fl-space-1); }
+.mk-muted, .mk-was { color: var(--fl-color-text-muted); font-size: var(--fl-size-sm); }
+.mk-was { display: block; }
+.mk-nowrap { white-space: nowrap; }
+.mk-status { width: 170px; }
+.mk-date { display: block; font-size: var(--fl-size-sm); }
+.mk-form .mk-h3 { margin-bottom: var(--fl-space-3); }
+.mk-customer { margin-top: var(--fl-space-1); }
+.mk-late { color: var(--fl-color-warning); font-weight: var(--fl-weight-medium); }
+.mk-action { margin-top: var(--fl-space-4); }
+.mk-reason { margin-top: var(--fl-space-2); }
+.mk-alert-actions { margin-top: var(--fl-space-2); }
+.mk-link { padding: 0; height: auto; text-decoration: underline; }
+.mk-inline { display: flex; gap: var(--fl-space-2); align-items: center; }
+.mk-grow { flex: 1; }
+.mk-form .fl-alert { margin-bottom: var(--fl-space-4); }
+.mk-skel { margin: var(--fl-space-3) 0; }
+.mk-topalert { margin-bottom: var(--fl-space-4); }
+.mk-toast-btn { color: var(--fl-color-text-inverse); height: auto; text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<section data-screen="work-orders" data-state="default" class="mk-frame">
+  <h2 class="mk-frame__title">State: default. All parts delivered, the planner can plan the next visit</h2>
+  <div class="fl-shell mk-shell">
+    <nav class="fl-nav" aria-label="Main">
+      <div class="fl-nav__brand">Fieldline</div>
+      <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+      <a class="fl-nav__item" href="#">Planning board</a>
+      <a class="fl-nav__item" href="#">Technicians</a>
+      <a class="fl-nav__item" href="#">Parts</a>
+      <a class="fl-nav__item" href="#">Customers</a>
+    </nav>
+    <main class="fl-main">
+      
+      <header class="fl-page-header">
+        <div>
+          <h1>Work orders</h1>
+          <div class="fl-page-header__meta">Region Central &middot; Updated 09:42</div>
+        </div>
+        <div class="fl-page-header__actions">
+          <button class="fl-btn">Export</button>
+          <button class="fl-btn">New work order</button>
+        </div>
+      </header>
+      <div class="fl-toolbar" role="group" aria-label="Filters">
+        <button class="fl-chip" aria-pressed="false">All open</button>
+        <button class="fl-chip" aria-pressed="false">Unplanned</button>
+        <button class="fl-chip" aria-pressed="true">Waiting for parts</button>
+        
+        <button class="fl-chip" aria-pressed="false">Repairs</button>
+        <span class="fl-result-count">5 work orders</span>
+      </div>
+      <div class="mk-split"><div class="fl-table-wrap">
+          <table class="fl-table">
+            <thead><tr><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer</th><th scope="col">Status</th><th scope="col">Technician</th><th scope="col" class="fl-num">Due</th></tr></thead>
+            <tbody>
+              <tr aria-selected="true"><td>WO-24806</td><td>Repair</td><td>A. Yilmaz</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">23 Oct</td></tr>
+<tr><td>WO-24794</td><td>Repair</td><td>Fam. de Wit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">21 Oct</td></tr>
+<tr><td>WO-24781</td><td>Installation</td><td>Huisartsenpraktijk Overvecht</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>K. Bos</td><td class="fl-num">28 Oct</td></tr>
+<tr><td>WO-24769</td><td>Repair</td><td>P. Ramdin</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">20 Oct</td></tr>
+<tr><td>WO-24753</td><td>Maintenance</td><td>Bakkerij Smit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">30 Oct</td></tr>
+            </tbody>
+          </table>
+        </div><aside class="fl-sidepanel mk-panel" aria-label="Work order WO-24806">
+        <div class="mk-panel__head">
+          <h2 class="mk-h2">WO-24806</h2>
+          <button class="fl-btn fl-btn--ghost">Close</button>
+        </div>
+        <div class="fl-page-header__meta">Repair &middot; Heat pump</div>
+        <div class="mk-customer">A. Yilmaz &middot; Vondelstraat 88, Utrecht &middot; <span class="mk-nowrap">06 4172 3390</span></div>
+        <div class="mk-gap"><span class="fl-badge fl-badge--warning">Waiting for parts</span></div>
+        
+        
+        <section class="mk-block" aria-label="Parts order">
+          <div class="mk-titlerow">
+            <h3 class="mk-h3">Parts order PL-558213</h3>
+            <span class="fl-page-header__meta">Updated 09:42</span>
+          </div>
+          
+          <p class="mk-summary">All 3 parts delivered. Last delivery Thu 22 Oct.</p>
+          
+          <div class="fl-table-wrap">
+            <table class="fl-table" aria-label="Parts of order PL-558213">
+              <thead><tr><th scope="col">Part</th><th scope="col">Supplier status and date</th></tr></thead>
+              <tbody>
+                <tr><td>Expansion valve EEV-24</td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Thu 22 Oct</span></td></tr>
+<tr><td>Fan motor 230 V</td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Thu 22 Oct</span></td></tr>
+<tr><td>Gasket set <span class="mk-muted mk-nowrap">&times;2</span></td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Wed 21 Oct</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="fl-hint">Changes in PartsLink can take up to 4 hours to show here.</p>
+          <div class="mk-action"><button class="fl-btn fl-btn--primary">Plan next visit</button></div>
+        </section>
+        
+        <section class="mk-block" aria-label="Status history">
+          <h3 class="mk-h3">Status history from PartsLink</h3>
+          <ol class="fl-timeline"><li class="fl-timeline__item"><div class="fl-timeline__time">Thu 22 Oct 15:20</div>Delivered: Expansion valve EEV-24, Fan motor 230 V</li><li class="fl-timeline__item"><div class="fl-timeline__time">Wed 21 Oct 11:05</div>Delivered: Gasket set</li><li class="fl-timeline__item"><div class="fl-timeline__time">Tue 20 Oct 09:30</div>Shipped: all parts</li><li class="fl-timeline__item"><div class="fl-timeline__time">Mon 19 Oct 13:48</div>Confirmed: all parts, expected Thu 22 Oct</li><li class="fl-timeline__item"><div class="fl-timeline__time">Mon 19 Oct 10:12</div>Ordered by M. Kuipers</li></ol>
+        </section>
+      </aside></div>
+      
+    </main>
+  </div>
+</section>
+
+<section data-screen="work-orders" data-state="waiting" class="mk-frame">
+  <h2 class="mk-frame__title">State: waiting. Parts on the way, PartsLink decides</h2>
+  <div class="fl-shell mk-shell">
+    <nav class="fl-nav" aria-label="Main">
+      <div class="fl-nav__brand">Fieldline</div>
+      <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+      <a class="fl-nav__item" href="#">Planning board</a>
+      <a class="fl-nav__item" href="#">Technicians</a>
+      <a class="fl-nav__item" href="#">Parts</a>
+      <a class="fl-nav__item" href="#">Customers</a>
+    </nav>
+    <main class="fl-main">
+      
+      <header class="fl-page-header">
+        <div>
+          <h1>Work orders</h1>
+          <div class="fl-page-header__meta">Region Central &middot; Updated 09:42</div>
+        </div>
+        <div class="fl-page-header__actions">
+          <button class="fl-btn">Export</button>
+          <button class="fl-btn">New work order</button>
+        </div>
+      </header>
+      <div class="fl-toolbar" role="group" aria-label="Filters">
+        <button class="fl-chip" aria-pressed="false">All open</button>
+        <button class="fl-chip" aria-pressed="false">Unplanned</button>
+        <button class="fl-chip" aria-pressed="true">Waiting for parts</button>
+        
+        <button class="fl-chip" aria-pressed="false">Repairs</button>
+        <span class="fl-result-count">5 work orders</span>
+      </div>
+      <div class="mk-split"><div class="fl-table-wrap">
+          <table class="fl-table">
+            <thead><tr><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer</th><th scope="col">Status</th><th scope="col">Technician</th><th scope="col" class="fl-num">Due</th></tr></thead>
+            <tbody>
+              <tr aria-selected="true"><td>WO-24806</td><td>Repair</td><td>A. Yilmaz</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">23 Oct</td></tr>
+<tr><td>WO-24794</td><td>Repair</td><td>Fam. de Wit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">21 Oct</td></tr>
+<tr><td>WO-24781</td><td>Installation</td><td>Huisartsenpraktijk Overvecht</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>K. Bos</td><td class="fl-num">28 Oct</td></tr>
+<tr><td>WO-24769</td><td>Repair</td><td>P. Ramdin</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">20 Oct</td></tr>
+<tr><td>WO-24753</td><td>Maintenance</td><td>Bakkerij Smit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">30 Oct</td></tr>
+            </tbody>
+          </table>
+        </div><aside class="fl-sidepanel mk-panel" aria-label="Work order WO-24806">
+        <div class="mk-panel__head">
+          <h2 class="mk-h2">WO-24806</h2>
+          <button class="fl-btn fl-btn--ghost">Close</button>
+        </div>
+        <div class="fl-page-header__meta">Repair &middot; Heat pump</div>
+        <div class="mk-customer">A. Yilmaz &middot; Vondelstraat 88, Utrecht &middot; <span class="mk-nowrap">06 4172 3390</span></div>
+        <div class="mk-gap"><span class="fl-badge fl-badge--warning">Waiting for parts</span></div>
+        
+        
+        <section class="mk-block" aria-label="Parts order">
+          <div class="mk-titlerow">
+            <h3 class="mk-h3">Parts order PL-558213</h3>
+            <span class="fl-page-header__meta">Updated 09:42</span>
+          </div>
+          
+          <p class="mk-summary">0 of 3 parts delivered. Last part expected Tue 27 Oct. 1 part has no date yet.</p>
+          <p class="fl-hint">Next: PartsLink sends the date when the supplier confirms the gasket set.</p>
+          <div class="fl-table-wrap">
+            <table class="fl-table" aria-label="Parts of order PL-558213">
+              <thead><tr><th scope="col">Part</th><th scope="col">Supplier status and date</th></tr></thead>
+              <tbody>
+                <tr><td>Expansion valve EEV-24</td><td class="mk-status"><span class="fl-badge fl-badge--info">Shipped</span><span class="mk-date">Expected Mon 26 Oct</span></td></tr>
+<tr><td>Fan motor 230 V</td><td class="mk-status"><span class="fl-badge fl-badge--info">Confirmed</span><span class="mk-date">Expected Tue 27 Oct</span></td></tr>
+<tr><td>Gasket set <span class="mk-muted mk-nowrap">&times;2</span></td><td class="mk-status"><span class="fl-badge fl-badge--neutral">Ordered</span><span class="mk-date">No date yet</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="fl-hint">Changes in PartsLink can take up to 4 hours to show here.</p>
+          <div class="mk-action">
+            <button class="fl-btn fl-btn--primary" disabled aria-describedby="why-2">Plan next visit</button>
+            <p class="fl-hint mk-reason" id="why-2">You can plan when all parts are delivered. Not delivered: 3 parts.</p>
+          </div>
+        </section>
+        
+        <section class="mk-block" aria-label="Status history">
+          <h3 class="mk-h3">Status history from PartsLink</h3>
+          <ol class="fl-timeline"><li class="fl-timeline__item"><div class="fl-timeline__time">Fri 23 Oct 08:05</div>Shipped: Expansion valve EEV-24</li><li class="fl-timeline__item"><div class="fl-timeline__time">Tue 20 Oct 14:02</div>Confirmed: Expansion valve EEV-24, Fan motor 230 V</li><li class="fl-timeline__item"><div class="fl-timeline__time">Mon 19 Oct 10:12</div>Ordered by M. Kuipers</li></ol>
+        </section>
+      </aside></div>
+      
+    </main>
+  </div>
+</section>
+
+<section data-screen="work-orders" data-state="disabled" class="mk-frame">
+  <h2 class="mk-frame__title">State: disabled. 2 of 3 parts delivered, planning is not possible yet</h2>
+  <div class="fl-shell mk-shell">
+    <nav class="fl-nav" aria-label="Main">
+      <div class="fl-nav__brand">Fieldline</div>
+      <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+      <a class="fl-nav__item" href="#">Planning board</a>
+      <a class="fl-nav__item" href="#">Technicians</a>
+      <a class="fl-nav__item" href="#">Parts</a>
+      <a class="fl-nav__item" href="#">Customers</a>
+    </nav>
+    <main class="fl-main">
+      
+      <header class="fl-page-header">
+        <div>
+          <h1>Work orders</h1>
+          <div class="fl-page-header__meta">Region Central &middot; Updated 09:42</div>
+        </div>
+        <div class="fl-page-header__actions">
+          <button class="fl-btn">Export</button>
+          <button class="fl-btn">New work order</button>
+        </div>
+      </header>
+      <div class="fl-toolbar" role="group" aria-label="Filters">
+        <button class="fl-chip" aria-pressed="false">All open</button>
+        <button class="fl-chip" aria-pressed="false">Unplanned</button>
+        <button class="fl-chip" aria-pressed="true">Waiting for parts</button>
+        
+        <button class="fl-chip" aria-pressed="false">Repairs</button>
+        <span class="fl-result-count">5 work orders</span>
+      </div>
+      <div class="mk-split"><div class="fl-table-wrap">
+          <table class="fl-table">
+            <thead><tr><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer</th><th scope="col">Status</th><th scope="col">Technician</th><th scope="col" class="fl-num">Due</th></tr></thead>
+            <tbody>
+              <tr aria-selected="true"><td>WO-24806</td><td>Repair</td><td>A. Yilmaz</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">23 Oct</td></tr>
+<tr><td>WO-24794</td><td>Repair</td><td>Fam. de Wit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">21 Oct</td></tr>
+<tr><td>WO-24781</td><td>Installation</td><td>Huisartsenpraktijk Overvecht</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>K. Bos</td><td class="fl-num">28 Oct</td></tr>
+<tr><td>WO-24769</td><td>Repair</td><td>P. Ramdin</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">20 Oct</td></tr>
+<tr><td>WO-24753</td><td>Maintenance</td><td>Bakkerij Smit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">30 Oct</td></tr>
+            </tbody>
+          </table>
+        </div><aside class="fl-sidepanel mk-panel" aria-label="Work order WO-24806">
+        <div class="mk-panel__head">
+          <h2 class="mk-h2">WO-24806</h2>
+          <button class="fl-btn fl-btn--ghost">Close</button>
+        </div>
+        <div class="fl-page-header__meta">Repair &middot; Heat pump</div>
+        <div class="mk-customer">A. Yilmaz &middot; Vondelstraat 88, Utrecht &middot; <span class="mk-nowrap">06 4172 3390</span></div>
+        <div class="mk-gap"><span class="fl-badge fl-badge--warning">Waiting for parts</span></div>
+        
+        
+        <section class="mk-block" aria-label="Parts order">
+          <div class="mk-titlerow">
+            <h3 class="mk-h3">Parts order PL-558213</h3>
+            <span class="fl-page-header__meta">Updated 09:42</span>
+          </div>
+          
+          <p class="mk-summary">2 of 3 parts delivered. Last part expected Mon 26 Oct.</p>
+          
+          <div class="fl-table-wrap">
+            <table class="fl-table" aria-label="Parts of order PL-558213">
+              <thead><tr><th scope="col">Part</th><th scope="col">Supplier status and date</th></tr></thead>
+              <tbody>
+                <tr><td>Expansion valve EEV-24</td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Thu 22 Oct</span></td></tr>
+<tr><td>Fan motor 230 V</td><td class="mk-status"><span class="fl-badge fl-badge--info">Shipped</span><span class="mk-date">Expected Mon 26 Oct</span></td></tr>
+<tr><td>Gasket set <span class="mk-muted mk-nowrap">&times;2</span></td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Wed 21 Oct</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="fl-hint">Changes in PartsLink can take up to 4 hours to show here.</p>
+          <div class="mk-action">
+            <button class="fl-btn fl-btn--primary" disabled aria-describedby="why-3">Plan next visit</button>
+            <p class="fl-hint mk-reason" id="why-3">You can plan when all parts are delivered. Not delivered: Fan motor 230 V, expected Mon 26 Oct.</p>
+          </div>
+        </section>
+        
+        <section class="mk-block" aria-label="Status history">
+          <h3 class="mk-h3">Status history from PartsLink</h3>
+          <ol class="fl-timeline"><li class="fl-timeline__item"><div class="fl-timeline__time">Fri 23 Oct 08:05</div>Shipped: Fan motor 230 V</li><li class="fl-timeline__item"><div class="fl-timeline__time">Thu 22 Oct 15:20</div>Delivered: Expansion valve EEV-24</li><li class="fl-timeline__item"><div class="fl-timeline__time">Wed 21 Oct 11:05</div>Delivered: Gasket set</li></ol>
+        </section>
+      </aside></div>
+      
+    </main>
+  </div>
+</section>
+
+<section data-screen="work-orders" data-state="date-moved" class="mk-frame">
+  <h2 class="mk-frame__title">State: date-moved. The supplier moved the expected date (AC-4)</h2>
+  <div class="fl-shell mk-shell">
+    <nav class="fl-nav" aria-label="Main">
+      <div class="fl-nav__brand">Fieldline</div>
+      <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+      <a class="fl-nav__item" href="#">Planning board</a>
+      <a class="fl-nav__item" href="#">Technicians</a>
+      <a class="fl-nav__item" href="#">Parts</a>
+      <a class="fl-nav__item" href="#">Customers</a>
+    </nav>
+    <main class="fl-main">
+      
+      <header class="fl-page-header">
+        <div>
+          <h1>Work orders</h1>
+          <div class="fl-page-header__meta">Region Central &middot; Updated 09:42</div>
+        </div>
+        <div class="fl-page-header__actions">
+          <button class="fl-btn">Export</button>
+          <button class="fl-btn">New work order</button>
+        </div>
+      </header>
+      <div class="fl-toolbar" role="group" aria-label="Filters">
+        <button class="fl-chip" aria-pressed="false">All open</button>
+        <button class="fl-chip" aria-pressed="false">Unplanned</button>
+        <button class="fl-chip" aria-pressed="true">Waiting for parts</button>
+        
+        <button class="fl-chip" aria-pressed="false">Repairs</button>
+        <span class="fl-result-count">5 work orders</span>
+      </div>
+      <div class="mk-split"><div class="fl-table-wrap">
+          <table class="fl-table">
+            <thead><tr><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer</th><th scope="col">Status</th><th scope="col">Technician</th><th scope="col" class="fl-num">Due</th></tr></thead>
+            <tbody>
+              <tr aria-selected="true"><td>WO-24806</td><td>Repair</td><td>A. Yilmaz</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">23 Oct</td></tr>
+<tr><td>WO-24794</td><td>Repair</td><td>Fam. de Wit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">21 Oct</td></tr>
+<tr><td>WO-24781</td><td>Installation</td><td>Huisartsenpraktijk Overvecht</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>K. Bos</td><td class="fl-num">28 Oct</td></tr>
+<tr><td>WO-24769</td><td>Repair</td><td>P. Ramdin</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">20 Oct</td></tr>
+<tr><td>WO-24753</td><td>Maintenance</td><td>Bakkerij Smit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">30 Oct</td></tr>
+            </tbody>
+          </table>
+        </div><aside class="fl-sidepanel mk-panel" aria-label="Work order WO-24806">
+        <div class="mk-panel__head">
+          <h2 class="mk-h2">WO-24806</h2>
+          <button class="fl-btn fl-btn--ghost">Close</button>
+        </div>
+        <div class="fl-page-header__meta">Repair &middot; Heat pump</div>
+        <div class="mk-customer">A. Yilmaz &middot; Vondelstraat 88, Utrecht &middot; <span class="mk-nowrap">06 4172 3390</span></div>
+        <div class="mk-gap"><span class="fl-badge fl-badge--warning">Waiting for parts</span></div>
+        
+        
+        <section class="mk-block" aria-label="Parts order">
+          <div class="mk-titlerow">
+            <h3 class="mk-h3">Parts order PL-558213</h3>
+            <span class="fl-page-header__meta">Updated 09:42</span>
+          </div>
+          <div class="fl-alert fl-alert--warning mk-gap" role="status">
+            <div><strong>Expected date moved.</strong> Fan motor 230 V: now Thu 29 Oct, was Mon 26 Oct. PartsLink, Fri 23 Oct 08:05. Tell the customer the new date.</div>
+          </div>
+          <p class="mk-summary">2 of 3 parts delivered. Last part expected Thu 29 Oct.</p>
+          
+          <div class="fl-table-wrap">
+            <table class="fl-table" aria-label="Parts of order PL-558213">
+              <thead><tr><th scope="col">Part</th><th scope="col">Supplier status and date</th></tr></thead>
+              <tbody>
+                <tr><td>Expansion valve EEV-24</td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Thu 22 Oct</span></td></tr>
+<tr><td>Fan motor 230 V</td><td class="mk-status"><span class="fl-badge fl-badge--info">Confirmed</span><span class="mk-date">Expected Thu 29 Oct <span class="mk-was">was Mon 26 Oct</span></span></td></tr>
+<tr><td>Gasket set <span class="mk-muted mk-nowrap">&times;2</span></td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Wed 21 Oct</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="fl-hint">Changes in PartsLink can take up to 4 hours to show here.</p>
+          <div class="mk-action">
+            <button class="fl-btn fl-btn--primary" disabled aria-describedby="why-4">Plan next visit</button>
+            <p class="fl-hint mk-reason" id="why-4">You can plan when all parts are delivered. Not delivered: Fan motor 230 V, expected Thu 29 Oct.</p>
+          </div>
+        </section>
+        
+        <section class="mk-block" aria-label="Status history">
+          <h3 class="mk-h3">Status history from PartsLink</h3>
+          <ol class="fl-timeline"><li class="fl-timeline__item"><div class="fl-timeline__time">Fri 23 Oct 08:05</div>Date moved: Fan motor 230 V, from Mon 26 Oct to Thu 29 Oct</li><li class="fl-timeline__item"><div class="fl-timeline__time">Thu 22 Oct 15:20</div>Delivered: Expansion valve EEV-24</li><li class="fl-timeline__item"><div class="fl-timeline__time">Wed 21 Oct 11:05</div>Delivered: Gasket set</li></ol>
+        </section>
+      </aside></div>
+      
+    </main>
+  </div>
+</section>
+
+<section data-screen="work-orders" data-state="cancelled" class="mk-frame">
+  <h2 class="mk-frame__title">State: cancelled. The supplier cancelled a part (AC-4)</h2>
+  <div class="fl-shell mk-shell">
+    <nav class="fl-nav" aria-label="Main">
+      <div class="fl-nav__brand">Fieldline</div>
+      <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+      <a class="fl-nav__item" href="#">Planning board</a>
+      <a class="fl-nav__item" href="#">Technicians</a>
+      <a class="fl-nav__item" href="#">Parts</a>
+      <a class="fl-nav__item" href="#">Customers</a>
+    </nav>
+    <main class="fl-main">
+      
+      <header class="fl-page-header">
+        <div>
+          <h1>Work orders</h1>
+          <div class="fl-page-header__meta">Region Central &middot; Updated 09:42</div>
+        </div>
+        <div class="fl-page-header__actions">
+          <button class="fl-btn">Export</button>
+          <button class="fl-btn">New work order</button>
+        </div>
+      </header>
+      <div class="fl-toolbar" role="group" aria-label="Filters">
+        <button class="fl-chip" aria-pressed="false">All open</button>
+        <button class="fl-chip" aria-pressed="false">Unplanned</button>
+        <button class="fl-chip" aria-pressed="true">Waiting for parts</button>
+        
+        <button class="fl-chip" aria-pressed="false">Repairs</button>
+        <span class="fl-result-count">5 work orders</span>
+      </div>
+      <div class="mk-split"><div class="fl-table-wrap">
+          <table class="fl-table">
+            <thead><tr><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer</th><th scope="col">Status</th><th scope="col">Technician</th><th scope="col" class="fl-num">Due</th></tr></thead>
+            <tbody>
+              <tr aria-selected="true"><td>WO-24806</td><td>Repair</td><td>A. Yilmaz</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">23 Oct</td></tr>
+<tr><td>WO-24794</td><td>Repair</td><td>Fam. de Wit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">21 Oct</td></tr>
+<tr><td>WO-24781</td><td>Installation</td><td>Huisartsenpraktijk Overvecht</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>K. Bos</td><td class="fl-num">28 Oct</td></tr>
+<tr><td>WO-24769</td><td>Repair</td><td>P. Ramdin</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">20 Oct</td></tr>
+<tr><td>WO-24753</td><td>Maintenance</td><td>Bakkerij Smit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">30 Oct</td></tr>
+            </tbody>
+          </table>
+        </div><aside class="fl-sidepanel mk-panel" aria-label="Work order WO-24806">
+        <div class="mk-panel__head">
+          <h2 class="mk-h2">WO-24806</h2>
+          <button class="fl-btn fl-btn--ghost">Close</button>
+        </div>
+        <div class="fl-page-header__meta">Repair &middot; Heat pump</div>
+        <div class="mk-customer">A. Yilmaz &middot; Vondelstraat 88, Utrecht &middot; <span class="mk-nowrap">06 4172 3390</span></div>
+        <div class="mk-gap"><span class="fl-badge fl-badge--warning">Waiting for parts</span></div>
+        
+        
+        <section class="mk-block" aria-label="Parts order">
+          <div class="mk-titlerow">
+            <h3 class="mk-h3">Parts order PL-558213</h3>
+            <span class="fl-page-header__meta">Updated 09:42</span>
+          </div>
+          <div class="fl-alert fl-alert--danger mk-gap" role="status">
+            <div><strong>PartsLink cancelled 1 part.</strong> Expansion valve EEV-24, Thu 22 Oct 16:40. Reason from the supplier: Out of stock. Order a replacement in PartsLink. The new part shows here when PartsLink sends it.<div class="mk-alert-actions"><a class="fl-btn fl-btn--ghost mk-link" href="#">Open order PL-558213 in PartsLink</a></div></div>
+          </div>
+          <p class="mk-summary">2 of 3 parts delivered. 1 part cancelled.</p>
+          
+          <div class="fl-table-wrap">
+            <table class="fl-table" aria-label="Parts of order PL-558213">
+              <thead><tr><th scope="col">Part</th><th scope="col">Supplier status and date</th></tr></thead>
+              <tbody>
+                <tr><td>Expansion valve EEV-24</td><td class="mk-status"><span class="fl-badge fl-badge--danger">Cancelled</span><span class="mk-date">Not delivered</span></td></tr>
+<tr><td>Fan motor 230 V</td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Thu 22 Oct</span></td></tr>
+<tr><td>Gasket set <span class="mk-muted mk-nowrap">&times;2</span></td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Wed 21 Oct</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="fl-hint">Changes in PartsLink can take up to 4 hours to show here.</p>
+          <div class="mk-action">
+            <button class="fl-btn fl-btn--primary" disabled aria-describedby="why-5">Plan next visit</button>
+            <p class="fl-hint mk-reason" id="why-5">1 part is cancelled. Order a replacement first.</p>
+          </div>
+        </section>
+        
+        <section class="mk-block" aria-label="Status history">
+          <h3 class="mk-h3">Status history from PartsLink</h3>
+          <ol class="fl-timeline"><li class="fl-timeline__item"><div class="fl-timeline__time">Thu 22 Oct 16:40</div>Cancelled: Expansion valve EEV-24. Out of stock</li><li class="fl-timeline__item"><div class="fl-timeline__time">Thu 22 Oct 15:20</div>Delivered: Fan motor 230 V</li><li class="fl-timeline__item"><div class="fl-timeline__time">Wed 21 Oct 11:05</div>Delivered: Gasket set</li></ol>
+        </section>
+      </aside></div>
+      
+    </main>
+  </div>
+</section>
+
+<section data-screen="work-orders" data-state="stale" class="mk-frame">
+  <h2 class="mk-frame__title">State: stale. No update from PartsLink for more than 24 hours (AC-5)</h2>
+  <div class="fl-shell mk-shell">
+    <nav class="fl-nav" aria-label="Main">
+      <div class="fl-nav__brand">Fieldline</div>
+      <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+      <a class="fl-nav__item" href="#">Planning board</a>
+      <a class="fl-nav__item" href="#">Technicians</a>
+      <a class="fl-nav__item" href="#">Parts</a>
+      <a class="fl-nav__item" href="#">Customers</a>
+    </nav>
+    <main class="fl-main">
+      
+      <header class="fl-page-header">
+        <div>
+          <h1>Work orders</h1>
+          <div class="fl-page-header__meta">Region Central &middot; Updated 09:42</div>
+        </div>
+        <div class="fl-page-header__actions">
+          <button class="fl-btn">Export</button>
+          <button class="fl-btn">New work order</button>
+        </div>
+      </header>
+      <div class="fl-toolbar" role="group" aria-label="Filters">
+        <button class="fl-chip" aria-pressed="false">All open</button>
+        <button class="fl-chip" aria-pressed="false">Unplanned</button>
+        <button class="fl-chip" aria-pressed="true">Waiting for parts</button>
+        
+        <button class="fl-chip" aria-pressed="false">Repairs</button>
+        <span class="fl-result-count">5 work orders</span>
+      </div>
+      <div class="mk-split"><div class="fl-table-wrap">
+          <table class="fl-table">
+            <thead><tr><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer</th><th scope="col">Status</th><th scope="col">Technician</th><th scope="col" class="fl-num">Due</th></tr></thead>
+            <tbody>
+              <tr aria-selected="true"><td>WO-24806</td><td>Repair</td><td>A. Yilmaz</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">23 Oct</td></tr>
+<tr><td>WO-24794</td><td>Repair</td><td>Fam. de Wit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">21 Oct</td></tr>
+<tr><td>WO-24781</td><td>Installation</td><td>Huisartsenpraktijk Overvecht</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>K. Bos</td><td class="fl-num">28 Oct</td></tr>
+<tr><td>WO-24769</td><td>Repair</td><td>P. Ramdin</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">20 Oct</td></tr>
+<tr><td>WO-24753</td><td>Maintenance</td><td>Bakkerij Smit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">30 Oct</td></tr>
+            </tbody>
+          </table>
+        </div><aside class="fl-sidepanel mk-panel" aria-label="Work order WO-24806">
+        <div class="mk-panel__head">
+          <h2 class="mk-h2">WO-24806</h2>
+          <button class="fl-btn fl-btn--ghost">Close</button>
+        </div>
+        <div class="fl-page-header__meta">Repair &middot; Heat pump</div>
+        <div class="mk-customer">A. Yilmaz &middot; Vondelstraat 88, Utrecht &middot; <span class="mk-nowrap">06 4172 3390</span></div>
+        <div class="mk-gap"><span class="fl-badge fl-badge--warning">Waiting for parts</span></div>
+        
+        
+        <section class="mk-block" aria-label="Parts order">
+          <div class="mk-titlerow">
+            <h3 class="mk-h3">Parts order PL-558213</h3>
+            <span class="fl-page-header__meta">Updated Thu 22 Oct 07:12</span>
+          </div>
+          <div class="fl-alert fl-alert--warning mk-gap" role="status">
+            <div><strong>No update from PartsLink for 27 hours.</strong> Last update: Thu 22 Oct 07:12. The status can be out of date. Check the order in PartsLink before you tell the customer a date.<div class="mk-alert-actions"><a class="fl-btn fl-btn--ghost mk-link" href="#">Open order PL-558213 in PartsLink</a></div></div>
+          </div>
+          <p class="mk-summary">0 of 3 parts delivered. Last part expected Tue 27 Oct.</p>
+          
+          <div class="fl-table-wrap">
+            <table class="fl-table" aria-label="Parts of order PL-558213">
+              <thead><tr><th scope="col">Part</th><th scope="col">Supplier status and date</th></tr></thead>
+              <tbody>
+                <tr><td>Expansion valve EEV-24</td><td class="mk-status"><span class="fl-badge fl-badge--info">Shipped</span><span class="mk-date">Expected Mon 26 Oct</span></td></tr>
+<tr><td>Fan motor 230 V</td><td class="mk-status"><span class="fl-badge fl-badge--info">Confirmed</span><span class="mk-date">Expected Tue 27 Oct</span></td></tr>
+<tr><td>Gasket set <span class="mk-muted mk-nowrap">&times;2</span></td><td class="mk-status"><span class="fl-badge fl-badge--info">Shipped</span><span class="mk-date">Expected Mon 26 Oct</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="fl-hint">Changes in PartsLink can take up to 4 hours to show here.</p>
+          <div class="mk-action">
+            <button class="fl-btn fl-btn--primary" disabled aria-describedby="why-6">Plan next visit</button>
+            <p class="fl-hint mk-reason" id="why-6">You can plan when all parts are delivered. Not delivered: 3 parts.</p>
+          </div>
+        </section>
+        
+        <section class="mk-block" aria-label="Status history">
+          <h3 class="mk-h3">Status history from PartsLink</h3>
+          <ol class="fl-timeline"><li class="fl-timeline__item"><div class="fl-timeline__time">Thu 22 Oct 07:12</div>Shipped: Expansion valve EEV-24, Gasket set</li><li class="fl-timeline__item"><div class="fl-timeline__time">Tue 20 Oct 14:02</div>Confirmed: Expansion valve EEV-24, Fan motor 230 V</li><li class="fl-timeline__item"><div class="fl-timeline__time">Mon 19 Oct 10:12</div>Ordered by M. Kuipers</li></ol>
+        </section>
+      </aside></div>
+      
+    </main>
+  </div>
+</section>
+
+<section data-screen="work-orders" data-state="partial" class="mk-frame">
+  <h2 class="mk-frame__title">State: partial. PartsLink has no data for 1 part</h2>
+  <div class="fl-shell mk-shell">
+    <nav class="fl-nav" aria-label="Main">
+      <div class="fl-nav__brand">Fieldline</div>
+      <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+      <a class="fl-nav__item" href="#">Planning board</a>
+      <a class="fl-nav__item" href="#">Technicians</a>
+      <a class="fl-nav__item" href="#">Parts</a>
+      <a class="fl-nav__item" href="#">Customers</a>
+    </nav>
+    <main class="fl-main">
+      
+      <header class="fl-page-header">
+        <div>
+          <h1>Work orders</h1>
+          <div class="fl-page-header__meta">Region Central &middot; Updated 09:42</div>
+        </div>
+        <div class="fl-page-header__actions">
+          <button class="fl-btn">Export</button>
+          <button class="fl-btn">New work order</button>
+        </div>
+      </header>
+      <div class="fl-toolbar" role="group" aria-label="Filters">
+        <button class="fl-chip" aria-pressed="false">All open</button>
+        <button class="fl-chip" aria-pressed="false">Unplanned</button>
+        <button class="fl-chip" aria-pressed="true">Waiting for parts</button>
+        
+        <button class="fl-chip" aria-pressed="false">Repairs</button>
+        <span class="fl-result-count">5 work orders</span>
+      </div>
+      <div class="mk-split"><div class="fl-table-wrap">
+          <table class="fl-table">
+            <thead><tr><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer</th><th scope="col">Status</th><th scope="col">Technician</th><th scope="col" class="fl-num">Due</th></tr></thead>
+            <tbody>
+              <tr aria-selected="true"><td>WO-24806</td><td>Repair</td><td>A. Yilmaz</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">23 Oct</td></tr>
+<tr><td>WO-24794</td><td>Repair</td><td>Fam. de Wit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">21 Oct</td></tr>
+<tr><td>WO-24781</td><td>Installation</td><td>Huisartsenpraktijk Overvecht</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>K. Bos</td><td class="fl-num">28 Oct</td></tr>
+<tr><td>WO-24769</td><td>Repair</td><td>P. Ramdin</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">20 Oct</td></tr>
+<tr><td>WO-24753</td><td>Maintenance</td><td>Bakkerij Smit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">30 Oct</td></tr>
+            </tbody>
+          </table>
+        </div><aside class="fl-sidepanel mk-panel" aria-label="Work order WO-24806">
+        <div class="mk-panel__head">
+          <h2 class="mk-h2">WO-24806</h2>
+          <button class="fl-btn fl-btn--ghost">Close</button>
+        </div>
+        <div class="fl-page-header__meta">Repair &middot; Heat pump</div>
+        <div class="mk-customer">A. Yilmaz &middot; Vondelstraat 88, Utrecht &middot; <span class="mk-nowrap">06 4172 3390</span></div>
+        <div class="mk-gap"><span class="fl-badge fl-badge--warning">Waiting for parts</span></div>
+        
+        
+        <section class="mk-block" aria-label="Parts order">
+          <div class="mk-titlerow">
+            <h3 class="mk-h3">Parts order PL-558213</h3>
+            <span class="fl-page-header__meta">Updated 09:42</span>
+          </div>
+          <div class="fl-alert fl-alert--info mk-gap" role="status">
+            <div><strong>PartsLink has no data for 1 part.</strong> Check the order in PartsLink.<div class="mk-alert-actions"><a class="fl-btn fl-btn--ghost mk-link" href="#">Open order PL-558213 in PartsLink</a></div></div>
+          </div>
+          <p class="mk-summary">1 of 3 parts delivered. 1 part has no status from PartsLink.</p>
+          
+          <div class="fl-table-wrap">
+            <table class="fl-table" aria-label="Parts of order PL-558213">
+              <thead><tr><th scope="col">Part</th><th scope="col">Supplier status and date</th></tr></thead>
+              <tbody>
+                <tr><td>Expansion valve EEV-24</td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Thu 22 Oct</span></td></tr>
+<tr><td>Fan motor 230 V</td><td class="mk-status"><span class="fl-badge fl-badge--info">Shipped</span><span class="mk-date">Expected Mon 26 Oct</span></td></tr>
+<tr><td>Gasket set <span class="mk-muted mk-nowrap">&times;2</span></td><td class="mk-status"><span class="fl-badge fl-badge--neutral">No data</span><span class="mk-date">No date yet</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="fl-hint">Changes in PartsLink can take up to 4 hours to show here.</p>
+          <div class="mk-action">
+            <button class="fl-btn fl-btn--primary" disabled aria-describedby="why-7">Plan next visit</button>
+            <p class="fl-hint mk-reason" id="why-7">Not all parts have a status from PartsLink.</p>
+          </div>
+        </section>
+        
+        <section class="mk-block" aria-label="Status history">
+          <h3 class="mk-h3">Status history from PartsLink</h3>
+          <ol class="fl-timeline"><li class="fl-timeline__item"><div class="fl-timeline__time">Fri 23 Oct 08:05</div>Shipped: Expansion valve EEV-24</li><li class="fl-timeline__item"><div class="fl-timeline__time">Tue 20 Oct 14:02</div>Confirmed: Expansion valve EEV-24, Fan motor 230 V</li><li class="fl-timeline__item"><div class="fl-timeline__time">Mon 19 Oct 10:12</div>Ordered by M. Kuipers</li></ol>
+        </section>
+      </aside></div>
+      
+    </main>
+  </div>
+</section>
+
+<section data-screen="work-orders" data-state="in-progress" class="mk-frame">
+  <h2 class="mk-frame__title">State: in-progress. The planner fills in the plan form in the side panel (AC-3)</h2>
+  <div class="fl-shell mk-shell">
+    <nav class="fl-nav" aria-label="Main">
+      <div class="fl-nav__brand">Fieldline</div>
+      <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+      <a class="fl-nav__item" href="#">Planning board</a>
+      <a class="fl-nav__item" href="#">Technicians</a>
+      <a class="fl-nav__item" href="#">Parts</a>
+      <a class="fl-nav__item" href="#">Customers</a>
+    </nav>
+    <main class="fl-main">
+      
+      <header class="fl-page-header">
+        <div>
+          <h1>Work orders</h1>
+          <div class="fl-page-header__meta">Region Central &middot; Updated 09:42</div>
+        </div>
+        <div class="fl-page-header__actions">
+          <button class="fl-btn">Export</button>
+          <button class="fl-btn">New work order</button>
+        </div>
+      </header>
+      <div class="fl-toolbar" role="group" aria-label="Filters">
+        <button class="fl-chip" aria-pressed="false">All open</button>
+        <button class="fl-chip" aria-pressed="false">Unplanned</button>
+        <button class="fl-chip" aria-pressed="true">Waiting for parts</button>
+        
+        <button class="fl-chip" aria-pressed="false">Repairs</button>
+        <span class="fl-result-count">5 work orders</span>
+      </div>
+      <div class="mk-split"><div class="fl-table-wrap">
+          <table class="fl-table">
+            <thead><tr><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer</th><th scope="col">Status</th><th scope="col">Technician</th><th scope="col" class="fl-num">Due</th></tr></thead>
+            <tbody>
+              <tr aria-selected="true"><td>WO-24806</td><td>Repair</td><td>A. Yilmaz</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">23 Oct</td></tr>
+<tr><td>WO-24794</td><td>Repair</td><td>Fam. de Wit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">21 Oct</td></tr>
+<tr><td>WO-24781</td><td>Installation</td><td>Huisartsenpraktijk Overvecht</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>K. Bos</td><td class="fl-num">28 Oct</td></tr>
+<tr><td>WO-24769</td><td>Repair</td><td>P. Ramdin</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">20 Oct</td></tr>
+<tr><td>WO-24753</td><td>Maintenance</td><td>Bakkerij Smit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">30 Oct</td></tr>
+            </tbody>
+          </table>
+        </div><aside class="fl-sidepanel mk-panel" aria-label="Work order WO-24806">
+        <div class="mk-panel__head">
+          <h2 class="mk-h2">WO-24806</h2>
+          <button class="fl-btn fl-btn--ghost">Close</button>
+        </div>
+        <div class="fl-page-header__meta">Repair &middot; Heat pump</div>
+        <div class="mk-customer">A. Yilmaz &middot; Vondelstraat 88, Utrecht &middot; <span class="mk-nowrap">06 4172 3390</span></div>
+        <div class="mk-gap"><span class="fl-badge fl-badge--warning">Waiting for parts</span></div>
+        
+        
+        <section class="mk-block" aria-label="Parts order">
+          <div class="mk-titlerow">
+            <h3 class="mk-h3">Parts order PL-558213</h3>
+            <span class="fl-page-header__meta">Updated 09:42</span>
+          </div>
+          
+          <p class="mk-summary">All 3 parts delivered. Last delivery Thu 22 Oct.</p>
+          
+          <div class="fl-table-wrap">
+            <table class="fl-table" aria-label="Parts of order PL-558213">
+              <thead><tr><th scope="col">Part</th><th scope="col">Supplier status and date</th></tr></thead>
+              <tbody>
+                <tr><td>Expansion valve EEV-24</td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Thu 22 Oct</span></td></tr>
+<tr><td>Fan motor 230 V</td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Thu 22 Oct</span></td></tr>
+<tr><td>Gasket set <span class="mk-muted mk-nowrap">&times;2</span></td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Wed 21 Oct</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="fl-hint">Changes in PartsLink can take up to 4 hours to show here.</p>
+          
+        </section>
+        <section class="mk-block mk-form" aria-label="Plan next visit">
+          <h3 class="mk-h3">Plan next visit</h3>
+          
+          <div class="fl-field">
+            <label class="fl-label" for="date-8">Date</label>
+            <div class="mk-inline">
+              <input class="fl-input mk-grow" id="date-8" type="text" value="Mon 26 Oct 2026">
+              <button class="fl-btn" type="button">Open calendar</button>
+            </div>
+            <p class="fl-hint">All parts delivered on Thu 22 Oct.</p>
+          </div>
+          <fieldset class="fl-radio-group">
+            <legend>Slot</legend>
+            <div class="fl-radio-group__options">
+              <label><input type="radio" name="slot-8" value="morning" checked> Morning 08:00 to 12:00</label>
+              <label><input type="radio" name="slot-8" value="afternoon"> Afternoon 12:30 to 17:00</label>
+            </div>
+            
+          </fieldset>
+          <div class="fl-field">
+            <label class="fl-label" for="tech-8">Technician</label>
+            <select class="fl-select" id="tech-8"><option value="">Select a technician</option><option value="visser" selected>S. Visser, 1 of 2 places free</option><option value="hendriks">R. Hendriks, 2 of 2 places free</option><option value="bos" disabled>K. Bos, full</option></select>
+            
+            
+            <p class="fl-hint">Region Central, heat pump skill. Max 2 visits per slot. 3 technicians without the heat pump skill are not shown.</p>
+          </div>
+          
+          <p class="mk-summary">WO-24806 changes to Planned. You can undo for 8 seconds.</p>
+          <div class="mk-inline">
+            <button class="fl-btn fl-btn--primary">Plan visit</button>
+            <button class="fl-btn fl-btn--ghost">Cancel</button>
+          </div>
+        </section>
+        
+      </aside></div>
+      
+    </main>
+  </div>
+</section>
+
+<section data-screen="work-orders" data-state="error-validation" class="mk-frame">
+  <h2 class="mk-frame__title">State: error-validation. The planner selected Plan visit with 2 empty fields</h2>
+  <div class="fl-shell mk-shell">
+    <nav class="fl-nav" aria-label="Main">
+      <div class="fl-nav__brand">Fieldline</div>
+      <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+      <a class="fl-nav__item" href="#">Planning board</a>
+      <a class="fl-nav__item" href="#">Technicians</a>
+      <a class="fl-nav__item" href="#">Parts</a>
+      <a class="fl-nav__item" href="#">Customers</a>
+    </nav>
+    <main class="fl-main">
+      
+      <header class="fl-page-header">
+        <div>
+          <h1>Work orders</h1>
+          <div class="fl-page-header__meta">Region Central &middot; Updated 09:42</div>
+        </div>
+        <div class="fl-page-header__actions">
+          <button class="fl-btn">Export</button>
+          <button class="fl-btn">New work order</button>
+        </div>
+      </header>
+      <div class="fl-toolbar" role="group" aria-label="Filters">
+        <button class="fl-chip" aria-pressed="false">All open</button>
+        <button class="fl-chip" aria-pressed="false">Unplanned</button>
+        <button class="fl-chip" aria-pressed="true">Waiting for parts</button>
+        
+        <button class="fl-chip" aria-pressed="false">Repairs</button>
+        <span class="fl-result-count">5 work orders</span>
+      </div>
+      <div class="mk-split"><div class="fl-table-wrap">
+          <table class="fl-table">
+            <thead><tr><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer</th><th scope="col">Status</th><th scope="col">Technician</th><th scope="col" class="fl-num">Due</th></tr></thead>
+            <tbody>
+              <tr aria-selected="true"><td>WO-24806</td><td>Repair</td><td>A. Yilmaz</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">23 Oct</td></tr>
+<tr><td>WO-24794</td><td>Repair</td><td>Fam. de Wit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">21 Oct</td></tr>
+<tr><td>WO-24781</td><td>Installation</td><td>Huisartsenpraktijk Overvecht</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>K. Bos</td><td class="fl-num">28 Oct</td></tr>
+<tr><td>WO-24769</td><td>Repair</td><td>P. Ramdin</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">20 Oct</td></tr>
+<tr><td>WO-24753</td><td>Maintenance</td><td>Bakkerij Smit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">30 Oct</td></tr>
+            </tbody>
+          </table>
+        </div><aside class="fl-sidepanel mk-panel" aria-label="Work order WO-24806">
+        <div class="mk-panel__head">
+          <h2 class="mk-h2">WO-24806</h2>
+          <button class="fl-btn fl-btn--ghost">Close</button>
+        </div>
+        <div class="fl-page-header__meta">Repair &middot; Heat pump</div>
+        <div class="mk-customer">A. Yilmaz &middot; Vondelstraat 88, Utrecht &middot; <span class="mk-nowrap">06 4172 3390</span></div>
+        <div class="mk-gap"><span class="fl-badge fl-badge--warning">Waiting for parts</span></div>
+        
+        
+        <section class="mk-block" aria-label="Parts order">
+          <div class="mk-titlerow">
+            <h3 class="mk-h3">Parts order PL-558213</h3>
+            <span class="fl-page-header__meta">Updated 09:42</span>
+          </div>
+          
+          <p class="mk-summary">All 3 parts delivered. Last delivery Thu 22 Oct.</p>
+          
+          <div class="fl-table-wrap">
+            <table class="fl-table" aria-label="Parts of order PL-558213">
+              <thead><tr><th scope="col">Part</th><th scope="col">Supplier status and date</th></tr></thead>
+              <tbody>
+                <tr><td>Expansion valve EEV-24</td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Thu 22 Oct</span></td></tr>
+<tr><td>Fan motor 230 V</td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Thu 22 Oct</span></td></tr>
+<tr><td>Gasket set <span class="mk-muted mk-nowrap">&times;2</span></td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Wed 21 Oct</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="fl-hint">Changes in PartsLink can take up to 4 hours to show here.</p>
+          
+        </section>
+        <section class="mk-block mk-form" aria-label="Plan next visit">
+          <h3 class="mk-h3">Plan next visit</h3>
+          <div class="fl-alert fl-alert--danger mk-gap" role="alert">
+            <div><strong>2 fields need a value:</strong> <a class="fl-btn fl-btn--ghost mk-link" href="#">Slot</a> <a class="fl-btn fl-btn--ghost mk-link" href="#">Technician</a></div>
+          </div>
+          <div class="fl-field">
+            <label class="fl-label" for="date-9">Date</label>
+            <div class="mk-inline">
+              <input class="fl-input mk-grow" id="date-9" type="text" value="Mon 26 Oct 2026">
+              <button class="fl-btn" type="button">Open calendar</button>
+            </div>
+            <p class="fl-hint">All parts delivered on Thu 22 Oct.</p>
+          </div>
+          <fieldset class="fl-radio-group">
+            <legend>Slot</legend>
+            <div class="fl-radio-group__options">
+              <label><input type="radio" name="slot-9" value="morning"> Morning 08:00 to 12:00</label>
+              <label><input type="radio" name="slot-9" value="afternoon"> Afternoon 12:30 to 17:00</label>
+            </div>
+            <p class="fl-error-text" id="slot-err-9">Select a slot.</p>
+          </fieldset>
+          <div class="fl-field fl-field--error">
+            <label class="fl-label" for="tech-9">Technician</label>
+            <select class="fl-select" id="tech-9"><option selected value="">Select a technician</option><option value="visser">S. Visser, 1 of 2 places free</option><option value="hendriks">R. Hendriks, 2 of 2 places free</option><option value="bos" disabled>K. Bos, full</option></select>
+            <p class="fl-error-text" id="tech-err-9">Select a technician.</p>
+            
+            <p class="fl-hint">Region Central, heat pump skill. Max 2 visits per slot. 3 technicians without the heat pump skill are not shown.</p>
+          </div>
+          
+          <p class="mk-summary">WO-24806 changes to Planned. You can undo for 8 seconds.</p>
+          <div class="mk-inline">
+            <button class="fl-btn fl-btn--primary">Plan visit</button>
+            <button class="fl-btn fl-btn--ghost">Cancel</button>
+          </div>
+        </section>
+        
+      </aside></div>
+      
+    </main>
+  </div>
+</section>
+
+<section data-screen="work-orders" data-state="success" class="mk-frame">
+  <h2 class="mk-frame__title">State: success. The visit is planned, undo for 8 seconds</h2>
+  <div class="fl-shell mk-shell">
+    <nav class="fl-nav" aria-label="Main">
+      <div class="fl-nav__brand">Fieldline</div>
+      <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+      <a class="fl-nav__item" href="#">Planning board</a>
+      <a class="fl-nav__item" href="#">Technicians</a>
+      <a class="fl-nav__item" href="#">Parts</a>
+      <a class="fl-nav__item" href="#">Customers</a>
+    </nav>
+    <main class="fl-main">
+      
+      <header class="fl-page-header">
+        <div>
+          <h1>Work orders</h1>
+          <div class="fl-page-header__meta">Region Central &middot; Updated 09:42</div>
+        </div>
+        <div class="fl-page-header__actions">
+          <button class="fl-btn">Export</button>
+          <button class="fl-btn">New work order</button>
+        </div>
+      </header>
+      <div class="fl-toolbar" role="group" aria-label="Filters">
+        <button class="fl-chip" aria-pressed="false">All open</button>
+        <button class="fl-chip" aria-pressed="false">Unplanned</button>
+        <button class="fl-chip" aria-pressed="true">Waiting for parts</button>
+        
+        <button class="fl-chip" aria-pressed="false">Repairs</button>
+        <span class="fl-result-count">5 work orders</span>
+      </div>
+      <div class="mk-split"><div class="fl-table-wrap">
+          <table class="fl-table">
+            <thead><tr><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer</th><th scope="col">Status</th><th scope="col">Technician</th><th scope="col" class="fl-num">Due</th></tr></thead>
+            <tbody>
+              <tr aria-selected="true"><td>WO-24806</td><td>Repair</td><td>A. Yilmaz</td><td><span class="fl-badge fl-badge--info">Planned</span></td><td>S. Visser</td><td class="fl-num">23 Oct</td></tr>
+<tr><td>WO-24794</td><td>Repair</td><td>Fam. de Wit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">21 Oct</td></tr>
+<tr><td>WO-24781</td><td>Installation</td><td>Huisartsenpraktijk Overvecht</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>K. Bos</td><td class="fl-num">28 Oct</td></tr>
+<tr><td>WO-24769</td><td>Repair</td><td>P. Ramdin</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">20 Oct</td></tr>
+<tr><td>WO-24753</td><td>Maintenance</td><td>Bakkerij Smit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">30 Oct</td></tr>
+            </tbody>
+          </table>
+        </div><aside class="fl-sidepanel mk-panel" aria-label="Work order WO-24806">
+        <div class="mk-panel__head">
+          <h2 class="mk-h2">WO-24806</h2>
+          <button class="fl-btn fl-btn--ghost">Close</button>
+        </div>
+        <div class="fl-page-header__meta">Repair &middot; Heat pump</div>
+        <div class="mk-customer">A. Yilmaz &middot; Vondelstraat 88, Utrecht &middot; <span class="mk-nowrap">06 4172 3390</span></div>
+        <div class="mk-gap"><span class="fl-badge fl-badge--info">Planned</span></div>
+        <p class="mk-summary" tabindex="-1">Next visit: Mon 26 Oct, morning, S. Visser</p>
+        
+        <section class="mk-block" aria-label="Parts order">
+          <div class="mk-titlerow">
+            <h3 class="mk-h3">Parts order PL-558213</h3>
+            <span class="fl-page-header__meta">Updated 09:42</span>
+          </div>
+          
+          <p class="mk-summary">All 3 parts delivered. Last delivery Thu 22 Oct.</p>
+          
+          <div class="fl-table-wrap">
+            <table class="fl-table" aria-label="Parts of order PL-558213">
+              <thead><tr><th scope="col">Part</th><th scope="col">Supplier status and date</th></tr></thead>
+              <tbody>
+                <tr><td>Expansion valve EEV-24</td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Thu 22 Oct</span></td></tr>
+<tr><td>Fan motor 230 V</td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Thu 22 Oct</span></td></tr>
+<tr><td>Gasket set <span class="mk-muted mk-nowrap">&times;2</span></td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Wed 21 Oct</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="fl-hint">Changes in PartsLink can take up to 4 hours to show here.</p>
+          
+        </section>
+        
+        <section class="mk-block" aria-label="Status history">
+          <h3 class="mk-h3">Status history from PartsLink</h3>
+          <ol class="fl-timeline"><li class="fl-timeline__item"><div class="fl-timeline__time">Thu 22 Oct 15:20</div>Delivered: Expansion valve EEV-24, Fan motor 230 V</li><li class="fl-timeline__item"><div class="fl-timeline__time">Wed 21 Oct 11:05</div>Delivered: Gasket set</li><li class="fl-timeline__item"><div class="fl-timeline__time">Tue 20 Oct 09:30</div>Shipped: all parts</li><li class="fl-timeline__item"><div class="fl-timeline__time">Mon 19 Oct 13:48</div>Confirmed: all parts, expected Thu 22 Oct</li><li class="fl-timeline__item"><div class="fl-timeline__time">Mon 19 Oct 10:12</div>Ordered by M. Kuipers</li></ol>
+        </section>
+      </aside></div>
+      <div class="fl-toast" role="status">Visit planned: Mon 26 Oct, morning, S. Visser. <button class="fl-btn fl-btn--ghost mk-toast-btn">Undo</button></div>
+    </main>
+  </div>
+</section>
+
+<section data-screen="work-orders" data-state="error-save" class="mk-frame">
+  <h2 class="mk-frame__title">State: error-save. The save failed, the choices are kept</h2>
+  <div class="fl-shell mk-shell">
+    <nav class="fl-nav" aria-label="Main">
+      <div class="fl-nav__brand">Fieldline</div>
+      <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+      <a class="fl-nav__item" href="#">Planning board</a>
+      <a class="fl-nav__item" href="#">Technicians</a>
+      <a class="fl-nav__item" href="#">Parts</a>
+      <a class="fl-nav__item" href="#">Customers</a>
+    </nav>
+    <main class="fl-main">
+      
+      <header class="fl-page-header">
+        <div>
+          <h1>Work orders</h1>
+          <div class="fl-page-header__meta">Region Central &middot; Updated 09:42</div>
+        </div>
+        <div class="fl-page-header__actions">
+          <button class="fl-btn">Export</button>
+          <button class="fl-btn">New work order</button>
+        </div>
+      </header>
+      <div class="fl-toolbar" role="group" aria-label="Filters">
+        <button class="fl-chip" aria-pressed="false">All open</button>
+        <button class="fl-chip" aria-pressed="false">Unplanned</button>
+        <button class="fl-chip" aria-pressed="true">Waiting for parts</button>
+        
+        <button class="fl-chip" aria-pressed="false">Repairs</button>
+        <span class="fl-result-count">5 work orders</span>
+      </div>
+      <div class="mk-split"><div class="fl-table-wrap">
+          <table class="fl-table">
+            <thead><tr><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer</th><th scope="col">Status</th><th scope="col">Technician</th><th scope="col" class="fl-num">Due</th></tr></thead>
+            <tbody>
+              <tr aria-selected="true"><td>WO-24806</td><td>Repair</td><td>A. Yilmaz</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">23 Oct</td></tr>
+<tr><td>WO-24794</td><td>Repair</td><td>Fam. de Wit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">21 Oct</td></tr>
+<tr><td>WO-24781</td><td>Installation</td><td>Huisartsenpraktijk Overvecht</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>K. Bos</td><td class="fl-num">28 Oct</td></tr>
+<tr><td>WO-24769</td><td>Repair</td><td>P. Ramdin</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">20 Oct</td></tr>
+<tr><td>WO-24753</td><td>Maintenance</td><td>Bakkerij Smit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">30 Oct</td></tr>
+            </tbody>
+          </table>
+        </div><aside class="fl-sidepanel mk-panel" aria-label="Work order WO-24806">
+        <div class="mk-panel__head">
+          <h2 class="mk-h2">WO-24806</h2>
+          <button class="fl-btn fl-btn--ghost">Close</button>
+        </div>
+        <div class="fl-page-header__meta">Repair &middot; Heat pump</div>
+        <div class="mk-customer">A. Yilmaz &middot; Vondelstraat 88, Utrecht &middot; <span class="mk-nowrap">06 4172 3390</span></div>
+        <div class="mk-gap"><span class="fl-badge fl-badge--warning">Waiting for parts</span></div>
+        
+        
+        <section class="mk-block" aria-label="Parts order">
+          <div class="mk-titlerow">
+            <h3 class="mk-h3">Parts order PL-558213</h3>
+            <span class="fl-page-header__meta">Updated 09:42</span>
+          </div>
+          
+          <p class="mk-summary">All 3 parts delivered. Last delivery Thu 22 Oct.</p>
+          
+          <div class="fl-table-wrap">
+            <table class="fl-table" aria-label="Parts of order PL-558213">
+              <thead><tr><th scope="col">Part</th><th scope="col">Supplier status and date</th></tr></thead>
+              <tbody>
+                <tr><td>Expansion valve EEV-24</td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Thu 22 Oct</span></td></tr>
+<tr><td>Fan motor 230 V</td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Thu 22 Oct</span></td></tr>
+<tr><td>Gasket set <span class="mk-muted mk-nowrap">&times;2</span></td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Wed 21 Oct</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="fl-hint">Changes in PartsLink can take up to 4 hours to show here.</p>
+          
+        </section>
+        <section class="mk-block mk-form" aria-label="Plan next visit">
+          <h3 class="mk-h3">Plan next visit</h3>
+          
+          <div class="fl-field">
+            <label class="fl-label" for="date-11">Date</label>
+            <div class="mk-inline">
+              <input class="fl-input mk-grow" id="date-11" type="text" value="Mon 26 Oct 2026">
+              <button class="fl-btn" type="button">Open calendar</button>
+            </div>
+            <p class="fl-hint">All parts delivered on Thu 22 Oct.</p>
+          </div>
+          <fieldset class="fl-radio-group">
+            <legend>Slot</legend>
+            <div class="fl-radio-group__options">
+              <label><input type="radio" name="slot-11" value="morning" checked> Morning 08:00 to 12:00</label>
+              <label><input type="radio" name="slot-11" value="afternoon"> Afternoon 12:30 to 17:00</label>
+            </div>
+            
+          </fieldset>
+          <div class="fl-field">
+            <label class="fl-label" for="tech-11">Technician</label>
+            <select class="fl-select" id="tech-11"><option value="">Select a technician</option><option value="visser" selected>S. Visser, 1 of 2 places free</option><option value="hendriks">R. Hendriks, 2 of 2 places free</option><option value="bos" disabled>K. Bos, full</option></select>
+            
+            
+            <p class="fl-hint">Region Central, heat pump skill. Max 2 visits per slot. 3 technicians without the heat pump skill are not shown.</p>
+          </div>
+          <div class="fl-alert fl-alert--danger mk-gap" role="alert">
+            <div><strong>The visit was not planned.</strong> The server did not answer. Your choices are kept. Try again.</div>
+          </div>
+          <p class="mk-summary">WO-24806 changes to Planned. You can undo for 8 seconds.</p>
+          <div class="mk-inline">
+            <button class="fl-btn fl-btn--primary">Plan visit</button>
+            <button class="fl-btn fl-btn--ghost">Cancel</button>
+          </div>
+        </section>
+        
+      </aside></div>
+      
+    </main>
+  </div>
+</section>
+
+<section data-screen="work-orders" data-state="conflict" class="mk-frame">
+  <h2 class="mk-frame__title">State: conflict. Another planner took the last place of the technician</h2>
+  <div class="fl-shell mk-shell">
+    <nav class="fl-nav" aria-label="Main">
+      <div class="fl-nav__brand">Fieldline</div>
+      <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+      <a class="fl-nav__item" href="#">Planning board</a>
+      <a class="fl-nav__item" href="#">Technicians</a>
+      <a class="fl-nav__item" href="#">Parts</a>
+      <a class="fl-nav__item" href="#">Customers</a>
+    </nav>
+    <main class="fl-main">
+      
+      <header class="fl-page-header">
+        <div>
+          <h1>Work orders</h1>
+          <div class="fl-page-header__meta">Region Central &middot; Updated 09:42</div>
+        </div>
+        <div class="fl-page-header__actions">
+          <button class="fl-btn">Export</button>
+          <button class="fl-btn">New work order</button>
+        </div>
+      </header>
+      <div class="fl-toolbar" role="group" aria-label="Filters">
+        <button class="fl-chip" aria-pressed="false">All open</button>
+        <button class="fl-chip" aria-pressed="false">Unplanned</button>
+        <button class="fl-chip" aria-pressed="true">Waiting for parts</button>
+        
+        <button class="fl-chip" aria-pressed="false">Repairs</button>
+        <span class="fl-result-count">5 work orders</span>
+      </div>
+      <div class="mk-split"><div class="fl-table-wrap">
+          <table class="fl-table">
+            <thead><tr><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer</th><th scope="col">Status</th><th scope="col">Technician</th><th scope="col" class="fl-num">Due</th></tr></thead>
+            <tbody>
+              <tr aria-selected="true"><td>WO-24806</td><td>Repair</td><td>A. Yilmaz</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">23 Oct</td></tr>
+<tr><td>WO-24794</td><td>Repair</td><td>Fam. de Wit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">21 Oct</td></tr>
+<tr><td>WO-24781</td><td>Installation</td><td>Huisartsenpraktijk Overvecht</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>K. Bos</td><td class="fl-num">28 Oct</td></tr>
+<tr><td>WO-24769</td><td>Repair</td><td>P. Ramdin</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">20 Oct</td></tr>
+<tr><td>WO-24753</td><td>Maintenance</td><td>Bakkerij Smit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">30 Oct</td></tr>
+            </tbody>
+          </table>
+        </div><aside class="fl-sidepanel mk-panel" aria-label="Work order WO-24806">
+        <div class="mk-panel__head">
+          <h2 class="mk-h2">WO-24806</h2>
+          <button class="fl-btn fl-btn--ghost">Close</button>
+        </div>
+        <div class="fl-page-header__meta">Repair &middot; Heat pump</div>
+        <div class="mk-customer">A. Yilmaz &middot; Vondelstraat 88, Utrecht &middot; <span class="mk-nowrap">06 4172 3390</span></div>
+        <div class="mk-gap"><span class="fl-badge fl-badge--warning">Waiting for parts</span></div>
+        
+        
+        <section class="mk-block" aria-label="Parts order">
+          <div class="mk-titlerow">
+            <h3 class="mk-h3">Parts order PL-558213</h3>
+            <span class="fl-page-header__meta">Updated 09:42</span>
+          </div>
+          
+          <p class="mk-summary">All 3 parts delivered. Last delivery Thu 22 Oct.</p>
+          
+          <div class="fl-table-wrap">
+            <table class="fl-table" aria-label="Parts of order PL-558213">
+              <thead><tr><th scope="col">Part</th><th scope="col">Supplier status and date</th></tr></thead>
+              <tbody>
+                <tr><td>Expansion valve EEV-24</td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Thu 22 Oct</span></td></tr>
+<tr><td>Fan motor 230 V</td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Thu 22 Oct</span></td></tr>
+<tr><td>Gasket set <span class="mk-muted mk-nowrap">&times;2</span></td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Wed 21 Oct</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="fl-hint">Changes in PartsLink can take up to 4 hours to show here.</p>
+          
+        </section>
+        <section class="mk-block mk-form" aria-label="Plan next visit">
+          <h3 class="mk-h3">Plan next visit</h3>
+          
+          <div class="fl-field">
+            <label class="fl-label" for="date-12">Date</label>
+            <div class="mk-inline">
+              <input class="fl-input mk-grow" id="date-12" type="text" value="Mon 26 Oct 2026">
+              <button class="fl-btn" type="button">Open calendar</button>
+            </div>
+            <p class="fl-hint">All parts delivered on Thu 22 Oct.</p>
+          </div>
+          <fieldset class="fl-radio-group">
+            <legend>Slot</legend>
+            <div class="fl-radio-group__options">
+              <label><input type="radio" name="slot-12" value="morning" checked> Morning 08:00 to 12:00</label>
+              <label><input type="radio" name="slot-12" value="afternoon"> Afternoon 12:30 to 17:00</label>
+            </div>
+            
+          </fieldset>
+          <div class="fl-field fl-field--error">
+            <label class="fl-label" for="tech-12">Technician</label>
+            <select class="fl-select" id="tech-12"><option value="">Select a technician</option><option value="visser" selected>S. Visser, full</option><option value="hendriks">R. Hendriks, 2 of 2 places free</option><option value="bos" disabled>K. Bos, full</option></select>
+            <p class="fl-error-text" id="tech-err-12">S. Visser has no free place on Mon 26 Oct, morning, anymore. Another planner planned a visit there at 10:14. Select another technician or slot.</p>
+            
+            <p class="fl-hint">Region Central, heat pump skill. Max 2 visits per slot. 3 technicians without the heat pump skill are not shown.</p>
+          </div>
+          
+          <p class="mk-summary">WO-24806 changes to Planned. You can undo for 8 seconds.</p>
+          <div class="mk-inline">
+            <button class="fl-btn fl-btn--primary">Plan visit</button>
+            <button class="fl-btn fl-btn--ghost">Cancel</button>
+          </div>
+        </section>
+        
+      </aside></div>
+      
+    </main>
+  </div>
+</section>
+
+<section data-screen="work-orders" data-state="error-undo" class="mk-frame">
+  <h2 class="mk-frame__title">State: error-undo. The undo did not work</h2>
+  <div class="fl-shell mk-shell">
+    <nav class="fl-nav" aria-label="Main">
+      <div class="fl-nav__brand">Fieldline</div>
+      <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+      <a class="fl-nav__item" href="#">Planning board</a>
+      <a class="fl-nav__item" href="#">Technicians</a>
+      <a class="fl-nav__item" href="#">Parts</a>
+      <a class="fl-nav__item" href="#">Customers</a>
+    </nav>
+    <main class="fl-main">
+      
+      <header class="fl-page-header">
+        <div>
+          <h1>Work orders</h1>
+          <div class="fl-page-header__meta">Region Central &middot; Updated 09:42</div>
+        </div>
+        <div class="fl-page-header__actions">
+          <button class="fl-btn">Export</button>
+          <button class="fl-btn">New work order</button>
+        </div>
+      </header>
+      <div class="fl-toolbar" role="group" aria-label="Filters">
+        <button class="fl-chip" aria-pressed="false">All open</button>
+        <button class="fl-chip" aria-pressed="false">Unplanned</button>
+        <button class="fl-chip" aria-pressed="true">Waiting for parts</button>
+        
+        <button class="fl-chip" aria-pressed="false">Repairs</button>
+        <span class="fl-result-count">5 work orders</span>
+      </div>
+      <div class="mk-split"><div class="fl-table-wrap">
+          <table class="fl-table">
+            <thead><tr><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer</th><th scope="col">Status</th><th scope="col">Technician</th><th scope="col" class="fl-num">Due</th></tr></thead>
+            <tbody>
+              <tr aria-selected="true"><td>WO-24806</td><td>Repair</td><td>A. Yilmaz</td><td><span class="fl-badge fl-badge--info">Planned</span></td><td>S. Visser</td><td class="fl-num">23 Oct</td></tr>
+<tr><td>WO-24794</td><td>Repair</td><td>Fam. de Wit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">21 Oct</td></tr>
+<tr><td>WO-24781</td><td>Installation</td><td>Huisartsenpraktijk Overvecht</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>K. Bos</td><td class="fl-num">28 Oct</td></tr>
+<tr><td>WO-24769</td><td>Repair</td><td>P. Ramdin</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">20 Oct</td></tr>
+<tr><td>WO-24753</td><td>Maintenance</td><td>Bakkerij Smit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">30 Oct</td></tr>
+            </tbody>
+          </table>
+        </div><aside class="fl-sidepanel mk-panel" aria-label="Work order WO-24806">
+        <div class="mk-panel__head">
+          <h2 class="mk-h2">WO-24806</h2>
+          <button class="fl-btn fl-btn--ghost">Close</button>
+        </div>
+        <div class="fl-page-header__meta">Repair &middot; Heat pump</div>
+        <div class="mk-customer">A. Yilmaz &middot; Vondelstraat 88, Utrecht &middot; <span class="mk-nowrap">06 4172 3390</span></div>
+        <div class="mk-gap"><span class="fl-badge fl-badge--info">Planned</span></div>
+        <p class="mk-summary" tabindex="-1">Next visit: Mon 26 Oct, morning, S. Visser</p>
+        <div class="fl-alert fl-alert--danger mk-gap" role="alert">
+            <div><strong>The undo did not work.</strong> The visit on Mon 26 Oct, morning, with S. Visser is still planned. To remove it, open the planning board.<div class="mk-alert-actions"><a class="fl-btn fl-btn--ghost mk-link" href="#">Open planning board</a></div></div>
+          </div>
+        <section class="mk-block" aria-label="Parts order">
+          <div class="mk-titlerow">
+            <h3 class="mk-h3">Parts order PL-558213</h3>
+            <span class="fl-page-header__meta">Updated 09:42</span>
+          </div>
+          
+          <p class="mk-summary">All 3 parts delivered. Last delivery Thu 22 Oct.</p>
+          
+          <div class="fl-table-wrap">
+            <table class="fl-table" aria-label="Parts of order PL-558213">
+              <thead><tr><th scope="col">Part</th><th scope="col">Supplier status and date</th></tr></thead>
+              <tbody>
+                <tr><td>Expansion valve EEV-24</td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Thu 22 Oct</span></td></tr>
+<tr><td>Fan motor 230 V</td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Thu 22 Oct</span></td></tr>
+<tr><td>Gasket set <span class="mk-muted mk-nowrap">&times;2</span></td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Wed 21 Oct</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="fl-hint">Changes in PartsLink can take up to 4 hours to show here.</p>
+          
+        </section>
+        
+        <section class="mk-block" aria-label="Status history">
+          <h3 class="mk-h3">Status history from PartsLink</h3>
+          <ol class="fl-timeline"><li class="fl-timeline__item"><div class="fl-timeline__time">Thu 22 Oct 15:20</div>Delivered: Expansion valve EEV-24, Fan motor 230 V</li><li class="fl-timeline__item"><div class="fl-timeline__time">Wed 21 Oct 11:05</div>Delivered: Gasket set</li><li class="fl-timeline__item"><div class="fl-timeline__time">Tue 20 Oct 09:30</div>Shipped: all parts</li><li class="fl-timeline__item"><div class="fl-timeline__time">Mon 19 Oct 13:48</div>Confirmed: all parts, expected Thu 22 Oct</li><li class="fl-timeline__item"><div class="fl-timeline__time">Mon 19 Oct 10:12</div>Ordered by M. Kuipers</li></ol>
+        </section>
+      </aside></div>
+      
+    </main>
+  </div>
+</section>
+
+<section data-screen="work-orders" data-state="error-load" class="mk-frame">
+  <h2 class="mk-frame__title">State: error-load. The parts order did not load</h2>
+  <div class="fl-shell mk-shell">
+    <nav class="fl-nav" aria-label="Main">
+      <div class="fl-nav__brand">Fieldline</div>
+      <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+      <a class="fl-nav__item" href="#">Planning board</a>
+      <a class="fl-nav__item" href="#">Technicians</a>
+      <a class="fl-nav__item" href="#">Parts</a>
+      <a class="fl-nav__item" href="#">Customers</a>
+    </nav>
+    <main class="fl-main">
+      
+      <header class="fl-page-header">
+        <div>
+          <h1>Work orders</h1>
+          <div class="fl-page-header__meta">Region Central &middot; Updated 09:42</div>
+        </div>
+        <div class="fl-page-header__actions">
+          <button class="fl-btn">Export</button>
+          <button class="fl-btn">New work order</button>
+        </div>
+      </header>
+      <div class="fl-toolbar" role="group" aria-label="Filters">
+        <button class="fl-chip" aria-pressed="false">All open</button>
+        <button class="fl-chip" aria-pressed="false">Unplanned</button>
+        <button class="fl-chip" aria-pressed="true">Waiting for parts</button>
+        
+        <button class="fl-chip" aria-pressed="false">Repairs</button>
+        <span class="fl-result-count">5 work orders</span>
+      </div>
+      <div class="mk-split"><div class="fl-table-wrap">
+          <table class="fl-table">
+            <thead><tr><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer</th><th scope="col">Status</th><th scope="col">Technician</th><th scope="col" class="fl-num">Due</th></tr></thead>
+            <tbody>
+              <tr aria-selected="true"><td>WO-24806</td><td>Repair</td><td>A. Yilmaz</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">23 Oct</td></tr>
+<tr><td>WO-24794</td><td>Repair</td><td>Fam. de Wit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">21 Oct</td></tr>
+<tr><td>WO-24781</td><td>Installation</td><td>Huisartsenpraktijk Overvecht</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>K. Bos</td><td class="fl-num">28 Oct</td></tr>
+<tr><td>WO-24769</td><td>Repair</td><td>P. Ramdin</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">20 Oct</td></tr>
+<tr><td>WO-24753</td><td>Maintenance</td><td>Bakkerij Smit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">30 Oct</td></tr>
+            </tbody>
+          </table>
+        </div><aside class="fl-sidepanel mk-panel" aria-label="Work order WO-24806">
+        <div class="mk-panel__head">
+          <h2 class="mk-h2">WO-24806</h2>
+          <button class="fl-btn fl-btn--ghost">Close</button>
+        </div>
+        <div class="fl-page-header__meta">Repair &middot; Heat pump</div>
+        <div class="mk-customer">A. Yilmaz &middot; Vondelstraat 88, Utrecht &middot; <span class="mk-nowrap">06 4172 3390</span></div>
+        <div class="mk-gap"><span class="fl-badge fl-badge--warning">Waiting for parts</span></div>
+        
+        
+        <section class="mk-block" aria-label="Parts order">
+          <div class="mk-titlerow">
+            <h3 class="mk-h3">Parts order</h3>
+            
+          </div>
+          <div class="fl-alert fl-alert--danger mk-gap" role="alert">
+            <div><strong>The parts order did not load.</strong> The server did not answer.<div class="mk-alert-actions"><button class="fl-btn">Try again</button></div></div>
+          </div>
+        </section>
+        
+        
+      </aside></div>
+      
+    </main>
+  </div>
+</section>
+
+<section data-screen="work-orders" data-state="empty" class="mk-frame">
+  <h2 class="mk-frame__title">State: empty. No parts order found for the work order</h2>
+  <div class="fl-shell mk-shell">
+    <nav class="fl-nav" aria-label="Main">
+      <div class="fl-nav__brand">Fieldline</div>
+      <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+      <a class="fl-nav__item" href="#">Planning board</a>
+      <a class="fl-nav__item" href="#">Technicians</a>
+      <a class="fl-nav__item" href="#">Parts</a>
+      <a class="fl-nav__item" href="#">Customers</a>
+    </nav>
+    <main class="fl-main">
+      
+      <header class="fl-page-header">
+        <div>
+          <h1>Work orders</h1>
+          <div class="fl-page-header__meta">Region Central &middot; Updated 09:42</div>
+        </div>
+        <div class="fl-page-header__actions">
+          <button class="fl-btn">Export</button>
+          <button class="fl-btn">New work order</button>
+        </div>
+      </header>
+      <div class="fl-toolbar" role="group" aria-label="Filters">
+        <button class="fl-chip" aria-pressed="false">All open</button>
+        <button class="fl-chip" aria-pressed="false">Unplanned</button>
+        <button class="fl-chip" aria-pressed="true">Waiting for parts</button>
+        
+        <button class="fl-chip" aria-pressed="false">Repairs</button>
+        <span class="fl-result-count">5 work orders</span>
+      </div>
+      <div class="mk-split"><div class="fl-table-wrap">
+          <table class="fl-table">
+            <thead><tr><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer</th><th scope="col">Status</th><th scope="col">Technician</th><th scope="col" class="fl-num">Due</th></tr></thead>
+            <tbody>
+              <tr aria-selected="true"><td>WO-24806</td><td>Repair</td><td>A. Yilmaz</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">23 Oct</td></tr>
+<tr><td>WO-24794</td><td>Repair</td><td>Fam. de Wit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">21 Oct</td></tr>
+<tr><td>WO-24781</td><td>Installation</td><td>Huisartsenpraktijk Overvecht</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>K. Bos</td><td class="fl-num">28 Oct</td></tr>
+<tr><td>WO-24769</td><td>Repair</td><td>P. Ramdin</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">20 Oct</td></tr>
+<tr><td>WO-24753</td><td>Maintenance</td><td>Bakkerij Smit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">30 Oct</td></tr>
+            </tbody>
+          </table>
+        </div><aside class="fl-sidepanel mk-panel" aria-label="Work order WO-24806">
+        <div class="mk-panel__head">
+          <h2 class="mk-h2">WO-24806</h2>
+          <button class="fl-btn fl-btn--ghost">Close</button>
+        </div>
+        <div class="fl-page-header__meta">Repair &middot; Heat pump</div>
+        <div class="mk-customer">A. Yilmaz &middot; Vondelstraat 88, Utrecht &middot; <span class="mk-nowrap">06 4172 3390</span></div>
+        <div class="mk-gap"><span class="fl-badge fl-badge--warning">Waiting for parts</span></div>
+        
+        
+        <section class="mk-block" aria-label="Parts order">
+          <div class="mk-titlerow">
+            <h3 class="mk-h3">Parts order</h3>
+            
+          </div>
+          <div class="fl-empty">
+            <p class="fl-empty__title">No parts order found</p>
+            <p>PartsLink has no order for WO-24806. Check in PartsLink that the order has the work order number.</p>
+            <a class="fl-btn fl-btn--ghost mk-link" href="#">Open PartsLink</a>
+          </div>
+        </section>
+        
+        
+      </aside></div>
+      
+    </main>
+  </div>
+</section>
+
+<section data-screen="work-orders" data-state="loading" class="mk-frame">
+  <h2 class="mk-frame__title">State: loading. The parts order loads</h2>
+  <div class="fl-shell mk-shell">
+    <nav class="fl-nav" aria-label="Main">
+      <div class="fl-nav__brand">Fieldline</div>
+      <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+      <a class="fl-nav__item" href="#">Planning board</a>
+      <a class="fl-nav__item" href="#">Technicians</a>
+      <a class="fl-nav__item" href="#">Parts</a>
+      <a class="fl-nav__item" href="#">Customers</a>
+    </nav>
+    <main class="fl-main">
+      
+      <header class="fl-page-header">
+        <div>
+          <h1>Work orders</h1>
+          <div class="fl-page-header__meta">Region Central &middot; Updated 09:42</div>
+        </div>
+        <div class="fl-page-header__actions">
+          <button class="fl-btn">Export</button>
+          <button class="fl-btn">New work order</button>
+        </div>
+      </header>
+      <div class="fl-toolbar" role="group" aria-label="Filters">
+        <button class="fl-chip" aria-pressed="false">All open</button>
+        <button class="fl-chip" aria-pressed="false">Unplanned</button>
+        <button class="fl-chip" aria-pressed="true">Waiting for parts</button>
+        
+        <button class="fl-chip" aria-pressed="false">Repairs</button>
+        <span class="fl-result-count">5 work orders</span>
+      </div>
+      <div class="mk-split"><div class="fl-table-wrap">
+          <table class="fl-table">
+            <thead><tr><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer</th><th scope="col">Status</th><th scope="col">Technician</th><th scope="col" class="fl-num">Due</th></tr></thead>
+            <tbody>
+              <tr aria-selected="true"><td>WO-24806</td><td>Repair</td><td>A. Yilmaz</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">23 Oct</td></tr>
+<tr><td>WO-24794</td><td>Repair</td><td>Fam. de Wit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">21 Oct</td></tr>
+<tr><td>WO-24781</td><td>Installation</td><td>Huisartsenpraktijk Overvecht</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>K. Bos</td><td class="fl-num">28 Oct</td></tr>
+<tr><td>WO-24769</td><td>Repair</td><td>P. Ramdin</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">20 Oct</td></tr>
+<tr><td>WO-24753</td><td>Maintenance</td><td>Bakkerij Smit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">30 Oct</td></tr>
+            </tbody>
+          </table>
+        </div><aside class="fl-sidepanel mk-panel" aria-label="Work order WO-24806">
+        <div class="mk-panel__head">
+          <h2 class="mk-h2">WO-24806</h2>
+          <button class="fl-btn fl-btn--ghost">Close</button>
+        </div>
+        <div class="fl-page-header__meta">Repair &middot; Heat pump</div>
+        <div class="mk-customer">A. Yilmaz &middot; Vondelstraat 88, Utrecht &middot; <span class="mk-nowrap">06 4172 3390</span></div>
+        <div class="mk-gap"><span class="fl-badge fl-badge--warning">Waiting for parts</span></div>
+        
+        
+        <section class="mk-block" aria-label="Parts order">
+          <div class="mk-titlerow">
+            <h3 class="mk-h3">Parts order</h3>
+            
+          </div>
+          <div aria-busy="true" aria-label="Loading the parts order"><div class="fl-skeleton mk-skel"></div><div class="fl-skeleton mk-skel"></div><div class="fl-skeleton mk-skel"></div><div class="fl-skeleton mk-skel"></div></div>
+        </section>
+        
+        
+      </aside></div>
+      
+    </main>
+  </div>
+</section>
+
+<section data-screen="work-orders" data-state="overflow" class="mk-frame">
+  <h2 class="mk-frame__title">State: overflow. 6 parts, long names, a long customer name, a late part</h2>
+  <div class="fl-shell mk-shell">
+    <nav class="fl-nav" aria-label="Main">
+      <div class="fl-nav__brand">Fieldline</div>
+      <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+      <a class="fl-nav__item" href="#">Planning board</a>
+      <a class="fl-nav__item" href="#">Technicians</a>
+      <a class="fl-nav__item" href="#">Parts</a>
+      <a class="fl-nav__item" href="#">Customers</a>
+    </nav>
+    <main class="fl-main">
+      
+      <header class="fl-page-header">
+        <div>
+          <h1>Work orders</h1>
+          <div class="fl-page-header__meta">Region Central &middot; Updated 09:42</div>
+        </div>
+        <div class="fl-page-header__actions">
+          <button class="fl-btn">Export</button>
+          <button class="fl-btn">New work order</button>
+        </div>
+      </header>
+      <div class="fl-toolbar" role="group" aria-label="Filters">
+        <button class="fl-chip" aria-pressed="false">All open</button>
+        <button class="fl-chip" aria-pressed="false">Unplanned</button>
+        <button class="fl-chip" aria-pressed="true">Waiting for parts</button>
+        
+        <button class="fl-chip" aria-pressed="false">Repairs</button>
+        <span class="fl-result-count">5 work orders</span>
+      </div>
+      <div class="mk-split"><div class="fl-table-wrap">
+          <table class="fl-table">
+            <thead><tr><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer</th><th scope="col">Status</th><th scope="col">Technician</th><th scope="col" class="fl-num">Due</th></tr></thead>
+            <tbody>
+              <tr aria-selected="true"><td>WO-24806</td><td>Repair</td><td>A. Yilmaz</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">23 Oct</td></tr>
+<tr><td>WO-24794</td><td>Repair</td><td>Fam. de Wit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">21 Oct</td></tr>
+<tr><td>WO-24781</td><td>Installation</td><td>Huisartsenpraktijk Overvecht</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>K. Bos</td><td class="fl-num">28 Oct</td></tr>
+<tr><td>WO-24769</td><td>Repair</td><td>P. Ramdin</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">20 Oct</td></tr>
+<tr><td>WO-24753</td><td>Maintenance</td><td>Bakkerij Smit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">30 Oct</td></tr>
+            </tbody>
+          </table>
+        </div><aside class="fl-sidepanel mk-panel" aria-label="Work order WO-24806">
+        <div class="mk-panel__head">
+          <h2 class="mk-h2">WO-24806</h2>
+          <button class="fl-btn fl-btn--ghost">Close</button>
+        </div>
+        <div class="fl-page-header__meta">Repair &middot; Heat pump</div>
+        <div class="mk-customer">Vereniging van Eigenaren Rijnhaven Kade-Noord &middot; Vondelstraat 88, Utrecht &middot; <span class="mk-nowrap">06 4172 3390</span></div>
+        <div class="mk-gap"><span class="fl-badge fl-badge--warning">Waiting for parts</span></div>
+        
+        
+        <section class="mk-block" aria-label="Parts order">
+          <div class="mk-titlerow">
+            <h3 class="mk-h3">Parts order PL-558213</h3>
+            <span class="fl-page-header__meta">Updated 09:42</span>
+          </div>
+          <div class="fl-alert fl-alert--warning mk-gap" role="status">
+            <div><strong>1 part is late.</strong> Fan motor 230 V, 120 W, with mounting bracket and cable set: expected Wed 21 Oct, not delivered. Tell the customer that the date is not known.</div>
+          </div>
+          <p class="mk-summary">3 of 6 parts delivered. 1 part is late. 1 part has no date yet.</p>
+          
+          <div class="fl-table-wrap">
+            <table class="fl-table" aria-label="Parts of order PL-558213">
+              <thead><tr><th scope="col">Part</th><th scope="col">Supplier status and date</th></tr></thead>
+              <tbody>
+                <tr><td>Expansion valve electronic EEV-24 for Daikin Altherma 3 H HT 16 kW</td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Thu 22 Oct</span></td></tr>
+<tr><td>Fan motor 230 V, 120 W, with mounting bracket and cable set</td><td class="mk-status"><span class="fl-badge fl-badge--info">Shipped</span><span class="mk-date"><span class="mk-late">Late since Wed 21 Oct</span></span></td></tr>
+<tr><td>Gasket set <span class="mk-muted mk-nowrap">&times;2</span></td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Wed 21 Oct</span></td></tr>
+<tr><td>Pressure sensor high side 0 to 45 bar</td><td class="mk-status"><span class="fl-badge fl-badge--info">Confirmed</span><span class="mk-date">Expected Mon 26 Oct</span></td></tr>
+<tr><td>Refrigerant R32, cylinder 9 kg</td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Tue 20 Oct</span></td></tr>
+<tr><td>Control board PCB main unit, revision C</td><td class="mk-status"><span class="fl-badge fl-badge--neutral">Ordered</span><span class="mk-date">No date yet</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="fl-hint">Changes in PartsLink can take up to 4 hours to show here.</p>
+          <div class="mk-action">
+            <button class="fl-btn fl-btn--primary" disabled aria-describedby="why-17">Plan next visit</button>
+            <p class="fl-hint mk-reason" id="why-17">You can plan when all parts are delivered. Not delivered: 3 parts.</p>
+          </div>
+        </section>
+        
+        <section class="mk-block" aria-label="Status history">
+          <h3 class="mk-h3">Status history from PartsLink</h3>
+          <ol class="fl-timeline"><li class="fl-timeline__item"><div class="fl-timeline__time">Fri 23 Oct 08:05</div>Shipped: Expansion valve EEV-24</li><li class="fl-timeline__item"><div class="fl-timeline__time">Tue 20 Oct 14:02</div>Confirmed: Expansion valve EEV-24, Fan motor 230 V</li><li class="fl-timeline__item"><div class="fl-timeline__time">Mon 19 Oct 10:12</div>Ordered by M. Kuipers</li></ol>
+        </section>
+      </aside></div>
+      
+    </main>
+  </div>
+</section>
+
+<section data-screen="work-orders" data-state="offline" class="mk-frame">
+  <h2 class="mk-frame__title">State: offline. The connection is lost</h2>
+  <div class="fl-shell mk-shell">
+    <nav class="fl-nav" aria-label="Main">
+      <div class="fl-nav__brand">Fieldline</div>
+      <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+      <a class="fl-nav__item" href="#">Planning board</a>
+      <a class="fl-nav__item" href="#">Technicians</a>
+      <a class="fl-nav__item" href="#">Parts</a>
+      <a class="fl-nav__item" href="#">Customers</a>
+    </nav>
+    <main class="fl-main">
+      <div class="mk-topalert"><div class="fl-alert fl-alert--warning mk-gap" role="status">
+            <div><strong>No connection.</strong> You see the data of 10:02. You cannot plan until the connection is back.</div>
+          </div></div>
+      <header class="fl-page-header">
+        <div>
+          <h1>Work orders</h1>
+          <div class="fl-page-header__meta">Region Central &middot; Updated 09:42</div>
+        </div>
+        <div class="fl-page-header__actions">
+          <button class="fl-btn">Export</button>
+          <button class="fl-btn">New work order</button>
+        </div>
+      </header>
+      <div class="fl-toolbar" role="group" aria-label="Filters">
+        <button class="fl-chip" aria-pressed="false">All open</button>
+        <button class="fl-chip" aria-pressed="false">Unplanned</button>
+        <button class="fl-chip" aria-pressed="true">Waiting for parts</button>
+        
+        <button class="fl-chip" aria-pressed="false">Repairs</button>
+        <span class="fl-result-count">5 work orders</span>
+      </div>
+      <div class="mk-split"><div class="fl-table-wrap">
+          <table class="fl-table">
+            <thead><tr><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer</th><th scope="col">Status</th><th scope="col">Technician</th><th scope="col" class="fl-num">Due</th></tr></thead>
+            <tbody>
+              <tr aria-selected="true"><td>WO-24806</td><td>Repair</td><td>A. Yilmaz</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">23 Oct</td></tr>
+<tr><td>WO-24794</td><td>Repair</td><td>Fam. de Wit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">21 Oct</td></tr>
+<tr><td>WO-24781</td><td>Installation</td><td>Huisartsenpraktijk Overvecht</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>K. Bos</td><td class="fl-num">28 Oct</td></tr>
+<tr><td>WO-24769</td><td>Repair</td><td>P. Ramdin</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">20 Oct</td></tr>
+<tr><td>WO-24753</td><td>Maintenance</td><td>Bakkerij Smit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">30 Oct</td></tr>
+            </tbody>
+          </table>
+        </div><aside class="fl-sidepanel mk-panel" aria-label="Work order WO-24806">
+        <div class="mk-panel__head">
+          <h2 class="mk-h2">WO-24806</h2>
+          <button class="fl-btn fl-btn--ghost">Close</button>
+        </div>
+        <div class="fl-page-header__meta">Repair &middot; Heat pump</div>
+        <div class="mk-customer">A. Yilmaz &middot; Vondelstraat 88, Utrecht &middot; <span class="mk-nowrap">06 4172 3390</span></div>
+        <div class="mk-gap"><span class="fl-badge fl-badge--warning">Waiting for parts</span></div>
+        
+        
+        <section class="mk-block" aria-label="Parts order">
+          <div class="mk-titlerow">
+            <h3 class="mk-h3">Parts order PL-558213</h3>
+            <span class="fl-page-header__meta">Updated 09:42</span>
+          </div>
+          
+          <p class="mk-summary">All 3 parts delivered. Last delivery Thu 22 Oct.</p>
+          
+          <div class="fl-table-wrap">
+            <table class="fl-table" aria-label="Parts of order PL-558213">
+              <thead><tr><th scope="col">Part</th><th scope="col">Supplier status and date</th></tr></thead>
+              <tbody>
+                <tr><td>Expansion valve EEV-24</td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Thu 22 Oct</span></td></tr>
+<tr><td>Fan motor 230 V</td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Thu 22 Oct</span></td></tr>
+<tr><td>Gasket set <span class="mk-muted mk-nowrap">&times;2</span></td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Wed 21 Oct</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="fl-hint">Changes in PartsLink can take up to 4 hours to show here.</p>
+          <div class="mk-action">
+            <button class="fl-btn fl-btn--primary" disabled aria-describedby="why-18">Plan next visit</button>
+            <p class="fl-hint mk-reason" id="why-18">No connection. You cannot plan until the connection is back.</p>
+          </div>
+        </section>
+        
+        <section class="mk-block" aria-label="Status history">
+          <h3 class="mk-h3">Status history from PartsLink</h3>
+          <ol class="fl-timeline"><li class="fl-timeline__item"><div class="fl-timeline__time">Thu 22 Oct 15:20</div>Delivered: Expansion valve EEV-24, Fan motor 230 V</li><li class="fl-timeline__item"><div class="fl-timeline__time">Wed 21 Oct 11:05</div>Delivered: Gasket set</li><li class="fl-timeline__item"><div class="fl-timeline__time">Tue 20 Oct 09:30</div>Shipped: all parts</li><li class="fl-timeline__item"><div class="fl-timeline__time">Mon 19 Oct 13:48</div>Confirmed: all parts, expected Thu 22 Oct</li><li class="fl-timeline__item"><div class="fl-timeline__time">Mon 19 Oct 10:12</div>Ordered by M. Kuipers</li></ol>
+        </section>
+      </aside></div>
+      
+    </main>
+  </div>
+</section>
+
+<section data-screen="work-orders" data-state="proposed-op-1" class="mk-frame">
+  <h2 class="mk-frame__title">State: proposed-op-1. OP-1: Parts column and Parts delivered filter in the list (UXD-010)</h2>
+  <div class="fl-shell mk-shell">
+    <nav class="fl-nav" aria-label="Main">
+      <div class="fl-nav__brand">Fieldline</div>
+      <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+      <a class="fl-nav__item" href="#">Planning board</a>
+      <a class="fl-nav__item" href="#">Technicians</a>
+      <a class="fl-nav__item" href="#">Parts</a>
+      <a class="fl-nav__item" href="#">Customers</a>
+    </nav>
+    <main class="fl-main">
+      
+      <header class="fl-page-header">
+        <div>
+          <h1>Work orders</h1>
+          <div class="fl-page-header__meta">Region Central &middot; Updated 09:42</div>
+        </div>
+        <div class="fl-page-header__actions">
+          <button class="fl-btn">Export</button>
+          <button class="fl-btn fl-btn--primary">New work order</button>
+        </div>
+      </header>
+      <div class="fl-toolbar" role="group" aria-label="Filters">
+        <button class="fl-chip" aria-pressed="false">All open</button>
+        <button class="fl-chip" aria-pressed="false">Unplanned</button>
+        <button class="fl-chip" aria-pressed="true">Waiting for parts</button>
+        <button class="fl-chip" aria-pressed="false">Parts delivered</button> <span class="fl-badge fl-badge--neutral" data-proposed>Proposed</span>
+        <button class="fl-chip" aria-pressed="false">Repairs</button>
+        <span class="fl-result-count">5 work orders</span>
+      </div>
+      <div class="fl-table-wrap">
+          <table class="fl-table">
+            <thead><tr><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer</th><th scope="col">Address</th><th scope="col">Status</th><th scope="col">Parts <span class="fl-badge fl-badge--neutral" data-proposed>Proposed</span></th><th scope="col">Technician</th><th scope="col" class="fl-num">Due</th></tr></thead>
+            <tbody>
+              <tr><td>WO-24806</td><td>Repair</td><td>A. Yilmaz</td><td>Vondelstraat 88, Utrecht</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td><span class="mk-late">Late since Wed 21 Oct</span></td><td>S. Visser</td><td class="fl-num">23 Oct</td></tr>
+<tr><td>WO-24794</td><td>Repair</td><td>Fam. de Wit</td><td>Kerkstraat 2, Houten</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td><span class="fl-badge fl-badge--success">All delivered</span></td><td>R. Hendriks</td><td class="fl-num">21 Oct</td></tr>
+<tr><td>WO-24781</td><td>Installation</td><td>Huisartsenpraktijk Overvecht</td><td>Zamenhofdreef 61, Utrecht</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>Expected Thu 29 Oct</td><td>K. Bos</td><td class="fl-num">28 Oct</td></tr>
+<tr><td>WO-24769</td><td>Repair</td><td>P. Ramdin</td><td>Laan van Vollenhove 3021, Zeist</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td><span class="fl-badge fl-badge--danger">1 cancelled</span></td><td>S. Visser</td><td class="fl-num">20 Oct</td></tr>
+<tr><td>WO-24753</td><td>Maintenance</td><td>Bakkerij Smit</td><td>Markt 3, Nijkerk</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>Expected Mon 26 Oct</td><td>R. Hendriks</td><td class="fl-num">30 Oct</td></tr>
+            </tbody>
+          </table>
+        </div>
+      
+    </main>
+  </div>
+</section>
+
+<section data-screen="work-orders" data-state="proposed-op-2" class="mk-frame">
+  <h2 class="mk-frame__title">State: proposed-op-2. OP-2: the technician of the first visit is preselected (UXD-011)</h2>
+  <div class="fl-shell mk-shell">
+    <nav class="fl-nav" aria-label="Main">
+      <div class="fl-nav__brand">Fieldline</div>
+      <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+      <a class="fl-nav__item" href="#">Planning board</a>
+      <a class="fl-nav__item" href="#">Technicians</a>
+      <a class="fl-nav__item" href="#">Parts</a>
+      <a class="fl-nav__item" href="#">Customers</a>
+    </nav>
+    <main class="fl-main">
+      
+      <header class="fl-page-header">
+        <div>
+          <h1>Work orders</h1>
+          <div class="fl-page-header__meta">Region Central &middot; Updated 09:42</div>
+        </div>
+        <div class="fl-page-header__actions">
+          <button class="fl-btn">Export</button>
+          <button class="fl-btn">New work order</button>
+        </div>
+      </header>
+      <div class="fl-toolbar" role="group" aria-label="Filters">
+        <button class="fl-chip" aria-pressed="false">All open</button>
+        <button class="fl-chip" aria-pressed="false">Unplanned</button>
+        <button class="fl-chip" aria-pressed="true">Waiting for parts</button>
+        
+        <button class="fl-chip" aria-pressed="false">Repairs</button>
+        <span class="fl-result-count">5 work orders</span>
+      </div>
+      <div class="mk-split"><div class="fl-table-wrap">
+          <table class="fl-table">
+            <thead><tr><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer</th><th scope="col">Status</th><th scope="col">Technician</th><th scope="col" class="fl-num">Due</th></tr></thead>
+            <tbody>
+              <tr aria-selected="true"><td>WO-24806</td><td>Repair</td><td>A. Yilmaz</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">23 Oct</td></tr>
+<tr><td>WO-24794</td><td>Repair</td><td>Fam. de Wit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">21 Oct</td></tr>
+<tr><td>WO-24781</td><td>Installation</td><td>Huisartsenpraktijk Overvecht</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>K. Bos</td><td class="fl-num">28 Oct</td></tr>
+<tr><td>WO-24769</td><td>Repair</td><td>P. Ramdin</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>S. Visser</td><td class="fl-num">20 Oct</td></tr>
+<tr><td>WO-24753</td><td>Maintenance</td><td>Bakkerij Smit</td><td><span class="fl-badge fl-badge--warning">Waiting for parts</span></td><td>R. Hendriks</td><td class="fl-num">30 Oct</td></tr>
+            </tbody>
+          </table>
+        </div><aside class="fl-sidepanel mk-panel" aria-label="Work order WO-24806">
+        <div class="mk-panel__head">
+          <h2 class="mk-h2">WO-24806</h2>
+          <button class="fl-btn fl-btn--ghost">Close</button>
+        </div>
+        <div class="fl-page-header__meta">Repair &middot; Heat pump</div>
+        <div class="mk-customer">A. Yilmaz &middot; Vondelstraat 88, Utrecht &middot; <span class="mk-nowrap">06 4172 3390</span></div>
+        <div class="mk-gap"><span class="fl-badge fl-badge--warning">Waiting for parts</span></div>
+        
+        
+        <section class="mk-block" aria-label="Parts order">
+          <div class="mk-titlerow">
+            <h3 class="mk-h3">Parts order PL-558213</h3>
+            <span class="fl-page-header__meta">Updated 09:42</span>
+          </div>
+          
+          <p class="mk-summary">All 3 parts delivered. Last delivery Thu 22 Oct.</p>
+          
+          <div class="fl-table-wrap">
+            <table class="fl-table" aria-label="Parts of order PL-558213">
+              <thead><tr><th scope="col">Part</th><th scope="col">Supplier status and date</th></tr></thead>
+              <tbody>
+                <tr><td>Expansion valve EEV-24</td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Thu 22 Oct</span></td></tr>
+<tr><td>Fan motor 230 V</td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Thu 22 Oct</span></td></tr>
+<tr><td>Gasket set <span class="mk-muted mk-nowrap">&times;2</span></td><td class="mk-status"><span class="fl-badge fl-badge--success">Delivered</span><span class="mk-date">Wed 21 Oct</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="fl-hint">Changes in PartsLink can take up to 4 hours to show here.</p>
+          
+        </section>
+        <section class="mk-block mk-form" aria-label="Plan next visit">
+          <h3 class="mk-h3">Plan next visit</h3>
+          
+          <div class="fl-field">
+            <label class="fl-label" for="date-20">Date</label>
+            <div class="mk-inline">
+              <input class="fl-input mk-grow" id="date-20" type="text" value="Mon 26 Oct 2026">
+              <button class="fl-btn" type="button">Open calendar</button>
+            </div>
+            <p class="fl-hint">All parts delivered on Thu 22 Oct.</p>
+          </div>
+          <fieldset class="fl-radio-group">
+            <legend>Slot</legend>
+            <div class="fl-radio-group__options">
+              <label><input type="radio" name="slot-20" value="morning" checked> Morning 08:00 to 12:00</label>
+              <label><input type="radio" name="slot-20" value="afternoon"> Afternoon 12:30 to 17:00</label>
+            </div>
+            
+          </fieldset>
+          <div class="fl-field">
+            <label class="fl-label" for="tech-20">Technician</label>
+            <select class="fl-select" id="tech-20"><option value="">Select a technician</option><option value="visser" selected>S. Visser, 1 of 2 places free</option><option value="hendriks">R. Hendriks, 2 of 2 places free</option><option value="bos" disabled>K. Bos, full</option></select>
+            
+            <p class="fl-hint">S. Visser did the first visit on Mon 19 Oct. <span class="fl-badge fl-badge--neutral" data-proposed>Proposed</span></p>
+            <p class="fl-hint">Region Central, heat pump skill. Max 2 visits per slot. 3 technicians without the heat pump skill are not shown.</p>
+          </div>
+          
+          <p class="mk-summary">WO-24806 changes to Planned. You can undo for 8 seconds.</p>
+          <div class="mk-inline">
+            <button class="fl-btn fl-btn--primary">Plan visit</button>
+            <button class="fl-btn fl-btn--ghost">Cancel</button>
+          </div>
+        </section>
+        
+      </aside></div>
+      
+    </main>
+  </div>
+</section>
+</body>
+</html>

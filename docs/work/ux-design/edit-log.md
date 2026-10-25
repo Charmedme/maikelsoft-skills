@@ -94,9 +94,167 @@ This log records each change to a skill or to an eval case, the test that measur
 - Verdict: confounded
 - Evidence: `evals/ux-design/results-2026-10-24.md`
 
+### E10: ux-prototype: Prototype mode on the shared shell
+- Date and version: 2026-10-25, ux-design 0.2.0
+- Change: Prototype mode on the shared shell.
+- Test: Prototype, FL-31, baseline and agent v1, 3 runs, Opus.
+- Observed: Agent v1 lost the question 0-6 and test readiness 0-6.
+- Verdict: hurt
+- Evidence: `evals/ux-design/results-2026-10-25.md`
+
+### E11: ux-prototype question: Rank the candidate questions by risk
+- Date and version: 2026-10-25, ux-design 0.2.0
+- Change: Rank the candidate questions by risk.
+- Test: Prototype, FL-31, v1 and v2, 3 runs, Opus.
+- Observed: Question v2 6-0 against v1, and 4-1 against the baseline. All v2 runs took the risk question. Changed together with E11 and E12.
+- Verdict: confounded
+- Evidence: `evals/ux-design/results-2026-10-25.md`
+
+### E12: ux-prototype test plan: Test-plan template with pass rules and decisions
+- Date and version: 2026-10-25, ux-design 0.2.0
+- Change: Test-plan template with pass rules and decisions.
+- Test: Same test as E10.
+- Observed: Test readiness v2 6-0 against v1, 3-2 against the baseline.
+- Verdict: confounded
+- Evidence: `evals/ux-design/results-2026-10-25.md`
+
+### E13: ux-prototype states: Add the failure states of the path
+- Date and version: 2026-10-25, ux-design 0.2.0
+- Change: Add the failure states of the path.
+- Test: Same test as E10.
+- Observed: States v2 6-0 against v1 and against the baseline. 13 to 16 states, against 7 to 8.
+- Verdict: confounded
+- Evidence: `evals/ux-design/results-2026-10-25.md`
+
+### E14: product-prototype: Move to the shared shell
+- Date and version: 2026-10-25, ux-design 0.2.0
+- Change: Move to the shared shell.
+- Test: Prototype, FL-31, old and new, 3 runs, Opus.
+- Observed: Test readiness new 5-1, states 4-2, fidelity 4-2. Question old 4-0.
+- Verdict: confounded
+- Evidence: `evals/ux-design/results-2026-10-25.md`
+
+### E15: product-prototype question: Rank the open points by the cost of a wrong answer
+- Date and version: 2026-10-25, ux-design 0.2.0
+- Change: Rank the open points by the cost of a wrong answer.
+- Test: Prototype, FL-31, shell v1 and v2, 3 runs, Opus.
+- Observed: Question v2 4-0 against shell v1, and 4-0 against the old version.
+- Verdict: helped
+- Evidence: `evals/ux-design/results-2026-10-25.md`
+
+### E16: ux-review: Review mode with a walk file, screenshots, axe-core
+- Date and version: 2026-10-25, ux-design 0.2.0
+- Change: Review mode with a walk file, screenshots, axe-core.
+- Test: Review, 6 easy and 6 subtle defects, baselines on Opus and Sonnet, 3 runs.
+- Observed: The same defects found as the baselines. Adds a verdict, severities, screenshots, and a walk file.
+- Verdict: no observed effect
+- Evidence: `evals/ux-design/results-2026-10-25.md`
+
+### E17: ux-review walk: Each state ends with expect_text checks inside the element of the state
+- Date and version: 2026-10-25, ux-design 0.2.0
+- Change: Each state ends with expect_text checks inside the element of the state.
+- Test: Review, subtle defects, Sonnet v1, v2, v3, 3 runs.
+- Observed: 14, 16 (v2), 15 (v3, short prompt) of 18. D5 not found: the design is not clear on it.
+- Verdict: confounded
+- Evidence: `evals/ux-design/results-2026-10-25.md`
+
+### E18: example-mapping: One example for each state of the UX design, source ux:
+- Date and version: 2026-10-25, ux-design 0.2.0
+- Change: One example for each state of the UX design, source ux:.
+- Test: Handoff, 3 stories, old and new, 2 runs, Sonnet.
+- Observed: States covered 100% (6 of 6 runs) against 53% to 76%.
+- Verdict: helped
+- Evidence: `evals/ux-design/results-2026-10-25.md`
+
+### E19: uxcheck.py: Skip invisible elements in the tell checks
+- Date and version: 2026-10-25, ux-design 0.2.0
+- Change: Skip invisible elements in the tell checks.
+- Test: The clean app of the review test.
+- Observed: 2 false results (a hidden date input) gone.
+- Verdict: helped
+- Evidence: `evals/ux-design/results-2026-10-25.md`
+
+### E20: uxcheck.py: Tab walk and reduced-motion check in review mode
+- Date and version: 2026-10-25, ux-design 0.3.0
+- Change: Tab walk and reduced-motion check in review mode.
+- Test: Accessibility app with 6 faults, 3 runs, Sonnet, and the clean app.
+- Observed: Faults found 16 of 18 (v1), against 14 of 18 with 0.2.0. No new false findings on the clean app.
+- Verdict: helped
+- Evidence: `evals/ux-design/results-2026-10-25-b3.md`
+
+### E21: uxcheck.py: A tabindex above 0 is an error (RV-TABINDEX), not only a warning about the order
+- Date and version: 2026-10-25, ux-design 0.3.0
+- Change: A tabindex above 0 is an error (RV-TABINDEX), not only a warning about the order.
+- Test: The same app, 3 runs.
+- Observed: The tabindex fault found in 3 of 3 runs, against 1 of 3. Total 18 of 18.
+- Verdict: helped
+- Evidence: `evals/ux-design/results-2026-10-25-b3.md`
+
+### E22: web-accessibility: Manual checklist after the tools: focus after actions, live regions, keyboard, zoom
+- Date and version: 2026-10-25, ux-design 0.3.0
+- Change: Manual checklist after the tools: focus after actions, live regions, keyboard, zoom.
+- Test: The same app.
+- Observed: The missing live region (no tool finds it) found in 3 of 3 runs.
+- Verdict: helped
+- Evidence: `evals/ux-design/results-2026-10-25-b3.md`
+
+### E23: brand-rules: DTCG tokens with usage notes and contrast pairs, DESIGN.md sections, a Words table
+- Date and version: 2026-10-25, ux-design 0.3.0
+- Change: DTCG tokens with usage notes and contrast pairs, DESIGN.md sections, a Words table.
+- Test: Faulty design system without brand files, 2 runs.
+- Observed: Contrast pairs 20 to 22 against 0. Tokens without usage 0 against 24 to 38. DESIGN.md sections 8 against 1 to 2.
+- Verdict: helped
+- Evidence: `evals/ux-design/results-2026-10-25-b3.md`
+
+### E24: figma: Call budget for the seat, and a read order
+- Date and version: 2026-10-25, ux-design 0.3.0
+- Change: Call budget for the seat, and a read order.
+- Test: Fake Figma server, Dev and View seat, 2 runs each.
+- Observed: View seat: 4 to 5 read calls against 7 to 9, and the human gets told. Dev seat: 12 calls against 7 to 9 (more screenshots).
+- Verdict: mixed
+- Evidence: `evals/ux-design/results-2026-10-25-b3.md`
+
+### E25: ux-setup: Scan first, mark each line found or guess
+- Date and version: 2026-10-25, ux-design 0.3.0
+- Change: Scan first, mark each line found or guess.
+- Test: 3 fixtures, 2 runs each.
+- Observed: Facts 31 of 32 against 28 of 32. No invented stack or run command.
+- Verdict: helped
+- Evidence: `evals/ux-design/results-2026-10-25-b3.md`
+
+### E26: ux-designer: disallowedTools instead of a tools list
+- Date and version: 2026-10-25, ux-design 0.3.0
+- Change: disallowedTools instead of a tools list.
+- Test: Runtime check with --plugin-dir.
+- Observed: The agent loads, and the Artifact and MCP tools are in reach. idea-to-backlog starts it in 3 modes.
+- Verdict: helped
+- Evidence: `evals/ux-design/results-2026-10-25-b3.md`
+
+### E27: openpencil: Import the checked mockups with browser snapshots (opimport.py)
+- Date and version: 2026-10-25, ux-design 0.3.1
+- Change: Import the checked mockups with browser snapshots (opimport.py).
+- Test: FL-31 mockup (22 states), a real headless OpenPencil 0.8.4 server, 0.3.0 against 0.3.1, 2 runs each, Sonnet.
+- Observed: 22 of 22 frames in all runs. Pixels that differ: 5.3% and 5.4% with the script, 5.3% and 15.8% without it. Cost $0.32 and $0.60 against $1.01 and $1.43.
+- Verdict: helped
+- Evidence: `evals/ux-design/results-2026-10-25-b3.md`
+
 ## Lesson of batch 1
 
 - Cue: a design skill adds completeness rules (more states, more failure paths).
 - Lesson: in ui-craft, keep the visual rules (rules at the point of decision, numbered steps) in the same version. More frames make the screens denser and cost clarity.
 - Evidence: E5 to E8.
 - Confidence: low. Each round tested more than one change.
+
+## Lesson of batch 2
+
+- Cue: a skill picks one item from a list of candidates, for example the question of a prototype.
+- Lesson: give the skill the ranking rule (the cost of a wrong answer), not only the list. Without the rule, the model takes the first clear item.
+- Evidence: E10, E14.
+- Confidence: medium. Two skills, the same cause, and the same fix.
+
+## Lesson of batch 3
+
+- Cue: a tool gives a warning, and the agent must decide what it means.
+- Lesson: when a rule has one clear cause, make it an error that names the cause (RV-TABINDEX). A vague warning lets the agent pick another cause.
+- Evidence: E20, E21.
+- Confidence: medium. One fault, 3 runs before and 3 runs after the change.

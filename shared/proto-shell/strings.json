@@ -1,0 +1,23 @@
+{
+  "en": {
+    "badge": "Prototype, not the product", "throwaway": "throwaway", "evolutionary": "evolutionary",
+    "version": "Version", "task_of": "Task {i} of {n}", "start_task": "Start task", "done": "I am done", "give_up": "Give up",
+    "task": "Task", "rate": "Rate the task", "seq": "Overall, how difficult or easy was this task?", "very_difficult": "Very difficult", "very_easy": "Very easy",
+    "preference": "Which version was easier to use?", "no_difference": "No difference", "why": "Why?", "finish": "Finish",
+    "thanks": "Thank you", "saved": "Your answers are saved."
+  },
+  "nl": {
+    "badge": "Prototype, niet het product", "throwaway": "weggooiversie", "evolutionary": "wordt doorgebouwd",
+    "version": "Versie", "task_of": "Taak {i} van {n}", "start_task": "Start de taak", "done": "Ik ben klaar", "give_up": "Ik stop",
+    "task": "Taak", "rate": "Beoordeel de taak", "seq": "Hoe moeilijk of makkelijk was deze taak?", "very_difficult": "Heel moeilijk", "very_easy": "Heel makkelijk",
+    "preference": "Welke versie was makkelijker?", "no_difference": "Geen verschil", "why": "Waarom?", "finish": "Afronden",
+    "thanks": "Bedankt", "saved": "De antwoorden zijn opgeslagen."
+  },
+  "de": {
+    "badge": "Prototyp, nicht das Produkt", "throwaway": "Wegwerfversion", "evolutionary": "wird weiterentwickelt",
+    "version": "Version", "task_of": "Aufgabe {i} von {n}", "start_task": "Aufgabe starten", "done": "Ich bin fertig", "give_up": "Aufgeben",
+    "task": "Aufgabe", "rate": "Aufgabe bewerten", "seq": "Wie schwierig oder einfach war diese Aufgabe insgesamt?", "very_difficult": "Sehr schwierig", "very_easy": "Sehr einfach",
+    "preference": "Welche Version war einfacher zu bedienen?", "no_difference": "Kein Unterschied", "why": "Warum?", "finish": "Abschließen",
+    "thanks": "Vielen Dank", "saved": "Die Antworten sind gespeichert."
+  }
+}

@@ -2,3 +2,6 @@ __pycache__/
 *.pyc
 .DS_Store
 .claude-flow/
+
+# axe-core for the ux-design review evals (npm install in evals/ux-design/tools/)
+evals/ux-design/tools/node_modules/
