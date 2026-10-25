@@ -93,6 +93,7 @@ The configuration values are read when the builder runs. `WebApplicationFactory`
 
 - `UseRabbitMqUsingNamedConnection("rabbitmq")` reads the connection from configuration (Aspire style).
 - Wolverine publishes with `mandatory: false`. Without the topology, the broker drops the message and Wolverine sees a success.
+- `.ExternallyOwned()` on `ListenToRabbitQueue(...)`, `ToRabbitQueue(...)`, or `ToRabbitExchange(...)`: Wolverine does not declare, purge, or delete it, also with `AutoProvision()`. Use it for a queue that another team declares. Without it, Wolverine declares the queue with its own arguments, for example its `x-dead-letter-exchange`. The broker refuses with `PRECONDITION_FAILED` (or `ACCESS_REFUSED` without configure permission). Wolverine then retries the broker start.
 - A queue per listener for dead letters: `ListenToRabbitQueue("x").DeadLetterQueueing(new DeadLetterQueue("x.dlq"))`. Use it only when another team owns the queue (MSG-06).
 
 ## Listener modes
@@ -128,7 +129,28 @@ await bus.PublishAsync(evt, new DeliveryOptions { DeduplicationId = $"order-plac
 - Wolverine generates the code that calls each handler. `Dynamic` compiles it at run time with Roslyn and needs `WolverineFx.RuntimeCompilation`. `Static` loads types that `codegen write` wrote before.
 - `dotnet run -- codegen write` writes `Internal/Generated/`. Commit the folder. CI runs the command again and fails on a diff.
 - `codegen write` starts the host. Keep connections to the database and the broker out of the top of `Program.cs`, before `RunJasperFxCommands(args)`.
-- `opts.CodeGeneration.AlwaysUseServiceLocationFor<T>()` allows service location for one type that the generator cannot see through (for example a client from a factory). Add a comment with the reason.
+- `opts.CodeGeneration.AlwaysUseServiceLocationFor<T>()` allows service location for one type that the generator cannot see through. Add a comment with the reason.
+
+### Registrations that the generator cannot see through
+
+Wolverine 6 uses `ServiceLocationPolicy.NotAllowed` by default. The generated code builds each handler dependency with its constructor. A registration through a factory hides the constructor, so the generator needs service location and throws `InvalidServiceLocationException`. In `Dynamic` mode the host starts, and the error comes on the first message of that handler.
+
+| Registration | Handler can inject it | Fix |
+|--------------|-----------------------|-----|
+| `AddScoped<IFoo, Foo>()` | Yes | None |
+| `AddScoped<IFoo>(sp => new Foo(...))` | No | `AddScoped<IFoo, Foo>()`, or `AlwaysUseServiceLocationFor<IFoo>()` |
+| `AddHttpClient<IFoo, Foo>()` or `AddHttpClient<IFoo, Foo>((sp, http) => ...)` (typed client) | No | `AlwaysUseServiceLocationFor<IFoo>()` with a reason |
+| `IHttpClientFactory` (singleton from `AddHttpClient`) | Yes | None. Call `factory.CreateClient("name")` in the handler |
+| `AddDbContext<T>(...)` | No | `AddDbContextWithWolverineIntegration<T>`, or `optionsLifetime: ServiceLifetime.Singleton` |
+
+```csharp
+// Typed HttpClient: AddHttpClient registers ICarrierClient through a factory.
+opts.CodeGeneration.AlwaysUseServiceLocationFor<ICarrierClient>();
+```
+
+An endpoint that injects the same client works, because ASP.NET Core resolves it from the container. A test factory that replaces the client with `AddSingleton<ICarrierClient>(fake)` also hides the error. Start the host once with the real registration and send one message to each handler.
+
+Do not use `RestoreV5Defaults()` or `ServiceLocationPolicy.AllowedButWarn` as the fix. They turn the check off for each type.
 
 ## Tracing
 

@@ -19,10 +19,10 @@ Each check is `tool (<rule ID>)` when a tool finds it, or `judge` when a reviewe
 |---|-------|------|
 | 1 | The target framework is .NET 9 or 10 for Wolverine 6. | judge |
 | 2 | Each `DbContext` that a handler injects uses `AddDbContextWithWolverineIntegration` or `optionsLifetime: ServiceLifetime.Singleton`. | tool (WOLV-DBCONTEXT-OPTIONS) |
-| 3 | No lambda registration for a service that a handler injects. `AlwaysUseServiceLocationFor<T>()` only with a reason. | judge |
+| 3 | No lambda registration for a service that a handler injects. Each typed `HttpClient` (`AddHttpClient<IFoo, Foo>`) that a handler injects has `AlwaysUseServiceLocationFor<IFoo>()` with a reason. Find the registration of each handler parameter in `Program.cs`, and read the test factory: a fake there hides the error. | tool (WOLV-TYPED-HTTPCLIENT), judge |
 | 4 | No `RestoreV5Defaults()`. | tool (WOLV-RESTORE-V5) |
 | 5 | `WolverineFx.RuntimeCompilation` is referenced when any environment uses `Dynamic` or `Auto`. | judge |
-| 6 | Production uses `TypeLoadMode.Static`, `Internal/Generated/` is in git, and CI runs `codegen write` with a diff check. | tool (WOLV-DYNAMIC-PROD), judge |
+| 6 | Production uses `TypeLoadMode.Static`, `Internal/Generated/` is in git, and CI runs `codegen write` with a diff check. A change that adds, changes, or deletes a handler also changes `Internal/Generated/`. A deleted folder passes the tests in `Dynamic` and stops the production start. | tool (WOLV-DYNAMIC-PROD), judge |
 | 7 | `opts.ApplicationAssembly` is set when tests use `WebApplicationFactory`. | judge |
 
 ## Handlers
@@ -50,7 +50,7 @@ Each check is `tool (<rule ID>)` when a tool finds it, or `judge` when a reviewe
 | # | Check | Type |
 |---|-------|------|
 | 18 | `UseQuorumQueues()` and both publisher confirm flags on the RabbitMQ transport. | judge |
-| 19 | The topology is declared (`AutoProvision()` or by operations). The exchange type fits the consumers (fanout is the default). | judge |
+| 19 | The topology is declared (`AutoProvision()` or by operations). The exchange type fits the consumers (fanout is the default). A queue or exchange that another team owns is `ExternallyOwned()`. | judge |
 | 20 | One dead-letter queue per service with `CustomizeDeadLetterQueueing`. | judge |
 | 21 | The listener mode fits each endpoint. No `BufferedInMemory` for business messages. | judge |
 
@@ -68,14 +68,14 @@ Each check is `tool (<rule ID>)` when a tool finds it, or `judge` when a reviewe
 | # | Check | Type |
 |---|-------|------|
 | 26 | Each contract has `[MessageIdentity]` with a version. | judge |
-| 27 | Each `IForwardsTo<T>` type is registered with `RegisterMessageForwarder`. | judge |
+| 27 | Each `IForwardsTo<T>` type is registered with `RegisterMessageForwarder`. When a handler moves to a new message type, a test still sends the old type. | judge |
 | 28 | System.Text.Json (the default). No `UseNewtonsoftForSerialization` in new code. | tool (WOLV-NEWTONSOFT) |
 
 ## Tests
 
 | # | Check | Type |
 |---|-------|------|
-| 29 | Tests use tracked sessions, not `Task.Delay`. | tool (WOLV-TEST-DELAY), judge |
+| 29 | Tests use tracked sessions, not `Task.Delay`. A test of an error policy uses `SendMessageAndWaitAsync`, not `InvokeMessageAndWaitAsync`. | tool (WOLV-TEST-DELAY), judge |
 | 30 | Tests call `DisableAllExternalWolverineTransports()` and `RunWolverineInSoloMode()`, and set `JasperFxEnvironment.AutoStartHost` when the app uses `RunJasperFxCommands`. | judge |
 | 31 | A test covers the business error path (error queue or no retry). | judge |
 
