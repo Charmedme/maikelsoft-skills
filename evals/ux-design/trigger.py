@@ -47,10 +47,13 @@ def main():
     p.add_argument("--plugin", required=True)
     p.add_argument("--model", default="sonnet")
     p.add_argument("--parallel", type=int, default=4)
+    p.add_argument("--skill", nargs="*", help="test only these skills")
     args = p.parse_args()
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     spec = json.loads((HERE / "triggers.json").read_text(encoding="utf-8"))
+    if args.skill:
+        spec = {k: v for k, v in spec.items() if k in args.skill}
     jobs = [(s, k, q) for s, kinds in spec.items() for k, qs in kinds.items() for q in qs]
     with cf.ThreadPoolExecutor(max_workers=args.parallel) as ex:
         results = list(ex.map(lambda j: run_query(*j, args, out), jobs))

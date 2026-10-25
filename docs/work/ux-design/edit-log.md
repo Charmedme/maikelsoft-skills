@@ -94,9 +94,96 @@ This log records each change to a skill or to an eval case, the test that measur
 - Verdict: confounded
 - Evidence: `evals/ux-design/results-2026-10-24.md`
 
+### E10: ux-prototype: Prototype mode on the shared shell
+- Date and version: 2026-10-25, ux-design 0.2.0
+- Change: Prototype mode on the shared shell.
+- Test: Prototype, FL-31, baseline and agent v1, 3 runs, Opus.
+- Observed: Agent v1 lost the question 0-6 and test readiness 0-6.
+- Verdict: hurt
+- Evidence: `evals/ux-design/results-2026-10-25.md`
+
+### E11: ux-prototype question: Rank the candidate questions by risk
+- Date and version: 2026-10-25, ux-design 0.2.0
+- Change: Rank the candidate questions by risk.
+- Test: Prototype, FL-31, v1 and v2, 3 runs, Opus.
+- Observed: Question v2 6-0 against v1, and 4-1 against the baseline. All v2 runs took the risk question. Changed together with E11 and E12.
+- Verdict: confounded
+- Evidence: `evals/ux-design/results-2026-10-25.md`
+
+### E12: ux-prototype test plan: Test-plan template with pass rules and decisions
+- Date and version: 2026-10-25, ux-design 0.2.0
+- Change: Test-plan template with pass rules and decisions.
+- Test: Same test as E10.
+- Observed: Test readiness v2 6-0 against v1, 3-2 against the baseline.
+- Verdict: confounded
+- Evidence: `evals/ux-design/results-2026-10-25.md`
+
+### E13: ux-prototype states: Add the failure states of the path
+- Date and version: 2026-10-25, ux-design 0.2.0
+- Change: Add the failure states of the path.
+- Test: Same test as E10.
+- Observed: States v2 6-0 against v1 and against the baseline. 13 to 16 states, against 7 to 8.
+- Verdict: confounded
+- Evidence: `evals/ux-design/results-2026-10-25.md`
+
+### E14: product-prototype: Move to the shared shell
+- Date and version: 2026-10-25, ux-design 0.2.0
+- Change: Move to the shared shell.
+- Test: Prototype, FL-31, old and new, 3 runs, Opus.
+- Observed: Test readiness new 5-1, states 4-2, fidelity 4-2. Question old 4-0.
+- Verdict: confounded
+- Evidence: `evals/ux-design/results-2026-10-25.md`
+
+### E15: product-prototype question: Rank the open points by the cost of a wrong answer
+- Date and version: 2026-10-25, ux-design 0.2.0
+- Change: Rank the open points by the cost of a wrong answer.
+- Test: Prototype, FL-31, shell v1 and v2, 3 runs, Opus.
+- Observed: Question v2 4-0 against shell v1, and 4-0 against the old version.
+- Verdict: helped
+- Evidence: `evals/ux-design/results-2026-10-25.md`
+
+### E16: ux-review: Review mode with a walk file, screenshots, axe-core
+- Date and version: 2026-10-25, ux-design 0.2.0
+- Change: Review mode with a walk file, screenshots, axe-core.
+- Test: Review, 6 easy and 6 subtle defects, baselines on Opus and Sonnet, 3 runs.
+- Observed: The same defects found as the baselines. Adds a verdict, severities, screenshots, and a walk file.
+- Verdict: no observed effect
+- Evidence: `evals/ux-design/results-2026-10-25.md`
+
+### E17: ux-review walk: Each state ends with expect_text checks inside the element of the state
+- Date and version: 2026-10-25, ux-design 0.2.0
+- Change: Each state ends with expect_text checks inside the element of the state.
+- Test: Review, subtle defects, Sonnet v1, v2, v3, 3 runs.
+- Observed: 14, 16 (v2), 15 (v3, short prompt) of 18. D5 not found: the design is not clear on it.
+- Verdict: confounded
+- Evidence: `evals/ux-design/results-2026-10-25.md`
+
+### E18: example-mapping: One example for each state of the UX design, source ux:
+- Date and version: 2026-10-25, ux-design 0.2.0
+- Change: One example for each state of the UX design, source ux:.
+- Test: Handoff, 3 stories, old and new, 2 runs, Sonnet.
+- Observed: States covered 100% (6 of 6 runs) against 53% to 76%.
+- Verdict: helped
+- Evidence: `evals/ux-design/results-2026-10-25.md`
+
+### E19: uxcheck.py: Skip invisible elements in the tell checks
+- Date and version: 2026-10-25, ux-design 0.2.0
+- Change: Skip invisible elements in the tell checks.
+- Test: The clean app of the review test.
+- Observed: 2 false results (a hidden date input) gone.
+- Verdict: helped
+- Evidence: `evals/ux-design/results-2026-10-25.md`
+
 ## Lesson of batch 1
 
 - Cue: a design skill adds completeness rules (more states, more failure paths).
 - Lesson: in ui-craft, keep the visual rules (rules at the point of decision, numbered steps) in the same version. More frames make the screens denser and cost clarity.
 - Evidence: E5 to E8.
 - Confidence: low. Each round tested more than one change.
+
+## Lesson of batch 2
+
+- Cue: a skill picks one item from a list of candidates, for example the question of a prototype.
+- Lesson: give the skill the ranking rule (the cost of a wrong answer), not only the list. Without the rule, the model takes the first clear item.
+- Evidence: E10, E14.
+- Confidence: medium. Two skills, the same cause, and the same fix.

@@ -1,18 +1,98 @@
 {
   "ux-practice": {
-    "start": ["Design the UX for this user story before the developers start.", "We need a UX design with screens and states for the new returns flow.", "Act as the UX designer: frame the problem and design the flow for supplier onboarding.", "Make a design spec for the invoice approval screen, with the reason for each decision.", "Start the UX design work for the parts ordering feature."],
-    "skip": ["Build the returns API endpoint in ASP.NET Core.", "Write the user story for the returns feature.", "Plan the next sprint for the team.", "Refactor the invoice service to remove duplicate code.", "Write release notes for version 2.3."]
+    "start": [
+      "Design the UX for this user story before the developers start.",
+      "We need a UX design with screens and states for the new returns flow.",
+      "Act as the UX designer: frame the problem and design the flow for supplier onboarding.",
+      "Make a design spec for the invoice approval screen, with the reason for each decision.",
+      "Start the UX design work for the parts ordering feature."
+    ],
+    "skip": [
+      "Build the returns API endpoint in ASP.NET Core.",
+      "Write the user story for the returns feature.",
+      "Plan the next sprint for the team.",
+      "Refactor the invoice service to remove duplicate code.",
+      "Write release notes for version 2.3."
+    ]
   },
   "ux-patterns": {
-    "start": ["Should the list of 300 invoices be a table or cards? The users compare amounts and due dates.", "Do I put the edit form for a customer in a modal or in a side panel next to the list?", "Pagination or infinite scroll for the audit log, which one is right?", "How should the bulk delete of selected orders work in the UI?", "Which input control do I use to pick one of 40 countries in our form?"],
-    "skip": ["Write the CSS for a sticky table header.", "Fix the TypeScript error in the order list component.", "Review the security of this login endpoint.", "Make a slide about our Q3 results.", "Explain how the EF Core change tracker works."]
+    "start": [
+      "Should the list of 300 invoices be a table or cards? The users compare amounts and due dates.",
+      "Do I put the edit form for a customer in a modal or in a side panel next to the list?",
+      "Pagination or infinite scroll for the audit log, which one is right?",
+      "How should the bulk delete of selected orders work in the UI?",
+      "Which input control do I use to pick one of 40 countries in our form?"
+    ],
+    "skip": [
+      "Write the CSS for a sticky table header.",
+      "Fix the TypeScript error in the order list component.",
+      "Review the security of this login endpoint.",
+      "Make a slide about our Q3 results.",
+      "Explain how the EF Core change tracker works."
+    ]
   },
   "ui-craft": {
-    "start": ["This dashboard screen looks generic and cluttered. How do I improve the visual hierarchy?", "Score these two layout concepts for the order screen and pick one.", "Which density should the planner table use, compact or comfortable?", "Review this mockup on alignment, spacing, and consistency with our design system.", "Decide the type roles and the spacing for the new settings page."],
-    "skip": ["Write an Angular component that loads orders with httpResource.", "Generate a logo for our company.", "Translate this error message to Dutch.", "Set up Playwright in the CI pipeline.", "Write a README for the design system repository."]
+    "start": [
+      "This dashboard screen looks generic and cluttered. How do I improve the visual hierarchy?",
+      "Score these two layout concepts for the order screen and pick one.",
+      "Which density should the planner table use, compact or comfortable?",
+      "Review this mockup on alignment, spacing, and consistency with our design system.",
+      "Decide the type roles and the spacing for the new settings page."
+    ],
+    "skip": [
+      "Write an Angular component that loads orders with httpResource.",
+      "Generate a logo for our company.",
+      "Translate this error message to Dutch.",
+      "Set up Playwright in the CI pipeline.",
+      "Write a README for the design system repository."
+    ]
   },
   "ux-states": {
-    "start": ["Which states does the order list need besides the normal one?", "Our design shows only the happy path. Add the empty, loading, and error states for the upload screen.", "What should the user see when the bulk send fails for 3 of 50 invoices?", "Design what happens when another user edits the same record.", "The status page waits on the bank's system. What do we show while we wait?"],
-    "skip": ["Write unit tests for the order state machine reducer.", "Add a Redux store for the cart state.", "Explain the HTTP status codes 409 and 423.", "Make the loading spinner spin faster in CSS.", "Write the changelog for this release."]
+    "start": [
+      "Which states does the order list need besides the normal one?",
+      "Our design shows only the happy path. Add the empty, loading, and error states for the upload screen.",
+      "What should the user see when the bulk send fails for 3 of 50 invoices?",
+      "Design what happens when another user edits the same record.",
+      "The status page waits on the bank's system. What do we show while we wait?"
+    ],
+    "skip": [
+      "Write unit tests for the order state machine reducer.",
+      "Add a Redux store for the cart state.",
+      "Explain the HTTP status codes 409 and 423.",
+      "Make the loading spinner spin faster in CSS.",
+      "Write the changelog for this release."
+    ]
+  },
+  "ux-prototype": {
+    "start": [
+      "Make a clickable prototype of the approved assign design so we can test it with 5 planners.",
+      "We want an A/B test: two variants of the checkout flow as a prototype for user sessions.",
+      "Turn these mockups into a prototype with tasks for a usability test.",
+      "Build a prototype that answers whether planners pick the slot or the technician first.",
+      "Prepare a test-ready prototype of the onboarding flow, with a test plan."
+    ],
+    "skip": [
+      "Write the production React component for the checkout page.",
+      "Make a static mockup of the invoice screen in our design system.",
+      "Plan the usability test schedule with the recruiting agency.",
+      "Write unit tests for the assign service.",
+      "Export the Figma frames to PNG."
+    ]
+  },
+  "ux-review": {
+    "start": [
+      "The assign feature is built. Review it against the approved design and mockups.",
+      "Check the delivered order screen in each state at mobile, tablet, and desktop with Playwright.",
+      "Do a UX review of the new invoice page before release: states, accessibility, and the design.",
+      "Audit our existing settings screens for usability problems and accessibility.",
+      "Compare the built parts panel with the mockups and list the findings by severity."
+    ],
+    "skip": [
+      "Review this pull request for security problems.",
+      "Write Playwright end-to-end tests for the login API.",
+      "Review the wording of the README.",
+      "Fix the failing CSS build.",
+      "Review the database schema for the orders table."
+    ]
   }
 }

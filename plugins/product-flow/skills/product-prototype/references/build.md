@@ -2,28 +2,26 @@
 
 ## Contents
 
-- The file
-- The page
+- The files
+- The content
 - Scope
 - Styles
 - Data and states
 - Text
 
-## The file
+## The files
 
-- One HTML file with inline CSS and JavaScript. No server, no build step, no framework. It opens with a double-click.
-- No network calls. No `fetch`, no external images, no external scripts. The prototype works offline.
-- Name it `prototype-<slug>.html`. In a repository, put it in the work folder (for example `docs/work/<slug>/`), not in the source code.
+- You write one content file, `content-<slug>.html`, in the format of `proto-shell/STANDARD.md`. `protobuild.py` makes `prototype-<slug>.html` from it: one HTML file with the shell, that opens with a double-click.
+- No server, no build step, no framework. No network calls: no `fetch`, no external images, fonts, or scripts. The prototype works offline.
+- In a repository, put both files in the work folder (for example `docs/work/<slug>/`), not in the source code.
 
-## The page
+## The content
 
-From the top down:
-
-1. **A banner:** "PROTOTYPE: not the final design" in a fixed bar. Give it `id="prototype-banner"`.
-2. **The question:** one sentence in an element with `id="question"`.
-3. **A switch:** buttons for the variants (A, B, C) or the steps of the flow. The arrow keys also switch.
-4. **The screen:** the current variant or step.
-5. **A state bar:** buttons for the states (see below).
+- **Manifest.** `title` (max 40 characters), `question` (the one question, ends with `?`), and `kind` `throwaway`. Also `scope` (one sentence), `lang` (the language of the users), `start`, `screens`, `variants`, and `themes`.
+- **Screen type.** 2 or 3 variants, each with a `hypothesis`. Each variant has its own template for the screen that differs (`data-variant="A"`).
+- **Flow type.** One variant. Each step of the flow is a screen. Use `data-goto` on the buttons that go to the next step.
+- **Notes.** Put each decision of the context file that the prototype shows in a note (`data-note`). The product owner sees why the screen looks like this.
+- Do not change the shell. It gives the header, the question, the variant switch, the state switch, and the sizes.
 
 ## Scope
 
@@ -31,14 +29,14 @@ Show only what the question and the request need. Do not add a cart, an account 
 
 ## Styles
 
-- **With design sources (default when found):** put all tokens in CSS variables (`--color-primary`, `--font-family`, `--radius-md` and so on) and use them for each element. Copy the layout of the existing screens: the header, the navigation, the position of the main action. Name the components of the design system in comments. The prototype must look like a new page of the existing product.
+- **With design sources (default when found):** put all tokens in CSS variables in `proto-css`, for example `--color-primary`. Use them for each element. Copy the layout of the existing screens: the header, the navigation, the position of the main action. Name the components of the design system in comments. The prototype must look like a new page of the existing product.
 - **Without design sources:** the plain style. Greys, one accent colour for the main action, the system font, and boxes for images. Say in the reply that the style is a placeholder.
-- The layout works on a phone (360 px) and on a desktop.
+- The layout works at the 3 sizes of the shell: 390, 820, and 1440 px.
 
 ## Data and states
 
 - Use fake data that looks fake: "Customer A", "Product 001", "Status X". Never use real names or real numbers of customers.
-- Show at least these states, each with a button in the state bar: `normal`, `empty` (no data), and `error` (the data does not load). Add `loading` when the question is about speed. Give each state a `data-state` attribute.
+- Each screen has at least the states `default`, `empty` (no data), and `error` (the data does not load). Add `loading` when the question is about speed. Put them in `states` of the screen in the manifest, and use `data-show-state` for the parts of each state.
 - Keep the state in memory. Do not save it.
 
 ## Text

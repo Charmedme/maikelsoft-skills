@@ -1,0 +1,748 @@
+{
+ "base_url": "http://localhost:8123",
+ "flows": [
+  {
+   "id": "work-orders",
+   "routes": [],
+   "states": [
+    {
+     "state": "default",
+     "routes": [],
+     "steps": [
+      {
+       "goto": "/api/_debug/reset"
+      },
+      {
+       "goto": "/"
+      },
+      {
+       "wait": "[data-testid=wo-row]"
+      },
+      {
+       "expect_text": [
+        "[data-testid=result-count]",
+        "14 unplanned work orders"
+       ]
+      }
+     ]
+    },
+    {
+     "state": "loading",
+     "routes": [
+      {
+       "url": "**/api/work-orders",
+       "hold": true
+      }
+     ],
+     "steps": [
+      {
+       "goto": "/api/_debug/reset"
+      },
+      {
+       "goto": "/",
+       "no_wait": true
+      },
+      {
+       "wait_ms": 300
+      },
+      {
+       "expect_text": [
+        "[data-testid=result-count]",
+        "Loading work orders"
+       ]
+      }
+     ]
+    },
+    {
+     "state": "error-load",
+     "routes": [
+      {
+       "url": "**/api/work-orders",
+       "status": 500,
+       "body": "{}",
+       "content_type": "application/json"
+      }
+     ],
+     "steps": [
+      {
+       "goto": "/api/_debug/reset"
+      },
+      {
+       "goto": "/"
+      },
+      {
+       "wait": "[data-testid=error-load]"
+      },
+      {
+       "expect_text": [
+        "[data-testid=error-load]",
+        "The work orders did not load. The server did not answer."
+       ]
+      }
+     ]
+    },
+    {
+     "state": "empty",
+     "routes": [],
+     "steps": [
+      {
+       "goto": "/api/_debug/reset"
+      },
+      {
+       "goto": "/"
+      },
+      {
+       "wait": "[data-testid=wo-row]"
+      },
+      {
+       "click": "[data-testid=filter-type-repair]"
+      },
+      {
+       "click": "[data-testid=filter-skill-gas-boiler]"
+      },
+      {
+       "wait": "[data-testid=empty]"
+      },
+      {
+       "expect_text": [
+        "[data-testid=empty]",
+        "No unplanned work orders match these filters."
+       ]
+      }
+     ]
+    },
+    {
+     "state": "empty-all-done",
+     "routes": [
+      {
+       "url": "**/api/work-orders",
+       "status": 200,
+       "body": "{\"region\": \"Central\", \"today\": \"2026-10-26\", \"nextWorkDay\": \"2026-10-27\", \"updatedAt\": \"09:42\", \"seq\": 0, \"workOrders\": []}",
+       "content_type": "application/json"
+      }
+     ],
+     "steps": [
+      {
+       "goto": "/api/_debug/reset"
+      },
+      {
+       "goto": "/"
+      },
+      {
+       "wait": "[data-testid=empty-all-done]"
+      },
+      {
+       "expect_text": [
+        "[data-testid=empty-all-done]",
+        "All work orders in region Central are planned."
+       ]
+      }
+     ]
+    },
+    {
+     "state": "in-progress",
+     "routes": [],
+     "steps": [
+      {
+       "goto": "/api/_debug/reset"
+      },
+      {
+       "goto": "/"
+      },
+      {
+       "wait": "[data-testid=wo-row]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24817]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24822]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24840]"
+      },
+      {
+       "expect_text": [
+        "[data-testid=bulk-count]",
+        "3 work orders selected"
+       ]
+      }
+     ]
+    },
+    {
+     "state": "disabled",
+     "routes": [],
+     "steps": [
+      {
+       "goto": "/api/_debug/reset"
+      },
+      {
+       "goto": "/"
+      },
+      {
+       "wait": "[data-testid=wo-row]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24817]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24822]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24840]"
+      },
+      {
+       "click": "[data-testid=assign-open]"
+      },
+      {
+       "wait": "[data-testid=tech-list]"
+      },
+      {
+       "expect_text": [
+        "[data-testid=assign-hint]",
+        "Select a technician and a slot."
+       ]
+      }
+     ]
+    },
+    {
+     "state": "assign-loading",
+     "routes": [
+      {
+       "url": "**/api/technicians?**",
+       "hold": true
+      }
+     ],
+     "steps": [
+      {
+       "goto": "/api/_debug/reset"
+      },
+      {
+       "goto": "/"
+      },
+      {
+       "wait": "[data-testid=wo-row]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24817]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24822]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24840]"
+      },
+      {
+       "click": "[data-testid=assign-open]"
+      },
+      {
+       "wait": "[data-testid=tech-loading]"
+      },
+      {
+       "wait_ms": 300
+      }
+     ]
+    },
+    {
+     "state": "partial",
+     "routes": [
+      {
+       "url": "**/api/technicians?**",
+       "status": 500,
+       "body": "{}",
+       "content_type": "application/json"
+      }
+     ],
+     "steps": [
+      {
+       "goto": "/api/_debug/reset"
+      },
+      {
+       "goto": "/"
+      },
+      {
+       "wait": "[data-testid=wo-row]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24817]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24822]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24840]"
+      },
+      {
+       "click": "[data-testid=assign-open]"
+      },
+      {
+       "wait": "[data-testid=techs-error]"
+      },
+      {
+       "expect_text": [
+        "[data-testid=techs-error]",
+        "The free places of the technicians did not load."
+       ]
+      }
+     ]
+    },
+    {
+     "state": "assign-ready",
+     "routes": [],
+     "steps": [
+      {
+       "goto": "/api/_debug/reset"
+      },
+      {
+       "goto": "/"
+      },
+      {
+       "wait": "[data-testid=wo-row]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24817]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24822]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24840]"
+      },
+      {
+       "click": "[data-testid=assign-open]"
+      },
+      {
+       "wait": "[data-testid=tech-list]"
+      },
+      {
+       "check": "[data-testid=slot-radio][data-tech=t-bos][data-slot=morning]"
+      },
+      {
+       "wait": "[data-testid=assign-summary]"
+      },
+      {
+       "expect_text": [
+        "[data-testid=assign-confirm]",
+        "Assign 2 work orders"
+       ]
+      }
+     ]
+    },
+    {
+     "state": "assign-no-technician",
+     "routes": [],
+     "steps": [
+      {
+       "goto": "/api/_debug/reset"
+      },
+      {
+       "goto": "/"
+      },
+      {
+       "wait": "[data-testid=wo-row]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24817]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24828]"
+      },
+      {
+       "click": "[data-testid=assign-open]"
+      },
+      {
+       "wait": "[data-testid=tech-list]"
+      },
+      {
+       "fill": [
+        "[data-testid=assign-date]",
+        "Sat 31 Oct 2026"
+       ]
+      },
+      {
+       "press": [
+        "[data-testid=assign-date]",
+        "Enter"
+       ]
+      },
+      {
+       "wait": "[data-testid=no-technician]"
+      },
+      {
+       "expect_text": [
+        "[data-testid=no-technician]",
+        "No technician with the skills Heat pump and Air conditioning has a free place on Sat 31 Oct."
+       ]
+      }
+     ]
+    },
+    {
+     "state": "conflict",
+     "routes": [
+      {
+       "url": "**/api/assignments",
+       "method": "POST",
+       "status": 409,
+       "body": "{\"error\": \"conflict\", \"free\": 1, \"changedAt\": \"09:51\"}",
+       "content_type": "application/json"
+      }
+     ],
+     "steps": [
+      {
+       "goto": "/api/_debug/reset"
+      },
+      {
+       "goto": "/"
+      },
+      {
+       "wait": "[data-testid=wo-row]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24817]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24822]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24840]"
+      },
+      {
+       "click": "[data-testid=assign-open]"
+      },
+      {
+       "wait": "[data-testid=tech-list]"
+      },
+      {
+       "check": "[data-testid=slot-radio][data-tech=t-bos][data-slot=morning]"
+      },
+      {
+       "wait": "[data-testid=assign-summary]"
+      },
+      {
+       "click": "[data-testid=assign-confirm]"
+      },
+      {
+       "wait": "[data-testid=conflict-alert]"
+      },
+      {
+       "expect_text": [
+        "[data-testid=conflict-alert]",
+        "The free places changed at 09:51. K. Bos, morning now has 1 free place."
+       ]
+      }
+     ]
+    },
+    {
+     "state": "error-save",
+     "routes": [
+      {
+       "url": "**/api/assignments",
+       "method": "POST",
+       "status": 500,
+       "body": "{}",
+       "content_type": "application/json"
+      }
+     ],
+     "steps": [
+      {
+       "goto": "/api/_debug/reset"
+      },
+      {
+       "goto": "/"
+      },
+      {
+       "wait": "[data-testid=wo-row]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24817]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24822]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24840]"
+      },
+      {
+       "click": "[data-testid=assign-open]"
+      },
+      {
+       "wait": "[data-testid=tech-list]"
+      },
+      {
+       "check": "[data-testid=slot-radio][data-tech=t-bos][data-slot=morning]"
+      },
+      {
+       "wait": "[data-testid=assign-summary]"
+      },
+      {
+       "click": "[data-testid=assign-confirm]"
+      },
+      {
+       "wait": "[data-testid=error-save]"
+      },
+      {
+       "expect_text": [
+        "[data-testid=error-save]",
+        "The work orders were not assigned. The server did not answer. Nothing changed."
+       ]
+      }
+     ]
+    },
+    {
+     "state": "bulk-result",
+     "routes": [],
+     "steps": [
+      {
+       "goto": "/api/_debug/reset"
+      },
+      {
+       "goto": "/"
+      },
+      {
+       "wait": "[data-testid=wo-row]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24817]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24822]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24840]"
+      },
+      {
+       "click": "[data-testid=assign-open]"
+      },
+      {
+       "wait": "[data-testid=tech-list]"
+      },
+      {
+       "check": "[data-testid=slot-radio][data-tech=t-bos][data-slot=morning]"
+      },
+      {
+       "wait": "[data-testid=assign-summary]"
+      },
+      {
+       "click": "[data-testid=assign-confirm]"
+      },
+      {
+       "wait": "[data-testid=result-alert]"
+      },
+      {
+       "expect_text": [
+        "[data-testid=result-alert]",
+        "2 of 3 work orders assigned to K. Bos, Tue 27 Oct, morning. 1 not assigned:"
+       ]
+      },
+      {
+       "wait": "[data-testid=tech-list]"
+      }
+     ]
+    },
+    {
+     "state": "success",
+     "routes": [],
+     "steps": [
+      {
+       "goto": "/api/_debug/reset"
+      },
+      {
+       "goto": "/"
+      },
+      {
+       "wait": "[data-testid=wo-row]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24817]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24822]"
+      },
+      {
+       "click": "[data-testid=assign-open]"
+      },
+      {
+       "wait": "[data-testid=tech-list]"
+      },
+      {
+       "check": "[data-testid=slot-radio][data-tech=t-bos][data-slot=morning]"
+      },
+      {
+       "click": "[data-testid=assign-confirm]"
+      },
+      {
+       "wait": "[data-testid=toast]"
+      },
+      {
+       "expect_text": [
+        "[data-testid=toast]",
+        "2 work orders assigned to K. Bos, Tue 27 Oct, morning."
+       ]
+      },
+      {
+       "expect_text": [
+        "[data-testid=result-count]",
+        "12 unplanned work orders"
+       ]
+      }
+     ]
+    },
+    {
+     "state": "error-undo",
+     "routes": [
+      {
+       "url": "**/api/assignments/undo",
+       "method": "POST",
+       "status": 500,
+       "body": "{}",
+       "content_type": "application/json"
+      }
+     ],
+     "steps": [
+      {
+       "goto": "/api/_debug/reset"
+      },
+      {
+       "goto": "/"
+      },
+      {
+       "wait": "[data-testid=wo-row]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24817]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24822]"
+      },
+      {
+       "click": "[data-testid=assign-open]"
+      },
+      {
+       "wait": "[data-testid=tech-list]"
+      },
+      {
+       "check": "[data-testid=slot-radio][data-tech=t-bos][data-slot=morning]"
+      },
+      {
+       "click": "[data-testid=assign-confirm]"
+      },
+      {
+       "wait": "[data-testid=toast]"
+      },
+      {
+       "click": "[data-testid=toast-undo]"
+      },
+      {
+       "wait": "[data-testid=error-undo]"
+      },
+      {
+       "expect_text": [
+        "[data-testid=error-undo]",
+        "The assignment was not undone. The server did not answer."
+       ]
+      }
+     ]
+    },
+    {
+     "state": "stale",
+     "routes": [
+      {
+       "url": "**/api/work-orders/changes?**",
+       "status": 200,
+       "body": "{\"newCount\": 4}",
+       "content_type": "application/json"
+      }
+     ],
+     "steps": [
+      {
+       "goto": "/api/_debug/reset"
+      },
+      {
+       "goto": "/?poll=500"
+      },
+      {
+       "wait": "[data-testid=wo-row]"
+      },
+      {
+       "wait": "[data-testid=stale-alert]"
+      },
+      {
+       "expect_text": [
+        "[data-testid=stale-alert]",
+        "4 new unplanned work orders since 09:42."
+       ]
+      }
+     ]
+    },
+    {
+     "state": "overflow",
+     "routes": [],
+     "steps": [
+      {
+       "goto": "/api/_debug/reset"
+      },
+      {
+       "goto": "/"
+      },
+      {
+       "wait": "[data-testid=wo-row]"
+      },
+      {
+       "check": "[data-testid=select-all]"
+      },
+      {
+       "click": "[data-testid=assign-open]"
+      },
+      {
+       "wait": "[data-testid=tech-list]"
+      },
+      {
+       "expect_text": [
+        "[data-testid=show-all-selected]",
+        "Show all, 11 more"
+       ]
+      }
+     ]
+    },
+    {
+     "state": "offline",
+     "routes": [
+      {
+       "url": "**/api/health",
+       "abort": true
+      }
+     ],
+     "steps": [
+      {
+       "goto": "/api/_debug/reset"
+      },
+      {
+       "goto": "/?poll=500"
+      },
+      {
+       "wait": "[data-testid=wo-row]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24817]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24822]"
+      },
+      {
+       "check": "[data-testid=wo-check][data-wo=WO-24840]"
+      },
+      {
+       "wait": "[data-testid=offline-alert]"
+      },
+      {
+       "expect_text": [
+        "[data-testid=offline-alert]",
+        "No connection. You can look at the list. You cannot assign until the connection is back."
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

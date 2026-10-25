@@ -11,6 +11,7 @@ What it checks:
                   on the first line under a "## Verdict" heading.
     RUN-COUNTER   each counter in run.md is at or below its limit. At G2, security-review is 1.
                   A light run (run.md field Mode: light) has no reflection and no security review.
+                  When the run folder has ux-design.md, ux-review is 1 at G2 and ux-review.md exists.
     RUN-ROUNDS    each package has at most one plan feedback, one review, and one fix.
     RUN-STEPS     the files of each step exist (plan, feedback, report, review per package).
     RUN-FIX       a review with CHANGES_REQUIRED has a fix row in log.md.
@@ -34,6 +35,7 @@ STATUS = {
     "core-report.md": {"CORE_DONE", "CORE_DONE_WITH_CONCERNS", "NEEDS_HUMAN", "BLOCKED"},
     "core-review.md": {"APPROVED", "APPROVED_WITH_COMMENTS", "CHANGES_REQUIRED"},
     "security-review.md": {"PASS", "PASS_WITH_FINDINGS", "BLOCKED"},
+    "ux-review.md": {"DONE", "DONE_WITH_CONCERNS", "CHANGES_REQUIRED"},
 }
 PACKAGE_STATUS = {
     "plan": {"PLAN_READY", "NEEDS_CONTEXT", "BLOCKED"},
@@ -133,6 +135,11 @@ def check(run, stage):
                 add(run / "run.md", "RUN-COUNTER", f"{name} is {value}, the limit is {limit}")
         if stage != "g1" and not light and counters.get("security-review", (1, 0))[1] != 1:
             add(run / "run.md", "RUN-COUNTER", "security-review must be 1 before G2")
+        if stage != "g1" and (run / "ux-design.md").is_file():
+            if counters.get("ux-review", (1, 0))[1] != 1:
+                add(run / "run.md", "RUN-COUNTER", "ux-review must be 1 before G2 (the run has ux-design.md)")
+            if not (run / "ux-review.md").is_file():
+                add(run / "ux-review.md", "RUN-FILE", "file is missing (the run has ux-design.md)")
 
     log_rows = []
     if (run / "log.md").is_file():

@@ -2,7 +2,7 @@
 """examplecheck: check the examples.md of example mapping.
 
 Usage:
-    python3 examplecheck.py <examples.md> [--format text|json]
+    python3 examplecheck.py <examples.md> [--design <ux-design.md>] [--format text|json]
 
 The script checks:
   - The five sections exist: Rules, Examples, Words with more than one meaning,
@@ -11,6 +11,8 @@ The script checks:
   - Each rule with "(limit: ...)" has the cases below, at, and above.
   - Each example row names a rule that exists, and has a source.
   - Each "open: P<n>" source has a question P<n> under Open questions.
+  - Each "ux: <screen>/<state>" source names a state of that screen in ux-design.md
+    (the file next to examples.md, or --design), when that file exists.
   - No word with more than one meaning in a criterion has a technical or an assumed
     answer. A word of a technical contract, marked "(contract)", can have one.
 
@@ -45,7 +47,29 @@ def sections(text):
     return out
 
 
-def check(text):
+def ux_states(design: str | None) -> dict | None:
+    """The states of each screen in ux-design.md: {screen: {state, ...}}. None when there is no design."""
+    if not design:
+        return None
+    states, screen = {}, None
+    for line in design.splitlines():
+        h = re.match(r"^#{2,4}[ \t]+States:[ \t]*(\S+)", line)
+        if h:
+            screen = h.group(1).strip().lower()
+            states.setdefault(screen, set())
+            continue
+        if line.startswith("#"):
+            screen = None
+            continue
+        m = ROW.match(line)
+        if screen and m:
+            first = m.group(1).split("|")[0].strip().strip("`").lower()
+            if first and first != "state" and not set(first) <= set("-: "):
+                states[screen].add(first)
+    return states
+
+
+def check(text, design=None):
     errors = []
     sec = sections(text)
     for name in SECTIONS:
@@ -81,6 +105,14 @@ def check(text):
         source = row.get("source", "")
         if not source:
             errors.append(f"An example of {rule} has no source")
+        u = re.search(r"\bux:\s*([\w-]+)/([\w-]+)", source, re.I)
+        known = ux_states(design)
+        if u and known is not None:
+            scr, st = u.group(1).lower(), u.group(2).lower()
+            if scr not in known:
+                errors.append(f"An example of {rule} names a screen that is not in ux-design.md: {scr}")
+            elif st not in known[scr]:
+                errors.append(f"An example of {rule} names a state that is not in the states of {scr}: {st}")
         m = re.search(r"open:\s*(P\d+)", source, re.I)
         if m:
             waiting.add((rule, m.group(1).upper()))
@@ -105,9 +137,13 @@ def check(text):
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("file")
+    ap.add_argument("--design", help="ux-design.md (default: the file next to examples.md)")
     ap.add_argument("--format", choices=("text", "json"), default="text")
     args = ap.parse_args(argv)
-    errors, waiting, count, questions = check(pathlib.Path(args.file).read_text(encoding="utf-8"))
+    path = pathlib.Path(args.file)
+    design_path = pathlib.Path(args.design) if args.design else path.parent / "ux-design.md"
+    design = design_path.read_text(encoding="utf-8") if design_path.exists() else None
+    errors, waiting, count, questions = check(path.read_text(encoding="utf-8"), design)
     if args.format == "json":
         print(json.dumps({"errors": errors, "rules": count, "waiting": waiting, "questions": questions}, indent=2))
     else:

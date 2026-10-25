@@ -64,7 +64,7 @@ For a small, medium, or large item, the skill does these steps before it writes 
 2. **Acceptance tests.** It turns the answered examples into tests. The tests have four layers: the test case, a DSL, a protocol driver, and the system. The tests fail first.
 3. **Gate Spec.** You approve `examples.md` and the tests. `speclock.py` then locks the test cases and watches the DSL. A PreToolUse hook blocks each edit of a locked test, also through Bash.
 4. **Build.** One scenario at a time: red, green, a review of the step, a commit.
-5. **Review.** `speclock.py check` must show 0 changes. `mutate.py` flips each comparison in the changed code. A mutation that survives is a rule without an example. When the project has Stryker, the skill runs it too. In the medium and large tier, a review sub-agent on Sonnet reads the diff.
+5. **Review.** `speclock.py check` must show 0 changes. `mutate.py` flips each comparison in the changed code. A mutation that survives is a rule without an example. When the project has Stryker, the skill runs it too. In the medium and large tier, a review sub-agent on Sonnet reads the diff. For an item with UI work, the `ux-design` agent reviews the built screens against the approved design. It uses Playwright, and needs that plugin.
 
 ### Product questions go to the PO
 

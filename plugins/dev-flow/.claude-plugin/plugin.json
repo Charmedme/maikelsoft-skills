@@ -1,7 +1,7 @@
 {
   "name": "dev-flow",
   "displayName": "Developer flow",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Builds one approved work item (story, bug, task, or chore) from the tracker to tested commits. Sets a tier from the size and the risk of the change (patch, small, medium, large) and runs only the steps and gates of that tier. Product questions go back to the product owner on the item. Output in ASD-STE100 Simplified Technical English or Begrijpelijk Nederlands (B1).",
   "author": {
     "name": "Maikel",

@@ -21,6 +21,10 @@ Each skill whose SKILL.md names one of these files also gets it (a .py file in s
     shared/example-mapping.md
     shared/examplecheck.py
 
+Each skill whose SKILL.md names "proto-shell" also gets the files of shared/proto-shell/:
+    scripts/<name>.py             <- shared/proto-shell/<name>.py
+    references/proto-shell/<name> <- shared/proto-shell/<name> (each other file)
+
 A SKILL.md that has these two marker lines also gets shared/workflow.md between them:
     <!-- BEGIN shared/workflow.md -->
     <!-- END shared/workflow.md -->
@@ -43,6 +47,8 @@ PLUGIN_COPIES = {
 }
 # Shared files for each skill that names the file in its SKILL.md.
 NAMED_COPIES = [SHARED / "po-questions.md", SHARED / "example-mapping.md", SHARED / "examplecheck.py"]
+# Shared folders for each skill that names the folder in its SKILL.md.
+NAMED_FOLDERS = [SHARED / "proto-shell"]
 BLOCK = re.compile(r"(<!-- BEGIN shared/workflow\.md -->\n).*?(<!-- END shared/workflow\.md -->)", re.DOTALL)
 
 
@@ -63,6 +69,14 @@ def expected_files(skill: pathlib.Path) -> dict:
         if src.name in text:
             folder = "scripts" if src.suffix == ".py" else "references"
             files[skill / folder / src.name] = src.read_text(encoding="utf-8")
+    for folder_src in NAMED_FOLDERS:
+        if folder_src.name in text:
+            for src in sorted(folder_src.iterdir()):
+                if not src.is_file() or src.name.startswith("."):
+                    continue
+                target = (skill / "scripts" / src.name if src.suffix == ".py"
+                          else skill / "references" / folder_src.name / src.name)
+                files[target] = src.read_text(encoding="utf-8")
     plugin_shared = skill.parents[1] / "shared"
     if plugin_shared.is_dir():
         for src in sorted(plugin_shared.iterdir()):

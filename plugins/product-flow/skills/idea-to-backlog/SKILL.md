@@ -49,7 +49,14 @@ This skill takes a request of a product owner (PO) or a business analyst (BA) to
 
 1. **Scan and research.** Read `references/research.md`. Find the tools first, then the facts. Done when the "Sources" section lists each source with its link, and each open fact has a mark.
 2. **Grill.** Read `references/grill.md`. Always start with round 1, the need, also when the documents describe the problem. Then ask in rounds until no question that blocks the scope is open. Gate **G1**: give the shared understanding in at most 10 lines and ask: "Is this what you mean?"
-3. **Prototype.** Use the `product-prototype` skill for the riskiest open point. If you cannot load that skill, read `${CLAUDE_SKILL_DIR}/../product-prototype/SKILL.md` and follow it. Before G2, compare each screen with the "Decisions" section. Fix each difference, or give it to the human as a question. Gate **G2**: "Is this what you mean?" When the answer is "no", go back to phase 2 for that part only. Write the verdict in the "Prototype" section. A function that the human adds while clicking through the prototype becomes a new decision.
+3. **Prototype.** When the `ux-design` plugin is installed and the request changes screens, use the `ux-design:ux-designer` agent:
+   1. Write `docs/work/<slug>/story.md`: the shared understanding of G1, and each decision as a numbered point.
+   2. Start the agent three times, in the modes `design`, `mockup`, and `prototype`, with that work folder. When the agent returns `NEEDS_HUMAN`, ask the human its questions, and start that mode again with the answers.
+   3. At G2, show the prototype, the mockups, and the proposed decisions and opportunities of `ux-design.md`. Each proposed decision that the human accepts becomes a decision in the context file.
+
+   Else, use the `product-prototype` skill for the riskiest open point. If you cannot load that skill, read `${CLAUDE_SKILL_DIR}/../product-prototype/SKILL.md` and follow it.
+
+   Before G2, compare each screen with the "Decisions" section. Fix each difference, or give it to the human as a question. Gate **G2**: "Is this what you mean?" When the answer is "no", go back to phase 2 for that part only. Write the verdict in the "Prototype" section. A function that the human adds while clicking through the prototype becomes a new decision.
 4. **Spec.** Read `references/spec.md`. Write the goal, the users, the scope, and the story map in the "Spec" section. Done when each step of the first release slice has a story title.
 5. **Backlog.** Write the items in the "Backlog" section with the skills of this plugin, in this order:
    1. `backlog-goal` for the product goal. Write it one time, in the "Spec" section. Write a separate goal item only when the team keeps its goals as items (see `profiles.md`).
