@@ -1,6 +1,6 @@
 # Tests for logs, spans, and metrics
 
-Test the behavior that a reader of the logs and the dashboards depends on: the event ID, the level, the structured values, no raw personal data, and the metric tags.
+Test the behavior that readers of logs and dashboards need. Test the event ID, the level, the structured values, no raw personal data, and the metric tags.
 
 ## Contents
 
@@ -53,7 +53,7 @@ Assert.IsFalse(measurement.Tags.ContainsKey("customer.id"));
 
 ## Spans with the in-memory exporter
 
-Package: `OpenTelemetry.Exporter.InMemory` 1.20.
+Package: `OpenTelemetry.Exporter.InMemory` 1.20.1.
 
 ```csharp
 var spans = new List<Activity>();

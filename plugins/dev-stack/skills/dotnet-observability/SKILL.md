@@ -2,8 +2,8 @@
 name: dotnet-observability
 description: Logs, traces, and metrics in .NET code with ILogger, LoggerMessage, OpenTelemetry, and Azure Monitor (Application Insights). Use when code or a review touches ILogger, log levels, message templates, LoggerMessage, BeginScope, personal data or secrets in logs, log redaction, ActivitySource and spans, Meter, IMeterFactory, counters, OpenTelemetry setup (AddOpenTelemetry, UseOtlpExporter), Application Insights (connection string, UseMicrosoftOpenTelemetry, UseAzureMonitor, TelemetryClient), Serilog, trace sampling, or tests with FakeLogger and MetricCollector. Not for the middleware order or exception handlers (dev-stack:aspnetcore), an Aspire ServiceDefaults project (aspire), or dashboards and alert rules in a monitoring tool.
 metadata:
-  verified: "2026-10-19"
-  versions: ".NET 10, OpenTelemetry .NET 1.20, Microsoft.OpenTelemetry 1.2, Azure.Monitor.OpenTelemetry.AspNetCore 1.6, Microsoft.Extensions.Telemetry and Compliance.Redaction 10.11, Serilog 4.4 with Serilog.AspNetCore 10.0"
+  verified: "2026-10-25"
+  versions: ".NET 10, OpenTelemetry .NET 1.20.1, Microsoft.OpenTelemetry 1.2, Azure.Monitor.OpenTelemetry.AspNetCore 1.6, Microsoft.Extensions.Telemetry and Compliance.Redaction 10.11, Serilog 4.4 with Serilog.AspNetCore 10.0"
 ---
 
 # .NET observability
@@ -46,7 +46,7 @@ Existing code keeps its style (stack rule 3).
 2. New app on Azure: call `UseMicrosoftOpenTelemetry` with `ExportTarget.AzureMonitor`. Keep `UseAzureMonitor` where it exists. Use one distro: `UseAzureMonitor` plus `UseMicrosoftOpenTelemetry` stops the host with `NotSupportedException` ("Multiple calls to UseAzureMonitorExporter").
 3. Register the distro only when the connection string is set. Without `APPLICATIONINSIGHTS_CONNECTION_STRING` it throws `InvalidOperationException` at host start, so local runs and `WebApplicationFactory` tests fail. The package has no public guard method: read the configuration value.
 4. Read the connection string from configuration (`APPLICATIONINSIGHTS_CONNECTION_STRING`, from the environment or a secret store). Do not use an instrumentation key: key ingestion is out of support since 2025-03-31.
-5. Set sampling in code or configuration (OPS-20). The distro samples 5 traces per second by default, and its trace-based log sampler drops the logs of unsampled traces. `SamplingRatio = 1.0F` with `TracesPerSecond = null` keeps all.
+5. Set sampling in code or configuration (OPS-20). `SamplingRatio` alone changes nothing: its default is already 1.0, and `TracesPerSecond` (default 5) wins when both have a value. So `SamplingRatio = 1.0F` alone keeps about 5 traces per second (Azure Monitor distro 1.5.0 and later). The trace-based log sampler (on by default) then drops the logs of the other traces. Set `TracesPerSecond = null` next to `SamplingRatio`. In a review, a `SamplingRatio` without `TracesPerSecond = null` is a high finding. Microsoft distro 1.2.0 caveat: `references/appinsights.md`.
 6. Register each own `ActivitySource` and `Meter` by name. With the distro, call `ConfigureOpenTelemetryTracerProvider` and `ConfigureOpenTelemetryMeterProvider`. Without a registration, `StartActivity` returns null and the counter records nothing.
 
 ```csharp
@@ -65,6 +65,7 @@ if (!string.IsNullOrWhiteSpace(builder.Configuration["APPLICATIONINSIGHTS_CONNEC
 {
     builder.Services.ConfigureOpenTelemetryTracerProvider(tracing => tracing.AddSource(Telemetry.Name));
     builder.Services.ConfigureOpenTelemetryMeterProvider(metrics => metrics.AddMeter(Telemetry.Name));
+    builder.Services.Configure<OpenTelemetryLoggerOptions>(logging => logging.IncludeScopes = true); // rule 11
     builder.UseMicrosoftOpenTelemetry(options =>
     {
         options.Exporters = ExportTarget.AzureMonitor;
@@ -82,7 +83,7 @@ Without Azure, use the OpenTelemetry SDK with `.UseOtlpExporter()` one time for 
 8. Write new log calls as `[LoggerMessage]` methods with a unique `EventId` per class (OPS-23). CA1873 warns on each `LogTrace`, `LogDebug`, or `LogInformation` call that passes arguments, also when the project turns CA1848 off. With `-warnaserror` the build then fails. Existing code keeps its style.
 9. Pass the exception as the exception argument, not `ex.Message`. Log a failure one time, at the boundary that handles it. A log and a rethrow give two entries for one failure.
 10. Do not log secrets, tokens, connection strings, full bodies, or headers. Classify personal data with a `DataClassificationAttribute` (for example `[PersonalData] string email`), and turn on `EnableRedaction` with `AddRedaction`. Use the HMAC redactor when support must search by the value: the log then holds `<key id>:<hash>`. Redaction works only in the MEL logger factory.
-11. With the OpenTelemetry log exporter, set `IncludeScopes = true` when the code depends on `BeginScope`. OpenTelemetry drops scopes by default.
+11. Log scopes are off by default in OpenTelemetry, also with both distros (`OpenTelemetryLoggerOptions.IncludeScopes` is false). When code or support depends on a `BeginScope` value (for example a filter on `customDimensions.ShipmentId`), set `IncludeScopes = true`. Or put the value in the log event itself. Existing scope use without this setting is a finding: those values never reached the backend.
 
 ```csharp
 internal static partial class OrderLog
@@ -141,6 +142,7 @@ Examples: `references/testing.md`.
 | `private readonly Meter _meter = new("Orders");` | `meterFactory.Create("Orders.Api")` |
 | `_created.Add(1, new("customer.id", customerId))` | `_created.Add(1, new("orders.channel", channel))` |
 | `EnableAdaptiveSampling = false` | `SamplingRatio` and `TracesPerSecond` |
+| `options.SamplingRatio = 1.0F;` alone | `SamplingRatio = 1.0F` and `TracesPerSecond = null` |
 | `.AddConsoleExporter()` in all environments | `.UseOtlpExporter()`, console only in development |
 | `new FakeLogger<T>()` to test classified values | A logger from a provider with `EnableRedaction()` and `AddFakeLogging()` |
 
@@ -179,7 +181,7 @@ The full list is in `references/review-checklist.md`.
 1. One logging pipeline. Serilog only with `writeToProviders: true` or without other providers. tool (OBS-USE-SERILOG), judge
 2. One distro, registered only when the connection string is set. tool (OBS-TWO-DISTROS), judge
 3. No instrumentation key, no classic Application Insights API. tool (OBS-IKEY, OBS-AI-CLASSIC, OBS-PKG-MEL-AI, OBS-PKG-AI-2X)
-4. Sampling is explicit (OPS-20). judge
+4. Sampling is explicit (OPS-20): `TracesPerSecond = null` next to each `SamplingRatio`. judge
 5. Own sources and meters are registered by name. judge
 6. Message templates only, no interpolation. tool (CA2254, CA2017, CA2253, CA1727)
 7. New log calls are `[LoggerMessage]` methods or follow the project style. tool (CA1873, CA1848), judge
@@ -190,6 +192,7 @@ The full list is in `references/review-checklist.md`.
 12. No console exporter in production. tool (OBS-CONSOLE-EXPORTER)
 13. `StartActivity` results use `activity?.`. tool (CS8602)
 14. Tests prove the log and metric behavior with `FakeLogger` and `MetricCollector<T>`. judge
+15. Scope values that code or support depends on reach the backend (`IncludeScopes = true`). judge
 
 ## Report
 
