@@ -4,7 +4,7 @@ ux-design is a Claude Code plugin with a UX designer agent and its practice skil
 
 English output follows ASD-STE100 Simplified Technical English. Dutch output follows Begrijpelijk Nederlands (taalniveau B1).
 
-Status: version 0.3.0, preview. The agent has four modes: design, mockup, prototype, and review. The tool skills connect it to Claude Design, Figma, and OpenPencil. product-flow, dev-flow, and dev-team call the agent when this plugin is installed. Read the test results below before you use it on real work.
+Status: version 0.3.1, preview. The agent has four modes: design, mockup, prototype, and review. The tool skills connect it to Claude Design, Figma, and OpenPencil. product-flow, dev-flow, and dev-team call the agent when this plugin is installed. Read the test results below before you use it on real work.
 
 ## Install
 
@@ -55,7 +55,7 @@ pip install playwright
 | Skill | `brand-rules` | `DESIGN.md`, `PRODUCT.md` with a Words table, and DTCG tokens with usage notes and contrast pairs. `brandcheck.py` checks and converts the tokens. |
 | Skill | `claude-design` | Reads a Claude Design System, turns the checked HTML mockups into a Design canvas, and makes a Design System from DTCG tokens. |
 | Skill | `figma` | Adds to the official Figma plugin: a call budget, a read order, and a map from the variables to the tokens. It writes only in a draft file. |
-| Skill | `openpencil` | Loads the `openpencil-design` skill, after a check of the skill, the `op` CLI, and the app. |
+| Skill | `openpencil` | Imports the checked HTML mockups into OpenPencil, one frame for each state (`opimport.py`). Then it uses the `openpencil-design` skill. |
 
 ## How it works
 
@@ -115,6 +115,7 @@ Version 0.3.0 adds the tool skills, the brand files, accessibility, and the setu
 | Brand files | Each token has a usage note and each text color has contrast pairs (20 to 22, against 0). `DESIGN.md` has all 8 sections. The banned words are a check, not prose. |
 | Figma | With a View seat, the skill keeps to the budget (4 to 5 read calls) and says which frames it did not read. Without the skill: 7 to 9 calls, and no word about the budget. A fake Figma server was used. |
 | Setup | 31 of 32 facts right, against 28 of 32. No invented stack or run command. |
+| OpenPencil | With a real headless OpenPencil 0.8.4 server: 22 of 22 states as frames in each run. The frames differ from the mockups in about 5% of the pixels. Cost $0.32 to $0.60, against $1.01 to $1.43 without the import script. |
 | Calls between the plugins | `idea-to-backlog` starts the agent in design, mockup, and prototype mode when the plugin is installed, and uses `product-prototype` when it is not. |
 
 Version 0.2.0 adds the prototype, the review, and the handoff. The full results are in [`evals/ux-design/results-2026-10-25.md`](../../evals/ux-design/results-2026-10-25.md).
@@ -132,7 +133,6 @@ On Opus, version 0.1.0 wins each design criterion and the states against Opus wi
 - The agent cannot do user research. It writes the questions and the research backlog. Real users answer them.
 - Claude Design needs a claude.ai login. In a `claude -p` run or in CI, the agent makes HTML mockups only.
 - The Figma skill was tested with a fake Figma server, not with a real Figma file. The write tools of Figma are in beta.
-- The OpenPencil skill only loads the skill of OpenPencil. It was not tested with the OpenPencil app.
 - The tests used one fictional product and three stories. Results on other products can differ.
 - Review mode does not find more defects than a strong model. Its value is the gate: a verdict, the evidence, and a walk file that runs again.
 - Only the human runs a prototype test with users. The agent does not invent results.
