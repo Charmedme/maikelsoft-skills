@@ -82,6 +82,10 @@ var response = await client.Indices.UpdateAliasesAsync(a => a
 
 Both actions apply together.
 
+Give each action its own lambda. One `IndexUpdateAliasesActionDescriptor` holds one action: a second call on the same descriptor replaces the first. `act => act.Remove(...).Add(...)` and `act => act.RemoveIndex(...).Add(...)` compile with no warning and send only `{"actions":[{"add":...}]}`.
+
+The result: the old index keeps the alias, so the alias points to two indexes. Or a concrete index with the alias name stays and Elasticsearch answers 400 `invalid_alias_name_exception`. A test on a fresh container does not see this. To replace a concrete index that has the alias name, use `act => act.RemoveIndex(r => r.Index(Alias))` and a separate `act => act.Add(...)`.
+
 ## Rebuild without downtime
 
 A mapping change (a new type, a new analyzer) needs a new index:

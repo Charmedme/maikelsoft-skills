@@ -2,8 +2,8 @@
 name: elasticsearch
 description: Search code with Elasticsearch 9 and the .NET client Elastic.Clients.Elasticsearch 9. Use when code or a review touches ElasticsearchClient, an index mapping, aliases, a reindex, bulk indexing, the sync from the database to a search index, search queries, filters, paging, point in time, search_after, an export of many hits, or an upgrade from NEST or client 8. Not for database full-text search (PostgreSQL tsvector, SQL Server full-text index; dev-stack:efcore, dev-stack:postgresql, dev-stack:sqlserver), the outbox mechanism itself (dev-stack:wolverine), or log search in Kibana.
 metadata:
-  verified: "2026-10-19"
-  versions: "Elastic.Clients.Elasticsearch 9.5.3, Elasticsearch 9.5, .NET 10. Client 8.19 for 8.x clusters and NEST migration in references/migration.md"
+  verified: "2026-10-25"
+  versions: "Elastic.Clients.Elasticsearch 9.5.3, Elasticsearch 9.5.5, .NET 10. Client 8.19.27 for 8.x clusters and NEST migration in references/migration.md"
 ---
 
 # Elasticsearch
@@ -42,7 +42,7 @@ Existing code keeps its style (stack rule 3).
 ### Client
 
 1. Register one `ElasticsearchClient` as a singleton. Set an API key, trust the cluster CA (`CertificateFingerprint` or `CertificateValidations.AuthorityIsRoot`), `DefaultMappingFor<T>` with the alias, and `RequestTimeout`. The client pools connections and caches metadata.
-2. Use the client major of the server major: 9.x for 9.x, 8.19.x for 8.x. Pin the exact version and read the release notes before an update. The client is not backward compatible and does not follow semver.
+2. Use the client major of the server major: 9.x for 9.x, 8.19.x for 8.x. A 9.x client never works with an 8.x server. An 8.x client works with a 9.x server (forward compatible, no new features). So upgrade the server first, then the client. Pin the exact version and read the release notes before an update: the client does not follow semver (`references/migration.md`).
 3. Check each response. The client does not throw by default: a 409 or a 400 comes back with `IsValidResponse == false`. Throw with `DebugInformation` (an `EnsureValid()` helper), or set `ThrowExceptions()` one time for the client.
 4. After a bulk call, read `ItemsWithErrors` one item at a time. One failed item sets `Errors = true` and `IsValidResponse = false` on a 200 response, and `ThrowExceptions()` does not throw for it. A blanket throw on `!IsValidResponse` also throws on stale 409 items that the sync must skip.
 
@@ -69,7 +69,7 @@ builder.Services.AddSingleton(sp =>
    - `Keyword` for IDs, codes, and filters.
    - `Text` with a `Keyword` sub-field and `IgnoreAbove` for text that you also sort.
    - `ScaledFloatNumber` or `LongNumber` for money.
-6. Name the physical index `{entity}_v{n}` and use only the alias in code. Move the alias with one `UpdateAliasesAsync` call (remove plus add with `IsWriteIndex(true)`). A field type cannot change in place, so a mapping change needs a new index.
+6. Name the physical index `{entity}_v{n}` and use only the alias in code. Move the alias with one `UpdateAliasesAsync` call (remove plus add with `IsWriteIndex(true)`). Give each action its own lambda in `Actions(...)`. One descriptor holds one action: `act.Remove(...).Add(...)` sends only the add, with no warning (`references/index-design.md`). A field type cannot change in place, so a mapping change needs a new index.
 7. For a full rebuild, create the new index with 0 replicas and refresh `-1`. Then bulk load, restore both settings, refresh, and move the alias.
 
 ```csharp
@@ -136,6 +136,7 @@ Detail and examples: `references/queries.md`.
 | `try { await client.IndexAsync(...); } catch (Exception)` as the only error check | Check `IsValidResponse`, or set `ThrowExceptions()` |
 | `if (!bulk.IsValidResponse) throw ...` in a sync with external versions | Loop over `ItemsWithErrors`: skip 409, retry 429 and 5xx |
 | `.From(page * 1000).Size(1000)` to export all hits | `OpenPointInTimeAsync` plus `SearchAfter` |
+| `a.Actions(act => act.Remove(...).Add(...))` (one descriptor, sends only the add) | `a.Actions(act => act.Remove(...), act => act.Add(...))` |
 | `.Refresh(Refresh.True)` on each index call | The default refresh. `Refresh.WaitFor` only for read-your-write. |
 | `.ServerCertificateValidationCallback(CertificateValidations.AllowAll)` | `CertificateValidations.AuthorityIsRoot(ca)` or `CertificateFingerprint(...)` |
 | `await client.IndexAsync(doc)` right after `SaveChangesAsync` in the endpoint | An outbox row in the same transaction, and a worker that indexes |
@@ -143,7 +144,7 @@ Detail and examples: `references/queries.md`.
 
 ## Check
 
-1. Build with warnings as errors. It catches `s.Index(...)` on a search (CS0618) and the 8.x and NEST APIs (CS1061, CS0246).
+1. Build with warnings as errors. It catches `s.Index(...)` on a search (CS0618) and the APIs of client 8.18 or older and of NEST (CS1061, CS0246).
 
    ```
    dotnet build -warnaserror
@@ -173,13 +174,13 @@ Detail and examples: `references/queries.md`.
 
 The full list is in `references/review-checklist.md`.
 
-1. No NEST, no Elasticsearch.Net, no 8.x client against a 9.x server. tool (ES-USING-NEST, ES-PKG-NEST, ES-PKG-ESNET, build)
+1. No NEST, no Elasticsearch.Net, no 9.x client against an 8.x server. An 8.x client on a 9.x server works, but plan the client upgrade. tool (ES-USING-NEST, ES-PKG-NEST, ES-PKG-ESNET, build), judge
 2. One client for the process. tool (ES-NEW-CLIENT), judge
 3. TLS validation is on. tool (ES-TLS-OFF)
 4. Each response is checked (`IsValidResponse`, `EnsureValid()`, or `ThrowExceptions()`). judge
 5. Bulk results are read item by item: 409 is skipped, 429 and 5xx are retried. judge
 6. The index has an explicit strict mapping with types from the access pattern. judge
-7. Code uses the alias. A mapping change makes a new index and moves the alias. judge
+7. Code uses the alias. A mapping change makes a new index and moves the alias. Each alias action has its own descriptor. judge
 8. The sync uses an outbox and a worker. No second write in the request. judge
 9. Writes and deletes use `VersionType.External` with a monotonic 64-bit version. judge
 10. No `Refresh.True` in production code. tool (ES-REFRESH-TRUE)

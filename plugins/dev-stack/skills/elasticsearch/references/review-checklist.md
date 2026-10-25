@@ -17,7 +17,7 @@ Each check is `tool (<rule ID>)` when a tool finds it, or `judge` when a reviewe
 | # | Check | Type |
 |---|-------|------|
 | 1 | No NEST and no Elasticsearch.Net. | tool (ES-USING-NEST, ES-PKG-NEST, ES-PKG-ESNET) |
-| 2 | The client major matches the server major, with an exact version. | judge |
+| 2 | The client major matches the server major, with an exact version. A 9.x client on an 8.x server is a defect. An 8.x client on a 9.x server works (forward compatible), but needs a planned upgrade. | judge |
 | 3 | One `ElasticsearchClient` for the process. No `new ElasticsearchClient` in a method, a constructor, or a scoped service. | tool (ES-NEW-CLIENT), judge |
 | 4 | Authentication with an API key with only the privileges that the service needs. The key comes from a secret store. | judge |
 | 5 | TLS validation is on: `CertificateFingerprint` or `AuthorityIsRoot`, never `AllowAll` or a callback that returns `true`. | tool (ES-TLS-OFF) |
@@ -38,7 +38,7 @@ Each check is `tool (<rule ID>)` when a tool finds it, or `judge` when a reviewe
 |---|-------|------|
 | 11 | Each index has an explicit mapping with `Dynamic(DynamicMapping.Strict)`. | judge |
 | 12 | IDs, codes, and filter fields are `keyword`. Sorted text has a `keyword` sub-field with `IgnoreAbove`. Money is `scaled_float` or `long`. | judge |
-| 13 | The physical index is `{entity}_v{n}`. Code uses only the alias. The alias moves with one `UpdateAliasesAsync` call. | judge |
+| 13 | The physical index is `{entity}_v{n}`. Code uses only the alias. The alias moves with one `UpdateAliasesAsync` call, with one descriptor (lambda) for each action. `act.Remove(...).Add(...)` sends only the add. | judge |
 | 14 | A full rebuild sets 0 replicas and refresh `-1`, and restores both before the alias moves. | judge |
 | 15 | Dutch and German text uses the `dutch` and `german` analyzers on sub-fields (SEARCH-06), with an `_analyze` test. | judge |
 

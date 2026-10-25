@@ -1,6 +1,6 @@
 # Sources
 
-Checked on 2026-10-19. The facts of this skill come from these primary sources. Look them up again when `metadata.verified` in `SKILL.md` is older than 6 months.
+Checked on 2026-10-19, and again on 2026-10-25. The facts of this skill come from these primary sources. Look them up again when `metadata.verified` in `SKILL.md` is older than 6 months.
 
 ## Contents
 
@@ -11,11 +11,11 @@ Checked on 2026-10-19. The facts of this skill come from these primary sources. 
 
 ## Versions
 
-| Item | Version on 2026-10-19 | Source |
+| Item | Version on 2026-10-25 | Source |
 |------|-----------------------|--------|
 | Elastic.Clients.Elasticsearch | 9.5.3 (2026-09-28), needs Elastic.Transport 1.1.0 or later | [nuget.org](https://www.nuget.org/packages/Elastic.Clients.Elasticsearch) |
 | Elastic.Clients.Elasticsearch 8.x | 8.19.27 | [nuget.org](https://www.nuget.org/packages/Elastic.Clients.Elasticsearch) |
-| Elasticsearch server | 9.5.5, 9.4.8, 8.19.23 | [Docker Hub elasticsearch](https://hub.docker.com/_/elasticsearch/tags) |
+| Elasticsearch server | 9.5.5, 9.4.8, 8.19.23. Server 8.19 support ends on 2027-07-15. | [Docker Hub elasticsearch](https://hub.docker.com/_/elasticsearch/tags), [endoflife.date](https://endoflife.date/elasticsearch), [Elastic EOL policy](https://www.elastic.co/support/eol) |
 | Testcontainers.Elasticsearch | 4.16.0 (default image 8.6.1) | [nuget.org](https://www.nuget.org/packages/Testcontainers.Elasticsearch) |
 | NEST | 7.17.5, deprecated | [nuget.org](https://www.nuget.org/packages/NEST) |
 | OpenSearch.Client | 2.2.0 | [nuget.org](https://www.nuget.org/packages/OpenSearch.Client) |
@@ -24,7 +24,9 @@ Checked on 2026-10-19. The facts of this skill come from these primary sources. 
 ## Documentation
 
 - [Elasticsearch .NET client: getting started and connecting](https://www.elastic.co/docs/reference/elasticsearch/clients/dotnet): setup, API keys, TLS.
-- [Elasticsearch .NET client: breaking changes](https://www.elastic.co/docs/release-notes/elasticsearch/clients/dotnet/breaking-changes): the 8.x to 9.x list.
+- [elasticsearch-net README, section Compatibility](https://github.com/elastic/elasticsearch-net/blob/main/README.md#compatibility): clients are forward compatible with the same and the next higher server major, never with an earlier major. Checked 2026-10-25.
+- [Elasticsearch .NET client: breaking changes](https://github.com/elastic/elasticsearch-net/blob/main/docs/release-notes/breaking-changes.md) (source of the page below). Checked 2026-10-25.
+- [Elasticsearch .NET client: breaking changes, docs site](https://www.elastic.co/docs/release-notes/elasticsearch/clients/dotnet/breaking-changes): the 8.x to 9.x list.
 - [Mapping](https://www.elastic.co/docs/manage-data/data-store/mapping): explicit mapping, `dynamic: strict`, field types.
 - [Aliases](https://www.elastic.co/docs/manage-data/data-store/aliases): `is_write_index`, atomic alias actions.
 - [Optimistic concurrency and versioning](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/optimistic-concurrency-control): `version_type=external`.
@@ -43,6 +45,14 @@ On 2026-10-19 with the .NET SDK 10.0.402 and client 9.5.3:
 - The eval probe (a fake HTTP server, the orders-api fixture): the client sent gzip-compressed request bodies by default. A worker that skips 409 items indexed the next order. A worker with a blanket throw logged the stale item as an error and retried the batch.
 - `s.Index(...)` on a search gave CS0618. `CertificateValidations.AllowAll` and `(_, _, _, _) => true` both compiled with no warning.
 - All C# examples in this skill compiled with warnings as errors. The container example in `testing.md` compiled but did not run: the test machine had no disk space for the Elasticsearch image.
+
+On 2026-10-25 with the .NET SDK 10.0.402:
+
+- Client 9.5.3, in-memory transport: `UpdateAliasesAsync(a => a.Actions(act => act.RemoveIndex(r => r.Index("products")).Add(...)))` sent `{"actions":[{"add":{"alias":"products","index":"products_v2"}}]}`. `act.Remove(...).Add(...)` also sent only the add. Neither gave a warning. One lambda for each action sent both actions (`remove_index`, then `add` with `is_write_index`).
+- Client 8.19.0 and 8.19.27: `Query.MatchAll(...)` (CS1955), `query.TryGet<T>` (CS1061), and `new FieldSort()` (CS9035) do not compile, and `s.Index(...)` on a search is obsolete (CS0618). The API shape is the same as client 9.
+- Client 8.18.3: `Query.MatchAll(...)`, `TryGet<T>`, `new FieldSort()`, and `s.Index(...)` compile. The synchronous methods are obsolete (CS0618).
+- `.ScaledFloat(...)` and `.Number(...)` do not exist in client 8.0.0, 8.18.3, 8.19, or 9.5.3. They are NEST names: NEST 7.17.5 compiled `.Number(n => n.Name(...).Type(NumberType.ScaledFloat).ScalingFactor(100))`.
+- nuget.org: Elastic.Clients.Elasticsearch 9.5.3 and 8.19.27, Elastic.Transport 1.1.0, Testcontainers.Elasticsearch 4.16.0, NEST 7.17.5, and OpenSearch.Client 2.2.0 are still the newest stable versions.
 
 ## Credits
 
