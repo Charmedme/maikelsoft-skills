@@ -17,8 +17,9 @@ Each check is `tool (<rule ID>)` when a tool finds it, or `judge` when a reviewe
 | # | Check | Type |
 |---|-------|------|
 | 1 | MailKit is 4.16.0 or later (CVE-2026-41319). MimeKit is 4.15.1 or later (CVE-2026-30227). | tool (MAIL-PKG-MIMEKIT-CVE) |
-| 2 | With MimeKit 4.15.1 to 4.18.1, `System.Security.Cryptography.Pkcs` 10.0.13 or later is pinned with `CentralPackageTransitivePinningEnabled`. The build has no NU1902 or NU1903. | tool (`dotnet build -warnaserror`, `dotnet package list --vulnerable --include-transitive`) |
-| 3 | No `NoWarn` for NU190x and no `NuGetAudit=false`. | tool (SC-NUGETAUDIT-OFF), judge |
+| 2 | With MimeKit 4.18.1 or lower, `System.Security.Cryptography.Pkcs` 10.0.13 or later is pinned with `CentralPackageTransitivePinningEnabled`. The build has no NU1902 or NU1903. | tool (`dotnet build -warnaserror`, `dotnet package list --vulnerable --include-transitive`) |
+| 3 | No hidden advisory. No `NuGetAuditSuppress` for a MailKit, MimeKit or Pkcs advisory, no `NoWarn` for NU1901 to NU1904, no `NuGetAuditLevel` `high` or `critical`, no `NuGetAudit` `false`. `dotnet package list --vulnerable --include-transitive` ignores these settings, so compare it with the build. | tool (MAIL-AUDIT-HIDDEN), judge |
+| 3a | For each old suppression: the reason in the code still holds after the change. Users who enter an address end "only addresses from our own records". "Only an internal relay" does not stop a man in the middle. The report names each hidden advisory and its reason. | judge |
 | 4 | No `System.Net.Mail.SmtpClient` in new code. | tool (MAIL-SYSTEM-NET-MAIL, RS0030) |
 | 5 | No MailKit 5 shapes (`await using` on the client, `SendResult`). MailKit 5 is not released. | judge (the build fails) |
 
@@ -73,7 +74,7 @@ The source of these checks is `dev-stack:secure-coding` (`references/integration
 | # | Check | Type |
 |---|-------|------|
 | 30 | The message builder has a unit test with a hostile name. | judge |
-| 31 | The sender has a test against Mailpit with a pinned tag (`axllent/mailpit:v1.31.6`), and the test reads the captured mail through the API. | tool (DET-MAIL-04), judge |
+| 31 | The sender has a test against Mailpit with a pinned tag (`axllent/mailpit:v1.32.0`), and the test reads the captured mail through the API. | tool (DET-MAIL-04), judge |
 | 32 | No MailHog, no mocked `SmtpClient`, no mail to a real mailbox. | tool (MAIL-MAILHOG), judge |
 | 33 | The TLS refusal and the retry after a relay outage have a test (a fake relay in test code). | judge |
 

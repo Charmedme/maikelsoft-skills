@@ -51,7 +51,7 @@ The team decisions that mail code needs. The order is the order in which a new p
 - Question: Which SMTP server do the integration tests use?
 - Ask when: the first test of the mail sender.
 - Options: Mailpit with Testcontainers.Mailpit: a real SMTP server with a REST API to read the captured mails, MIT, maintained. smtp4dev: a similar server with a web UI, BSD-3-Clause. A fake SMTP server in the test code: no container, full control over the replies (for TLS and failure tests). MailHog: not maintained. A mocked `SmtpClient`: proves nothing about the SMTP dialog.
-- Recommended: Mailpit through `Testcontainers.Mailpit` with a pinned image tag (`axllent/mailpit:v1.31.6`). A small fake server in test code for the cases that Mailpit cannot give (no STARTTLS, a 4xx or 5xx reply).
+- Recommended: Mailpit through `Testcontainers.Mailpit` with a pinned image tag (`axllent/mailpit:v1.32.0`). A small fake server in test code for the cases that Mailpit cannot give (no STARTTLS, a 4xx or 5xx reply).
 - Choose another option when: Docker is not available in CI. Then use the fake server only.
 - Depends on: TEST-07 (integration test strategy).
 - Revisit when: a new Mailpit major version, or the team moves to another test container setup.

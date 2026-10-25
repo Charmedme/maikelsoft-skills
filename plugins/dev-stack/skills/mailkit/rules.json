@@ -104,8 +104,8 @@
     "// MailHog captures the mails"
    ],
    "nomatch": [
-    "    image: axllent/mailpit:v1.31.6",
-    "new MailpitBuilder(\"axllent/mailpit:v1.31.6\").Build()"
+    "    image: axllent/mailpit:v1.32.0",
+    "new MailpitBuilder(\"axllent/mailpit:v1.32.0\").Build()"
    ]
   },
   {
@@ -119,7 +119,7 @@
    ],
    "pattern": "Include=\"MailKit\"[^>]*\\bVersion=\"\\[?\\s*([0-3]\\.|4\\.([0-9]|1[0-5])\\.)|Include=\"MimeKit\"[^>]*\\bVersion=\"\\[?\\s*([0-3]\\.|4\\.([0-9]|1[0-4])\\.|4\\.15\\.0\\b)",
    "message": "MailKit below 4.16.0 allows STARTTLS response injection (CVE-2026-41319, GHSA-9j88-vvj5-vhgr). MimeKit below 4.15.1 allows SMTP command injection through CR LF in a quoted local part (CVE-2026-30227, GHSA-g7hc-96xr-gvvx).",
-   "fix": "Use MailKit and MimeKit 4.18.2 or later. With MimeKit 4.15.1 to 4.18.1, also pin System.Security.Cryptography.Pkcs 10.0.13 or later with transitive pinning.",
+   "fix": "Use MailKit and MimeKit 4.18.2 or later. With MimeKit 4.18.1 and lower, also pin System.Security.Cryptography.Pkcs 10.0.13 or later with transitive pinning.",
    "match": [
     "    <PackageVersion Include=\"MailKit\" Version=\"4.15.0\" />",
     "    <PackageReference Include=\"MimeKit\" Version=\"4.8.0\" />",
@@ -131,6 +131,34 @@
     "    <PackageVersion Include=\"MailKit\" Version=\"4.16.0\" />",
     "    <PackageVersion Include=\"MimeKit\" Version=\"4.15.1\" />",
     "    <PackageReference Include=\"MailKit\" />"
+   ]
+  },
+  {
+   "id": "MAIL-AUDIT-HIDDEN",
+   "kind": "regex",
+   "severity": "error",
+   "files": [
+    "**/*.csproj",
+    "**/*.props",
+    "**/*.targets"
+   ],
+   "pattern": "<NuGetAuditSuppress\\b[^>]*\\bInclude=\"[^\"]*(GHSA-9j88-vvj5-vhgr|GHSA-g7hc-96xr-gvvx|GHSA-2fmv-rv2c-59x7|GHSA-846f-f764-76mx)|<NoWarn>[^<]*\\bNU190[1-4]\\b|\\bNoWarn=\"[^\"]*\\bNU190[1-4]\\b|<NuGetAuditLevel>\\s*(high|critical)\\s*</NuGetAuditLevel>|<NuGetAudit>\\s*false\\s*</NuGetAudit>",
+   "message": "This setting can hide a known advisory of MailKit, MimeKit, or their Pkcs dependency (CVE-2026-41319, CVE-2026-30227). The build is clean, but the package stays vulnerable. The MailKit and MimeKit advisories are moderate, so NuGetAuditLevel high hides them too.",
+   "fix": "Upgrade MailKit and MimeKit to 4.18.2 and remove the setting. In the report, name each hidden advisory, its reason in the code, and why the reason no longer holds.",
+   "match": [
+    "    <NuGetAuditSuppress Include=\"https://github.com/advisories/GHSA-9j88-vvj5-vhgr\" />",
+    "    <NuGetAuditSuppress Include=\"https://github.com/advisories/GHSA-g7hc-96xr-gvvx\" />",
+    "    <NoWarn>$(NoWarn);NU1902;NU1903</NoWarn>",
+    "    <PackageReference Include=\"MimeKit\" NoWarn=\"NU1902\" />",
+    "    <NuGetAuditLevel>high</NuGetAuditLevel>",
+    "    <NuGetAudit>false</NuGetAudit>"
+   ],
+   "nomatch": [
+    "    <NuGetAuditSuppress Include=\"https://github.com/advisories/GHSA-xxxx-yyyy-zzzz\" />",
+    "    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1902</WarningsNotAsErrors>",
+    "    <NoWarn>$(NoWarn);CS1591</NoWarn>",
+    "    <NuGetAuditLevel>low</NuGetAuditLevel>",
+    "    <NuGetAuditMode>all</NuGetAuditMode>"
    ]
   },
   {
@@ -198,8 +226,8 @@
    ],
    "pattern": "\\bMailpitBuilder\\b|axllent/mailpit|\\bmailhog/mailhog\\b|\\bsmtp4dev\\b|\\bnetDumbster\\b",
    "match": [
-    "new MailpitBuilder(\"axllent/mailpit:v1.31.6\").Build()",
-    "    image: axllent/mailpit:v1.31.6",
+    "new MailpitBuilder(\"axllent/mailpit:v1.32.0\").Build()",
+    "    image: axllent/mailpit:v1.32.0",
     "    image: rnwood/smtp4dev:v3"
    ],
    "nomatch": [
