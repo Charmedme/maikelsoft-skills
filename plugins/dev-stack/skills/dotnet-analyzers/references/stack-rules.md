@@ -39,6 +39,11 @@ Your trained knowledge is older than the project. The skill text is also older: 
 
 Read the code near the change before you write. Follow its style: names, folders, patterns, and libraries. When the project style differs from this skill, the project style wins in existing code. Say so in your output. When `docs/dev-team/conventions.md` exists, read it first.
 
+The style of existing code wins. Its defects do not. Check the existing code that the change calls, copies, or edits. Use the review checklist of the skill: version facts, quiet defaults, and the rules of the skill. Do not copy a defect into new code.
+
+- When the change depends on the defect, fix it, and name the fix under "Changes".
+- Else, report it under "Open points": the file, the line, the defect, and the fix.
+
 ## 4. Decisions for new code
 
 Each skill has a list of team decisions in `references/decisions.md`, with an ID such as `API-01`.
@@ -114,7 +119,7 @@ Cause: <only when the change fixes a problem that is not obvious (a build or tes
 For a vulnerable package: name, advisory ID, the fixed version, and how you fixed it (upgrade, pin of the transitive package).>
 
 ## Open points
-<None. Or one line each: what the human must do or check.>
+<None. Or one line each: what the human must do or check, and each defect of existing code that the change did not fix (rule 3).>
 ```
 
 ### Report after a review
