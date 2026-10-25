@@ -11,6 +11,8 @@ Each check is `tool (<rule ID>)` when a tool finds it, or `judge` when a reviewe
 - Locks, pub/sub, and streams
 - Tests
 - Decisions
+- Severity
+- Do not flag
 
 ## Connection and packages
 
@@ -19,7 +21,7 @@ Each check is `tool (<rule ID>)` when a tool finds it, or `judge` when a reviewe
 | 1 | One `IConnectionMultiplexer` for the process, made at startup with `ConnectAsync`. No `Connect` in a method, a constructor, or a scoped service. | tool (RDS-MUX-CONNECT), judge |
 | 2 | `AbortOnConnectFail = false` (or `abortConnect=false`), and `ClientName` is set. | tool (RDS-ABORT-CONNECT) |
 | 3 | `AddStackExchangeRedisCache` gets the same multiplexer through `ConnectionMultiplexerFactory`. | judge |
-| 4 | `StackExchange.Redis` 3.x resolves in each project (a direct reference or a pinned `PackageVersion`). | tool (`dotnet package list --include-transitive`) |
+| 4 | `StackExchange.Redis` 3.x resolves in each project (a direct reference or a pinned `PackageVersion`). A direct 2.x reference (for example 2.13.17) is the old line: SER305 to SER308 do not exist there. | tool (`dotnet package list --include-transitive`, RDS-PKG-SER2) |
 | 5 | No `.Result`, `.Wait()`, or `GetAwaiter().GetResult()` on a Redis call. SER305 to SER308 are errors in `.editorconfig`. | tool (SER305, SER306, SER307, SER308) |
 | 6 | No `ThreadPool.SetMinThreads` as a fix for timeouts. | tool (RDS-MIN-THREADS) |
 | 7 | No `Microsoft.Extensions.Caching.Redis` (the old package). | tool (RDS-PKG-OLD) |
@@ -34,6 +36,7 @@ Each check is `tool (<rule ID>)` when a tool finds it, or `judge` when a reviewe
 | 11 | Each value that must be fresh on all nodes has `DisableLocalCache`, or the service has a backplane (CACHE-07). | judge |
 | 12 | `LocalCacheExpiration` is shorter than `Expiration`, and short enough for the staleness that the product allows. | judge |
 | 13 | Entry options are `static readonly`, not new for each call. | judge |
+| 13a | No write decision (the price that checkout charges, stock, a permission) reads through the cache. Check existing write paths that the change depends on. A stale price that the shop charges is blocking. | judge |
 
 ## Writes and invalidation
 
@@ -49,6 +52,7 @@ Each check is `tool (<rule ID>)` when a tool finds it, or `judge` when a reviewe
 | # | Check | Type |
 |---|-------|------|
 | 18 | Keys follow CACHE-03: `InstanceName = "{service}:"`, key `v{n}:{entity}:{id}`, lowercase, with delimiters. | judge |
+| 18a | The key version goes up when the change adds, removes, or renames a field of a cached type. An existing key without a version gets one. Else the old version writes the old shape during the rolling deploy, and the new version reads default values. | judge |
 | 19 | No raw user input in a key. Free text is normalized and hashed, and its variants are capped. | judge |
 | 20 | Each direct key has a TTL. Keys written at the same time have jitter. | judge |
 | 21 | Cached values are DTOs (`sealed record`, `[ImmutableObject(true)]`), never EF entities. | judge |
@@ -79,3 +83,16 @@ Each check is `tool (<rule ID>)` when a tool finds it, or `judge` when a reviewe
 | # | Check | Type |
 |---|-------|------|
 | 33 | New cache code follows the accepted CACHE decisions, or the output marks them as assumed. | judge |
+
+## Severity
+
+A cached value that makes the app charge or show a wrong price, stock, or status on other nodes is blocking. Examples: a write decision through the cache (13a), and a default L1 TTL on data that must be fresh (11). Also a cached computed price that outlives its end time.
+
+## Do not flag
+
+These patterns are correct. A finding against them is a false positive.
+
+- `LockReleaseAsync(key, token)` in `finally`. It deletes the lock only when the token is still ours.
+- A lock expiry longer than the timer interval, for example 2 minutes with a 1 minute timer. This is correct when the release is in `finally` and the work is idempotent. The lock only prevents duplicate work (check 25).
+- A direct key on the raw multiplexer that carries the service prefix itself (`orders:v1:lock:...`). Only `IDistributedCache` adds `InstanceName`. A HybridCache key with the prefix again is a defect: it becomes `orders:orders:...`.
+- A new DI scope for each run in a singleton `BackgroundService` that uses a scoped `DbContext`.

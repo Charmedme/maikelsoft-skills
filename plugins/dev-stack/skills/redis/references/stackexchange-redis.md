@@ -25,7 +25,7 @@ With central package management and transitive pinning, a `PackageVersion` is en
   <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
 </PropertyGroup>
 <ItemGroup>
-  <PackageVersion Include="StackExchange.Redis" Version="3.4.5" />
+  <PackageVersion Include="StackExchange.Redis" Version="3.4.20" />
 </ItemGroup>
 ```
 

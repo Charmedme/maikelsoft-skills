@@ -66,7 +66,7 @@ var dto = await cache.GetOrCreateAsync(
 | Option | Effect |
 |--------|--------|
 | `Expiration` | TTL in L2. HybridCache sends it to `IDistributedCache` as an absolute expiration relative to now. |
-| `LocalCacheExpiration` | TTL in L1. Keep it shorter than `Expiration`. |
+| `LocalCacheExpiration` | TTL in L1. Keep it shorter than `Expiration`. When it is not set, L1 gets the `Expiration` of the same options object (source: `GetEffectiveLocalCacheExpiration`). With neither value set, both are 5 minutes. |
 | `Flags = DisableLocalCache` | No L1 read and no L1 write. Each read goes to L2. |
 | `Flags = DisableDistributedCache` | No L2. Use it for data that only this process needs. |
 | `Flags = DisableLocalCacheRead`, `DisableLocalCacheWrite`, `DisableDistributedCacheRead`, `DisableDistributedCacheWrite` | One direction only. |
@@ -141,6 +141,6 @@ Do not set `MaximumPayloadBytes` to 1 MB "to make big values cache". That is the
 
 ## When not to cache
 
-- The data must be correct at the moment of a write decision (stock, balance). Read the database.
+- The data must be correct at the moment of a write decision (stock, balance, the price that checkout charges). Read the database. A checkout that reads the price through the product cache charges the old price on other nodes until their L1 expires.
 - The query is fast and the load is low. A cache adds staleness and code for no gain.
 - The data is per user and rarely read two times. The hit rate stays low.
