@@ -257,7 +257,7 @@ def main():
         recs = [score_prototype(r, suite["slug"]) for r in runs]
     else:
         def defects_of(r):
-            app = "hard" if r.parts[-2].endswith("-hard") else "defects"
+            app = next((a for a in ("hard", "a11y") if r.parts[-2].endswith("-" + a)), "defects")
             return HERE / suite["app"][app] / "DEFECTS.md"
         with cf.ThreadPoolExecutor(max_workers=args.parallel) as ex:
             recs = list(ex.map(lambda r: score_review(r, suite["slug"], args.model, defects_of(r)), runs))

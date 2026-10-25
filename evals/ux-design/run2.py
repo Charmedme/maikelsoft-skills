@@ -117,7 +117,7 @@ def main():
     p.add_argument("--budget", type=float, default=12)
     p.add_argument("--timeout", type=int, default=3600)
     p.add_argument("--prev-root", help="checkout of the previous version, for a variant with root prev")
-    p.add_argument("--app", default="defects", choices=["defects", "clean", "hard"])
+    p.add_argument("--app", default="defects", choices=["defects", "clean", "hard", "a11y"])
     args = p.parse_args()
     suite = EV[args.suite]
     jobs = []

@@ -1,0 +1,58 @@
+{
+  "color": {
+    "$type": "color",
+    "ink": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.1,
+          0.12,
+          0.15
+        ],
+        "hex": "#1a1f26"
+      },
+      "$description": "Text."
+    },
+    "paper": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          1,
+          1,
+          1
+        ],
+        "hex": "#ffffff"
+      },
+      "$description": "Background."
+    },
+    "brand": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.13,
+          0.33,
+          0.75
+        ],
+        "hex": "#2154bf"
+      },
+      "$description": "Primary action."
+    }
+  },
+  "space": {
+    "$type": "dimension",
+    "2": {
+      "$value": {
+        "value": 8,
+        "unit": "px"
+      },
+      "$description": "Gap."
+    },
+    "4": {
+      "$value": {
+        "value": 16,
+        "unit": "px"
+      },
+      "$description": "Padding."
+    }
+  }
+}
