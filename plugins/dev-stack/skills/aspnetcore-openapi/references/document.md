@@ -52,6 +52,13 @@ The generator reads the return type and the metadata of the endpoint. It does no
 | `Results<Ok<T>, ProblemHttpResult>` with `TypedResults.Problem(statusCode: 404)` | 200 only | `.ProducesProblem(StatusCodes.Status404NotFound)` |
 | Any result, with `AddValidation` or a validation filter | No 400 | `.ProducesValidationProblem()` |
 | `IResult` | Nothing useful | A `Results<...>` union (`dev-stack:aspnetcore`) |
+| `IResult` file with `.Produces(200, contentType: "application/pdf")` | 200 with no content | `.Produces<Stream>(200, "application/pdf")` |
+| `TypedResults.File(...)` (`FileContentHttpResult`) | 200 with no content | `.Produces<Stream>(200, "application/pdf")` |
+| `Results<FileContentHttpResult, NotFound>` | 404 only, no 200 | `.Produces<Stream>(200, "application/pdf")` |
+
+Tested with Microsoft.AspNetCore.OpenApi 10.0.13 on 2026-10-25. `Produces<Stream>` and `Produces<IFormFile>` give `type: string, format: binary`. Do not use `Produces<byte[]>`: it gives `format: byte` (a base64 string), so a generator expects text. `Produces(200, typeof(FileContentHttpResult), ...)` gives the properties of the result class as an object schema.
+
+The generator reads metadata, not the handler body. So a wrong status or a wrong `Required` value stays in the document without a warning. Compare the metadata with the handler and its filters. Find each status that the code returns (`Problems.X`, `TypedResults.X`). Find each header or parameter that a filter rejects when it is missing.
 
 ```csharp
 group.MapGet("/{id:guid}", GetAsync)
@@ -159,7 +166,7 @@ public sealed class SkuExampleTransformer : IOpenApiSchemaTransformer
 
 Register them: `builder.Services.AddOpenApi(o => { o.AddDocumentTransformer<BearerSecurityTransformer>(); o.AddSchemaTransformer<SkuExampleTransformer>(); });`.
 
-For one operation, use the endpoint method. It replaces `WithOpenApi` (ASPDEPR002):
+For one operation, use the endpoint method. It replaces `WithOpenApi` (ASPDEPR002). `WithOpenApi` still compiles and runs, but the built-in generator ignores the operation that its delegate returns. A `Summary` or `Description` in it is not in the document (tested with 10.0.13 on 2026-10-25). `AddOpenApiOperationTransformer` and `WithSummary` reach the document:
 
 ```csharp
 app.MapGet("/orders/{id:guid}", GetAsync)

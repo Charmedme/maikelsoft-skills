@@ -22,7 +22,7 @@
       "file": "src/Orders.Api/Invoices/InvoiceEndpoints.cs",
       "line": 13,
       "subtle": true,
-      "description": "Produces(200, contentType: \"application/pdf\") without a response type writes a 200 with no content in the document (checked: the committed document has an empty 200). The generated client does not know that the invoice is a PDF file. Use Produces<byte[]>(200, \"application/pdf\") or a typed FileContentHttpResult.",
+      "description": "Produces(200, contentType: \"application/pdf\") without a response type writes a 200 with no content in the document (checked: the committed document has an empty 200). The generated client does not know that the invoice is a PDF file. Use Produces<Stream>(200, \"application/pdf\"), which gives a binary string schema. Produces<byte[]> gives base64 (format: byte), and a typed FileContentHttpResult gives no file content.",
       "severity": "medium"
     },
     {
