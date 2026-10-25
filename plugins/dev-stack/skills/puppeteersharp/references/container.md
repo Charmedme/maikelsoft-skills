@@ -19,9 +19,9 @@ WORKDIR /src
 COPY . .
 RUN dotnet publish src/Orders.Api/Orders.Api.csproj -c Release -o /app
 
-# chrome-headless-shell, pinned to Chrome.DefaultBuildId of PuppeteerSharp 25.14.0.
+# chrome-headless-shell, pinned to Chrome.DefaultBuildId of PuppeteerSharp 25.15.0.
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS chrome
-ARG CHROME_BUILD=155.0.8059.79
+ARG CHROME_BUILD=155.0.8059.84
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates curl unzip \
     && curl -fsSLo /tmp/shell.zip "https://storage.googleapis.com/chrome-for-testing-public/${CHROME_BUILD}/linux64/chrome-headless-shell-linux64.zip" \

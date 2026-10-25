@@ -49,18 +49,20 @@ Each check is `tool (<rule ID>)` when a tool finds it, or `judge` when a reviewe
 | 17 | `SetContentAsync` uses `SetContentOptions` with a timeout. No `NavigationOptions` with network idle. | tool (CS0618), judge |
 | 18 | `PdfOptions.Timeout` and the wait timeouts are set. The `CancellationToken` reaches the semaphore wait. | judge |
 | 19 | No `WaitForTimeoutAsync`, no fixed delays: a real wait condition. | tool (CS1061), judge |
+| 20 | Each `PdfOptions` sets `Format` (or `Width` and `Height`), also in existing code that the change touches. Without it, the PDF is Letter. A CSS `@page` size counts only with `PreferCSSPageSize = true`. | tool (PPTR-PDF-FORMAT), judge |
+| 21 | `PrintBackground = true` when the template has a background color or image (the default is `false`). | tool (PPTR-PDF-BACKGROUND), judge |
 
 ## Tests
 
 | # | Check | Type |
 |---|-------|------|
-| 20 | An integration test with the real `chrome-headless-shell` checks the PDF header. | judge |
-| 21 | A test proves that user markup makes no request (local listener). | judge |
-| 22 | CI does not add `--no-sandbox` to the app. A root-only wrapper is in the CI setup, not in the app. | judge |
+| 22 | An integration test with the real `chrome-headless-shell` checks the PDF header. | judge |
+| 23 | A test proves that user markup makes no request (local listener). | judge |
+| 24 | CI does not add `--no-sandbox` to the app. A root-only wrapper is in the CI setup, not in the app. | judge |
 
 ## Decisions
 
 | # | Check | Type |
 |---|-------|------|
-| 23 | SEC-24 is accepted in `docs/dev-team/decisions.md`, or the report marks it as assumed. A sandbox opt-out has an ADR. | judge |
-| 24 | The renderer image follows OPS-03 (own image on full `aspnet:10.0`), or the report names the deviation. | judge |
+| 25 | SEC-24 is accepted in `docs/dev-team/decisions.md`, or the report marks it as assumed. A sandbox opt-out has an ADR. | judge |
+| 26 | The renderer image follows OPS-03 (own image on full `aspnet:10.0`), or the report names the deviation. | judge |
