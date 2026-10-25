@@ -116,7 +116,8 @@ Cause: <only when the change fixes a problem that is not obvious (a build or tes
 
 ## Packages
 <None. Or one line for each package: name, version, license, reason, "waiting for approval".
-For a vulnerable package: name, advisory ID, the fixed version, and how you fixed it (upgrade, pin of the transitive package).>
+For a vulnerable package: name, advisory ID, the fixed version, and how you fixed it (upgrade, pin of the transitive package).
+For each advisory that the project hides (NuGetAuditSuppress, NoWarn NU190x, NuGetAuditLevel): the advisory, the reason in the code, and if the reason still holds.>
 
 ## Open points
 <None. Or one line each: what the human must do or check, and each defect of existing code that the change did not fix (rule 3).>
