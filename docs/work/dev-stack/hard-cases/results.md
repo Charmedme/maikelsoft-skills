@@ -1,6 +1,6 @@
 # Results: the hard cases of dev-stack (2026-10-25)
 
-Input: the 22 hard cases of `concept.md`, a write case and a review case for each of the 11 batch 2 skills. Model: Claude Sonnet (the owner chose Sonnet to keep the cost down). Each case ran 3 times without the skill (baseline) and 3 times with it. A run scores the check items with `score.py` and the judge items with one blind grader each (`grade.py`). The divergence table is in `divergence.md`.
+Input: the 22 hard cases of `concept.md`, a write case and a review case for each of the 11 batch 2 skills. Model: Claude Sonnet (the owner chose Sonnet to keep the cost down). Each case ran 3 times without the skill (baseline) and 3 times with it. A run scores the check items with `score.py` and the judge items with one blind grader each (`grade.py`). The divergence table is in `evals/dev-stack/divergence-hard-2026-10-25.txt` (output of `divergence.py`).
 
 ## Result
 
