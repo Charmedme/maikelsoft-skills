@@ -1,0 +1,123 @@
+{
+  "prototype": {
+    "fixture": "fixtures/fieldline",
+    "slug": "fl-31-assign-unplanned",
+    "design": "fixtures/approved/fl-31-assign-unplanned",
+    "variants": {
+      "baseline": {
+        "model": "opus",
+        "prompt": [
+          "prompts2/proto-common.md"
+        ]
+      },
+      "pp-prev": {
+        "model": "opus",
+        "plugin": "plugins/product-flow",
+        "prompt": [
+          "prompts2/proto-common.md",
+          "prompts2/proto-pp.md"
+        ],
+        "root": "prev"
+      },
+      "ux": {
+        "model": "opus",
+        "plugin": "plugins/ux-design",
+        "prompt": [
+          "prompts2/proto-common.md",
+          "prompts2/proto-ux.md"
+        ]
+      },
+      "pp": {
+        "model": "opus",
+        "plugin": "plugins/product-flow",
+        "prompt": [
+          "prompts2/proto-common.md",
+          "prompts2/proto-pp.md"
+        ]
+      }
+    }
+  },
+  "review": {
+    "fixture": "fixtures/fieldline",
+    "slug": "fl-31-assign-unplanned",
+    "design": "fixtures/approved/fl-31-assign-unplanned",
+    "app": {
+      "defects": "fixtures/fieldline-app-defects",
+      "clean": "fixtures/fieldline-app",
+      "hard": "fixtures/fieldline-app-hard"
+    },
+    "variants": {
+      "baseline": {
+        "model": "opus",
+        "prompt": [
+          "prompts2/review-common.md"
+        ]
+      },
+      "ux-opus": {
+        "model": "opus",
+        "plugin": "plugins/ux-design",
+        "prompt": [
+          "prompts2/review-common.md",
+          "prompts2/review-ux.md"
+        ]
+      },
+      "baseline-sonnet": {
+        "model": "sonnet",
+        "prompt": [
+          "prompts2/review-common.md"
+        ]
+      },
+      "baseline-sonnet-short": {
+        "model": "sonnet",
+        "prompt": [
+          "prompts2/review-short.md"
+        ]
+      },
+      "ux-sonnet-short": {
+        "model": "sonnet",
+        "plugin": "plugins/ux-design",
+        "prompt": [
+          "prompts2/review-short.md",
+          "prompts2/review-ux.md"
+        ]
+      }
+    }
+  },
+  "handoff": {
+    "fixture": "fixtures/fieldline",
+    "cases": [
+      {
+        "name": "assign-unplanned",
+        "slug": "fl-31-assign-unplanned",
+        "design": "fixtures/approved/fl-31-assign-unplanned"
+      },
+      {
+        "name": "callback-request",
+        "slug": "fl-38-callback-request",
+        "design": "fixtures/approved/fl-38-callback-request"
+      },
+      {
+        "name": "parts-status",
+        "slug": "fl-44-parts-status",
+        "design": "fixtures/approved/fl-44-parts-status"
+      }
+    ],
+    "variants": {
+      "prev": {
+        "model": "sonnet",
+        "plugin": "plugins/dev-flow",
+        "prompt": [
+          "prompts2/handoff.md"
+        ],
+        "root": "prev"
+      },
+      "new": {
+        "model": "sonnet",
+        "plugin": "plugins/dev-flow",
+        "prompt": [
+          "prompts2/handoff.md"
+        ]
+      }
+    }
+  }
+}

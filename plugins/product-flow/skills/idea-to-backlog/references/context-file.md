@@ -64,6 +64,7 @@ Name it `backlog-<slug>.md`. The slug is 2 or 3 words of the subject, for exampl
 - File: <path or link>
 - Question: <the question of the prototype>
 - Verdict: <yes | yes with changes | no>. Changes: <...>
+- Design: <path of ux-design.md and the mockups folder, or "none">
 
 ## Spec
 

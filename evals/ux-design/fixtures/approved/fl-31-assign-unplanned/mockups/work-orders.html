@@ -1,0 +1,1280 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Work orders: assign unplanned (FL-31 mockup) · Fieldline</title>
+<link rel="stylesheet" href="../../../../design-system/tokens.css">
+<link rel="stylesheet" href="../../../../design-system/components.css">
+<link rel="stylesheet" href="ds-fixes.css">
+<style>
+/* Mockup frame only: not part of the design. */
+strong { font-weight: var(--fl-weight-bold); }
+.mk-frame { transform: translateZ(0); border-bottom: 4px solid var(--fl-color-border-strong); }
+.mk-frame .fl-shell { min-height: 900px; }
+.mk-frame-label { background: var(--fl-color-surface-sunken); padding: var(--fl-space-3) var(--fl-space-6); border-bottom: 1px solid var(--fl-color-border); }
+.mk-frame-label h2 { font-size: var(--fl-size-lg); font-weight: var(--fl-weight-bold); margin: 0; }
+.mk-frame-label p { margin: var(--fl-space-1) 0 0; font-size: var(--fl-size-sm); color: var(--fl-color-text-muted); }
+/* Layout helpers, built from tokens. */
+.mk-split { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: var(--fl-space-4); align-items: start; }
+.mk-group-label { color: var(--fl-color-text-muted); }
+.mk-sep { width: var(--fl-space-3); }
+.mk-pager { margin-top: var(--fl-space-2); }
+.mk-link { color: var(--fl-color-accent); font-weight: var(--fl-weight-medium); white-space: nowrap; }
+.mk-nowrap { white-space: nowrap; }
+.mk-muted { color: var(--fl-color-text-muted); }
+.mk-small { font-size: var(--fl-size-sm); }
+.mk-gap { margin-bottom: var(--fl-space-3); }
+.mk-center { align-items: center; }
+.mk-row { display: flex; gap: var(--fl-space-2); }
+.mk-row .fl-input { flex: 1; }
+.mk-radio { display: inline-flex; align-items: center; gap: var(--fl-space-2); white-space: nowrap; }
+.mk-panel-head { display: flex; align-items: center; justify-content: space-between; gap: var(--fl-space-2); }
+.mk-panel-head .fl-section-title { margin: 0; }
+.mk-sel-list { list-style: none; margin: var(--fl-space-3) 0 var(--fl-space-1); padding: 0; font-size: var(--fl-size-sm); }
+.mk-sel-list li { padding: var(--fl-space-1) 0; }
+.mk-inline { height: auto; padding: 0; font-size: var(--fl-size-sm); }
+.mk-panel-foot { margin-top: var(--fl-space-4); padding-top: var(--fl-space-4); border-top: 1px solid var(--fl-color-border); display: flex; flex-direction: column; gap: var(--fl-space-3); }
+.mk-summary { margin: 0; }
+.mk-actions { display: flex; gap: var(--fl-space-2); }
+.mk-empty-sm { padding: var(--fl-space-5) var(--fl-space-3); }
+.mk-kbd-hint { font-size: var(--fl-size-sm); color: var(--fl-color-text-muted); }
+.fl-sidepanel .fl-table td, .fl-sidepanel .fl-table th { padding-left: var(--fl-space-2); padding-right: var(--fl-space-2); }
+.fl-table td { padding-top: var(--fl-space-1); padding-bottom: var(--fl-space-1); }
+</style>
+</head>
+<body>
+<section data-screen="work-orders" data-state="default" class="mk-frame" aria-labelledby="h-default">
+  <div class="mk-frame-label"><h2 id="h-default">work-orders / default</h2><p>Unplanned chip active. The list as the planner finds it on Monday morning, earliest due first. No selection, so no bulk bar.</p></div>
+  <div class="fl-shell">
+  <nav class="fl-nav" aria-label="Main">
+    <div class="fl-nav__brand">Fieldline</div>
+    <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+    <a class="fl-nav__item" href="#">Planning board</a>
+    <a class="fl-nav__item" href="#">Technicians</a>
+    <a class="fl-nav__item" href="#">Parts</a>
+    <a class="fl-nav__item" href="#">Customers</a>
+  </nav>
+  <main class="fl-main">
+    <header class="fl-page-header">
+      <div>
+        <h1>Work orders</h1>
+        <div class="fl-page-header__meta">Region Central · Updated 09:42</div>
+      </div>
+      <div class="fl-page-header__actions">
+        <button class="fl-btn">Export</button>
+        <button class="fl-btn fl-btn--primary">New work order</button>
+      </div>
+    </header>
+    <div class="fl-toolbar" role="group" aria-label="Status">
+      <button class="fl-chip" aria-pressed="false">All open</button>
+      <button class="fl-chip" aria-pressed="true">Unplanned</button>
+      <button class="fl-chip" aria-pressed="false">Waiting for parts</button>
+      <button class="fl-chip" aria-pressed="false">Repairs</button>
+    </div><div class="fl-toolbar" role="group" aria-label="Filters">
+      <span class="fl-label mk-group-label">Type</span><button class="fl-chip" aria-pressed="false">Installation</button><button class="fl-chip" aria-pressed="false">Maintenance</button><button class="fl-chip" aria-pressed="false">Repair</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Skill needed</span><button class="fl-chip" aria-pressed="false">Heat pump</button><button class="fl-chip" aria-pressed="false">Air conditioning</button><button class="fl-chip" aria-pressed="false">Gas boiler</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Due</span><button class="fl-chip" aria-pressed="true">Any</button><button class="fl-chip" aria-pressed="false">Overdue</button><button class="fl-chip" aria-pressed="false">By today</button><button class="fl-chip" aria-pressed="false">Within 2 work days</button>
+      <span class="fl-result-count" role="status">63 unplanned work orders</span>
+      
+    </div><div class="fl-table-wrap">
+      <table class="fl-table" aria-label="Unplanned work orders, region Central, earliest due first">
+        <thead><tr><th scope="col"><input type="checkbox" aria-label="Select all 63 on this page"></th><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer</th><th scope="col">Address</th><th scope="col">Skill needed</th><th scope="col" class="fl-num" aria-sort="ascending">Due</th></tr></thead>
+        <tbody><tr><td><input type="checkbox" aria-label="Select WO-24802"></td><td><a href="#" class="mk-link">WO-24802</a></td><td>Repair</td><td>H. Bakker</td><td>Kerkstraat 2, Soest</td><td>Air conditioning</td><td class="fl-num"><span class="fl-badge fl-badge--danger">Overdue</span> <span class="mk-nowrap">23 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24817"></td><td><a href="#" class="mk-link">WO-24817</a></td><td>Repair</td><td>M. de Groot</td><td>Lindelaan 14, Amersfoort</td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">26 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24822"></td><td><a href="#" class="mk-link">WO-24822</a></td><td>Repair</td><td>Huisartsenpraktijk Leusden</td><td>Hamersveldseweg 41, Leusden</td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24825"></td><td><a href="#" class="mk-link">WO-24825</a></td><td>Maintenance</td><td>Fam. Kok</td><td>Dorpsstraat 9, Houten</td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24828"></td><td><a href="#" class="mk-link">WO-24828</a></td><td>Repair</td><td>J. Willems</td><td>Biltseweg 77, De Bilt</td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">28 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24831"></td><td><a href="#" class="mk-link">WO-24831</a></td><td>Installation</td><td>Fam. Peters</td><td>Eemweg 3, Baarn</td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24834"></td><td><a href="#" class="mk-link">WO-24834</a></td><td>Maintenance</td><td>Kapsalon Mira</td><td>Langestraat 52, Amersfoort</td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24840"></td><td><a href="#" class="mk-link">WO-24840</a></td><td>Maintenance</td><td>R. Smits</td><td>Prinses Irenelaan 12, Zeist</td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">2 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24843"></td><td><a href="#" class="mk-link">WO-24843</a></td><td>Installation</td><td>Bouwbedrijf Van Dam</td><td>Industrieweg 6, Nijkerk</td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">4 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24847"></td><td><a href="#" class="mk-link">WO-24847</a></td><td>Maintenance</td><td>T. Verhoeven</td><td>Utrechtseweg 201, Amersfoort</td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">6 Nov</span></td></tr></tbody>
+      </table>
+    </div><div class="fl-result-count mk-pager">1 to 63 of 63 · 100 per page</div>
+  </main>
+  
+</div>
+</section>
+<section data-screen="work-orders" data-state="in-progress" class="mk-frame" aria-labelledby="h-in-progress">
+  <div class="mk-frame-label"><h2 id="h-in-progress">work-orders / in-progress</h2><p>3 work orders selected. The primary action moves to the bulk bar (UXD-007).</p></div>
+  <div class="fl-shell">
+  <nav class="fl-nav" aria-label="Main">
+    <div class="fl-nav__brand">Fieldline</div>
+    <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+    <a class="fl-nav__item" href="#">Planning board</a>
+    <a class="fl-nav__item" href="#">Technicians</a>
+    <a class="fl-nav__item" href="#">Parts</a>
+    <a class="fl-nav__item" href="#">Customers</a>
+  </nav>
+  <main class="fl-main">
+    <header class="fl-page-header">
+      <div>
+        <h1>Work orders</h1>
+        <div class="fl-page-header__meta">Region Central · Updated 09:42</div>
+      </div>
+      <div class="fl-page-header__actions">
+        <button class="fl-btn">Export</button>
+        <button class="fl-btn">New work order</button>
+      </div>
+    </header>
+    <div class="fl-toolbar" role="group" aria-label="Status">
+      <button class="fl-chip" aria-pressed="false">All open</button>
+      <button class="fl-chip" aria-pressed="true">Unplanned</button>
+      <button class="fl-chip" aria-pressed="false">Waiting for parts</button>
+      <button class="fl-chip" aria-pressed="false">Repairs</button>
+    </div><div class="fl-toolbar" role="group" aria-label="Filters">
+      <span class="fl-label mk-group-label">Type</span><button class="fl-chip" aria-pressed="false">Installation</button><button class="fl-chip" aria-pressed="false">Maintenance</button><button class="fl-chip" aria-pressed="false">Repair</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Skill needed</span><button class="fl-chip" aria-pressed="false">Heat pump</button><button class="fl-chip" aria-pressed="false">Air conditioning</button><button class="fl-chip" aria-pressed="false">Gas boiler</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Due</span><button class="fl-chip" aria-pressed="true">Any</button><button class="fl-chip" aria-pressed="false">Overdue</button><button class="fl-chip" aria-pressed="false">By today</button><button class="fl-chip" aria-pressed="false">Within 2 work days</button>
+      <span class="fl-result-count" role="status">63 unplanned work orders</span>
+      
+    </div><div class="fl-bulkbar" role="region" aria-label="Selection">
+      <strong role="status">3 work orders selected</strong>
+      <button class="fl-btn fl-btn--primary">Assign to technician</button>
+      <button class="fl-btn fl-btn--ghost">Clear selection</button>
+    </div><div class="fl-table-wrap">
+      <table class="fl-table" aria-label="Unplanned work orders, region Central, earliest due first">
+        <thead><tr><th scope="col"><input type="checkbox" aria-label="Select all 63 on this page"></th><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer</th><th scope="col">Address</th><th scope="col">Skill needed</th><th scope="col" class="fl-num" aria-sort="ascending">Due</th></tr></thead>
+        <tbody><tr><td><input type="checkbox" aria-label="Select WO-24802"></td><td><a href="#" class="mk-link">WO-24802</a></td><td>Repair</td><td>H. Bakker</td><td>Kerkstraat 2, Soest</td><td>Air conditioning</td><td class="fl-num"><span class="fl-badge fl-badge--danger">Overdue</span> <span class="mk-nowrap">23 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24817" checked></td><td><a href="#" class="mk-link">WO-24817</a></td><td>Repair</td><td>M. de Groot</td><td>Lindelaan 14, Amersfoort</td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">26 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24822" checked></td><td><a href="#" class="mk-link">WO-24822</a></td><td>Repair</td><td>Huisartsenpraktijk Leusden</td><td>Hamersveldseweg 41, Leusden</td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24825"></td><td><a href="#" class="mk-link">WO-24825</a></td><td>Maintenance</td><td>Fam. Kok</td><td>Dorpsstraat 9, Houten</td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24828"></td><td><a href="#" class="mk-link">WO-24828</a></td><td>Repair</td><td>J. Willems</td><td>Biltseweg 77, De Bilt</td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">28 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24831"></td><td><a href="#" class="mk-link">WO-24831</a></td><td>Installation</td><td>Fam. Peters</td><td>Eemweg 3, Baarn</td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24834"></td><td><a href="#" class="mk-link">WO-24834</a></td><td>Maintenance</td><td>Kapsalon Mira</td><td>Langestraat 52, Amersfoort</td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24840" checked></td><td><a href="#" class="mk-link">WO-24840</a></td><td>Maintenance</td><td>R. Smits</td><td>Prinses Irenelaan 12, Zeist</td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">2 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24843"></td><td><a href="#" class="mk-link">WO-24843</a></td><td>Installation</td><td>Bouwbedrijf Van Dam</td><td>Industrieweg 6, Nijkerk</td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">4 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24847"></td><td><a href="#" class="mk-link">WO-24847</a></td><td>Maintenance</td><td>T. Verhoeven</td><td>Utrechtseweg 201, Amersfoort</td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">6 Nov</span></td></tr></tbody>
+      </table>
+    </div><div class="fl-result-count mk-pager">1 to 63 of 63 · 100 per page</div>
+  </main>
+  
+</div>
+</section>
+<section data-screen="work-orders" data-state="disabled" class="mk-frame" aria-labelledby="h-disabled">
+  <div class="mk-frame-label"><h2 id="h-disabled">work-orders / disabled</h2><p>Assign panel open, no technician and slot chosen yet. Assign is disabled, and the reason is next to it.</p></div>
+  <div class="fl-shell">
+  <nav class="fl-nav" aria-label="Main">
+    <div class="fl-nav__brand">Fieldline</div>
+    <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+    <a class="fl-nav__item" href="#">Planning board</a>
+    <a class="fl-nav__item" href="#">Technicians</a>
+    <a class="fl-nav__item" href="#">Parts</a>
+    <a class="fl-nav__item" href="#">Customers</a>
+  </nav>
+  <main class="fl-main">
+    <header class="fl-page-header">
+      <div>
+        <h1>Work orders</h1>
+        <div class="fl-page-header__meta">Region Central · Updated 09:42</div>
+      </div>
+      <div class="fl-page-header__actions">
+        <button class="fl-btn">Export</button>
+        <button class="fl-btn">New work order</button>
+      </div>
+    </header>
+    <div class="fl-toolbar" role="group" aria-label="Status">
+      <button class="fl-chip" aria-pressed="false">All open</button>
+      <button class="fl-chip" aria-pressed="true">Unplanned</button>
+      <button class="fl-chip" aria-pressed="false">Waiting for parts</button>
+      <button class="fl-chip" aria-pressed="false">Repairs</button>
+    </div><div class="fl-toolbar" role="group" aria-label="Filters">
+      <span class="fl-label mk-group-label">Type</span><button class="fl-chip" aria-pressed="false">Installation</button><button class="fl-chip" aria-pressed="false">Maintenance</button><button class="fl-chip" aria-pressed="false">Repair</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Skill needed</span><button class="fl-chip" aria-pressed="false">Heat pump</button><button class="fl-chip" aria-pressed="false">Air conditioning</button><button class="fl-chip" aria-pressed="false">Gas boiler</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Due</span><button class="fl-chip" aria-pressed="true">Any</button><button class="fl-chip" aria-pressed="false">Overdue</button><button class="fl-chip" aria-pressed="false">By today</button><button class="fl-chip" aria-pressed="false">Within 2 work days</button>
+      <span class="fl-result-count" role="status">63 unplanned work orders</span>
+      
+    </div><div class="mk-split"><div><div class="fl-bulkbar" role="region" aria-label="Selection">
+      <strong role="status">3 work orders selected</strong>
+      <button class="fl-btn">Assign to technician</button>
+      <button class="fl-btn fl-btn--ghost">Clear selection</button>
+    </div><div class="fl-table-wrap">
+      <table class="fl-table" aria-label="Unplanned work orders, region Central, earliest due first">
+        <thead><tr><th scope="col"><input type="checkbox" aria-label="Select all 63 on this page"></th><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer and address</th><th scope="col">Skill needed</th><th scope="col" class="fl-num" aria-sort="ascending">Due</th></tr></thead>
+        <tbody><tr><td><input type="checkbox" aria-label="Select WO-24802"></td><td><a href="#" class="mk-link">WO-24802</a></td><td>Repair</td><td>H. Bakker<br><span class="mk-small mk-muted">Kerkstraat 2, Soest</span></td><td>Air conditioning</td><td class="fl-num"><span class="fl-badge fl-badge--danger">Overdue</span> <span class="mk-nowrap">23 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24817" checked></td><td><a href="#" class="mk-link">WO-24817</a></td><td>Repair</td><td>M. de Groot<br><span class="mk-small mk-muted">Lindelaan 14, Amersfoort</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">26 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24822" checked></td><td><a href="#" class="mk-link">WO-24822</a></td><td>Repair</td><td>Huisartsenpraktijk Leusden<br><span class="mk-small mk-muted">Hamersveldseweg 41, Leusden</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24825"></td><td><a href="#" class="mk-link">WO-24825</a></td><td>Maintenance</td><td>Fam. Kok<br><span class="mk-small mk-muted">Dorpsstraat 9, Houten</span></td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24828"></td><td><a href="#" class="mk-link">WO-24828</a></td><td>Repair</td><td>J. Willems<br><span class="mk-small mk-muted">Biltseweg 77, De Bilt</span></td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">28 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24831"></td><td><a href="#" class="mk-link">WO-24831</a></td><td>Installation</td><td>Fam. Peters<br><span class="mk-small mk-muted">Eemweg 3, Baarn</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24834"></td><td><a href="#" class="mk-link">WO-24834</a></td><td>Maintenance</td><td>Kapsalon Mira<br><span class="mk-small mk-muted">Langestraat 52, Amersfoort</span></td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24840" checked></td><td><a href="#" class="mk-link">WO-24840</a></td><td>Maintenance</td><td>R. Smits<br><span class="mk-small mk-muted">Prinses Irenelaan 12, Zeist</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">2 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24843"></td><td><a href="#" class="mk-link">WO-24843</a></td><td>Installation</td><td>Bouwbedrijf Van Dam<br><span class="mk-small mk-muted">Industrieweg 6, Nijkerk</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">4 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24847"></td><td><a href="#" class="mk-link">WO-24847</a></td><td>Maintenance</td><td>T. Verhoeven<br><span class="mk-small mk-muted">Utrechtseweg 201, Amersfoort</span></td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">6 Nov</span></td></tr></tbody>
+      </table>
+    </div><div class="fl-result-count mk-pager">1 to 63 of 63 · 100 per page</div></div><aside class="fl-sidepanel" aria-labelledby="ap-title-disabled">
+      <div class="mk-panel-head">
+        <h2 class="fl-section-title" id="ap-title-disabled">Assign 3 work orders</h2>
+        <button class="fl-btn fl-btn--ghost">Close</button>
+      </div>
+      <ul class="mk-sel-list"><li>WO-24817 · Repair · Amersfoort · due 26 Oct</li><li>WO-24822 · Repair · Leusden · due 27 Oct</li><li>WO-24840 · Maintenance · Zeist · due 2 Nov</li></ul>
+      <p class="mk-small mk-muted">Skills needed: Heat pump</p>
+      <div class="fl-field">
+        <label class="fl-label" for="ap-date-disabled">Date</label>
+        <div class="mk-row"><input class="fl-input" id="ap-date-disabled" value="Tue 27 Oct 2026"><button class="fl-btn">Pick date</button></div>
+        <span class="fl-hint">Morning 08:00 to 12:00, afternoon 12:30 to 17:00</span>
+      </div>
+      <div class="fl-table-wrap" role="radiogroup" aria-label="Technician and slot">
+        <table class="fl-table">
+          <thead><tr><th scope="col">Technician</th><th scope="col">Skills</th><th scope="col">Morning</th><th scope="col">Afternoon</th></tr></thead>
+          <tbody><tr><td>K. Bos</td><td class="mk-small">Heat pump, Air conditioning</td><td><label class="mk-radio"><input type="radio" name="slot-disabled" aria-label="K. Bos, morning, 2 free"> 2 free</label></td><td><label class="mk-radio"><input type="radio" name="slot-disabled" aria-label="K. Bos, afternoon, 1 free"> 1 free</label></td></tr><tr><td>L. Mertens</td><td class="mk-small">Heat pump, Air conditioning, Gas boiler</td><td><label class="mk-radio"><input type="radio" name="slot-disabled" aria-label="L. Mertens, morning, 2 free"> 2 free</label></td><td><label class="mk-radio"><input type="radio" name="slot-disabled" aria-label="L. Mertens, afternoon, 2 free"> 2 free</label></td></tr><tr><td>R. Hendriks</td><td class="mk-small">Heat pump, Gas boiler</td><td class="mk-muted">Full</td><td><label class="mk-radio"><input type="radio" name="slot-disabled" aria-label="R. Hendriks, afternoon, 2 free"> 2 free</label></td></tr><tr><td>S. Visser</td><td class="mk-small">Heat pump</td><td><label class="mk-radio"><input type="radio" name="slot-disabled" aria-label="S. Visser, morning, 1 free"> 1 free</label></td><td class="mk-muted">Full</td></tr></tbody>
+        </table>
+      </div><p class="mk-small mk-muted">Not shown: 9 technicians without the skill Heat pump, 2 technicians with no free place on Tue 27 Oct.</p>
+      <div class="mk-panel-foot"><p class="mk-small mk-muted" id="ap-hint-disabled">Select a technician and a slot.</p>
+        <div class="mk-actions"><button class="fl-btn fl-btn--primary" disabled aria-describedby="ap-hint-disabled">Assign</button><button class="fl-btn">Cancel</button></div></div>
+    </aside></div>
+  </main>
+  
+</div>
+</section>
+<section data-screen="work-orders" data-state="assign-ready" class="mk-frame" aria-labelledby="h-assign-ready">
+  <div class="mk-frame-label"><h2 id="h-assign-ready">work-orders / assign-ready</h2><p>K. Bos, morning chosen. The summary names the work order that stays unplanned (AC-5, UXD-006) and the due-date rule.</p></div>
+  <div class="fl-shell">
+  <nav class="fl-nav" aria-label="Main">
+    <div class="fl-nav__brand">Fieldline</div>
+    <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+    <a class="fl-nav__item" href="#">Planning board</a>
+    <a class="fl-nav__item" href="#">Technicians</a>
+    <a class="fl-nav__item" href="#">Parts</a>
+    <a class="fl-nav__item" href="#">Customers</a>
+  </nav>
+  <main class="fl-main">
+    <header class="fl-page-header">
+      <div>
+        <h1>Work orders</h1>
+        <div class="fl-page-header__meta">Region Central · Updated 09:42</div>
+      </div>
+      <div class="fl-page-header__actions">
+        <button class="fl-btn">Export</button>
+        <button class="fl-btn">New work order</button>
+      </div>
+    </header>
+    <div class="fl-toolbar" role="group" aria-label="Status">
+      <button class="fl-chip" aria-pressed="false">All open</button>
+      <button class="fl-chip" aria-pressed="true">Unplanned</button>
+      <button class="fl-chip" aria-pressed="false">Waiting for parts</button>
+      <button class="fl-chip" aria-pressed="false">Repairs</button>
+    </div><div class="fl-toolbar" role="group" aria-label="Filters">
+      <span class="fl-label mk-group-label">Type</span><button class="fl-chip" aria-pressed="false">Installation</button><button class="fl-chip" aria-pressed="false">Maintenance</button><button class="fl-chip" aria-pressed="false">Repair</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Skill needed</span><button class="fl-chip" aria-pressed="false">Heat pump</button><button class="fl-chip" aria-pressed="false">Air conditioning</button><button class="fl-chip" aria-pressed="false">Gas boiler</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Due</span><button class="fl-chip" aria-pressed="true">Any</button><button class="fl-chip" aria-pressed="false">Overdue</button><button class="fl-chip" aria-pressed="false">By today</button><button class="fl-chip" aria-pressed="false">Within 2 work days</button>
+      <span class="fl-result-count" role="status">63 unplanned work orders</span>
+      
+    </div><div class="mk-split"><div><div class="fl-bulkbar" role="region" aria-label="Selection">
+      <strong role="status">3 work orders selected</strong>
+      <button class="fl-btn">Assign to technician</button>
+      <button class="fl-btn fl-btn--ghost">Clear selection</button>
+    </div><div class="fl-table-wrap">
+      <table class="fl-table" aria-label="Unplanned work orders, region Central, earliest due first">
+        <thead><tr><th scope="col"><input type="checkbox" aria-label="Select all 63 on this page"></th><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer and address</th><th scope="col">Skill needed</th><th scope="col" class="fl-num" aria-sort="ascending">Due</th></tr></thead>
+        <tbody><tr><td><input type="checkbox" aria-label="Select WO-24802"></td><td><a href="#" class="mk-link">WO-24802</a></td><td>Repair</td><td>H. Bakker<br><span class="mk-small mk-muted">Kerkstraat 2, Soest</span></td><td>Air conditioning</td><td class="fl-num"><span class="fl-badge fl-badge--danger">Overdue</span> <span class="mk-nowrap">23 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24817" checked></td><td><a href="#" class="mk-link">WO-24817</a></td><td>Repair</td><td>M. de Groot<br><span class="mk-small mk-muted">Lindelaan 14, Amersfoort</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">26 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24822" checked></td><td><a href="#" class="mk-link">WO-24822</a></td><td>Repair</td><td>Huisartsenpraktijk Leusden<br><span class="mk-small mk-muted">Hamersveldseweg 41, Leusden</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24825"></td><td><a href="#" class="mk-link">WO-24825</a></td><td>Maintenance</td><td>Fam. Kok<br><span class="mk-small mk-muted">Dorpsstraat 9, Houten</span></td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24828"></td><td><a href="#" class="mk-link">WO-24828</a></td><td>Repair</td><td>J. Willems<br><span class="mk-small mk-muted">Biltseweg 77, De Bilt</span></td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">28 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24831"></td><td><a href="#" class="mk-link">WO-24831</a></td><td>Installation</td><td>Fam. Peters<br><span class="mk-small mk-muted">Eemweg 3, Baarn</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24834"></td><td><a href="#" class="mk-link">WO-24834</a></td><td>Maintenance</td><td>Kapsalon Mira<br><span class="mk-small mk-muted">Langestraat 52, Amersfoort</span></td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24840" checked></td><td><a href="#" class="mk-link">WO-24840</a></td><td>Maintenance</td><td>R. Smits<br><span class="mk-small mk-muted">Prinses Irenelaan 12, Zeist</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">2 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24843"></td><td><a href="#" class="mk-link">WO-24843</a></td><td>Installation</td><td>Bouwbedrijf Van Dam<br><span class="mk-small mk-muted">Industrieweg 6, Nijkerk</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">4 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24847"></td><td><a href="#" class="mk-link">WO-24847</a></td><td>Maintenance</td><td>T. Verhoeven<br><span class="mk-small mk-muted">Utrechtseweg 201, Amersfoort</span></td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">6 Nov</span></td></tr></tbody>
+      </table>
+    </div><div class="fl-result-count mk-pager">1 to 63 of 63 · 100 per page</div></div><aside class="fl-sidepanel" aria-labelledby="ap-title-assign-ready">
+      <div class="mk-panel-head">
+        <h2 class="fl-section-title" id="ap-title-assign-ready">Assign 3 work orders</h2>
+        <button class="fl-btn fl-btn--ghost">Close</button>
+      </div>
+      <ul class="mk-sel-list"><li>WO-24817 · Repair · Amersfoort · due 26 Oct</li><li>WO-24822 · Repair · Leusden · due 27 Oct</li><li>WO-24840 · Maintenance · Zeist · due 2 Nov</li></ul>
+      <p class="mk-small mk-muted">Skills needed: Heat pump</p>
+      <div class="fl-field">
+        <label class="fl-label" for="ap-date-assign-ready">Date</label>
+        <div class="mk-row"><input class="fl-input" id="ap-date-assign-ready" value="Tue 27 Oct 2026"><button class="fl-btn">Pick date</button></div>
+        <span class="fl-hint">Morning 08:00 to 12:00, afternoon 12:30 to 17:00</span>
+      </div>
+      <div class="fl-table-wrap" role="radiogroup" aria-label="Technician and slot">
+        <table class="fl-table">
+          <thead><tr><th scope="col">Technician</th><th scope="col">Skills</th><th scope="col">Morning</th><th scope="col">Afternoon</th></tr></thead>
+          <tbody><tr aria-selected="true"><td>K. Bos</td><td class="mk-small">Heat pump, Air conditioning</td><td><label class="mk-radio"><input type="radio" name="slot-assign-ready" checked aria-label="K. Bos, morning, 2 free"> 2 free</label></td><td><label class="mk-radio"><input type="radio" name="slot-assign-ready" aria-label="K. Bos, afternoon, 1 free"> 1 free</label></td></tr><tr><td>L. Mertens</td><td class="mk-small">Heat pump, Air conditioning, Gas boiler</td><td><label class="mk-radio"><input type="radio" name="slot-assign-ready" aria-label="L. Mertens, morning, 2 free"> 2 free</label></td><td><label class="mk-radio"><input type="radio" name="slot-assign-ready" aria-label="L. Mertens, afternoon, 2 free"> 2 free</label></td></tr><tr><td>R. Hendriks</td><td class="mk-small">Heat pump, Gas boiler</td><td class="mk-muted">Full</td><td><label class="mk-radio"><input type="radio" name="slot-assign-ready" aria-label="R. Hendriks, afternoon, 2 free"> 2 free</label></td></tr><tr><td>S. Visser</td><td class="mk-small">Heat pump</td><td><label class="mk-radio"><input type="radio" name="slot-assign-ready" aria-label="S. Visser, morning, 1 free"> 1 free</label></td><td class="mk-muted">Full</td></tr></tbody>
+        </table>
+      </div><p class="mk-small mk-muted">Not shown: 9 technicians without the skill Heat pump, 2 technicians with no free place on Tue 27 Oct.</p>
+      <div class="mk-panel-foot"><p class="mk-summary" role="status"><strong>WO-24817 and WO-24822</strong> get a visit with K. Bos, Tue 27 Oct, morning.<br><strong>WO-24840 stays unplanned:</strong> no free place left. You can undo for 8 seconds.</p>
+        <div class="fl-alert fl-alert--warning">WO-24817 is a repair due Mon 26 Oct. This date is after the due date.</div>
+        <div class="mk-actions"><button class="fl-btn fl-btn--primary">Assign 2 work orders</button><button class="fl-btn">Cancel</button></div></div>
+    </aside></div>
+  </main>
+  
+</div>
+</section>
+<section data-screen="work-orders" data-state="assign-loading" class="mk-frame" aria-labelledby="h-assign-loading">
+  <div class="mk-frame-label"><h2 id="h-assign-loading">work-orders / assign-loading</h2><p>The free places load. The date field stays usable (PAT-FB-02).</p></div>
+  <div class="fl-shell">
+  <nav class="fl-nav" aria-label="Main">
+    <div class="fl-nav__brand">Fieldline</div>
+    <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+    <a class="fl-nav__item" href="#">Planning board</a>
+    <a class="fl-nav__item" href="#">Technicians</a>
+    <a class="fl-nav__item" href="#">Parts</a>
+    <a class="fl-nav__item" href="#">Customers</a>
+  </nav>
+  <main class="fl-main">
+    <header class="fl-page-header">
+      <div>
+        <h1>Work orders</h1>
+        <div class="fl-page-header__meta">Region Central · Updated 09:42</div>
+      </div>
+      <div class="fl-page-header__actions">
+        <button class="fl-btn">Export</button>
+        <button class="fl-btn">New work order</button>
+      </div>
+    </header>
+    <div class="fl-toolbar" role="group" aria-label="Status">
+      <button class="fl-chip" aria-pressed="false">All open</button>
+      <button class="fl-chip" aria-pressed="true">Unplanned</button>
+      <button class="fl-chip" aria-pressed="false">Waiting for parts</button>
+      <button class="fl-chip" aria-pressed="false">Repairs</button>
+    </div><div class="fl-toolbar" role="group" aria-label="Filters">
+      <span class="fl-label mk-group-label">Type</span><button class="fl-chip" aria-pressed="false">Installation</button><button class="fl-chip" aria-pressed="false">Maintenance</button><button class="fl-chip" aria-pressed="false">Repair</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Skill needed</span><button class="fl-chip" aria-pressed="false">Heat pump</button><button class="fl-chip" aria-pressed="false">Air conditioning</button><button class="fl-chip" aria-pressed="false">Gas boiler</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Due</span><button class="fl-chip" aria-pressed="true">Any</button><button class="fl-chip" aria-pressed="false">Overdue</button><button class="fl-chip" aria-pressed="false">By today</button><button class="fl-chip" aria-pressed="false">Within 2 work days</button>
+      <span class="fl-result-count" role="status">63 unplanned work orders</span>
+      
+    </div><div class="mk-split"><div><div class="fl-bulkbar" role="region" aria-label="Selection">
+      <strong role="status">3 work orders selected</strong>
+      <button class="fl-btn">Assign to technician</button>
+      <button class="fl-btn fl-btn--ghost">Clear selection</button>
+    </div><div class="fl-table-wrap">
+      <table class="fl-table" aria-label="Unplanned work orders, region Central, earliest due first">
+        <thead><tr><th scope="col"><input type="checkbox" aria-label="Select all 63 on this page"></th><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer and address</th><th scope="col">Skill needed</th><th scope="col" class="fl-num" aria-sort="ascending">Due</th></tr></thead>
+        <tbody><tr><td><input type="checkbox" aria-label="Select WO-24802"></td><td><a href="#" class="mk-link">WO-24802</a></td><td>Repair</td><td>H. Bakker<br><span class="mk-small mk-muted">Kerkstraat 2, Soest</span></td><td>Air conditioning</td><td class="fl-num"><span class="fl-badge fl-badge--danger">Overdue</span> <span class="mk-nowrap">23 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24817" checked></td><td><a href="#" class="mk-link">WO-24817</a></td><td>Repair</td><td>M. de Groot<br><span class="mk-small mk-muted">Lindelaan 14, Amersfoort</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">26 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24822" checked></td><td><a href="#" class="mk-link">WO-24822</a></td><td>Repair</td><td>Huisartsenpraktijk Leusden<br><span class="mk-small mk-muted">Hamersveldseweg 41, Leusden</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24825"></td><td><a href="#" class="mk-link">WO-24825</a></td><td>Maintenance</td><td>Fam. Kok<br><span class="mk-small mk-muted">Dorpsstraat 9, Houten</span></td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24828"></td><td><a href="#" class="mk-link">WO-24828</a></td><td>Repair</td><td>J. Willems<br><span class="mk-small mk-muted">Biltseweg 77, De Bilt</span></td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">28 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24831"></td><td><a href="#" class="mk-link">WO-24831</a></td><td>Installation</td><td>Fam. Peters<br><span class="mk-small mk-muted">Eemweg 3, Baarn</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24834"></td><td><a href="#" class="mk-link">WO-24834</a></td><td>Maintenance</td><td>Kapsalon Mira<br><span class="mk-small mk-muted">Langestraat 52, Amersfoort</span></td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24840" checked></td><td><a href="#" class="mk-link">WO-24840</a></td><td>Maintenance</td><td>R. Smits<br><span class="mk-small mk-muted">Prinses Irenelaan 12, Zeist</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">2 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24843"></td><td><a href="#" class="mk-link">WO-24843</a></td><td>Installation</td><td>Bouwbedrijf Van Dam<br><span class="mk-small mk-muted">Industrieweg 6, Nijkerk</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">4 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24847"></td><td><a href="#" class="mk-link">WO-24847</a></td><td>Maintenance</td><td>T. Verhoeven<br><span class="mk-small mk-muted">Utrechtseweg 201, Amersfoort</span></td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">6 Nov</span></td></tr></tbody>
+      </table>
+    </div><div class="fl-result-count mk-pager">1 to 63 of 63 · 100 per page</div></div><aside class="fl-sidepanel" aria-labelledby="ap-title-assign-loading">
+      <div class="mk-panel-head">
+        <h2 class="fl-section-title" id="ap-title-assign-loading">Assign 3 work orders</h2>
+        <button class="fl-btn fl-btn--ghost">Close</button>
+      </div>
+      <ul class="mk-sel-list"><li>WO-24817 · Repair · Amersfoort · due 26 Oct</li><li>WO-24822 · Repair · Leusden · due 27 Oct</li><li>WO-24840 · Maintenance · Zeist · due 2 Nov</li></ul>
+      <p class="mk-small mk-muted">Skills needed: Heat pump</p>
+      <div class="fl-field">
+        <label class="fl-label" for="ap-date-assign-loading">Date</label>
+        <div class="mk-row"><input class="fl-input" id="ap-date-assign-loading" value="Tue 27 Oct 2026"><button class="fl-btn">Pick date</button></div>
+        <span class="fl-hint">Morning 08:00 to 12:00, afternoon 12:30 to 17:00</span>
+      </div>
+      <div class="fl-table-wrap"><table class="fl-table" aria-label="Technician and slot" aria-busy="true"><thead><tr><th scope="col">Technician</th><th scope="col">Skills</th><th scope="col">Morning</th><th scope="col">Afternoon</th></tr></thead><tbody><tr><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td></tr><tr><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td></tr><tr><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td></tr><tr><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td></tr></tbody></table></div><p class="mk-small mk-muted" role="status">Loading the free places of the technicians.</p>
+      <div class="mk-panel-foot"><p class="mk-small mk-muted" id="ap-hint-assign-loading">Select a technician and a slot.</p>
+        <div class="mk-actions"><button class="fl-btn fl-btn--primary" disabled aria-describedby="ap-hint-assign-loading">Assign</button><button class="fl-btn">Cancel</button></div></div>
+    </aside></div>
+  </main>
+  
+</div>
+</section>
+<section data-screen="work-orders" data-state="assign-no-technician" class="mk-frame" aria-labelledby="h-assign-no-technician">
+  <div class="mk-frame-label"><h2 id="h-assign-no-technician">work-orders / assign-no-technician</h2><p>The selection needs Heat pump and Air conditioning (UXD-005). Nobody with both skills has a free place on this date.</p></div>
+  <div class="fl-shell">
+  <nav class="fl-nav" aria-label="Main">
+    <div class="fl-nav__brand">Fieldline</div>
+    <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+    <a class="fl-nav__item" href="#">Planning board</a>
+    <a class="fl-nav__item" href="#">Technicians</a>
+    <a class="fl-nav__item" href="#">Parts</a>
+    <a class="fl-nav__item" href="#">Customers</a>
+  </nav>
+  <main class="fl-main">
+    <header class="fl-page-header">
+      <div>
+        <h1>Work orders</h1>
+        <div class="fl-page-header__meta">Region Central · Updated 09:42</div>
+      </div>
+      <div class="fl-page-header__actions">
+        <button class="fl-btn">Export</button>
+        <button class="fl-btn">New work order</button>
+      </div>
+    </header>
+    <div class="fl-toolbar" role="group" aria-label="Status">
+      <button class="fl-chip" aria-pressed="false">All open</button>
+      <button class="fl-chip" aria-pressed="true">Unplanned</button>
+      <button class="fl-chip" aria-pressed="false">Waiting for parts</button>
+      <button class="fl-chip" aria-pressed="false">Repairs</button>
+    </div><div class="fl-toolbar" role="group" aria-label="Filters">
+      <span class="fl-label mk-group-label">Type</span><button class="fl-chip" aria-pressed="false">Installation</button><button class="fl-chip" aria-pressed="false">Maintenance</button><button class="fl-chip" aria-pressed="false">Repair</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Skill needed</span><button class="fl-chip" aria-pressed="false">Heat pump</button><button class="fl-chip" aria-pressed="false">Air conditioning</button><button class="fl-chip" aria-pressed="false">Gas boiler</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Due</span><button class="fl-chip" aria-pressed="true">Any</button><button class="fl-chip" aria-pressed="false">Overdue</button><button class="fl-chip" aria-pressed="false">By today</button><button class="fl-chip" aria-pressed="false">Within 2 work days</button>
+      <span class="fl-result-count" role="status">63 unplanned work orders</span>
+      
+    </div><div class="mk-split"><div><div class="fl-bulkbar" role="region" aria-label="Selection">
+      <strong role="status">2 work orders selected</strong>
+      <button class="fl-btn">Assign to technician</button>
+      <button class="fl-btn fl-btn--ghost">Clear selection</button>
+    </div><div class="fl-table-wrap">
+      <table class="fl-table" aria-label="Unplanned work orders, region Central, earliest due first">
+        <thead><tr><th scope="col"><input type="checkbox" aria-label="Select all 63 on this page"></th><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer and address</th><th scope="col">Skill needed</th><th scope="col" class="fl-num" aria-sort="ascending">Due</th></tr></thead>
+        <tbody><tr><td><input type="checkbox" aria-label="Select WO-24802"></td><td><a href="#" class="mk-link">WO-24802</a></td><td>Repair</td><td>H. Bakker<br><span class="mk-small mk-muted">Kerkstraat 2, Soest</span></td><td>Air conditioning</td><td class="fl-num"><span class="fl-badge fl-badge--danger">Overdue</span> <span class="mk-nowrap">23 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24817" checked></td><td><a href="#" class="mk-link">WO-24817</a></td><td>Repair</td><td>M. de Groot<br><span class="mk-small mk-muted">Lindelaan 14, Amersfoort</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">26 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24822"></td><td><a href="#" class="mk-link">WO-24822</a></td><td>Repair</td><td>Huisartsenpraktijk Leusden<br><span class="mk-small mk-muted">Hamersveldseweg 41, Leusden</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24825"></td><td><a href="#" class="mk-link">WO-24825</a></td><td>Maintenance</td><td>Fam. Kok<br><span class="mk-small mk-muted">Dorpsstraat 9, Houten</span></td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24828" checked></td><td><a href="#" class="mk-link">WO-24828</a></td><td>Repair</td><td>J. Willems<br><span class="mk-small mk-muted">Biltseweg 77, De Bilt</span></td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">28 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24831"></td><td><a href="#" class="mk-link">WO-24831</a></td><td>Installation</td><td>Fam. Peters<br><span class="mk-small mk-muted">Eemweg 3, Baarn</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24834"></td><td><a href="#" class="mk-link">WO-24834</a></td><td>Maintenance</td><td>Kapsalon Mira<br><span class="mk-small mk-muted">Langestraat 52, Amersfoort</span></td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24840"></td><td><a href="#" class="mk-link">WO-24840</a></td><td>Maintenance</td><td>R. Smits<br><span class="mk-small mk-muted">Prinses Irenelaan 12, Zeist</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">2 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24843"></td><td><a href="#" class="mk-link">WO-24843</a></td><td>Installation</td><td>Bouwbedrijf Van Dam<br><span class="mk-small mk-muted">Industrieweg 6, Nijkerk</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">4 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24847"></td><td><a href="#" class="mk-link">WO-24847</a></td><td>Maintenance</td><td>T. Verhoeven<br><span class="mk-small mk-muted">Utrechtseweg 201, Amersfoort</span></td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">6 Nov</span></td></tr></tbody>
+      </table>
+    </div><div class="fl-result-count mk-pager">1 to 63 of 63 · 100 per page</div></div><aside class="fl-sidepanel" aria-labelledby="ap-title-assign-no-technician">
+      <div class="mk-panel-head">
+        <h2 class="fl-section-title" id="ap-title-assign-no-technician">Assign 2 work orders</h2>
+        <button class="fl-btn fl-btn--ghost">Close</button>
+      </div>
+      <ul class="mk-sel-list"><li>WO-24817 · Repair · Amersfoort · due 26 Oct</li><li>WO-24828 · Repair · De Bilt · due 28 Oct</li></ul>
+      <p class="mk-small mk-muted">Skills needed: Heat pump, Air conditioning</p>
+      <div class="fl-field">
+        <label class="fl-label" for="ap-date-assign-no-technician">Date</label>
+        <div class="mk-row"><input class="fl-input" id="ap-date-assign-no-technician" value="Tue 27 Oct 2026"><button class="fl-btn">Pick date</button></div>
+        <span class="fl-hint">Morning 08:00 to 12:00, afternoon 12:30 to 17:00</span>
+      </div>
+      <div class="fl-empty mk-empty-sm"><p class="fl-empty__title">No technician with the skills Heat pump and Air conditioning has a free place on Tue 27 Oct.</p>
+        <p>Not shown: 6 technicians without both skills, 4 technicians with no free place.</p>
+        <button class="fl-btn">Next work day</button></div>
+      <div class="mk-panel-foot"><p class="mk-small mk-muted" id="ap-hint-assign-no-technician">Select another date, or select work orders that need one skill.</p>
+        <div class="mk-actions"><button class="fl-btn fl-btn--primary" disabled aria-describedby="ap-hint-assign-no-technician">Assign</button><button class="fl-btn">Cancel</button></div></div>
+    </aside></div>
+  </main>
+  
+</div>
+</section>
+<section data-screen="work-orders" data-state="empty" class="mk-frame" aria-labelledby="h-empty">
+  <div class="mk-frame-label"><h2 id="h-empty">work-orders / empty</h2><p>Filters Repair and Gas boiler give no result (PAT-EMPTY-02). The active chips stay visible.</p></div>
+  <div class="fl-shell">
+  <nav class="fl-nav" aria-label="Main">
+    <div class="fl-nav__brand">Fieldline</div>
+    <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+    <a class="fl-nav__item" href="#">Planning board</a>
+    <a class="fl-nav__item" href="#">Technicians</a>
+    <a class="fl-nav__item" href="#">Parts</a>
+    <a class="fl-nav__item" href="#">Customers</a>
+  </nav>
+  <main class="fl-main">
+    <header class="fl-page-header">
+      <div>
+        <h1>Work orders</h1>
+        <div class="fl-page-header__meta">Region Central · Updated 09:42</div>
+      </div>
+      <div class="fl-page-header__actions">
+        <button class="fl-btn">Export</button>
+        <button class="fl-btn fl-btn--primary">New work order</button>
+      </div>
+    </header>
+    <div class="fl-toolbar" role="group" aria-label="Status">
+      <button class="fl-chip" aria-pressed="false">All open</button>
+      <button class="fl-chip" aria-pressed="true">Unplanned</button>
+      <button class="fl-chip" aria-pressed="false">Waiting for parts</button>
+      <button class="fl-chip" aria-pressed="false">Repairs</button>
+    </div><div class="fl-toolbar" role="group" aria-label="Filters">
+      <span class="fl-label mk-group-label">Type</span><button class="fl-chip" aria-pressed="false">Installation</button><button class="fl-chip" aria-pressed="false">Maintenance</button><button class="fl-chip" aria-pressed="true">Repair</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Skill needed</span><button class="fl-chip" aria-pressed="false">Heat pump</button><button class="fl-chip" aria-pressed="false">Air conditioning</button><button class="fl-chip" aria-pressed="true">Gas boiler</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Due</span><button class="fl-chip" aria-pressed="true">Any</button><button class="fl-chip" aria-pressed="false">Overdue</button><button class="fl-chip" aria-pressed="false">By today</button><button class="fl-chip" aria-pressed="false">Within 2 work days</button>
+      <span class="fl-result-count" role="status">0 unplanned work orders</span>
+      <button class="fl-btn fl-btn--ghost">Clear filters</button>
+    </div><div class="fl-table-wrap"><div class="fl-empty"><p class="fl-empty__title">No unplanned work orders match these filters.</p><p>Active filters: Type Repair, Skill needed Gas boiler.</p><button class="fl-btn">Clear filters</button></div></div>
+  </main>
+  
+</div>
+</section>
+<section data-screen="work-orders" data-state="empty-all-done" class="mk-frame" aria-labelledby="h-empty-all-done">
+  <div class="mk-frame-label"><h2 id="h-empty-all-done">work-orders / empty-all-done</h2><p>All work is planned (PAT-EMPTY-03). Good news, no action needed.</p></div>
+  <div class="fl-shell">
+  <nav class="fl-nav" aria-label="Main">
+    <div class="fl-nav__brand">Fieldline</div>
+    <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+    <a class="fl-nav__item" href="#">Planning board</a>
+    <a class="fl-nav__item" href="#">Technicians</a>
+    <a class="fl-nav__item" href="#">Parts</a>
+    <a class="fl-nav__item" href="#">Customers</a>
+  </nav>
+  <main class="fl-main">
+    <header class="fl-page-header">
+      <div>
+        <h1>Work orders</h1>
+        <div class="fl-page-header__meta">Region Central · Updated 09:42</div>
+      </div>
+      <div class="fl-page-header__actions">
+        <button class="fl-btn">Export</button>
+        <button class="fl-btn fl-btn--primary">New work order</button>
+      </div>
+    </header>
+    <div class="fl-toolbar" role="group" aria-label="Status">
+      <button class="fl-chip" aria-pressed="false">All open</button>
+      <button class="fl-chip" aria-pressed="true">Unplanned</button>
+      <button class="fl-chip" aria-pressed="false">Waiting for parts</button>
+      <button class="fl-chip" aria-pressed="false">Repairs</button>
+    </div><div class="fl-toolbar" role="group" aria-label="Filters">
+      <span class="fl-label mk-group-label">Type</span><button class="fl-chip" aria-pressed="false">Installation</button><button class="fl-chip" aria-pressed="false">Maintenance</button><button class="fl-chip" aria-pressed="false">Repair</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Skill needed</span><button class="fl-chip" aria-pressed="false">Heat pump</button><button class="fl-chip" aria-pressed="false">Air conditioning</button><button class="fl-chip" aria-pressed="false">Gas boiler</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Due</span><button class="fl-chip" aria-pressed="true">Any</button><button class="fl-chip" aria-pressed="false">Overdue</button><button class="fl-chip" aria-pressed="false">By today</button><button class="fl-chip" aria-pressed="false">Within 2 work days</button>
+      <span class="fl-result-count" role="status">0 unplanned work orders</span>
+      
+    </div><div class="fl-table-wrap"><div class="fl-empty"><p class="fl-empty__title">All work orders in region Central are planned.</p><button class="fl-btn">Show all open work orders</button></div></div>
+  </main>
+  
+</div>
+</section>
+<section data-screen="work-orders" data-state="loading" class="mk-frame" aria-labelledby="h-loading">
+  <div class="mk-frame-label"><h2 id="h-loading">work-orders / loading</h2><p>The list loads. Header and filters stay usable (PAT-FB-02).</p></div>
+  <div class="fl-shell">
+  <nav class="fl-nav" aria-label="Main">
+    <div class="fl-nav__brand">Fieldline</div>
+    <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+    <a class="fl-nav__item" href="#">Planning board</a>
+    <a class="fl-nav__item" href="#">Technicians</a>
+    <a class="fl-nav__item" href="#">Parts</a>
+    <a class="fl-nav__item" href="#">Customers</a>
+  </nav>
+  <main class="fl-main">
+    <header class="fl-page-header">
+      <div>
+        <h1>Work orders</h1>
+        <div class="fl-page-header__meta">Region Central · Updated 09:42</div>
+      </div>
+      <div class="fl-page-header__actions">
+        <button class="fl-btn">Export</button>
+        <button class="fl-btn fl-btn--primary">New work order</button>
+      </div>
+    </header>
+    <div class="fl-toolbar" role="group" aria-label="Status">
+      <button class="fl-chip" aria-pressed="false">All open</button>
+      <button class="fl-chip" aria-pressed="true">Unplanned</button>
+      <button class="fl-chip" aria-pressed="false">Waiting for parts</button>
+      <button class="fl-chip" aria-pressed="false">Repairs</button>
+    </div><div class="fl-toolbar" role="group" aria-label="Filters">
+      <span class="fl-label mk-group-label">Type</span><button class="fl-chip" aria-pressed="false">Installation</button><button class="fl-chip" aria-pressed="false">Maintenance</button><button class="fl-chip" aria-pressed="false">Repair</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Skill needed</span><button class="fl-chip" aria-pressed="false">Heat pump</button><button class="fl-chip" aria-pressed="false">Air conditioning</button><button class="fl-chip" aria-pressed="false">Gas boiler</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Due</span><button class="fl-chip" aria-pressed="true">Any</button><button class="fl-chip" aria-pressed="false">Overdue</button><button class="fl-chip" aria-pressed="false">By today</button><button class="fl-chip" aria-pressed="false">Within 2 work days</button>
+      <span class="fl-result-count" role="status">Loading work orders</span>
+      
+    </div><div class="fl-table-wrap"><table class="fl-table" aria-busy="true" aria-label="Unplanned work orders"><thead><tr><th scope="col"><input type="checkbox" aria-label="Select all on this page" disabled></th><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer</th><th scope="col">Address</th><th scope="col">Skill needed</th><th scope="col" class="fl-num">Due</th></tr></thead><tbody><tr><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td></tr><tr><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td></tr><tr><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td></tr><tr><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td></tr><tr><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td></tr><tr><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td></tr><tr><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td></tr><tr><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td><td><div class="fl-skeleton"></div></td></tr></tbody></table></div>
+  </main>
+  
+</div>
+</section>
+<section data-screen="work-orders" data-state="partial" class="mk-frame" aria-labelledby="h-partial">
+  <div class="mk-frame-label"><h2 id="h-partial">work-orders / partial</h2><p>The list shows, but the free places of the technicians did not load. Assign stays disabled.</p></div>
+  <div class="fl-shell">
+  <nav class="fl-nav" aria-label="Main">
+    <div class="fl-nav__brand">Fieldline</div>
+    <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+    <a class="fl-nav__item" href="#">Planning board</a>
+    <a class="fl-nav__item" href="#">Technicians</a>
+    <a class="fl-nav__item" href="#">Parts</a>
+    <a class="fl-nav__item" href="#">Customers</a>
+  </nav>
+  <main class="fl-main">
+    <header class="fl-page-header">
+      <div>
+        <h1>Work orders</h1>
+        <div class="fl-page-header__meta">Region Central · Updated 09:42</div>
+      </div>
+      <div class="fl-page-header__actions">
+        <button class="fl-btn">Export</button>
+        <button class="fl-btn">New work order</button>
+      </div>
+    </header>
+    <div class="fl-toolbar" role="group" aria-label="Status">
+      <button class="fl-chip" aria-pressed="false">All open</button>
+      <button class="fl-chip" aria-pressed="true">Unplanned</button>
+      <button class="fl-chip" aria-pressed="false">Waiting for parts</button>
+      <button class="fl-chip" aria-pressed="false">Repairs</button>
+    </div><div class="fl-toolbar" role="group" aria-label="Filters">
+      <span class="fl-label mk-group-label">Type</span><button class="fl-chip" aria-pressed="false">Installation</button><button class="fl-chip" aria-pressed="false">Maintenance</button><button class="fl-chip" aria-pressed="false">Repair</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Skill needed</span><button class="fl-chip" aria-pressed="false">Heat pump</button><button class="fl-chip" aria-pressed="false">Air conditioning</button><button class="fl-chip" aria-pressed="false">Gas boiler</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Due</span><button class="fl-chip" aria-pressed="true">Any</button><button class="fl-chip" aria-pressed="false">Overdue</button><button class="fl-chip" aria-pressed="false">By today</button><button class="fl-chip" aria-pressed="false">Within 2 work days</button>
+      <span class="fl-result-count" role="status">63 unplanned work orders</span>
+      
+    </div><div class="mk-split"><div><div class="fl-bulkbar" role="region" aria-label="Selection">
+      <strong role="status">3 work orders selected</strong>
+      <button class="fl-btn">Assign to technician</button>
+      <button class="fl-btn fl-btn--ghost">Clear selection</button>
+    </div><div class="fl-table-wrap">
+      <table class="fl-table" aria-label="Unplanned work orders, region Central, earliest due first">
+        <thead><tr><th scope="col"><input type="checkbox" aria-label="Select all 63 on this page"></th><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer and address</th><th scope="col">Skill needed</th><th scope="col" class="fl-num" aria-sort="ascending">Due</th></tr></thead>
+        <tbody><tr><td><input type="checkbox" aria-label="Select WO-24802"></td><td><a href="#" class="mk-link">WO-24802</a></td><td>Repair</td><td>H. Bakker<br><span class="mk-small mk-muted">Kerkstraat 2, Soest</span></td><td>Air conditioning</td><td class="fl-num"><span class="fl-badge fl-badge--danger">Overdue</span> <span class="mk-nowrap">23 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24817" checked></td><td><a href="#" class="mk-link">WO-24817</a></td><td>Repair</td><td>M. de Groot<br><span class="mk-small mk-muted">Lindelaan 14, Amersfoort</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">26 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24822" checked></td><td><a href="#" class="mk-link">WO-24822</a></td><td>Repair</td><td>Huisartsenpraktijk Leusden<br><span class="mk-small mk-muted">Hamersveldseweg 41, Leusden</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24825"></td><td><a href="#" class="mk-link">WO-24825</a></td><td>Maintenance</td><td>Fam. Kok<br><span class="mk-small mk-muted">Dorpsstraat 9, Houten</span></td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24828"></td><td><a href="#" class="mk-link">WO-24828</a></td><td>Repair</td><td>J. Willems<br><span class="mk-small mk-muted">Biltseweg 77, De Bilt</span></td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">28 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24831"></td><td><a href="#" class="mk-link">WO-24831</a></td><td>Installation</td><td>Fam. Peters<br><span class="mk-small mk-muted">Eemweg 3, Baarn</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24834"></td><td><a href="#" class="mk-link">WO-24834</a></td><td>Maintenance</td><td>Kapsalon Mira<br><span class="mk-small mk-muted">Langestraat 52, Amersfoort</span></td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24840" checked></td><td><a href="#" class="mk-link">WO-24840</a></td><td>Maintenance</td><td>R. Smits<br><span class="mk-small mk-muted">Prinses Irenelaan 12, Zeist</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">2 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24843"></td><td><a href="#" class="mk-link">WO-24843</a></td><td>Installation</td><td>Bouwbedrijf Van Dam<br><span class="mk-small mk-muted">Industrieweg 6, Nijkerk</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">4 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24847"></td><td><a href="#" class="mk-link">WO-24847</a></td><td>Maintenance</td><td>T. Verhoeven<br><span class="mk-small mk-muted">Utrechtseweg 201, Amersfoort</span></td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">6 Nov</span></td></tr></tbody>
+      </table>
+    </div><div class="fl-result-count mk-pager">1 to 63 of 63 · 100 per page</div></div><aside class="fl-sidepanel" aria-labelledby="ap-title-partial">
+      <div class="mk-panel-head">
+        <h2 class="fl-section-title" id="ap-title-partial">Assign 3 work orders</h2>
+        <button class="fl-btn fl-btn--ghost">Close</button>
+      </div>
+      <ul class="mk-sel-list"><li>WO-24817 · Repair · Amersfoort · due 26 Oct</li><li>WO-24822 · Repair · Leusden · due 27 Oct</li><li>WO-24840 · Maintenance · Zeist · due 2 Nov</li></ul>
+      <p class="mk-small mk-muted">Skills needed: Heat pump</p>
+      <div class="fl-field">
+        <label class="fl-label" for="ap-date-partial">Date</label>
+        <div class="mk-row"><input class="fl-input" id="ap-date-partial" value="Tue 27 Oct 2026"><button class="fl-btn">Pick date</button></div>
+        <span class="fl-hint">Morning 08:00 to 12:00, afternoon 12:30 to 17:00</span>
+      </div>
+      <div class="fl-alert fl-alert--danger mk-center" role="alert"><div>The free places of the technicians did not load.</div><button class="fl-btn">Try again</button></div>
+      <div class="mk-panel-foot"><p class="mk-small mk-muted" id="ap-hint-partial">You can assign when the free places load.</p>
+        <div class="mk-actions"><button class="fl-btn fl-btn--primary" disabled aria-describedby="ap-hint-partial">Assign</button><button class="fl-btn">Cancel</button></div></div>
+    </aside></div>
+  </main>
+  
+</div>
+</section>
+<section data-screen="work-orders" data-state="error-load" class="mk-frame" aria-labelledby="h-error-load">
+  <div class="mk-frame-label"><h2 id="h-error-load">work-orders / error-load</h2><p>The list did not load. The filters stay. Nothing is lost.</p></div>
+  <div class="fl-shell">
+  <nav class="fl-nav" aria-label="Main">
+    <div class="fl-nav__brand">Fieldline</div>
+    <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+    <a class="fl-nav__item" href="#">Planning board</a>
+    <a class="fl-nav__item" href="#">Technicians</a>
+    <a class="fl-nav__item" href="#">Parts</a>
+    <a class="fl-nav__item" href="#">Customers</a>
+  </nav>
+  <main class="fl-main">
+    <header class="fl-page-header">
+      <div>
+        <h1>Work orders</h1>
+        <div class="fl-page-header__meta">Region Central · Updated 09:42</div>
+      </div>
+      <div class="fl-page-header__actions">
+        <button class="fl-btn">Export</button>
+        <button class="fl-btn fl-btn--primary">New work order</button>
+      </div>
+    </header>
+    <div class="fl-toolbar" role="group" aria-label="Status">
+      <button class="fl-chip" aria-pressed="false">All open</button>
+      <button class="fl-chip" aria-pressed="true">Unplanned</button>
+      <button class="fl-chip" aria-pressed="false">Waiting for parts</button>
+      <button class="fl-chip" aria-pressed="false">Repairs</button>
+    </div><div class="fl-toolbar" role="group" aria-label="Filters">
+      <span class="fl-label mk-group-label">Type</span><button class="fl-chip" aria-pressed="false">Installation</button><button class="fl-chip" aria-pressed="false">Maintenance</button><button class="fl-chip" aria-pressed="false">Repair</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Skill needed</span><button class="fl-chip" aria-pressed="false">Heat pump</button><button class="fl-chip" aria-pressed="false">Air conditioning</button><button class="fl-chip" aria-pressed="false">Gas boiler</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Due</span><button class="fl-chip" aria-pressed="true">Any</button><button class="fl-chip" aria-pressed="false">Overdue</button><button class="fl-chip" aria-pressed="false">By today</button><button class="fl-chip" aria-pressed="false">Within 2 work days</button>
+      <span class="fl-result-count" role="status"></span>
+      
+    </div><div class="fl-alert fl-alert--danger mk-center" role="alert"><div>The work orders did not load. The server did not answer.</div><button class="fl-btn">Try again</button></div>
+  </main>
+  
+</div>
+</section>
+<section data-screen="work-orders" data-state="error-save" class="mk-frame" aria-labelledby="h-error-save">
+  <div class="mk-frame-label"><h2 id="h-error-save">work-orders / error-save</h2><p>The assignment failed for all. The panel keeps the choice. Nothing changed.</p></div>
+  <div class="fl-shell">
+  <nav class="fl-nav" aria-label="Main">
+    <div class="fl-nav__brand">Fieldline</div>
+    <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+    <a class="fl-nav__item" href="#">Planning board</a>
+    <a class="fl-nav__item" href="#">Technicians</a>
+    <a class="fl-nav__item" href="#">Parts</a>
+    <a class="fl-nav__item" href="#">Customers</a>
+  </nav>
+  <main class="fl-main">
+    <header class="fl-page-header">
+      <div>
+        <h1>Work orders</h1>
+        <div class="fl-page-header__meta">Region Central · Updated 09:42</div>
+      </div>
+      <div class="fl-page-header__actions">
+        <button class="fl-btn">Export</button>
+        <button class="fl-btn">New work order</button>
+      </div>
+    </header>
+    <div class="fl-toolbar" role="group" aria-label="Status">
+      <button class="fl-chip" aria-pressed="false">All open</button>
+      <button class="fl-chip" aria-pressed="true">Unplanned</button>
+      <button class="fl-chip" aria-pressed="false">Waiting for parts</button>
+      <button class="fl-chip" aria-pressed="false">Repairs</button>
+    </div><div class="fl-toolbar" role="group" aria-label="Filters">
+      <span class="fl-label mk-group-label">Type</span><button class="fl-chip" aria-pressed="false">Installation</button><button class="fl-chip" aria-pressed="false">Maintenance</button><button class="fl-chip" aria-pressed="false">Repair</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Skill needed</span><button class="fl-chip" aria-pressed="false">Heat pump</button><button class="fl-chip" aria-pressed="false">Air conditioning</button><button class="fl-chip" aria-pressed="false">Gas boiler</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Due</span><button class="fl-chip" aria-pressed="true">Any</button><button class="fl-chip" aria-pressed="false">Overdue</button><button class="fl-chip" aria-pressed="false">By today</button><button class="fl-chip" aria-pressed="false">Within 2 work days</button>
+      <span class="fl-result-count" role="status">63 unplanned work orders</span>
+      
+    </div><div class="mk-split"><div><div class="fl-bulkbar" role="region" aria-label="Selection">
+      <strong role="status">3 work orders selected</strong>
+      <button class="fl-btn">Assign to technician</button>
+      <button class="fl-btn fl-btn--ghost">Clear selection</button>
+    </div><div class="fl-table-wrap">
+      <table class="fl-table" aria-label="Unplanned work orders, region Central, earliest due first">
+        <thead><tr><th scope="col"><input type="checkbox" aria-label="Select all 63 on this page"></th><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer and address</th><th scope="col">Skill needed</th><th scope="col" class="fl-num" aria-sort="ascending">Due</th></tr></thead>
+        <tbody><tr><td><input type="checkbox" aria-label="Select WO-24802"></td><td><a href="#" class="mk-link">WO-24802</a></td><td>Repair</td><td>H. Bakker<br><span class="mk-small mk-muted">Kerkstraat 2, Soest</span></td><td>Air conditioning</td><td class="fl-num"><span class="fl-badge fl-badge--danger">Overdue</span> <span class="mk-nowrap">23 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24817" checked></td><td><a href="#" class="mk-link">WO-24817</a></td><td>Repair</td><td>M. de Groot<br><span class="mk-small mk-muted">Lindelaan 14, Amersfoort</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">26 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24822" checked></td><td><a href="#" class="mk-link">WO-24822</a></td><td>Repair</td><td>Huisartsenpraktijk Leusden<br><span class="mk-small mk-muted">Hamersveldseweg 41, Leusden</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24825"></td><td><a href="#" class="mk-link">WO-24825</a></td><td>Maintenance</td><td>Fam. Kok<br><span class="mk-small mk-muted">Dorpsstraat 9, Houten</span></td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24828"></td><td><a href="#" class="mk-link">WO-24828</a></td><td>Repair</td><td>J. Willems<br><span class="mk-small mk-muted">Biltseweg 77, De Bilt</span></td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">28 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24831"></td><td><a href="#" class="mk-link">WO-24831</a></td><td>Installation</td><td>Fam. Peters<br><span class="mk-small mk-muted">Eemweg 3, Baarn</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24834"></td><td><a href="#" class="mk-link">WO-24834</a></td><td>Maintenance</td><td>Kapsalon Mira<br><span class="mk-small mk-muted">Langestraat 52, Amersfoort</span></td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24840" checked></td><td><a href="#" class="mk-link">WO-24840</a></td><td>Maintenance</td><td>R. Smits<br><span class="mk-small mk-muted">Prinses Irenelaan 12, Zeist</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">2 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24843"></td><td><a href="#" class="mk-link">WO-24843</a></td><td>Installation</td><td>Bouwbedrijf Van Dam<br><span class="mk-small mk-muted">Industrieweg 6, Nijkerk</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">4 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24847"></td><td><a href="#" class="mk-link">WO-24847</a></td><td>Maintenance</td><td>T. Verhoeven<br><span class="mk-small mk-muted">Utrechtseweg 201, Amersfoort</span></td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">6 Nov</span></td></tr></tbody>
+      </table>
+    </div><div class="fl-result-count mk-pager">1 to 63 of 63 · 100 per page</div></div><aside class="fl-sidepanel" aria-labelledby="ap-title-error-save">
+      <div class="mk-panel-head">
+        <h2 class="fl-section-title" id="ap-title-error-save">Assign 3 work orders</h2>
+        <button class="fl-btn fl-btn--ghost">Close</button>
+      </div>
+      <ul class="mk-sel-list"><li>WO-24817 · Repair · Amersfoort · due 26 Oct</li><li>WO-24822 · Repair · Leusden · due 27 Oct</li><li>WO-24840 · Maintenance · Zeist · due 2 Nov</li></ul>
+      <p class="mk-small mk-muted">Skills needed: Heat pump</p>
+      <div class="fl-field">
+        <label class="fl-label" for="ap-date-error-save">Date</label>
+        <div class="mk-row"><input class="fl-input" id="ap-date-error-save" value="Tue 27 Oct 2026"><button class="fl-btn">Pick date</button></div>
+        <span class="fl-hint">Morning 08:00 to 12:00, afternoon 12:30 to 17:00</span>
+      </div>
+      <div class="fl-table-wrap" role="radiogroup" aria-label="Technician and slot">
+        <table class="fl-table">
+          <thead><tr><th scope="col">Technician</th><th scope="col">Skills</th><th scope="col">Morning</th><th scope="col">Afternoon</th></tr></thead>
+          <tbody><tr aria-selected="true"><td>K. Bos</td><td class="mk-small">Heat pump, Air conditioning</td><td><label class="mk-radio"><input type="radio" name="slot-error-save" checked aria-label="K. Bos, morning, 2 free"> 2 free</label></td><td><label class="mk-radio"><input type="radio" name="slot-error-save" aria-label="K. Bos, afternoon, 1 free"> 1 free</label></td></tr><tr><td>L. Mertens</td><td class="mk-small">Heat pump, Air conditioning, Gas boiler</td><td><label class="mk-radio"><input type="radio" name="slot-error-save" aria-label="L. Mertens, morning, 2 free"> 2 free</label></td><td><label class="mk-radio"><input type="radio" name="slot-error-save" aria-label="L. Mertens, afternoon, 2 free"> 2 free</label></td></tr><tr><td>R. Hendriks</td><td class="mk-small">Heat pump, Gas boiler</td><td class="mk-muted">Full</td><td><label class="mk-radio"><input type="radio" name="slot-error-save" aria-label="R. Hendriks, afternoon, 2 free"> 2 free</label></td></tr><tr><td>S. Visser</td><td class="mk-small">Heat pump</td><td><label class="mk-radio"><input type="radio" name="slot-error-save" aria-label="S. Visser, morning, 1 free"> 1 free</label></td><td class="mk-muted">Full</td></tr></tbody>
+        </table>
+      </div>
+      <div class="mk-panel-foot"><div class="fl-alert fl-alert--danger" role="alert">The work orders were not assigned. The server did not answer. Nothing changed.</div>
+        <div class="mk-actions"><button class="fl-btn fl-btn--primary">Try again</button><button class="fl-btn">Cancel</button></div></div>
+    </aside></div>
+  </main>
+  
+</div>
+</section>
+<section data-screen="work-orders" data-state="error-undo" class="mk-frame" aria-labelledby="h-error-undo">
+  <div class="mk-frame-label"><h2 id="h-error-undo">work-orders / error-undo</h2><p>The undo failed. The alert says what is still planned. It stays until the undo works or the planner closes it.</p></div>
+  <div class="fl-shell">
+  <nav class="fl-nav" aria-label="Main">
+    <div class="fl-nav__brand">Fieldline</div>
+    <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+    <a class="fl-nav__item" href="#">Planning board</a>
+    <a class="fl-nav__item" href="#">Technicians</a>
+    <a class="fl-nav__item" href="#">Parts</a>
+    <a class="fl-nav__item" href="#">Customers</a>
+  </nav>
+  <main class="fl-main">
+    <header class="fl-page-header">
+      <div>
+        <h1>Work orders</h1>
+        <div class="fl-page-header__meta">Region Central · Updated 09:42</div>
+      </div>
+      <div class="fl-page-header__actions">
+        <button class="fl-btn">Export</button>
+        <button class="fl-btn fl-btn--primary">New work order</button>
+      </div>
+    </header>
+    <div class="fl-toolbar" role="group" aria-label="Status">
+      <button class="fl-chip" aria-pressed="false">All open</button>
+      <button class="fl-chip" aria-pressed="true">Unplanned</button>
+      <button class="fl-chip" aria-pressed="false">Waiting for parts</button>
+      <button class="fl-chip" aria-pressed="false">Repairs</button>
+    </div><div class="fl-toolbar" role="group" aria-label="Filters">
+      <span class="fl-label mk-group-label">Type</span><button class="fl-chip" aria-pressed="false">Installation</button><button class="fl-chip" aria-pressed="false">Maintenance</button><button class="fl-chip" aria-pressed="false">Repair</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Skill needed</span><button class="fl-chip" aria-pressed="false">Heat pump</button><button class="fl-chip" aria-pressed="false">Air conditioning</button><button class="fl-chip" aria-pressed="false">Gas boiler</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Due</span><button class="fl-chip" aria-pressed="true">Any</button><button class="fl-chip" aria-pressed="false">Overdue</button><button class="fl-chip" aria-pressed="false">By today</button><button class="fl-chip" aria-pressed="false">Within 2 work days</button>
+      <span class="fl-result-count" role="status">61 unplanned work orders</span>
+      
+    </div><div class="fl-alert fl-alert--danger mk-gap mk-center" role="alert"><div>The assignment was not undone. The server did not answer. <strong>WO-24817 and WO-24822</strong> are still planned with K. Bos, Tue 27 Oct, morning.</div><button class="fl-btn">Undo again</button><button class="fl-btn fl-btn--ghost">Close</button></div><div class="fl-table-wrap">
+      <table class="fl-table" aria-label="Unplanned work orders, region Central, earliest due first">
+        <thead><tr><th scope="col"><input type="checkbox" aria-label="Select all 61 on this page"></th><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer</th><th scope="col">Address</th><th scope="col">Skill needed</th><th scope="col" class="fl-num" aria-sort="ascending">Due</th></tr></thead>
+        <tbody><tr><td><input type="checkbox" aria-label="Select WO-24802"></td><td><a href="#" class="mk-link">WO-24802</a></td><td>Repair</td><td>H. Bakker</td><td>Kerkstraat 2, Soest</td><td>Air conditioning</td><td class="fl-num"><span class="fl-badge fl-badge--danger">Overdue</span> <span class="mk-nowrap">23 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24825"></td><td><a href="#" class="mk-link">WO-24825</a></td><td>Maintenance</td><td>Fam. Kok</td><td>Dorpsstraat 9, Houten</td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24828"></td><td><a href="#" class="mk-link">WO-24828</a></td><td>Repair</td><td>J. Willems</td><td>Biltseweg 77, De Bilt</td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">28 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24831"></td><td><a href="#" class="mk-link">WO-24831</a></td><td>Installation</td><td>Fam. Peters</td><td>Eemweg 3, Baarn</td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24834"></td><td><a href="#" class="mk-link">WO-24834</a></td><td>Maintenance</td><td>Kapsalon Mira</td><td>Langestraat 52, Amersfoort</td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24840"></td><td><a href="#" class="mk-link">WO-24840</a></td><td>Maintenance</td><td>R. Smits</td><td>Prinses Irenelaan 12, Zeist</td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">2 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24843"></td><td><a href="#" class="mk-link">WO-24843</a></td><td>Installation</td><td>Bouwbedrijf Van Dam</td><td>Industrieweg 6, Nijkerk</td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">4 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24847"></td><td><a href="#" class="mk-link">WO-24847</a></td><td>Maintenance</td><td>T. Verhoeven</td><td>Utrechtseweg 201, Amersfoort</td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">6 Nov</span></td></tr></tbody>
+      </table>
+    </div><div class="fl-result-count mk-pager">1 to 61 of 61 · 100 per page</div>
+  </main>
+  
+</div>
+</section>
+<section data-screen="work-orders" data-state="conflict" class="mk-frame" aria-labelledby="h-conflict">
+  <div class="mk-frame-label"><h2 id="h-conflict">work-orders / conflict</h2><p>Another planner filled a place while the panel was open. The planner sees the new result before the commit.</p></div>
+  <div class="fl-shell">
+  <nav class="fl-nav" aria-label="Main">
+    <div class="fl-nav__brand">Fieldline</div>
+    <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+    <a class="fl-nav__item" href="#">Planning board</a>
+    <a class="fl-nav__item" href="#">Technicians</a>
+    <a class="fl-nav__item" href="#">Parts</a>
+    <a class="fl-nav__item" href="#">Customers</a>
+  </nav>
+  <main class="fl-main">
+    <header class="fl-page-header">
+      <div>
+        <h1>Work orders</h1>
+        <div class="fl-page-header__meta">Region Central · Updated 09:42</div>
+      </div>
+      <div class="fl-page-header__actions">
+        <button class="fl-btn">Export</button>
+        <button class="fl-btn">New work order</button>
+      </div>
+    </header>
+    <div class="fl-toolbar" role="group" aria-label="Status">
+      <button class="fl-chip" aria-pressed="false">All open</button>
+      <button class="fl-chip" aria-pressed="true">Unplanned</button>
+      <button class="fl-chip" aria-pressed="false">Waiting for parts</button>
+      <button class="fl-chip" aria-pressed="false">Repairs</button>
+    </div><div class="fl-toolbar" role="group" aria-label="Filters">
+      <span class="fl-label mk-group-label">Type</span><button class="fl-chip" aria-pressed="false">Installation</button><button class="fl-chip" aria-pressed="false">Maintenance</button><button class="fl-chip" aria-pressed="false">Repair</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Skill needed</span><button class="fl-chip" aria-pressed="false">Heat pump</button><button class="fl-chip" aria-pressed="false">Air conditioning</button><button class="fl-chip" aria-pressed="false">Gas boiler</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Due</span><button class="fl-chip" aria-pressed="true">Any</button><button class="fl-chip" aria-pressed="false">Overdue</button><button class="fl-chip" aria-pressed="false">By today</button><button class="fl-chip" aria-pressed="false">Within 2 work days</button>
+      <span class="fl-result-count" role="status">63 unplanned work orders</span>
+      
+    </div><div class="mk-split"><div><div class="fl-bulkbar" role="region" aria-label="Selection">
+      <strong role="status">3 work orders selected</strong>
+      <button class="fl-btn">Assign to technician</button>
+      <button class="fl-btn fl-btn--ghost">Clear selection</button>
+    </div><div class="fl-table-wrap">
+      <table class="fl-table" aria-label="Unplanned work orders, region Central, earliest due first">
+        <thead><tr><th scope="col"><input type="checkbox" aria-label="Select all 63 on this page"></th><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer and address</th><th scope="col">Skill needed</th><th scope="col" class="fl-num" aria-sort="ascending">Due</th></tr></thead>
+        <tbody><tr><td><input type="checkbox" aria-label="Select WO-24802"></td><td><a href="#" class="mk-link">WO-24802</a></td><td>Repair</td><td>H. Bakker<br><span class="mk-small mk-muted">Kerkstraat 2, Soest</span></td><td>Air conditioning</td><td class="fl-num"><span class="fl-badge fl-badge--danger">Overdue</span> <span class="mk-nowrap">23 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24817" checked></td><td><a href="#" class="mk-link">WO-24817</a></td><td>Repair</td><td>M. de Groot<br><span class="mk-small mk-muted">Lindelaan 14, Amersfoort</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">26 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24822" checked></td><td><a href="#" class="mk-link">WO-24822</a></td><td>Repair</td><td>Huisartsenpraktijk Leusden<br><span class="mk-small mk-muted">Hamersveldseweg 41, Leusden</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24825"></td><td><a href="#" class="mk-link">WO-24825</a></td><td>Maintenance</td><td>Fam. Kok<br><span class="mk-small mk-muted">Dorpsstraat 9, Houten</span></td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24828"></td><td><a href="#" class="mk-link">WO-24828</a></td><td>Repair</td><td>J. Willems<br><span class="mk-small mk-muted">Biltseweg 77, De Bilt</span></td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">28 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24831"></td><td><a href="#" class="mk-link">WO-24831</a></td><td>Installation</td><td>Fam. Peters<br><span class="mk-small mk-muted">Eemweg 3, Baarn</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24834"></td><td><a href="#" class="mk-link">WO-24834</a></td><td>Maintenance</td><td>Kapsalon Mira<br><span class="mk-small mk-muted">Langestraat 52, Amersfoort</span></td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24840" checked></td><td><a href="#" class="mk-link">WO-24840</a></td><td>Maintenance</td><td>R. Smits<br><span class="mk-small mk-muted">Prinses Irenelaan 12, Zeist</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">2 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24843"></td><td><a href="#" class="mk-link">WO-24843</a></td><td>Installation</td><td>Bouwbedrijf Van Dam<br><span class="mk-small mk-muted">Industrieweg 6, Nijkerk</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">4 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24847"></td><td><a href="#" class="mk-link">WO-24847</a></td><td>Maintenance</td><td>T. Verhoeven<br><span class="mk-small mk-muted">Utrechtseweg 201, Amersfoort</span></td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">6 Nov</span></td></tr></tbody>
+      </table>
+    </div><div class="fl-result-count mk-pager">1 to 63 of 63 · 100 per page</div></div><aside class="fl-sidepanel" aria-labelledby="ap-title-conflict">
+      <div class="mk-panel-head">
+        <h2 class="fl-section-title" id="ap-title-conflict">Assign 3 work orders</h2>
+        <button class="fl-btn fl-btn--ghost">Close</button>
+      </div>
+      <ul class="mk-sel-list"><li>WO-24817 · Repair · Amersfoort · due 26 Oct</li><li>WO-24822 · Repair · Leusden · due 27 Oct</li><li>WO-24840 · Maintenance · Zeist · due 2 Nov</li></ul>
+      <p class="mk-small mk-muted">Skills needed: Heat pump</p>
+      <div class="fl-field">
+        <label class="fl-label" for="ap-date-conflict">Date</label>
+        <div class="mk-row"><input class="fl-input" id="ap-date-conflict" value="Tue 27 Oct 2026"><button class="fl-btn">Pick date</button></div>
+        <span class="fl-hint">Morning 08:00 to 12:00, afternoon 12:30 to 17:00</span>
+      </div>
+      <div class="fl-alert fl-alert--warning mk-gap" role="status">The free places changed at 09:51. K. Bos, morning now has 1 free place.</div><div class="fl-table-wrap" role="radiogroup" aria-label="Technician and slot">
+        <table class="fl-table">
+          <thead><tr><th scope="col">Technician</th><th scope="col">Skills</th><th scope="col">Morning</th><th scope="col">Afternoon</th></tr></thead>
+          <tbody><tr aria-selected="true"><td>K. Bos</td><td class="mk-small">Heat pump, Air conditioning</td><td><label class="mk-radio"><input type="radio" name="slot-conflict" checked aria-label="K. Bos, morning, 1 free"> 1 free</label></td><td><label class="mk-radio"><input type="radio" name="slot-conflict" aria-label="K. Bos, afternoon, 1 free"> 1 free</label></td></tr><tr><td>L. Mertens</td><td class="mk-small">Heat pump, Air conditioning, Gas boiler</td><td><label class="mk-radio"><input type="radio" name="slot-conflict" aria-label="L. Mertens, morning, 2 free"> 2 free</label></td><td><label class="mk-radio"><input type="radio" name="slot-conflict" aria-label="L. Mertens, afternoon, 2 free"> 2 free</label></td></tr><tr><td>R. Hendriks</td><td class="mk-small">Heat pump, Gas boiler</td><td class="mk-muted">Full</td><td><label class="mk-radio"><input type="radio" name="slot-conflict" aria-label="R. Hendriks, afternoon, 2 free"> 2 free</label></td></tr><tr><td>S. Visser</td><td class="mk-small">Heat pump</td><td><label class="mk-radio"><input type="radio" name="slot-conflict" aria-label="S. Visser, morning, 1 free"> 1 free</label></td><td class="mk-muted">Full</td></tr></tbody>
+        </table>
+      </div><p class="mk-small mk-muted">Not shown: 9 technicians without the skill Heat pump, 2 technicians with no free place on Tue 27 Oct.</p>
+      <div class="mk-panel-foot"><p class="mk-summary" role="status"><strong>WO-24817</strong> gets a visit with K. Bos, Tue 27 Oct, morning.<br><strong>WO-24822 and WO-24840 stay unplanned:</strong> no free place left. You can undo for 8 seconds.</p>
+        <div class="fl-alert fl-alert--warning">WO-24817 is a repair due Mon 26 Oct. This date is after the due date.</div>
+        <div class="mk-actions"><button class="fl-btn fl-btn--primary">Assign 1 work order</button><button class="fl-btn">Cancel</button></div></div>
+    </aside></div>
+  </main>
+  
+</div>
+</section>
+<section data-screen="work-orders" data-state="success" class="mk-frame" aria-labelledby="h-success">
+  <div class="mk-frame-label"><h2 id="h-success">work-orders / success</h2><p>All chosen work orders assigned. The rows left the Unplanned list. Undo for 8 seconds (UXD-003).</p></div>
+  <div class="fl-shell">
+  <nav class="fl-nav" aria-label="Main">
+    <div class="fl-nav__brand">Fieldline</div>
+    <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+    <a class="fl-nav__item" href="#">Planning board</a>
+    <a class="fl-nav__item" href="#">Technicians</a>
+    <a class="fl-nav__item" href="#">Parts</a>
+    <a class="fl-nav__item" href="#">Customers</a>
+  </nav>
+  <main class="fl-main">
+    <header class="fl-page-header">
+      <div>
+        <h1>Work orders</h1>
+        <div class="fl-page-header__meta">Region Central · Updated 09:42</div>
+      </div>
+      <div class="fl-page-header__actions">
+        <button class="fl-btn">Export</button>
+        <button class="fl-btn fl-btn--primary">New work order</button>
+      </div>
+    </header>
+    <div class="fl-toolbar" role="group" aria-label="Status">
+      <button class="fl-chip" aria-pressed="false">All open</button>
+      <button class="fl-chip" aria-pressed="true">Unplanned</button>
+      <button class="fl-chip" aria-pressed="false">Waiting for parts</button>
+      <button class="fl-chip" aria-pressed="false">Repairs</button>
+    </div><div class="fl-toolbar" role="group" aria-label="Filters">
+      <span class="fl-label mk-group-label">Type</span><button class="fl-chip" aria-pressed="false">Installation</button><button class="fl-chip" aria-pressed="false">Maintenance</button><button class="fl-chip" aria-pressed="false">Repair</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Skill needed</span><button class="fl-chip" aria-pressed="false">Heat pump</button><button class="fl-chip" aria-pressed="false">Air conditioning</button><button class="fl-chip" aria-pressed="false">Gas boiler</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Due</span><button class="fl-chip" aria-pressed="true">Any</button><button class="fl-chip" aria-pressed="false">Overdue</button><button class="fl-chip" aria-pressed="false">By today</button><button class="fl-chip" aria-pressed="false">Within 2 work days</button>
+      <span class="fl-result-count" role="status">61 unplanned work orders</span>
+      
+    </div><div class="fl-table-wrap">
+      <table class="fl-table" aria-label="Unplanned work orders, region Central, earliest due first">
+        <thead><tr><th scope="col"><input type="checkbox" aria-label="Select all 61 on this page"></th><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer</th><th scope="col">Address</th><th scope="col">Skill needed</th><th scope="col" class="fl-num" aria-sort="ascending">Due</th></tr></thead>
+        <tbody><tr><td><input type="checkbox" aria-label="Select WO-24802"></td><td><a href="#" class="mk-link">WO-24802</a></td><td>Repair</td><td>H. Bakker</td><td>Kerkstraat 2, Soest</td><td>Air conditioning</td><td class="fl-num"><span class="fl-badge fl-badge--danger">Overdue</span> <span class="mk-nowrap">23 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24825"></td><td><a href="#" class="mk-link">WO-24825</a></td><td>Maintenance</td><td>Fam. Kok</td><td>Dorpsstraat 9, Houten</td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24828"></td><td><a href="#" class="mk-link">WO-24828</a></td><td>Repair</td><td>J. Willems</td><td>Biltseweg 77, De Bilt</td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">28 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24831"></td><td><a href="#" class="mk-link">WO-24831</a></td><td>Installation</td><td>Fam. Peters</td><td>Eemweg 3, Baarn</td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24834"></td><td><a href="#" class="mk-link">WO-24834</a></td><td>Maintenance</td><td>Kapsalon Mira</td><td>Langestraat 52, Amersfoort</td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24840"></td><td><a href="#" class="mk-link">WO-24840</a></td><td>Maintenance</td><td>R. Smits</td><td>Prinses Irenelaan 12, Zeist</td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">2 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24843"></td><td><a href="#" class="mk-link">WO-24843</a></td><td>Installation</td><td>Bouwbedrijf Van Dam</td><td>Industrieweg 6, Nijkerk</td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">4 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24847"></td><td><a href="#" class="mk-link">WO-24847</a></td><td>Maintenance</td><td>T. Verhoeven</td><td>Utrechtseweg 201, Amersfoort</td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">6 Nov</span></td></tr></tbody>
+      </table>
+    </div><div class="fl-result-count mk-pager">1 to 61 of 61 · 100 per page</div>
+  </main>
+  <div class="fl-toast" role="status"><span>2 work orders assigned to K. Bos, Tue 27 Oct, morning.</span><button class="fl-toast__action">Undo</button></div>
+</div>
+</section>
+<section data-screen="work-orders" data-state="bulk-result" class="mk-frame" aria-labelledby="h-bulk-result">
+  <div class="mk-frame-label"><h2 id="h-bulk-result">work-orders / bulk-result</h2><p>2 of 3 assigned. The one that failed is named with its reason, stays selected, and the panel stays open for it (UXD-011).</p></div>
+  <div class="fl-shell">
+  <nav class="fl-nav" aria-label="Main">
+    <div class="fl-nav__brand">Fieldline</div>
+    <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+    <a class="fl-nav__item" href="#">Planning board</a>
+    <a class="fl-nav__item" href="#">Technicians</a>
+    <a class="fl-nav__item" href="#">Parts</a>
+    <a class="fl-nav__item" href="#">Customers</a>
+  </nav>
+  <main class="fl-main">
+    <header class="fl-page-header">
+      <div>
+        <h1>Work orders</h1>
+        <div class="fl-page-header__meta">Region Central · Updated 09:42</div>
+      </div>
+      <div class="fl-page-header__actions">
+        <button class="fl-btn">Export</button>
+        <button class="fl-btn">New work order</button>
+      </div>
+    </header>
+    <div class="fl-toolbar" role="group" aria-label="Status">
+      <button class="fl-chip" aria-pressed="false">All open</button>
+      <button class="fl-chip" aria-pressed="true">Unplanned</button>
+      <button class="fl-chip" aria-pressed="false">Waiting for parts</button>
+      <button class="fl-chip" aria-pressed="false">Repairs</button>
+    </div><div class="fl-toolbar" role="group" aria-label="Filters">
+      <span class="fl-label mk-group-label">Type</span><button class="fl-chip" aria-pressed="false">Installation</button><button class="fl-chip" aria-pressed="false">Maintenance</button><button class="fl-chip" aria-pressed="false">Repair</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Skill needed</span><button class="fl-chip" aria-pressed="false">Heat pump</button><button class="fl-chip" aria-pressed="false">Air conditioning</button><button class="fl-chip" aria-pressed="false">Gas boiler</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Due</span><button class="fl-chip" aria-pressed="true">Any</button><button class="fl-chip" aria-pressed="false">Overdue</button><button class="fl-chip" aria-pressed="false">By today</button><button class="fl-chip" aria-pressed="false">Within 2 work days</button>
+      <span class="fl-result-count" role="status">61 unplanned work orders</span>
+      
+    </div><div class="mk-split"><div><div class="fl-alert fl-alert--warning mk-gap" role="status" tabindex="-1"><div><strong>2 of 3 work orders assigned to K. Bos, Tue 27 Oct, morning. 1 not assigned:</strong><br>WO-24840 (R. Smits, Zeist): K. Bos has no free place left in this slot.</div><button class="fl-btn fl-btn--ghost">Close</button></div><div class="fl-bulkbar" role="region" aria-label="Selection">
+      <strong role="status">1 work order selected</strong>
+      <button class="fl-btn">Assign to technician</button>
+      <button class="fl-btn fl-btn--ghost">Clear selection</button>
+    </div><div class="fl-table-wrap">
+      <table class="fl-table" aria-label="Unplanned work orders, region Central, earliest due first">
+        <thead><tr><th scope="col"><input type="checkbox" aria-label="Select all 61 on this page"></th><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer and address</th><th scope="col">Skill needed</th><th scope="col" class="fl-num" aria-sort="ascending">Due</th></tr></thead>
+        <tbody><tr><td><input type="checkbox" aria-label="Select WO-24802"></td><td><a href="#" class="mk-link">WO-24802</a></td><td>Repair</td><td>H. Bakker<br><span class="mk-small mk-muted">Kerkstraat 2, Soest</span></td><td>Air conditioning</td><td class="fl-num"><span class="fl-badge fl-badge--danger">Overdue</span> <span class="mk-nowrap">23 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24825"></td><td><a href="#" class="mk-link">WO-24825</a></td><td>Maintenance</td><td>Fam. Kok<br><span class="mk-small mk-muted">Dorpsstraat 9, Houten</span></td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24828"></td><td><a href="#" class="mk-link">WO-24828</a></td><td>Repair</td><td>J. Willems<br><span class="mk-small mk-muted">Biltseweg 77, De Bilt</span></td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">28 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24831"></td><td><a href="#" class="mk-link">WO-24831</a></td><td>Installation</td><td>Fam. Peters<br><span class="mk-small mk-muted">Eemweg 3, Baarn</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24834"></td><td><a href="#" class="mk-link">WO-24834</a></td><td>Maintenance</td><td>Kapsalon Mira<br><span class="mk-small mk-muted">Langestraat 52, Amersfoort</span></td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24840" checked></td><td><a href="#" class="mk-link">WO-24840</a></td><td>Maintenance</td><td>R. Smits<br><span class="mk-small mk-muted">Prinses Irenelaan 12, Zeist</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">2 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24843"></td><td><a href="#" class="mk-link">WO-24843</a></td><td>Installation</td><td>Bouwbedrijf Van Dam<br><span class="mk-small mk-muted">Industrieweg 6, Nijkerk</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">4 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24847"></td><td><a href="#" class="mk-link">WO-24847</a></td><td>Maintenance</td><td>T. Verhoeven<br><span class="mk-small mk-muted">Utrechtseweg 201, Amersfoort</span></td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">6 Nov</span></td></tr></tbody>
+      </table>
+    </div><div class="fl-result-count mk-pager">1 to 61 of 61 · 100 per page</div></div><aside class="fl-sidepanel" aria-labelledby="ap-title-bulk-result">
+      <div class="mk-panel-head">
+        <h2 class="fl-section-title" id="ap-title-bulk-result">Assign 1 work order</h2>
+        <button class="fl-btn fl-btn--ghost">Close</button>
+      </div>
+      <ul class="mk-sel-list"><li>WO-24840 · Maintenance · Zeist · due 2 Nov</li></ul>
+      <p class="mk-small mk-muted">Skills needed: Heat pump</p>
+      <div class="fl-field">
+        <label class="fl-label" for="ap-date-bulk-result">Date</label>
+        <div class="mk-row"><input class="fl-input" id="ap-date-bulk-result" value="Tue 27 Oct 2026"><button class="fl-btn">Pick date</button></div>
+        <span class="fl-hint">Morning 08:00 to 12:00, afternoon 12:30 to 17:00</span>
+      </div>
+      <div class="fl-table-wrap" role="radiogroup" aria-label="Technician and slot">
+        <table class="fl-table">
+          <thead><tr><th scope="col">Technician</th><th scope="col">Skills</th><th scope="col">Morning</th><th scope="col">Afternoon</th></tr></thead>
+          <tbody><tr><td>K. Bos</td><td class="mk-small">Heat pump, Air conditioning</td><td class="mk-muted">Full</td><td><label class="mk-radio"><input type="radio" name="slot-bulk-result" aria-label="K. Bos, afternoon, 1 free"> 1 free</label></td></tr><tr><td>L. Mertens</td><td class="mk-small">Heat pump, Air conditioning, Gas boiler</td><td><label class="mk-radio"><input type="radio" name="slot-bulk-result" aria-label="L. Mertens, morning, 2 free"> 2 free</label></td><td><label class="mk-radio"><input type="radio" name="slot-bulk-result" aria-label="L. Mertens, afternoon, 2 free"> 2 free</label></td></tr><tr><td>R. Hendriks</td><td class="mk-small">Heat pump, Gas boiler</td><td class="mk-muted">Full</td><td><label class="mk-radio"><input type="radio" name="slot-bulk-result" aria-label="R. Hendriks, afternoon, 2 free"> 2 free</label></td></tr><tr><td>S. Visser</td><td class="mk-small">Heat pump</td><td><label class="mk-radio"><input type="radio" name="slot-bulk-result" aria-label="S. Visser, morning, 1 free"> 1 free</label></td><td class="mk-muted">Full</td></tr></tbody>
+        </table>
+      </div><p class="mk-small mk-muted">Not shown: 9 technicians without the skill Heat pump, 2 technicians with no free place on Tue 27 Oct.</p>
+      <div class="mk-panel-foot"><p class="mk-small mk-muted" id="ap-hint-bulk-result">Select a technician and a slot.</p>
+        <div class="mk-actions"><button class="fl-btn fl-btn--primary" disabled aria-describedby="ap-hint-bulk-result">Assign</button><button class="fl-btn">Cancel</button></div></div>
+    </aside></div>
+  </main>
+  <div class="fl-toast" role="status"><span>2 work orders assigned to K. Bos, Tue 27 Oct, morning.</span><button class="fl-toast__action">Undo</button></div>
+</div>
+</section>
+<section data-screen="work-orders" data-state="stale" class="mk-frame" aria-labelledby="h-stale">
+  <div class="mk-frame-label"><h2 id="h-stale">work-orders / stale</h2><p>New work orders came in after 09:42. Refresh keeps the selection.</p></div>
+  <div class="fl-shell">
+  <nav class="fl-nav" aria-label="Main">
+    <div class="fl-nav__brand">Fieldline</div>
+    <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+    <a class="fl-nav__item" href="#">Planning board</a>
+    <a class="fl-nav__item" href="#">Technicians</a>
+    <a class="fl-nav__item" href="#">Parts</a>
+    <a class="fl-nav__item" href="#">Customers</a>
+  </nav>
+  <main class="fl-main">
+    <header class="fl-page-header">
+      <div>
+        <h1>Work orders</h1>
+        <div class="fl-page-header__meta">Region Central · Updated 09:42</div>
+      </div>
+      <div class="fl-page-header__actions">
+        <button class="fl-btn">Export</button>
+        <button class="fl-btn fl-btn--primary">New work order</button>
+      </div>
+    </header>
+    <div class="fl-toolbar" role="group" aria-label="Status">
+      <button class="fl-chip" aria-pressed="false">All open</button>
+      <button class="fl-chip" aria-pressed="true">Unplanned</button>
+      <button class="fl-chip" aria-pressed="false">Waiting for parts</button>
+      <button class="fl-chip" aria-pressed="false">Repairs</button>
+    </div><div class="fl-toolbar" role="group" aria-label="Filters">
+      <span class="fl-label mk-group-label">Type</span><button class="fl-chip" aria-pressed="false">Installation</button><button class="fl-chip" aria-pressed="false">Maintenance</button><button class="fl-chip" aria-pressed="false">Repair</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Skill needed</span><button class="fl-chip" aria-pressed="false">Heat pump</button><button class="fl-chip" aria-pressed="false">Air conditioning</button><button class="fl-chip" aria-pressed="false">Gas boiler</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Due</span><button class="fl-chip" aria-pressed="true">Any</button><button class="fl-chip" aria-pressed="false">Overdue</button><button class="fl-chip" aria-pressed="false">By today</button><button class="fl-chip" aria-pressed="false">Within 2 work days</button>
+      <span class="fl-result-count" role="status">63 unplanned work orders</span>
+      
+    </div><div class="fl-alert fl-alert--info mk-gap mk-center" role="status"><div>4 new unplanned work orders since 09:42.</div><button class="fl-btn">Refresh list</button></div><div class="fl-table-wrap">
+      <table class="fl-table" aria-label="Unplanned work orders, region Central, earliest due first">
+        <thead><tr><th scope="col"><input type="checkbox" aria-label="Select all 63 on this page"></th><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer</th><th scope="col">Address</th><th scope="col">Skill needed</th><th scope="col" class="fl-num" aria-sort="ascending">Due</th></tr></thead>
+        <tbody><tr><td><input type="checkbox" aria-label="Select WO-24802"></td><td><a href="#" class="mk-link">WO-24802</a></td><td>Repair</td><td>H. Bakker</td><td>Kerkstraat 2, Soest</td><td>Air conditioning</td><td class="fl-num"><span class="fl-badge fl-badge--danger">Overdue</span> <span class="mk-nowrap">23 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24817"></td><td><a href="#" class="mk-link">WO-24817</a></td><td>Repair</td><td>M. de Groot</td><td>Lindelaan 14, Amersfoort</td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">26 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24822"></td><td><a href="#" class="mk-link">WO-24822</a></td><td>Repair</td><td>Huisartsenpraktijk Leusden</td><td>Hamersveldseweg 41, Leusden</td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24825"></td><td><a href="#" class="mk-link">WO-24825</a></td><td>Maintenance</td><td>Fam. Kok</td><td>Dorpsstraat 9, Houten</td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24828"></td><td><a href="#" class="mk-link">WO-24828</a></td><td>Repair</td><td>J. Willems</td><td>Biltseweg 77, De Bilt</td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">28 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24831"></td><td><a href="#" class="mk-link">WO-24831</a></td><td>Installation</td><td>Fam. Peters</td><td>Eemweg 3, Baarn</td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24834"></td><td><a href="#" class="mk-link">WO-24834</a></td><td>Maintenance</td><td>Kapsalon Mira</td><td>Langestraat 52, Amersfoort</td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24840"></td><td><a href="#" class="mk-link">WO-24840</a></td><td>Maintenance</td><td>R. Smits</td><td>Prinses Irenelaan 12, Zeist</td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">2 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24843"></td><td><a href="#" class="mk-link">WO-24843</a></td><td>Installation</td><td>Bouwbedrijf Van Dam</td><td>Industrieweg 6, Nijkerk</td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">4 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24847"></td><td><a href="#" class="mk-link">WO-24847</a></td><td>Maintenance</td><td>T. Verhoeven</td><td>Utrechtseweg 201, Amersfoort</td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">6 Nov</span></td></tr></tbody>
+      </table>
+    </div><div class="fl-result-count mk-pager">1 to 63 of 63 · 100 per page</div>
+  </main>
+  
+</div>
+</section>
+<section data-screen="work-orders" data-state="overflow" class="mk-frame" aria-labelledby="h-overflow">
+  <div class="mk-frame-label"><h2 id="h-overflow">work-orders / overflow</h2><p>12 selected, a long customer name, a long address, a long technician name. Rows grow, nothing is cut off.</p></div>
+  <div class="fl-shell">
+  <nav class="fl-nav" aria-label="Main">
+    <div class="fl-nav__brand">Fieldline</div>
+    <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+    <a class="fl-nav__item" href="#">Planning board</a>
+    <a class="fl-nav__item" href="#">Technicians</a>
+    <a class="fl-nav__item" href="#">Parts</a>
+    <a class="fl-nav__item" href="#">Customers</a>
+  </nav>
+  <main class="fl-main">
+    <header class="fl-page-header">
+      <div>
+        <h1>Work orders</h1>
+        <div class="fl-page-header__meta">Region Central · Updated 09:42</div>
+      </div>
+      <div class="fl-page-header__actions">
+        <button class="fl-btn">Export</button>
+        <button class="fl-btn">New work order</button>
+      </div>
+    </header>
+    <div class="fl-toolbar" role="group" aria-label="Status">
+      <button class="fl-chip" aria-pressed="false">All open</button>
+      <button class="fl-chip" aria-pressed="true">Unplanned</button>
+      <button class="fl-chip" aria-pressed="false">Waiting for parts</button>
+      <button class="fl-chip" aria-pressed="false">Repairs</button>
+    </div><div class="fl-toolbar" role="group" aria-label="Filters">
+      <span class="fl-label mk-group-label">Type</span><button class="fl-chip" aria-pressed="false">Installation</button><button class="fl-chip" aria-pressed="false">Maintenance</button><button class="fl-chip" aria-pressed="false">Repair</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Skill needed</span><button class="fl-chip" aria-pressed="false">Heat pump</button><button class="fl-chip" aria-pressed="false">Air conditioning</button><button class="fl-chip" aria-pressed="false">Gas boiler</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Due</span><button class="fl-chip" aria-pressed="true">Any</button><button class="fl-chip" aria-pressed="false">Overdue</button><button class="fl-chip" aria-pressed="false">By today</button><button class="fl-chip" aria-pressed="false">Within 2 work days</button>
+      <span class="fl-result-count" role="status">63 unplanned work orders</span>
+      
+    </div><div class="mk-split"><div><div class="fl-bulkbar" role="region" aria-label="Selection">
+      <strong role="status">12 work orders selected</strong>
+      <button class="fl-btn">Assign to technician</button>
+      <button class="fl-btn fl-btn--ghost">Clear selection</button>
+    </div><div class="fl-table-wrap">
+      <table class="fl-table" aria-label="Unplanned work orders, region Central, earliest due first">
+        <thead><tr><th scope="col"><input type="checkbox" aria-label="Select all 63 on this page"></th><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer and address</th><th scope="col">Skill needed</th><th scope="col" class="fl-num" aria-sort="ascending">Due</th></tr></thead>
+        <tbody><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24851" checked></td><td><a href="#" class="mk-link">WO-24851</a></td><td>Maintenance</td><td>Vereniging van Eigenaren Residentie Hoogstraat<br><span class="mk-small mk-muted">Burgemeester van Reenensingel 101-117, Amersfoort</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">9 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24802"></td><td><a href="#" class="mk-link">WO-24802</a></td><td>Repair</td><td>H. Bakker<br><span class="mk-small mk-muted">Kerkstraat 2, Soest</span></td><td>Air conditioning</td><td class="fl-num"><span class="fl-badge fl-badge--danger">Overdue</span> <span class="mk-nowrap">23 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24817" checked></td><td><a href="#" class="mk-link">WO-24817</a></td><td>Repair</td><td>M. de Groot<br><span class="mk-small mk-muted">Lindelaan 14, Amersfoort</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">26 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24822" checked></td><td><a href="#" class="mk-link">WO-24822</a></td><td>Repair</td><td>Huisartsenpraktijk Leusden<br><span class="mk-small mk-muted">Hamersveldseweg 41, Leusden</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24825"></td><td><a href="#" class="mk-link">WO-24825</a></td><td>Maintenance</td><td>Fam. Kok<br><span class="mk-small mk-muted">Dorpsstraat 9, Houten</span></td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24828"></td><td><a href="#" class="mk-link">WO-24828</a></td><td>Repair</td><td>J. Willems<br><span class="mk-small mk-muted">Biltseweg 77, De Bilt</span></td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">28 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24831" checked></td><td><a href="#" class="mk-link">WO-24831</a></td><td>Installation</td><td>Fam. Peters<br><span class="mk-small mk-muted">Eemweg 3, Baarn</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24834"></td><td><a href="#" class="mk-link">WO-24834</a></td><td>Maintenance</td><td>Kapsalon Mira<br><span class="mk-small mk-muted">Langestraat 52, Amersfoort</span></td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24840" checked></td><td><a href="#" class="mk-link">WO-24840</a></td><td>Maintenance</td><td>R. Smits<br><span class="mk-small mk-muted">Prinses Irenelaan 12, Zeist</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">2 Nov</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24843" checked></td><td><a href="#" class="mk-link">WO-24843</a></td><td>Installation</td><td>Bouwbedrijf Van Dam<br><span class="mk-small mk-muted">Industrieweg 6, Nijkerk</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">4 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24847"></td><td><a href="#" class="mk-link">WO-24847</a></td><td>Maintenance</td><td>T. Verhoeven<br><span class="mk-small mk-muted">Utrechtseweg 201, Amersfoort</span></td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">6 Nov</span></td></tr></tbody>
+      </table>
+    </div><div class="fl-result-count mk-pager">1 to 63 of 63 · 100 per page</div></div><aside class="fl-sidepanel" aria-labelledby="ap-title-overflow">
+      <div class="mk-panel-head">
+        <h2 class="fl-section-title" id="ap-title-overflow">Assign 12 work orders</h2>
+        <button class="fl-btn fl-btn--ghost">Close</button>
+      </div>
+      <ul class="mk-sel-list"><li>WO-24851 · Maintenance · Burgemeester van Reenensingel 101-117, Amersfoort · due 9 Nov</li><li>WO-24817 · Repair · Amersfoort · due 26 Oct</li><li>WO-24822 · Repair · Leusden · due 27 Oct</li><li><button class="fl-btn fl-btn--ghost mk-inline">Show all, 9 more</button></li></ul>
+      <p class="mk-small mk-muted">Skills needed: Heat pump</p>
+      <div class="fl-field">
+        <label class="fl-label" for="ap-date-overflow">Date</label>
+        <div class="mk-row"><input class="fl-input" id="ap-date-overflow" value="Tue 27 Oct 2026"><button class="fl-btn">Pick date</button></div>
+        <span class="fl-hint">Morning 08:00 to 12:00, afternoon 12:30 to 17:00</span>
+      </div>
+      <div class="fl-table-wrap" role="radiogroup" aria-label="Technician and slot">
+        <table class="fl-table">
+          <thead><tr><th scope="col">Technician</th><th scope="col">Skills</th><th scope="col">Morning</th><th scope="col">Afternoon</th></tr></thead>
+          <tbody><tr><td>K. Bos</td><td class="mk-small">Heat pump, Air conditioning</td><td><label class="mk-radio"><input type="radio" name="slot-overflow" aria-label="K. Bos, morning, 2 free"> 2 free</label></td><td><label class="mk-radio"><input type="radio" name="slot-overflow" aria-label="K. Bos, afternoon, 1 free"> 1 free</label></td></tr><tr><td>L. Mertens</td><td class="mk-small">Heat pump, Air conditioning, Gas boiler</td><td><label class="mk-radio"><input type="radio" name="slot-overflow" aria-label="L. Mertens, morning, 2 free"> 2 free</label></td><td><label class="mk-radio"><input type="radio" name="slot-overflow" aria-label="L. Mertens, afternoon, 2 free"> 2 free</label></td></tr><tr><td>R. Hendriks</td><td class="mk-small">Heat pump, Gas boiler</td><td class="mk-muted">Full</td><td><label class="mk-radio"><input type="radio" name="slot-overflow" aria-label="R. Hendriks, afternoon, 2 free"> 2 free</label></td></tr><tr><td>S. Visser</td><td class="mk-small">Heat pump</td><td><label class="mk-radio"><input type="radio" name="slot-overflow" aria-label="S. Visser, morning, 1 free"> 1 free</label></td><td class="mk-muted">Full</td></tr><tr><td>D. Oosterhuis-van der Meulenbroek</td><td class="mk-small">Heat pump, Air conditioning, Gas boiler</td><td><label class="mk-radio"><input type="radio" name="slot-overflow" aria-label="D. Oosterhuis-van der Meulenbroek, morning, 1 free"> 1 free</label></td><td><label class="mk-radio"><input type="radio" name="slot-overflow" aria-label="D. Oosterhuis-van der Meulenbroek, afternoon, 2 free"> 2 free</label></td></tr></tbody>
+        </table>
+      </div><p class="mk-small mk-muted">Not shown: 9 technicians without the skill Heat pump, 2 technicians with no free place on Tue 27 Oct.</p>
+      <div class="mk-panel-foot"><p class="mk-small mk-muted" id="ap-hint-overflow">Select a technician and a slot.</p>
+        <div class="mk-actions"><button class="fl-btn fl-btn--primary" disabled aria-describedby="ap-hint-overflow">Assign</button><button class="fl-btn">Cancel</button></div></div>
+    </aside></div>
+  </main>
+  
+</div>
+</section>
+<section data-screen="work-orders" data-state="offline" class="mk-frame" aria-labelledby="h-offline">
+  <div class="mk-frame-label"><h2 id="h-offline">work-orders / offline</h2><p>No connection. The planner can read, filter, and select. Assign is disabled until the connection is back.</p></div>
+  <div class="fl-shell">
+  <nav class="fl-nav" aria-label="Main">
+    <div class="fl-nav__brand">Fieldline</div>
+    <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+    <a class="fl-nav__item" href="#">Planning board</a>
+    <a class="fl-nav__item" href="#">Technicians</a>
+    <a class="fl-nav__item" href="#">Parts</a>
+    <a class="fl-nav__item" href="#">Customers</a>
+  </nav>
+  <main class="fl-main">
+    <header class="fl-page-header">
+      <div>
+        <h1>Work orders</h1>
+        <div class="fl-page-header__meta">Region Central · Updated 09:42</div>
+      </div>
+      <div class="fl-page-header__actions">
+        <button class="fl-btn">Export</button>
+        <button class="fl-btn">New work order</button>
+      </div>
+    </header>
+    <div class="fl-toolbar" role="group" aria-label="Status">
+      <button class="fl-chip" aria-pressed="false">All open</button>
+      <button class="fl-chip" aria-pressed="true">Unplanned</button>
+      <button class="fl-chip" aria-pressed="false">Waiting for parts</button>
+      <button class="fl-chip" aria-pressed="false">Repairs</button>
+    </div><div class="fl-toolbar" role="group" aria-label="Filters">
+      <span class="fl-label mk-group-label">Type</span><button class="fl-chip" aria-pressed="false">Installation</button><button class="fl-chip" aria-pressed="false">Maintenance</button><button class="fl-chip" aria-pressed="false">Repair</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Skill needed</span><button class="fl-chip" aria-pressed="false">Heat pump</button><button class="fl-chip" aria-pressed="false">Air conditioning</button><button class="fl-chip" aria-pressed="false">Gas boiler</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Due</span><button class="fl-chip" aria-pressed="true">Any</button><button class="fl-chip" aria-pressed="false">Overdue</button><button class="fl-chip" aria-pressed="false">By today</button><button class="fl-chip" aria-pressed="false">Within 2 work days</button>
+      <span class="fl-result-count" role="status">63 unplanned work orders</span>
+      
+    </div><div class="fl-alert fl-alert--warning mk-gap" role="status">No connection. You can look at the list. You cannot assign until the connection is back.</div><div class="fl-bulkbar" role="region" aria-label="Selection">
+      <strong role="status">3 work orders selected</strong>
+      <button class="fl-btn fl-btn--primary" disabled>Assign to technician</button>
+      <button class="fl-btn fl-btn--ghost">Clear selection</button>
+    </div><div class="fl-table-wrap">
+      <table class="fl-table" aria-label="Unplanned work orders, region Central, earliest due first">
+        <thead><tr><th scope="col"><input type="checkbox" aria-label="Select all 63 on this page"></th><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer</th><th scope="col">Address</th><th scope="col">Skill needed</th><th scope="col" class="fl-num" aria-sort="ascending">Due</th></tr></thead>
+        <tbody><tr><td><input type="checkbox" aria-label="Select WO-24802"></td><td><a href="#" class="mk-link">WO-24802</a></td><td>Repair</td><td>H. Bakker</td><td>Kerkstraat 2, Soest</td><td>Air conditioning</td><td class="fl-num"><span class="fl-badge fl-badge--danger">Overdue</span> <span class="mk-nowrap">23 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24817" checked></td><td><a href="#" class="mk-link">WO-24817</a></td><td>Repair</td><td>M. de Groot</td><td>Lindelaan 14, Amersfoort</td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">26 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24822" checked></td><td><a href="#" class="mk-link">WO-24822</a></td><td>Repair</td><td>Huisartsenpraktijk Leusden</td><td>Hamersveldseweg 41, Leusden</td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24825"></td><td><a href="#" class="mk-link">WO-24825</a></td><td>Maintenance</td><td>Fam. Kok</td><td>Dorpsstraat 9, Houten</td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24828"></td><td><a href="#" class="mk-link">WO-24828</a></td><td>Repair</td><td>J. Willems</td><td>Biltseweg 77, De Bilt</td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">28 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24831"></td><td><a href="#" class="mk-link">WO-24831</a></td><td>Installation</td><td>Fam. Peters</td><td>Eemweg 3, Baarn</td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24834"></td><td><a href="#" class="mk-link">WO-24834</a></td><td>Maintenance</td><td>Kapsalon Mira</td><td>Langestraat 52, Amersfoort</td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24840" checked></td><td><a href="#" class="mk-link">WO-24840</a></td><td>Maintenance</td><td>R. Smits</td><td>Prinses Irenelaan 12, Zeist</td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">2 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24843"></td><td><a href="#" class="mk-link">WO-24843</a></td><td>Installation</td><td>Bouwbedrijf Van Dam</td><td>Industrieweg 6, Nijkerk</td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">4 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24847"></td><td><a href="#" class="mk-link">WO-24847</a></td><td>Maintenance</td><td>T. Verhoeven</td><td>Utrechtseweg 201, Amersfoort</td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">6 Nov</span></td></tr></tbody>
+      </table>
+    </div><div class="fl-result-count mk-pager">1 to 63 of 63 · 100 per page</div>
+  </main>
+  
+</div>
+</section>
+<section data-screen="work-orders" data-state="proposed-op-1" class="mk-frame" aria-labelledby="h-proposed-op-1">
+  <div class="mk-frame-label"><h2 id="h-proposed-op-1">work-orders / proposed-op-1</h2><p>OP-1 (UXD-012, proposed): repairs whose 2-work-day first-visit limit ends today or tomorrow get a Contract limit badge, before they become overdue.</p></div>
+  <div class="fl-shell">
+  <nav class="fl-nav" aria-label="Main">
+    <div class="fl-nav__brand">Fieldline</div>
+    <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+    <a class="fl-nav__item" href="#">Planning board</a>
+    <a class="fl-nav__item" href="#">Technicians</a>
+    <a class="fl-nav__item" href="#">Parts</a>
+    <a class="fl-nav__item" href="#">Customers</a>
+  </nav>
+  <main class="fl-main">
+    <header class="fl-page-header">
+      <div>
+        <h1>Work orders</h1>
+        <div class="fl-page-header__meta">Region Central · Updated 09:42</div>
+      </div>
+      <div class="fl-page-header__actions">
+        <button class="fl-btn">Export</button>
+        <button class="fl-btn fl-btn--primary">New work order</button>
+      </div>
+    </header>
+    <div class="fl-toolbar" role="group" aria-label="Status">
+      <button class="fl-chip" aria-pressed="false">All open</button>
+      <button class="fl-chip" aria-pressed="true">Unplanned</button>
+      <button class="fl-chip" aria-pressed="false">Waiting for parts</button>
+      <button class="fl-chip" aria-pressed="false">Repairs</button>
+    </div><div class="fl-toolbar" role="group" aria-label="Filters">
+      <span class="fl-label mk-group-label">Type</span><button class="fl-chip" aria-pressed="false">Installation</button><button class="fl-chip" aria-pressed="false">Maintenance</button><button class="fl-chip" aria-pressed="false">Repair</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Skill needed</span><button class="fl-chip" aria-pressed="false">Heat pump</button><button class="fl-chip" aria-pressed="false">Air conditioning</button><button class="fl-chip" aria-pressed="false">Gas boiler</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Due</span><button class="fl-chip" aria-pressed="true">Any</button><button class="fl-chip" aria-pressed="false">Overdue</button><button class="fl-chip" aria-pressed="false">By today</button><button class="fl-chip" aria-pressed="false">Within 2 work days</button>
+      <span class="fl-result-count" role="status">63 unplanned work orders</span>
+      
+    </div><div class="fl-table-wrap">
+      <table class="fl-table" aria-label="Unplanned work orders, region Central, earliest due first">
+        <thead><tr><th scope="col"><input type="checkbox" aria-label="Select all 63 on this page"></th><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer</th><th scope="col">Address</th><th scope="col">Skill needed</th><th scope="col" class="fl-num" aria-sort="ascending">Due</th></tr></thead>
+        <tbody><tr><td><input type="checkbox" aria-label="Select WO-24802"></td><td><a href="#" class="mk-link">WO-24802</a></td><td>Repair</td><td>H. Bakker</td><td>Kerkstraat 2, Soest</td><td>Air conditioning</td><td class="fl-num"><span class="fl-badge fl-badge--danger">Overdue</span> <span class="mk-nowrap">23 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24817"></td><td><a href="#" class="mk-link">WO-24817</a></td><td>Repair <span data-proposed><span class="fl-badge fl-badge--warning">Contract limit</span> <span class="fl-badge fl-badge--info">Proposed</span></span></td><td>M. de Groot</td><td>Lindelaan 14, Amersfoort</td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">26 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24822"></td><td><a href="#" class="mk-link">WO-24822</a></td><td>Repair <span data-proposed><span class="fl-badge fl-badge--warning">Contract limit</span> <span class="fl-badge fl-badge--info">Proposed</span></span></td><td>Huisartsenpraktijk Leusden</td><td>Hamersveldseweg 41, Leusden</td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24825"></td><td><a href="#" class="mk-link">WO-24825</a></td><td>Maintenance</td><td>Fam. Kok</td><td>Dorpsstraat 9, Houten</td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24828"></td><td><a href="#" class="mk-link">WO-24828</a></td><td>Repair</td><td>J. Willems</td><td>Biltseweg 77, De Bilt</td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">28 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24831"></td><td><a href="#" class="mk-link">WO-24831</a></td><td>Installation</td><td>Fam. Peters</td><td>Eemweg 3, Baarn</td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24834"></td><td><a href="#" class="mk-link">WO-24834</a></td><td>Maintenance</td><td>Kapsalon Mira</td><td>Langestraat 52, Amersfoort</td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24840"></td><td><a href="#" class="mk-link">WO-24840</a></td><td>Maintenance</td><td>R. Smits</td><td>Prinses Irenelaan 12, Zeist</td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">2 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24843"></td><td><a href="#" class="mk-link">WO-24843</a></td><td>Installation</td><td>Bouwbedrijf Van Dam</td><td>Industrieweg 6, Nijkerk</td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">4 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24847"></td><td><a href="#" class="mk-link">WO-24847</a></td><td>Maintenance</td><td>T. Verhoeven</td><td>Utrechtseweg 201, Amersfoort</td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">6 Nov</span></td></tr></tbody>
+      </table>
+    </div><div class="fl-result-count mk-pager">1 to 63 of 63 · 100 per page</div>
+  </main>
+  
+</div>
+</section>
+<section data-screen="work-orders" data-state="proposed-op-2" class="mk-frame" aria-labelledby="h-proposed-op-2">
+  <div class="mk-frame-label"><h2 id="h-proposed-op-2">work-orders / proposed-op-2</h2><p>OP-2 (UXD-013, proposed): a Whole day column gives up to 4 places in one action. Fieldline fills the morning first.</p></div>
+  <div class="fl-shell">
+  <nav class="fl-nav" aria-label="Main">
+    <div class="fl-nav__brand">Fieldline</div>
+    <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+    <a class="fl-nav__item" href="#">Planning board</a>
+    <a class="fl-nav__item" href="#">Technicians</a>
+    <a class="fl-nav__item" href="#">Parts</a>
+    <a class="fl-nav__item" href="#">Customers</a>
+  </nav>
+  <main class="fl-main">
+    <header class="fl-page-header">
+      <div>
+        <h1>Work orders</h1>
+        <div class="fl-page-header__meta">Region Central · Updated 09:42</div>
+      </div>
+      <div class="fl-page-header__actions">
+        <button class="fl-btn">Export</button>
+        <button class="fl-btn">New work order</button>
+      </div>
+    </header>
+    <div class="fl-toolbar" role="group" aria-label="Status">
+      <button class="fl-chip" aria-pressed="false">All open</button>
+      <button class="fl-chip" aria-pressed="true">Unplanned</button>
+      <button class="fl-chip" aria-pressed="false">Waiting for parts</button>
+      <button class="fl-chip" aria-pressed="false">Repairs</button>
+    </div><div class="fl-toolbar" role="group" aria-label="Filters">
+      <span class="fl-label mk-group-label">Type</span><button class="fl-chip" aria-pressed="false">Installation</button><button class="fl-chip" aria-pressed="false">Maintenance</button><button class="fl-chip" aria-pressed="false">Repair</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Skill needed</span><button class="fl-chip" aria-pressed="false">Heat pump</button><button class="fl-chip" aria-pressed="false">Air conditioning</button><button class="fl-chip" aria-pressed="false">Gas boiler</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Due</span><button class="fl-chip" aria-pressed="true">Any</button><button class="fl-chip" aria-pressed="false">Overdue</button><button class="fl-chip" aria-pressed="false">By today</button><button class="fl-chip" aria-pressed="false">Within 2 work days</button>
+      <span class="fl-result-count" role="status">63 unplanned work orders</span>
+      
+    </div><div class="mk-split"><div><div class="fl-bulkbar" role="region" aria-label="Selection">
+      <strong role="status">3 work orders selected</strong>
+      <button class="fl-btn">Assign to technician</button>
+      <button class="fl-btn fl-btn--ghost">Clear selection</button>
+    </div><div class="fl-table-wrap">
+      <table class="fl-table" aria-label="Unplanned work orders, region Central, earliest due first">
+        <thead><tr><th scope="col"><input type="checkbox" aria-label="Select all 63 on this page"></th><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer and address</th><th scope="col">Skill needed</th><th scope="col" class="fl-num" aria-sort="ascending">Due</th></tr></thead>
+        <tbody><tr><td><input type="checkbox" aria-label="Select WO-24802"></td><td><a href="#" class="mk-link">WO-24802</a></td><td>Repair</td><td>H. Bakker<br><span class="mk-small mk-muted">Kerkstraat 2, Soest</span></td><td>Air conditioning</td><td class="fl-num"><span class="fl-badge fl-badge--danger">Overdue</span> <span class="mk-nowrap">23 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24817" checked></td><td><a href="#" class="mk-link">WO-24817</a></td><td>Repair</td><td>M. de Groot<br><span class="mk-small mk-muted">Lindelaan 14, Amersfoort</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">26 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24822" checked></td><td><a href="#" class="mk-link">WO-24822</a></td><td>Repair</td><td>Huisartsenpraktijk Leusden<br><span class="mk-small mk-muted">Hamersveldseweg 41, Leusden</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24825"></td><td><a href="#" class="mk-link">WO-24825</a></td><td>Maintenance</td><td>Fam. Kok<br><span class="mk-small mk-muted">Dorpsstraat 9, Houten</span></td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24828"></td><td><a href="#" class="mk-link">WO-24828</a></td><td>Repair</td><td>J. Willems<br><span class="mk-small mk-muted">Biltseweg 77, De Bilt</span></td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">28 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24831"></td><td><a href="#" class="mk-link">WO-24831</a></td><td>Installation</td><td>Fam. Peters<br><span class="mk-small mk-muted">Eemweg 3, Baarn</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24834"></td><td><a href="#" class="mk-link">WO-24834</a></td><td>Maintenance</td><td>Kapsalon Mira<br><span class="mk-small mk-muted">Langestraat 52, Amersfoort</span></td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24840" checked></td><td><a href="#" class="mk-link">WO-24840</a></td><td>Maintenance</td><td>R. Smits<br><span class="mk-small mk-muted">Prinses Irenelaan 12, Zeist</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">2 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24843"></td><td><a href="#" class="mk-link">WO-24843</a></td><td>Installation</td><td>Bouwbedrijf Van Dam<br><span class="mk-small mk-muted">Industrieweg 6, Nijkerk</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">4 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24847"></td><td><a href="#" class="mk-link">WO-24847</a></td><td>Maintenance</td><td>T. Verhoeven<br><span class="mk-small mk-muted">Utrechtseweg 201, Amersfoort</span></td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">6 Nov</span></td></tr></tbody>
+      </table>
+    </div><div class="fl-result-count mk-pager">1 to 63 of 63 · 100 per page</div></div><aside class="fl-sidepanel" aria-labelledby="ap-title-proposed-op-2">
+      <div class="mk-panel-head">
+        <h2 class="fl-section-title" id="ap-title-proposed-op-2">Assign 3 work orders</h2>
+        <button class="fl-btn fl-btn--ghost">Close</button>
+      </div>
+      <ul class="mk-sel-list"><li>WO-24817 · Repair · Amersfoort · due 26 Oct</li><li>WO-24822 · Repair · Leusden · due 27 Oct</li><li>WO-24840 · Maintenance · Zeist · due 2 Nov</li></ul>
+      <p class="mk-small mk-muted">Skills needed: Heat pump</p>
+      <div class="fl-field">
+        <label class="fl-label" for="ap-date-proposed-op-2">Date</label>
+        <div class="mk-row"><input class="fl-input" id="ap-date-proposed-op-2" value="Tue 27 Oct 2026"><button class="fl-btn">Pick date</button></div>
+        <span class="fl-hint">Morning 08:00 to 12:00, afternoon 12:30 to 17:00</span>
+      </div>
+      <div class="fl-table-wrap" role="radiogroup" aria-label="Technician and slot">
+        <table class="fl-table">
+          <thead><tr><th scope="col">Technician</th><th scope="col">Morning</th><th scope="col">Afternoon</th><th scope="col" data-proposed>Whole day <span class="fl-badge fl-badge--info">Proposed</span></th></tr></thead>
+          <tbody><tr><td>K. Bos</td><td><label class="mk-radio"><input type="radio" name="slot-proposed-op-2" aria-label="K. Bos, morning, 2 free"> 2 free</label></td><td><label class="mk-radio"><input type="radio" name="slot-proposed-op-2" aria-label="K. Bos, afternoon, 1 free"> 1 free</label></td><td><label class="mk-radio"><input type="radio" name="slot-proposed-op-2" aria-label="K. Bos, whole day, 3 free"> 3 free</label></td></tr><tr><td>L. Mertens</td><td><label class="mk-radio"><input type="radio" name="slot-proposed-op-2" aria-label="L. Mertens, morning, 2 free"> 2 free</label></td><td><label class="mk-radio"><input type="radio" name="slot-proposed-op-2" aria-label="L. Mertens, afternoon, 2 free"> 2 free</label></td><td><label class="mk-radio"><input type="radio" name="slot-proposed-op-2" aria-label="L. Mertens, whole day, 4 free"> 4 free</label></td></tr><tr><td>R. Hendriks</td><td class="mk-muted">Full</td><td><label class="mk-radio"><input type="radio" name="slot-proposed-op-2" aria-label="R. Hendriks, afternoon, 2 free"> 2 free</label></td><td><label class="mk-radio"><input type="radio" name="slot-proposed-op-2" aria-label="R. Hendriks, whole day, 2 free"> 2 free</label></td></tr><tr><td>S. Visser</td><td><label class="mk-radio"><input type="radio" name="slot-proposed-op-2" aria-label="S. Visser, morning, 1 free"> 1 free</label></td><td class="mk-muted">Full</td><td><label class="mk-radio"><input type="radio" name="slot-proposed-op-2" aria-label="S. Visser, whole day, 1 free"> 1 free</label></td></tr></tbody>
+        </table>
+      </div><p class="mk-small mk-muted">Not shown: 9 technicians without the skill Heat pump, 2 technicians with no free place on Tue 27 Oct.</p>
+      <div class="mk-panel-foot"><p class="mk-small mk-muted" id="ap-hint-proposed-op-2">Select a technician and a slot.</p>
+        <div class="mk-actions"><button class="fl-btn fl-btn--primary" disabled aria-describedby="ap-hint-proposed-op-2">Assign</button><button class="fl-btn">Cancel</button></div></div>
+    </aside></div>
+  </main>
+  
+</div>
+</section>
+<section data-screen="work-orders" data-state="proposed-op-3" class="mk-frame" aria-labelledby="h-proposed-op-3">
+  <div class="mk-frame-label"><h2 id="h-proposed-op-3">work-orders / proposed-op-3</h2><p>OP-3 (UXD-014, proposed): keyboard shortcuts. A opens the panel, arrow keys move in the technician table, Enter assigns.</p></div>
+  <div class="fl-shell">
+  <nav class="fl-nav" aria-label="Main">
+    <div class="fl-nav__brand">Fieldline</div>
+    <a class="fl-nav__item" href="#" aria-current="page">Work orders</a>
+    <a class="fl-nav__item" href="#">Planning board</a>
+    <a class="fl-nav__item" href="#">Technicians</a>
+    <a class="fl-nav__item" href="#">Parts</a>
+    <a class="fl-nav__item" href="#">Customers</a>
+  </nav>
+  <main class="fl-main">
+    <header class="fl-page-header">
+      <div>
+        <h1>Work orders</h1>
+        <div class="fl-page-header__meta">Region Central · Updated 09:42</div>
+      </div>
+      <div class="fl-page-header__actions">
+        <button class="fl-btn">Export</button>
+        <button class="fl-btn">New work order</button>
+      </div>
+    </header>
+    <div class="fl-toolbar" role="group" aria-label="Status">
+      <button class="fl-chip" aria-pressed="false">All open</button>
+      <button class="fl-chip" aria-pressed="true">Unplanned</button>
+      <button class="fl-chip" aria-pressed="false">Waiting for parts</button>
+      <button class="fl-chip" aria-pressed="false">Repairs</button>
+    </div><div class="fl-toolbar" role="group" aria-label="Filters">
+      <span class="fl-label mk-group-label">Type</span><button class="fl-chip" aria-pressed="false">Installation</button><button class="fl-chip" aria-pressed="false">Maintenance</button><button class="fl-chip" aria-pressed="false">Repair</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Skill needed</span><button class="fl-chip" aria-pressed="false">Heat pump</button><button class="fl-chip" aria-pressed="false">Air conditioning</button><button class="fl-chip" aria-pressed="false">Gas boiler</button>
+      <span class="mk-sep"></span>
+      <span class="fl-label mk-group-label">Due</span><button class="fl-chip" aria-pressed="true">Any</button><button class="fl-chip" aria-pressed="false">Overdue</button><button class="fl-chip" aria-pressed="false">By today</button><button class="fl-chip" aria-pressed="false">Within 2 work days</button>
+      <span class="fl-result-count" role="status">63 unplanned work orders</span>
+      
+    </div><div class="mk-split"><div><div class="fl-bulkbar" role="region" aria-label="Selection">
+      <strong role="status">3 work orders selected</strong>
+      <button class="fl-btn">Assign to technician</button> <span data-proposed class="mk-kbd-hint">Shortcut: A <span class="fl-badge fl-badge--info">Proposed</span></span>
+      <button class="fl-btn fl-btn--ghost">Clear selection</button>
+    </div><div class="fl-table-wrap">
+      <table class="fl-table" aria-label="Unplanned work orders, region Central, earliest due first">
+        <thead><tr><th scope="col"><input type="checkbox" aria-label="Select all 63 on this page"></th><th scope="col">Work order</th><th scope="col">Type</th><th scope="col">Customer and address</th><th scope="col">Skill needed</th><th scope="col" class="fl-num" aria-sort="ascending">Due</th></tr></thead>
+        <tbody><tr><td><input type="checkbox" aria-label="Select WO-24802"></td><td><a href="#" class="mk-link">WO-24802</a></td><td>Repair</td><td>H. Bakker<br><span class="mk-small mk-muted">Kerkstraat 2, Soest</span></td><td>Air conditioning</td><td class="fl-num"><span class="fl-badge fl-badge--danger">Overdue</span> <span class="mk-nowrap">23 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24817" checked></td><td><a href="#" class="mk-link">WO-24817</a></td><td>Repair</td><td>M. de Groot<br><span class="mk-small mk-muted">Lindelaan 14, Amersfoort</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">26 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24822" checked></td><td><a href="#" class="mk-link">WO-24822</a></td><td>Repair</td><td>Huisartsenpraktijk Leusden<br><span class="mk-small mk-muted">Hamersveldseweg 41, Leusden</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24825"></td><td><a href="#" class="mk-link">WO-24825</a></td><td>Maintenance</td><td>Fam. Kok<br><span class="mk-small mk-muted">Dorpsstraat 9, Houten</span></td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">27 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24828"></td><td><a href="#" class="mk-link">WO-24828</a></td><td>Repair</td><td>J. Willems<br><span class="mk-small mk-muted">Biltseweg 77, De Bilt</span></td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">28 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24831"></td><td><a href="#" class="mk-link">WO-24831</a></td><td>Installation</td><td>Fam. Peters<br><span class="mk-small mk-muted">Eemweg 3, Baarn</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24834"></td><td><a href="#" class="mk-link">WO-24834</a></td><td>Maintenance</td><td>Kapsalon Mira<br><span class="mk-small mk-muted">Langestraat 52, Amersfoort</span></td><td>Air conditioning</td><td class="fl-num"><span class="mk-nowrap">30 Oct</span></td></tr><tr aria-selected="true"><td><input type="checkbox" aria-label="Select WO-24840" checked></td><td><a href="#" class="mk-link">WO-24840</a></td><td>Maintenance</td><td>R. Smits<br><span class="mk-small mk-muted">Prinses Irenelaan 12, Zeist</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">2 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24843"></td><td><a href="#" class="mk-link">WO-24843</a></td><td>Installation</td><td>Bouwbedrijf Van Dam<br><span class="mk-small mk-muted">Industrieweg 6, Nijkerk</span></td><td>Heat pump</td><td class="fl-num"><span class="mk-nowrap">4 Nov</span></td></tr><tr><td><input type="checkbox" aria-label="Select WO-24847"></td><td><a href="#" class="mk-link">WO-24847</a></td><td>Maintenance</td><td>T. Verhoeven<br><span class="mk-small mk-muted">Utrechtseweg 201, Amersfoort</span></td><td>Gas boiler</td><td class="fl-num"><span class="mk-nowrap">6 Nov</span></td></tr></tbody>
+      </table>
+    </div><div class="fl-result-count mk-pager">1 to 63 of 63 · 100 per page</div></div><aside class="fl-sidepanel" aria-labelledby="ap-title-proposed-op-3">
+      <div class="mk-panel-head">
+        <h2 class="fl-section-title" id="ap-title-proposed-op-3">Assign 3 work orders</h2>
+        <button class="fl-btn fl-btn--ghost">Close</button>
+      </div>
+      <ul class="mk-sel-list"><li>WO-24817 · Repair · Amersfoort · due 26 Oct</li><li>WO-24822 · Repair · Leusden · due 27 Oct</li><li>WO-24840 · Maintenance · Zeist · due 2 Nov</li></ul>
+      <p class="mk-small mk-muted">Skills needed: Heat pump</p>
+      <div class="fl-field">
+        <label class="fl-label" for="ap-date-proposed-op-3">Date</label>
+        <div class="mk-row"><input class="fl-input" id="ap-date-proposed-op-3" value="Tue 27 Oct 2026"><button class="fl-btn">Pick date</button></div>
+        <span class="fl-hint">Morning 08:00 to 12:00, afternoon 12:30 to 17:00</span>
+      </div>
+      <div class="fl-table-wrap" role="radiogroup" aria-label="Technician and slot">
+        <table class="fl-table">
+          <thead><tr><th scope="col">Technician</th><th scope="col">Skills</th><th scope="col">Morning</th><th scope="col">Afternoon</th></tr></thead>
+          <tbody><tr aria-selected="true"><td>K. Bos</td><td class="mk-small">Heat pump, Air conditioning</td><td><label class="mk-radio"><input type="radio" name="slot-proposed-op-3" checked aria-label="K. Bos, morning, 2 free"> 2 free</label></td><td><label class="mk-radio"><input type="radio" name="slot-proposed-op-3" aria-label="K. Bos, afternoon, 1 free"> 1 free</label></td></tr><tr><td>L. Mertens</td><td class="mk-small">Heat pump, Air conditioning, Gas boiler</td><td><label class="mk-radio"><input type="radio" name="slot-proposed-op-3" aria-label="L. Mertens, morning, 2 free"> 2 free</label></td><td><label class="mk-radio"><input type="radio" name="slot-proposed-op-3" aria-label="L. Mertens, afternoon, 2 free"> 2 free</label></td></tr><tr><td>R. Hendriks</td><td class="mk-small">Heat pump, Gas boiler</td><td class="mk-muted">Full</td><td><label class="mk-radio"><input type="radio" name="slot-proposed-op-3" aria-label="R. Hendriks, afternoon, 2 free"> 2 free</label></td></tr><tr><td>S. Visser</td><td class="mk-small">Heat pump</td><td><label class="mk-radio"><input type="radio" name="slot-proposed-op-3" aria-label="S. Visser, morning, 1 free"> 1 free</label></td><td class="mk-muted">Full</td></tr></tbody>
+        </table>
+      </div><p class="mk-small mk-muted">Not shown: 9 technicians without the skill Heat pump, 2 technicians with no free place on Tue 27 Oct.</p><p class="mk-small mk-muted" data-proposed>Arrow keys: move between slots. Enter: assign. <span class="fl-badge fl-badge--info">Proposed</span></p>
+      <div class="mk-panel-foot"><p class="mk-summary" role="status"><strong>WO-24817 and WO-24822</strong> get a visit with K. Bos, Tue 27 Oct, morning.<br><strong>WO-24840 stays unplanned:</strong> no free place left. You can undo for 8 seconds.</p>
+        <div class="fl-alert fl-alert--warning">WO-24817 is a repair due Mon 26 Oct. This date is after the due date.</div>
+        <div class="mk-actions"><button class="fl-btn fl-btn--primary">Assign 2 work orders</button><button class="fl-btn">Cancel</button></div></div>
+    </aside></div>
+  </main>
+  
+</div>
+</section>
+
+</body>
+</html>

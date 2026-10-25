@@ -1,0 +1,18 @@
+/* Fixes and proposed parts for the Fieldline design system, FL-44.
+   Loaded after tokens.css and components.css. The design lead decides on each item.
+   See ../design-system-issues.md. */
+
+/* DS-1: no :focus-visible rule. Use the teal focus color of DESIGN.md. */
+:focus-visible { outline: 2px solid var(--fl-color-accent); outline-offset: 2px; }
+/* DS-1: teal on the dark navigation has less than 3:1, so use white there. */
+.fl-nav :focus-visible { outline-color: var(--fl-color-text-inverse); }
+
+/* DS-8: a badge and a date broke over 2 lines in a narrow table ("Waiting for / parts"). */
+.fl-badge, .fl-table td.fl-num { white-space: nowrap; }
+
+/* DS-3: proposed component. Radio group for 1 of 2 to 5 options (PAT-IN-01). */
+.fl-radio-group { border: 0; margin: 0 0 var(--fl-space-4); padding: 0; display: flex; flex-direction: column; gap: var(--fl-space-1); }
+.fl-radio-group legend { padding: 0; margin-bottom: var(--fl-space-1); font-size: var(--fl-size-sm); font-weight: var(--fl-weight-medium); }
+.fl-radio-group__options { display: flex; gap: var(--fl-space-4); }
+.fl-radio-group label { display: inline-flex; align-items: center; gap: var(--fl-space-2); min-height: var(--fl-control-height); font-size: var(--fl-size-md); }
+.fl-radio-group input { accent-color: var(--fl-color-accent); width: 16px; height: 16px; margin: 0; }

@@ -64,6 +64,7 @@ Result: <DONE / DONE_WITH_CONCERNS / BLOCKED> on branch <branch> (<N> commits si
 | runcheck.py | <0 findings / N findings> |
 | decisioncheck.py | <0 findings / N findings> |
 | security review | <verdict, findings per severity> |
+| UX review | <verdict, findings per severity, or "no UI work"> |
 
 ### Acceptance criteria
 

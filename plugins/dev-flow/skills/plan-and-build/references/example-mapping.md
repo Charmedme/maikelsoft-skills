@@ -15,8 +15,9 @@ The result is the file `examples.md`. Write it before any test or code. The gate
    3. The decision records (ADRs) and the project guide.
 
    When a decision answers a question, use that answer in the example, and cite the decision ID and its words.
-5. **Questions.** Each rule, limit, or word that has no answer yet is a question for the PO. Give each one the options and your recommended answer. Read `po-questions.md` for the way to send them.
-6. **Check.** Run `examplecheck.py examples.md` and fix each error.
+5. **UI states.** When the item has an approved UX design (`ux-design.md`), add one example for each state of each screen in scope. Take the Given, When, and Then from the states table, and the text from the copy table. The source is `ux: <screen>/<state>`. Then the acceptance tests cover each state. A state that the design marks `n/a` gets no row.
+6. **Questions.** Each rule, limit, or word that has no answer yet is a question for the PO. Give each one the options and your recommended answer. Read `po-questions.md` for the way to send them.
+7. **Check.** Run `examplecheck.py examples.md` and fix each error. When `ux-design.md` is in the same folder, the script also checks each `ux:` source against its states tables.
 
 ## The file
 
@@ -36,6 +37,7 @@ The result is the file `examples.md`. Write it before any test or code. The gate
 | AC1 R2 | below | <state> | <day 29> | <result> | item |
 | AC1 R2 | at | <state> | <day 30> | <result> | Q12 |
 | AC1 R2 | above | <state> | <day 31> | <result> | item |
+| AC2 R1 | error-save | <the save fails> | <action> | <the text of the state> | ux: list/error-save |
 
 ## Words with more than one meaning
 
@@ -50,7 +52,7 @@ The result is the file `examples.md`. Write it before any test or code. The gate
 - P1 (AC1 R2): <question>. Recommended: <answer>, because <reason>.
 ```
 
-Write "None." under a section without content. The Source column is `item`, a decision ID, `PO` with the date of the answer, or `open: P<n>`.
+Write "None." under a section without content. The Source column is `item`, a decision ID, `PO` with the date of the answer, `ux: <screen>/<state>`, or `open: P<n>`.
 
 ## Rules
 

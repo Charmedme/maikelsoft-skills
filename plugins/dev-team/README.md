@@ -33,7 +33,7 @@ claude plugin install dev-team@maikelsoft-skills
 
 | Part | Name | What it does |
 |------|------|--------------|
-| Skill | `deliver-story` | The main session leads the run: story, design, reflection, G1, core, packages, security review, G2. |
+| Skill | `deliver-story` | The main session leads the run: story, design, reflection, G1, core, packages, security review, UX review, G2. The UX review runs when the story has a UX design and the `ux-design` plugin is installed. |
 | Skill | `story-intake` | Reads the story from Jira, Azure DevOps, GitHub, GitLab, or Linear (read only) and writes `story.md`. |
 | Skill | `senior-practice` | The rules and templates of the senior: design, packages, reflection, plan feedback, review, self-check. |
 | Skill | `medior-practice` | The rules and templates of a medior: plan, build test first, report with real output, fix. |

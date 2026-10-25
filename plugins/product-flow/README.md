@@ -22,7 +22,7 @@ claude plugin install product-flow@maikelsoft-skills
 | `backlog-feature` | Write or review a feature with its goal, scope, criteria, and stories. |
 | `backlog-epic` | Write or review an epic, when the team uses 3 levels. |
 | `backlog-goal` | Write or review a product goal or a sprint goal. |
-| `product-prototype` | Build a throwaway clickable prototype with your design system or branding, to test one question. |
+| `product-prototype` | Build a throwaway clickable prototype with your design system or branding, to test one question. Each prototype uses the shared `proto-shell/1` standard: the same header, variants, states, sizes, and Test mode. |
 | `backlog-push` | Put a drafted backlog into Jira, Azure DevOps, GitHub, GitLab, or Linear, or into files. |
 | `example-mapping` | Turn one approved item into rules, examples, and questions for the PO before the build (`examples.md`). |
 
@@ -46,7 +46,7 @@ claude plugin install product-flow@maikelsoft-skills
 |-------|-----------------|-------------------|
 | 1. Scan and research | Sources: your tools, documents, existing tickets, and the web | |
 | 2. Grill | Problem (round 1: the need), decisions, open questions | **G1** Is this what you mean? |
-| 3. Prototype | A prototype file | **G2** Is this what you mean? |
+| 3. Prototype | A prototype file. With the `ux-design` plugin: the UX design, the mockups, and the prototype of the agent. | **G2** Is this what you mean? |
 | 4. Spec | Goal, users, scope, story map | |
 | 5. Backlog | Goal, features, stories | **G3** Is this backlog correct? |
 | 6. Push | Items in the ticket system, or files | **G4** Approval of the exact list |
@@ -89,7 +89,7 @@ The skills use these scripts. They use only the Python standard library.
 | `backlogcheck.py` | Stories, features, epics, and goals: role, value, criteria, edge cases, scope, measures, size. |
 | `backlogtree.py` | The tree of the draft, possible duplicates, the push log (to continue a push that stopped), and the file export. |
 | `examplecheck.py` | `examples.md`: each rule has an example, each limit has the cases below, at, and above, and each open example has a question. |
-| `protocheck.py` | The prototype: the banner, the question, the states, no external calls. |
+| `protocheck.py` | The prototype: the manifest, the header text, the states, the variants, the tasks, and no external calls. |
 | `doccheck.py` | The language rules of this repository. |
 
 ### No human to answer

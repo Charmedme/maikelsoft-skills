@@ -54,6 +54,8 @@ All files of one story are in the run folder `docs/work/<slug>/`. The files are 
 | core-fix | 1 | 0 |
 | security-review | 1 | 0 |
 | security-fix | 1 | 0 |
+| ux-review | 1 | 0 |
+| ux-fix | 1 | 0 |
 ```
 
 The senior adds three rows per package when it starts the package: `NN plan-feedback`, `NN review`, and `NN fix`, each with limit 1. Only the agent of a step changes the counter of that step. `runcheck.py` reads the counters.

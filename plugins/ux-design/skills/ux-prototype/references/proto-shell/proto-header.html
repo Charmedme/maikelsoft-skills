@@ -1,0 +1,9 @@
+<!-- proto-header: required in each prototype outside the shell. Do not edit. -->
+<proto-header id="proto-header" data-title="{{title}}" data-kind="{{kind}}" data-scope="{{scope}}" role="banner" style="display:block;position:sticky;top:0;z-index:2147483646"><template shadowrootmode="open"><style>
+:host { all: initial; display: block; }
+.bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 8px 16px; background: #ffffff; border-bottom: 1px solid #e4e4e7; font: 14px/1.4 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #18181b; }
+.badge { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #b45309; background: #fef3c7; padding: 3px 8px; border-radius: 999px; white-space: nowrap; }
+.title { font-weight: 650; font-size: 15px; }
+.kind { color: #71717a; font-size: 12px; }
+@media (prefers-color-scheme: dark) { .bar { background: #18181b; color: #f4f4f5; border-color: #27272a; } .badge { color: #fbbf24; background: #3a2a07; } .kind { color: #a1a1aa; } }
+</style><div class="bar"><span class="badge">{{badge}}</span><strong class="title">{{title}}</strong><span class="kind">{{kindLabel}} · {{scope}}</span></div></template></proto-header>

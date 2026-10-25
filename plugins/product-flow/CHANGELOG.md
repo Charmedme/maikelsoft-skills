@@ -6,6 +6,16 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-10-25
+
+### Changed
+
+- `product-prototype` makes each prototype in the shared `proto-shell/1` standard. The output is still one HTML file that opens offline. It now has the standard header, the toolbar, the variants, the states, the sizes, and Test mode. The checker `protocheck.py` is the shared one.
+- `product-prototype` ranks the open points by the cost of a wrong answer, and takes the one with the highest cost as its question.
+- `idea-to-backlog` uses the `ux-design:ux-designer` agent in phase 3 when the `ux-design` plugin is installed and the request changes screens. G2 shows the prototype, the mockups, and the proposed decisions. Without the plugin, phase 3 works as before.
+- Example mapping adds one example for each state of the approved UX design, with the source `ux: <screen>/<state>`.
+- `backlog-story` links the UX design of a story in its notes.
+
 ## [1.3.0] - 2026-10-24
 
 ### Added
