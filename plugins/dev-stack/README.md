@@ -71,6 +71,17 @@ claude plugin install dev-stack@maikelsoft-skills
 
 Method, cases, and results are in `evals/dev-stack/`.
 
+### Version 1.2.0: hard cases on Sonnet
+
+The batch 2 cases were too easy: without the skill, Opus passed most of them. Version 1.2.0 adds 22 hard cases. Each one has 6 traps or more, defects in the existing code, quiet defaults, and decoys in the review cases. Each case ran 3 times without the skill and 3 times with dev-stack 1.1, on Sonnet: 132 runs.
+
+| Measure | No skill | dev-stack 1.1 |
+|---------|----------|---------------|
+| Checks and grader items passed, 22 hard cases | 65% | 90% |
+| Cases where the skill scores higher | | 20 of 22 |
+
+The skills of 1.2.0 then got a check of each version and fact against the primary source. The 9 cases with an item that both variants failed ran again with the skill. 14 of the 16 gap items now pass in each valid run. The details and the limits are in `docs/work/dev-stack/hard-cases/results.md`.
+
 ### Version 1.1.0: the 11 new skills
 
 Each new skill has two cases. A trap case builds a change with a hidden trap. A review case reviews a change with planted mistakes. Each case ran 3 times without the skill and 3 times with it: 132 runs on Opus. Blind graders scored the reports. Scripts ran the build, the tests, and hidden probe tests.
@@ -102,7 +113,8 @@ The last two fixes had a test of their own: `efcore` rule 32a and `csharp` rule 
 
 - On cases that the agent already does well, the skills add little. The gain is on version traps and quiet defaults. Examples: MSTest 4 with FluentAssertions 7, analyzer gates, classic queues, the Chrome sandbox, and trace sampling.
 - The review cases are near the ceiling: without the skill, the agent already finds most planted mistakes.
-- The runs used one model (Opus). The gain can be different on other models.
+- Batch 2 ran on Opus and the hard cases on Sonnet. The gain can be different on other models.
+- `sqlserver-hard` is not stable on a machine with 2 CPUs and 7 GB: SQL Server sometimes does not start in the test container.
 - `migrate-fluentassertions` has no eval case yet.
 - The report limit of 700 words is not met. The mean is about 935 words.
 - The skills do not replace the build and the tests. The agent must run them, and the report shows only the results of the last run.

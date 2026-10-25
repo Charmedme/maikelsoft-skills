@@ -102,4 +102,4 @@ Then the 9 cases with a gap ran again, skill variant only, 3 runs each on Sonnet
 - `fluentvalidation-review-hard` went down. The new rule "put `NotNull()` before `SetValidator`" made each review flag an optional child on an update (decoy D1). The rule now says that `SetValidator` without `NotNull()` is correct when null is a valid value. This fix is not tested yet.
 - `sqlserver-hard` is not a valid measure on this machine. In 2 of the 3 runs, SQL Server did not start in the test container, so each test failed. The run that started passed C10.
 - Run 3 of `puppeteersharp-hard` has no grade: the disk filled up during the run, and its output stops before the end.
-- `redis-review-hard` did not run again. Its review checklist now lists correct patterns ("Do not flag") that match the decoys of that case, so a rerun would not be a fair measure for those items.
+- `redis-review-hard` did not run again. Its review checklist now lists correct patterns ("Do not flag"). They match the decoys of that case, so a rerun would not be a fair measure for those items.

@@ -148,10 +148,18 @@ This log records each change to a skill or to an eval case, the test that measur
 - Observed: the old text said that 4.3 denies global QoS.
 - Verdict: helped (a wrong fact is gone)
 
+### E16: reference audit of the 11 batch 2 skills, and stack rule 3 for existing code
+- Date and version: 2026-10-25, dev-stack 1.2.0
+- Change: each skill was checked against the primary sources (Microsoft Learn, DeepWiki, the official docs, a run). Facts that prevent a silent wrong result got a rule in `SKILL.md`. Stack rule 3: the style of existing code wins, its defects do not.
+- Test: the 9 hard cases with a gap item, skill variant, 3 runs each on Sonnet.
+- Observed: 14 of the 16 gap items went from 0/3 to a pass in each valid run. `fluentvalidation-review-hard` went down: the new null rule flagged a correct optional child (decoy D1) in 3 of 3 reviews. The rule is narrowed, not tested yet. `sqlserver-hard` failed for a reason of the machine in 2 of 3 runs.
+- Verdict: helped (14 gap items), hurt (one decoy, fixed and not tested)
+- Evidence: `docs/work/dev-stack/hard-cases/results.md`
+
 ## Lessons
 
 ### Round 1.1.0 (2026-10-21)
 - Cue: a rule is in the skill, and the model applies it in some runs only.
 - Lesson: move the rule to the form that the model cannot skip. A pattern that a regex can find goes to `rules.json`. A fact that the report must hold goes to the report section of `SKILL.md`, not to a reference file.
 - Evidence: the analysis of E7 to E10 (the rule exists in each case). Not tested yet.
-- Confidence: low, until E7 to E10 have a verdict.
+- Confidence: medium. E7 to E9 and E16 support it.
