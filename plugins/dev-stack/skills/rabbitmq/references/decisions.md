@@ -32,11 +32,11 @@ The team decisions that messaging code needs. The order is the order in which a 
 
 - Question: Which broker carries messages between services?
 - Ask when: the first message between two services.
-- Options: RabbitMQ 4.3: AMQP 0-9-1, quorum queues, streams, open source (MPL 2.0). Azure Service Bus: managed, sessions, no server to run. Kafka: a log for event streaming and replay, more operations work.
-- Recommended: RabbitMQ 4.3 with quorum queues. It fits command and event messaging between services, runs in a container in tests, and Wolverine and EasyNetQ support it.
+- Options: RabbitMQ 4.4: AMQP 0-9-1, quorum queues, streams, open source (MPL 2.0). Azure Service Bus: managed, sessions, no server to run. Kafka: a log for event streaming and replay, more operations work.
+- Recommended: RabbitMQ 4.4 with quorum queues for a new broker. An existing broker on 4.3 keeps its version until its upgrade. It fits command and event messaging between services, runs in a container in tests, and Wolverine and EasyNetQ support it.
 - Choose another option when: the platform is Azure-only and the team does not run servers: Azure Service Bus. The need is a replayable event log with long retention: Kafka.
 - Depends on: MSG-01.
-- Revisit when: the community support of the minor version ends (4.3: 2027-01-31). Throughput needs a log.
+- Revisit when: the community support of the minor version ends (4.3: 2027-01-31, 4.4: 2027-07-31). Throughput needs a log.
 - Check: judge.
 - Detect: DET-MSG-03.
 

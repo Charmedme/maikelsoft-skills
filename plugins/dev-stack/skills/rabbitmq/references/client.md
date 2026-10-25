@@ -188,8 +188,11 @@ public sealed class OrderPlacedConsumer(RabbitMqConnection rabbit, IServiceScope
 
 - An exception that leaves `ReceivedAsync` does not nack the message. The message stays unacked until the channel closes. Catch, classify, and ack or nack in each path.
 - `requeue: true` puts the message back at the head of the queue at once. Use it only with a `delivery-limit`, and only for a transient error.
-- From RabbitMQ 4.3, only a failed delivery counts toward the `delivery-limit` of a quorum queue: `BasicRejectAsync`, or a channel or connection that closes with unacked messages. `BasicNackAsync(requeue: true)` does not count. A message that fails each time then loops forever. Use `BasicRejectAsync(tag, requeue: true)` for a requeue that must count. For a delay, use a dead-letter exchange with a TTL queue, or the quorum delayed retry of 4.3 (`broker.md`).
+- On RabbitMQ 4.3 and later, only a failed delivery counts toward the `delivery-limit` of a quorum queue. A failed delivery is `BasicRejectAsync`, or a channel or connection that closes with unacked messages. `BasicNackAsync(requeue: true)` does not count. A message that fails each time then loops forever. Use `BasicRejectAsync(tag, requeue: true)` for a requeue that must count. For a delay, use a dead-letter exchange with a TTL queue, or the quorum delayed retry of 4.3 (`broker.md`).
+- Do not wait with `Task.Delay` in the handler. The dispatcher awaits each handler (`AsyncConsumerDispatcher.cs`). With `ConsumerDispatchConcurrency` 1, the wait stops all other deliveries of the channel.
 - `ConsumerDispatchConcurrency` on the `ConnectionFactory` is 1 by default: one message at a time for each channel. Raise it only when the order does not matter and the handler is thread-safe.
+- Without `BasicQosAsync`, the prefetch is 0: no limit. The broker sends ready messages to a consumer without a limit, so one consumer can hold the full backlog unacked while other instances wait.
+- When the broker cancels the consumer (a consumer timeout, a deleted queue), the client raises `UnregisteredAsync` and does not consume again. Restart the consume loop from that event, or let the `BackgroundService` end so that the host shows the failure (`broker.md`, section "Limits and timeouts").
 
 ## Recovery
 
