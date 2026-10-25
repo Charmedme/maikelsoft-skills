@@ -1,6 +1,6 @@
 # Sources
 
-Checked on 2026-10-19. The facts of this skill come from these primary sources. Look them up again when `metadata.verified` in `SKILL.md` is older than 6 months.
+Checked on 2026-10-19. Versions and the facts below "Checked on 2026-10-25" checked again on 2026-10-25. The facts of this skill come from these primary sources. Look them up again when `metadata.verified` in `SKILL.md` is older than 6 months.
 
 ## Contents
 
@@ -13,7 +13,7 @@ Checked on 2026-10-19. The facts of this skill come from these primary sources. 
 
 ## Versions
 
-| Item | Version on 2026-10-19 | Source |
+| Item | Version on 2026-10-25 (no change since 2026-10-19) | Source |
 |------|-----------------------|--------|
 | PostgreSQL | 18.6 (2026-08-13), supported to 2030-11-14 | [postgresql.org versions](https://www.postgresql.org/versions.json) |
 | PostgreSQL 19 | RC 1 (2026-10-15), not GA | [postgresql.org](https://www.postgresql.org/) |
@@ -21,6 +21,7 @@ Checked on 2026-10-19. The facts of this skill come from these primary sources. 
 | Npgsql.DependencyInjection | 10.0.3 | [nuget.org](https://www.nuget.org/packages/Npgsql.DependencyInjection) |
 | Npgsql.EntityFrameworkCore.PostgreSQL | 10.0.3, and 11.0.0-rc.2 | [nuget.org](https://www.nuget.org/packages/Npgsql.EntityFrameworkCore.PostgreSQL) |
 | Dapper | 2.1.89 (Apache-2.0) | [nuget.org](https://www.nuget.org/packages/Dapper) |
+| .NET 10 runtime | 10.0.13 | [nuget.org](https://www.nuget.org/packages/Microsoft.NETCore.App.Ref) |
 | Testcontainers.PostgreSql | 4.16.0 | [nuget.org](https://www.nuget.org/packages/Testcontainers.PostgreSql) |
 | squawk-cli | 2.70.0 (Apache-2.0 OR MIT) | [npmjs.com](https://www.npmjs.com/package/squawk-cli) |
 
@@ -51,6 +52,16 @@ Checked on 2026-10-19. The facts of this skill come from these primary sources. 
 - [Npgsql connection string parameters](https://www.npgsql.org/doc/connection-string-parameters.html): `Maximum Pool Size`, `Timezone`, `No Reset On Close`.
 - [Npgsql 10 release notes](https://www.npgsql.org/doc/release-notes/10.0.html)
 - [Dapper README](https://github.com/DapperLib/Dapper): list parameters, `CommandDefinition`, `QueryMultiple`. Dapper source `FeatureSupport.cs`: arrays on Npgsql.
+
+## Checked on 2026-10-25
+
+| Fact | Version | Source |
+|------|---------|--------|
+| `date_trunc` on a `timestamptz` truncates in the session `TimeZone`. The optional third argument names another zone. | PostgreSQL 18 | [Date/time functions, date_trunc](https://www.postgresql.org/docs/18/functions-datetime.html#FUNCTIONS-DATETIME-TRUNC) |
+| `ALTER TABLE` takes an `ACCESS EXCLUSIVE` lock unless the form says other. `VALIDATE CONSTRAINT` takes only `SHARE UPDATE EXCLUSIVE`. | PostgreSQL 18 | [ALTER TABLE](https://www.postgresql.org/docs/18/sql-altertable.html) |
+| `lock_timeout` stops a statement that waits for a lock longer than the limit. It does not limit how long a statement holds a lock. | PostgreSQL 18 | [Client connection defaults](https://www.postgresql.org/docs/18/runtime-config-client.html#GUC-LOCK-TIMEOUT) |
+| No new GA major: PostgreSQL 19 is RC 1. The newest minor is 18.6. | 2026-10-25 | [versions.json](https://www.postgresql.org/versions.json) |
+| Rule `PG-LOCAL-DATE-NO-ZONE` finds `o."PlacedAt"::date` and `date_trunc('month', o."PlacedAt")` in the review fixture, and nothing in the good selftest overlay. | stackcheck | run on 2026-10-25 |
 
 ## Tools
 

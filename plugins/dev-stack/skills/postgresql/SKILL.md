@@ -2,8 +2,8 @@
 name: postgresql
 description: PostgreSQL engine rules and SQL text for .NET services. Use when code or a review touches SQL for PostgreSQL (a .sql script, FromSql, SqlQuery, ExecuteSql, migrationBuilder.Sql, Dapper, or plain Npgsql), column types, keys, indexes, EXPLAIN, isolation levels, row locks, a queue table with SKIP LOCKED, an upsert, DDL on a live table, NpgsqlDataSource, COPY, or a report per local day. Not for EF Core mapping, LINQ, or generated EF migrations (dev-stack:efcore), SQL Server or T-SQL (dev-stack:sqlserver), or server operations (backup, replication, postgresql.conf tuning).
 metadata:
-  verified: "2026-10-19"
-  versions: "PostgreSQL 18 (19 is RC), Npgsql 10.0, Dapper 2.1, EFCore.PG 10.0, .NET 10"
+  verified: "2026-10-25"
+  versions: "PostgreSQL 18.6 (19 is RC 1), Npgsql 10.0.3, Dapper 2.1.89, EFCore.PG 10.0.3, .NET 10"
 ---
 
 # PostgreSQL
@@ -42,7 +42,21 @@ Ask the human before you apply a default that has no accepted decision (stack ru
 | Case-insensitive text | A nondeterministic ICU collation on the column. | DATA-24 |
 | DDL on live tables | `lock_timeout`, concurrent index builds, `NOT VALID` then `VALIDATE`. | DATA-25 |
 
-Existing code keeps its style (stack rule 3).
+## Existing code
+
+In PostgreSQL code, the defects of stack rule 3 include these. Each one gives a wrong result without an error, and tests with midday times or one worker pass.
+
+| Defect | Rule |
+|--------|------|
+| `::date` or `date_trunc` on a `timestamptz` without `AT TIME ZONE`, in a report per local day, week, or month. With the session zone UTC, it counts UTC days. | 7 |
+| `FOR UPDATE SKIP LOCKED` in autocommit, then a second statement. | 11 |
+| A read, then a write in a second statement, or `MERGE` as an upsert. | 10, 12 |
+| `NOT IN (SELECT ...)` on a nullable column. | 4 |
+| A local `DateTime` sent to `timestamptz` through Dapper or Npgsql. | 6 |
+| On a live table: an index without `CONCURRENTLY`, a column with a volatile default, a constraint without `NOT VALID`, or no `lock_timeout`. | 16 |
+| `BeginBinaryImportAsync` without `CompleteAsync`. | 19 |
+
+New code "like the existing report" depends on that report: fix both, and name the fix under "Changes".
 
 ## Rules
 
@@ -67,8 +81,8 @@ await using var connection = await dataSource.OpenConnectionAsync(ct);
 ### Types and time
 
 6. Store instants in `timestamptz` and send UTC: a `DateTimeOffset` with offset 0, or a `DateTime` with `Kind = Utc`. Npgsql sends a local `DateTime` as `timestamp`. PostgreSQL then converts it with the session `TimeZone`, without an error. With `America/New_York`, 12:00 local became 16:00Z. EF throws for this value. Dapper and plain Npgsql do not.
-7. Compute a local day with `(ts AT TIME ZONE 'Europe/Amsterdam')::date`. `ts::date` uses the session zone: 2026-07-01 22:30Z is 2026-07-02 in Amsterdam. Filter on the bare column with the UTC instants of local midnight, so that an index can serve the filter.
-8. Keys: `bigint GENERATED ALWAYS AS IDENTITY` or `uuid`. Do not use `serial`. On PostgreSQL 18, `DEFAULT uuidv7()` gives ordered keys to writers without EF.
+7. Compute a local day with `(ts AT TIME ZONE 'Europe/Amsterdam')::date`, and a local week or month with `date_trunc('week', ts AT TIME ZONE 'Europe/Amsterdam')`. `ts::date` and `date_trunc` on a `timestamptz` use the session zone: 2026-07-01 22:30Z is 2026-07-02 in Amsterdam. Filter on the bare column with the UTC instants of local midnight, so that an index can serve the filter.
+8. Keys: `bigint GENERATED ALWAYS AS IDENTITY` or `uuid`. Do not use `serial`. On PostgreSQL 18, `DEFAULT uuidv7()` gives ordered keys to writers without EF. It is a built-in function, so it needs no extension.
 9. Money: `numeric(19,4)`. Not `money` (it depends on `lc_monetary`) and not `float8`. Text: `text`, or `varchar(n)` when the limit is a rule. Not `char(n)`, because it pads with spaces.
 
 ```sql
@@ -121,7 +135,7 @@ Detail and examples: `references/indexes.md`.
     - Start with `SET lock_timeout = '5s'`. A DDL statement waits for its lock, and all later queries on the table wait behind it.
     - Build an index with `CREATE INDEX CONCURRENTLY`, outside a transaction. After a failed build, drop the INVALID index and build it again. EF: `IsCreatedConcurrently()`. One idempotent script: `dev-stack:efcore` rule 32a.
     - Add a column with a volatile default (`gen_random_uuid()`, `clock_timestamp()`) in steps: add it without a default, fill it in batches, then set the default. The one-step form writes the table again under an `ACCESS EXCLUSIVE` lock. A constant default does not.
-    - Add a foreign key or a check as `NOT VALID`, then run `VALIDATE CONSTRAINT` in a later statement.
+    - Add a foreign key or a check as `NOT VALID`, then run `VALIDATE CONSTRAINT` in a later statement. Without `NOT VALID`, PostgreSQL scans the table while it holds the `ACCESS EXCLUSIVE` lock. `lock_timeout` limits only the wait for the lock, not the scan.
     - Rename or remove a column in expand and contract steps (OPS-15).
 
 Detail, the order of steps, and the lint rules: `references/ddl-live-tables.md`.
@@ -158,6 +172,7 @@ Detail on the data source, Dapper mapping, multiple results, and COPY: `referenc
 | `WHERE Status = 'Placed'` on an EF table with PascalCase names | `WHERE "Status" = 'Placed'` |
 | `new { importedAt = DateTime.Now }` | `new { importedAt = time.GetUtcNow() }` |
 | `GROUP BY placed_at::date` for a local day | `GROUP BY (placed_at AT TIME ZONE 'Europe/Amsterdam')::date` |
+| `date_trunc('week', placed_at)` for a local week | `date_trunc('week', placed_at AT TIME ZONE 'Europe/Amsterdam')` |
 | `placed_at timestamp NOT NULL` | `placed_at timestamptz NOT NULL` |
 | `id serial PRIMARY KEY` | `id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY` |
 | `amount money` or `amount float8` | `amount numeric(19,4)` |
@@ -204,7 +219,7 @@ The full list is in `references/review-checklist.md`.
 1. Dapper on Npgsql uses `= ANY(@ids)`, not `IN @ids`. tool (PG-DAPPER-IN-LIST)
 2. Each binary `COPY` calls `CompleteAsync`. judge
 3. Instants are `timestamptz`. Parameters are UTC values, not a local `DateTime`. tool (PG-TIMESTAMP-NO-TZ), judge
-4. A local day uses `AT TIME ZONE` with an IANA zone. The `WHERE` clause compares the bare column. judge
+4. A local day, week, or month uses `AT TIME ZONE` with an IANA zone. Check the existing report that the change copies too. The `WHERE` clause compares the bare column. tool (PG-LOCAL-DATE-NO-ZONE), judge
 5. A claim query uses `SKIP LOCKED` in one statement or one transaction. judge
 6. No `NOT IN (SELECT ...)`. tool (PG-NOT-IN-SUBQUERY)
 7. Raw SQL quotes PascalCase names. `FromSql` on an entity with `xmin` selects `xmin`. EF does not compose `UPDATE ... RETURNING`. tool (PG-SELECT-STAR-FROMSQL), judge
