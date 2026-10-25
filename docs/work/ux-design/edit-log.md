@@ -174,6 +174,62 @@ This log records each change to a skill or to an eval case, the test that measur
 - Verdict: helped
 - Evidence: `evals/ux-design/results-2026-10-25.md`
 
+### E20: uxcheck.py: Tab walk and reduced-motion check in review mode
+- Date and version: 2026-10-25, ux-design 0.3.0
+- Change: Tab walk and reduced-motion check in review mode.
+- Test: Accessibility app with 6 faults, 3 runs, Sonnet, and the clean app.
+- Observed: Faults found 16 of 18 (v1), against 14 of 18 with 0.2.0. No new false findings on the clean app.
+- Verdict: helped
+- Evidence: `evals/ux-design/results-2026-10-25-b3.md`
+
+### E21: uxcheck.py: A tabindex above 0 is an error (RV-TABINDEX), not only a warning about the order
+- Date and version: 2026-10-25, ux-design 0.3.0
+- Change: A tabindex above 0 is an error (RV-TABINDEX), not only a warning about the order.
+- Test: The same app, 3 runs.
+- Observed: The tabindex fault found in 3 of 3 runs, against 1 of 3. Total 18 of 18.
+- Verdict: helped
+- Evidence: `evals/ux-design/results-2026-10-25-b3.md`
+
+### E22: web-accessibility: Manual checklist after the tools: focus after actions, live regions, keyboard, zoom
+- Date and version: 2026-10-25, ux-design 0.3.0
+- Change: Manual checklist after the tools: focus after actions, live regions, keyboard, zoom.
+- Test: The same app.
+- Observed: The missing live region (no tool finds it) found in 3 of 3 runs.
+- Verdict: helped
+- Evidence: `evals/ux-design/results-2026-10-25-b3.md`
+
+### E23: brand-rules: DTCG tokens with usage notes and contrast pairs, DESIGN.md sections, a Words table
+- Date and version: 2026-10-25, ux-design 0.3.0
+- Change: DTCG tokens with usage notes and contrast pairs, DESIGN.md sections, a Words table.
+- Test: Faulty design system without brand files, 2 runs.
+- Observed: Contrast pairs 20 to 22 against 0. Tokens without usage 0 against 24 to 38. DESIGN.md sections 8 against 1 to 2.
+- Verdict: helped
+- Evidence: `evals/ux-design/results-2026-10-25-b3.md`
+
+### E24: figma: Call budget for the seat, and a read order
+- Date and version: 2026-10-25, ux-design 0.3.0
+- Change: Call budget for the seat, and a read order.
+- Test: Fake Figma server, Dev and View seat, 2 runs each.
+- Observed: View seat: 4 to 5 read calls against 7 to 9, and the human gets told. Dev seat: 12 calls against 7 to 9 (more screenshots).
+- Verdict: mixed
+- Evidence: `evals/ux-design/results-2026-10-25-b3.md`
+
+### E25: ux-setup: Scan first, mark each line found or guess
+- Date and version: 2026-10-25, ux-design 0.3.0
+- Change: Scan first, mark each line found or guess.
+- Test: 3 fixtures, 2 runs each.
+- Observed: Facts 31 of 32 against 28 of 32. No invented stack or run command.
+- Verdict: helped
+- Evidence: `evals/ux-design/results-2026-10-25-b3.md`
+
+### E26: ux-designer: disallowedTools instead of a tools list
+- Date and version: 2026-10-25, ux-design 0.3.0
+- Change: disallowedTools instead of a tools list.
+- Test: Runtime check with --plugin-dir.
+- Observed: The agent loads, and the Artifact and MCP tools are in reach. idea-to-backlog starts it in 3 modes.
+- Verdict: helped
+- Evidence: `evals/ux-design/results-2026-10-25-b3.md`
+
 ## Lesson of batch 1
 
 - Cue: a design skill adds completeness rules (more states, more failure paths).
@@ -187,3 +243,10 @@ This log records each change to a skill or to an eval case, the test that measur
 - Lesson: give the skill the ranking rule (the cost of a wrong answer), not only the list. Without the rule, the model takes the first clear item.
 - Evidence: E10, E14.
 - Confidence: medium. Two skills, the same cause, and the same fix.
+
+## Lesson of batch 3
+
+- Cue: a tool gives a warning, and the agent must decide what it means.
+- Lesson: when a rule has one clear cause, make it an error that names the cause (RV-TABINDEX). A vague warning lets the agent pick another cause.
+- Evidence: E20, E21.
+- Confidence: medium. One fault, 3 runs before and 3 runs after the change.

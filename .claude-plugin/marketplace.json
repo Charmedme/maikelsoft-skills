@@ -141,7 +141,7 @@
     {
       "name": "ux-design",
       "source": "./plugins/ux-design",
-      "description": "A UX designer agent and its practice skills: problem frame, flow, pattern rules, design spec with a source for each decision, states, design-system audit, and mockups.",
+      "description": "A UX designer agent and its practice skills: problem frame, flow, pattern rules, design spec with a source for each decision, states, mockups, prototypes, and reviews. Also Claude Design, Figma, and OpenPencil, brand files and DTCG tokens, WCAG 2.2 accessibility, and the project setup.",
       "category": "design",
       "tags": [
         "ux",
@@ -151,6 +151,9 @@
         "states",
         "mockups",
         "design-system",
+        "accessibility",
+        "figma",
+        "design-tokens",
         "asd-ste100",
         "simplified-technical-english",
         "dutch",

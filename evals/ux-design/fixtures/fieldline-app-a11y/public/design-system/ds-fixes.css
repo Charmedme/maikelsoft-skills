@@ -1,0 +1,13 @@
+/* Fixes and proposed parts for the FL-31 mockups. See ../design-system-issues.md. Load after the system CSS. */
+
+/* DS-1: no focus style, now a visible teal ring */
+:focus-visible { outline: 2px solid var(--fl-color-accent); outline-offset: 2px; }
+
+/* DS-2: input border had 1.84:1, now 6.2:1 */
+.fl-input, .fl-select { border-color: var(--fl-color-text-muted); }
+
+/* DS-3: proposed toast action, inverse text (16:1 on the toast) */
+.fl-toast__action { background: transparent; border: 0; padding: 0; color: var(--fl-color-text-inverse); font: var(--fl-weight-bold) var(--fl-size-md) var(--fl-font); text-decoration: underline; cursor: pointer; }
+
+/* DS-4: checkbox and radio in the accent color, 20 px target */
+input[type="checkbox"], input[type="radio"] { accent-color: var(--fl-color-accent); width: 20px; height: 20px; margin: 0; vertical-align: middle; }

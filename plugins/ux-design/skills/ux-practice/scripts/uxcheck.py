@@ -6,7 +6,7 @@ Usage:
     python3 uxcheck.py mockup <file.html>... [--design <ux-design.md>] [--primary <css selector>]
                               [--shots <dir>] [--json]
     python3 uxcheck.py system <file.css>... [--json]
-    python3 uxcheck.py review <walk.json> --out <dir> [--axe <axe.min.js>] [--primary <css selector>] [--json]
+    python3 uxcheck.py review <walk.json> --out <dir> [--axe <axe.min.js>] [--primary <css selector>] [--no-keys] [--json]
 
 design  checks the design spec (10 decisions with a source each), the source tags, the
         pattern and decision IDs, the states tables, and the options table.
@@ -21,7 +21,12 @@ mockup  renders each HTML mockup with Playwright and checks the tells: off-token
 review  walks the built app with Playwright from a walk file. For each state of each flow, it
         sets the routes, runs the steps, and then at 390, 820, and 1440 px it takes a
         screenshot, runs the tell checks and axe-core (when axe.min.js is found), and checks
-        horizontal overflow. It writes <out>/review.json and <out>/<flow>__<state>__<width>.png.
+        horizontal overflow. At 1440 px it also walks the focus with the Tab key: a focus that
+        does not show (RV-FOCUS-VISIBLE), a focus trap (RV-FOCUS-TRAP), a focus under a sticky or
+        fixed element (RV-FOCUS-OBSCURED), a focus order that jumps back (RV-FOCUS-ORDER), and
+        a tabindex above 0 (RV-TABINDEX).
+        With prefers-reduced-motion it finds animations that still run (RV-MOTION). --no-keys
+        skips these checks. It writes <out>/review.json and <out>/<flow>__<state>__<width>.png.
 
 A mockup frame is an element with data-screen and data-state attributes.
 Exit code: 0 no errors, 1 errors, 2 bad usage, 3 Playwright is missing.
@@ -416,7 +421,128 @@ def add_routes(page, routes, held):
         page.route(rt["url"], make(rt))
 
 
-def check_review(walk_file, out, axe_path, primary, r):
+FOCUS_JS = """() => {
+  const el = document.activeElement;
+  if (!el || el === document.body || el === document.documentElement) return null;
+  const sel = (n) => {
+    const parts = [];
+    while (n && n.nodeType === 1 && parts.length < 4) {
+      let p = n.tagName.toLowerCase();
+      if (n.id) { parts.unshift(p + '#' + n.id); break; }
+      const t = (n.getAttribute('aria-label') || n.textContent || '').trim().slice(0, 24);
+      if (parts.length === 0 && t) p += '[' + t.replace(/\\s+/g, ' ') + ']';
+      parts.unshift(p);
+      n = n.parentElement;
+    }
+    return parts.join(' > ');
+  };
+  const sig = (e) => { const c = getComputedStyle(e); return [c.outlineStyle, c.outlineWidth, c.outlineColor, c.boxShadow,
+    c.borderTopColor, c.borderBottomColor, c.backgroundColor, c.color, c.textDecorationLine].join('|'); };
+  const r = el.getBoundingClientRect();
+  const focused = sig(el);
+  el.blur();
+  const plain = sig(el);
+  el.focus({preventScroll: true});
+  let obscured = '';
+  const cx = r.left + r.width / 2, cy = r.top + Math.min(r.height / 2, 12);
+  if (cy >= 0 && cy < innerHeight && cx >= 0 && cx < innerWidth) {
+    const top = document.elementFromPoint(cx, cy);
+    if (top && !el.contains(top) && !top.contains(el)) {
+      for (let n = top; n && n !== document.body; n = n.parentElement) {
+        const pos = getComputedStyle(n).position;
+        if (pos === 'fixed' || pos === 'sticky') { obscured = sel(n); break; }
+      }
+    }
+  }
+  return {sel: sel(el), top: Math.round(r.top + scrollY), left: Math.round(r.left + scrollX),
+          visible: focused !== plain, obscured, modal: !!el.closest('[aria-modal="true"], dialog[open]')};
+}"""
+
+TABBABLE_JS = """() => [...document.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]):not([type=hidden]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])')]
+  .filter(e => { const r = e.getBoundingClientRect(), c = getComputedStyle(e);
+    return r.width > 1 && r.height > 1 && c.visibility !== 'hidden' && !e.closest('[inert], [aria-hidden="true"]'); }).length"""
+
+TABINDEX_JS = """() => [...document.querySelectorAll('[tabindex]')].filter(e => e.tabIndex > 0)
+  .map(e => e.tagName.toLowerCase() + (e.id ? '#' + e.id : '') + '[tabindex=' + e.getAttribute('tabindex') + '] ' +
+       (e.getAttribute('aria-label') || e.textContent || '').trim().slice(0, 24))"""
+
+MOTION_JS = """() => {
+  const out = [];
+  for (const e of document.querySelectorAll('*')) {
+    const c = getComputedStyle(e);
+    if (c.animationName && c.animationName !== 'none') {
+      const d = Math.max(...c.animationDuration.split(',').map(x => parseFloat(x) * (x.trim().endsWith('ms') ? 0.001 : 1)));
+      if (d > 0.01 && c.animationPlayState !== 'paused') out.push((e.className && String(e.className).split(' ')[0]) || e.tagName.toLowerCase());
+    }
+  }
+  return [...new Set(out)].slice(0, 5);
+}"""
+
+
+def check_keys(page, where, rec, r, stats):
+    """Walk the focus with Tab. Report focus that does not show, traps, obscured focus, and order jumps."""
+    positive = page.evaluate(TABINDEX_JS)
+    if positive:
+        rec["issues"].append({"rule": "RV-TABINDEX", "msg": f"{len(positive)} elements with tabindex above 0: {'; '.join(positive[:4])}"})
+        r.error("RV-TABINDEX", f"{where}: {len(positive)} elements with a tabindex above 0 get the focus before all other "
+                f"elements (WCAG 2.4.3): {'; '.join(positive[:4])}.")
+    total = page.evaluate(TABBABLE_JS)
+    if not total:
+        return
+    # Start the walk at the top of the document.
+    page.evaluate("""() => { const s = document.createElement('span'); s.id = '__ux_start'; s.tabIndex = -1;
+      document.body.prepend(s); s.focus(); window.scrollTo(0, 0); }""")
+    seq, stuck, looped = [], 0, False
+    for _ in range(min(80, total * 2 + 4)):
+        page.keyboard.press("Tab")
+        f = page.evaluate(FOCUS_JS)
+        if f is None:
+            continue
+        if seq and f["sel"] == seq[-1]["sel"]:
+            stuck += 1
+            if stuck >= 2:
+                break
+            continue
+        if any(f["sel"] == x["sel"] for x in seq):
+            looped = True
+            break
+        seq.append(f)
+    page.evaluate("() => { const s = document.getElementById('__ux_start'); if (s) s.remove(); }")
+    stats["focus_stops"] = stats.get("focus_stops", 0) + len(seq)
+    uniq = {f["sel"] for f in seq}
+    modal = any(f["modal"] for f in seq)
+
+    def add(rule, msg, level="error"):
+        rec["issues"].append({"rule": rule, "msg": msg})
+        (r.error if level == "error" else r.warn)(rule, f"{where}: {msg}")
+    if not modal and (stuck >= 2 or (looped and len(uniq) < max(2, total * 0.5))):
+        add("RV-FOCUS-TRAP", f"Tab reaches {len(uniq)} of {total} focusable elements, then stays in a loop "
+            f"({' -> '.join(f['sel'] for f in seq[-3:])}).")
+    hidden = [f["sel"] for f in seq if not f["visible"]]
+    if hidden:
+        add("RV-FOCUS-VISIBLE", f"no visible focus on {len(hidden)} of {len(seq)} focus stops (outline, shadow, border, "
+            f"and color do not change): {'; '.join(hidden[:4])}{' ...' if len(hidden) > 4 else ''}.")
+    for f in seq:
+        if f["obscured"]:
+            add("RV-FOCUS-OBSCURED", f"the focus on {f['sel']} is under {f['obscured']} (WCAG 2.4.11).")
+    back = [(a, b) for a, b in zip(seq, seq[1:]) if b["top"] < a["top"] - 40 and b["left"] <= a["left"] + 100]
+    if len(back) >= 2 or any(a["top"] - b["top"] > 200 for a, b in back):
+        a, b = back[0]
+        add("RV-FOCUS-ORDER", f"the focus jumps back up from {a['sel']} to {b['sel']} ({len(back)} jumps). "
+            "Check that the focus order follows the reading order.", "warn")
+
+
+def check_motion(page, where, rec, r):
+    page.emulate_media(reduced_motion="reduce")
+    page.wait_for_timeout(100)
+    moving = page.evaluate(MOTION_JS)
+    page.emulate_media(reduced_motion="no-preference")
+    if moving:
+        rec["issues"].append({"rule": "RV-MOTION", "msg": f"animations run with prefers-reduced-motion: {', '.join(moving)}"})
+        r.error("RV-MOTION", f"{where}: animations still run when the user asks for reduced motion ({', '.join(moving)}).")
+
+
+def check_review(walk_file, out, axe_path, primary, r, keys=True):
     try:
         from playwright.sync_api import sync_playwright
     except ImportError:
@@ -476,6 +602,9 @@ def check_review(walk_file, out, axe_path, primary, r):
                             stats["axe"] += 1
                             rec["issues"].append({"rule": f"RV-AXE-{x['id']}", "msg": f"{x['impact']}: {x['help']} ({x['n']} nodes, {x['target']})"})
                             r.error(f"RV-AXE-{x['id']}", f"{where}: {x['impact']}: {x['help']} ({x['n']} nodes, first {x['target']})")
+                    if keys and w == WIDTHS[-1][0] and not fail:
+                        check_motion(page, where, rec, r)
+                        check_keys(page, where, rec, r, stats)
                     for c in console:
                         rec["issues"].append({"rule": "RV-JS", "msg": c[:160]})
                         r.error("RV-JS", f"{where}: script error: {c[:160]}")
@@ -596,7 +725,8 @@ def check_system(files, r):
 def main() -> int:
     argv = sys.argv[1:]
     as_json = "--json" in argv
-    argv = [a for a in argv if a != "--json"]
+    no_keys = "--no-keys" in argv
+    argv = [a for a in argv if a not in ("--json", "--no-keys")]
 
     def opt(name):
         if name in argv:
@@ -631,7 +761,7 @@ def main() -> int:
         if len(argv) != 1 or not out:
             print(__doc__, file=sys.stderr)
             return 2
-        code, extra = check_review(argv[0], out, axe, primary, r)
+        code, extra = check_review(argv[0], out, axe, primary, r, keys=not no_keys)
         res = r.finish(as_json, extra)
         return code if code is not None else res
     design, primary, shots = opt("--design"), opt("--primary") or PRIMARY, opt("--shots")
