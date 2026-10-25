@@ -159,6 +159,25 @@
         "public sealed record CreateOrderRequest(Guid CustomerId);",
         "services.AddValidation();"
       ]
+    },
+    {
+      "id": "FV-CLASS-CASCADE-STOP",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "\\bClassLevelCascadeMode\\s*=\\s*CascadeMode\\.Stop\\b",
+      "message": "ClassLevelCascadeMode = CascadeMode.Stop stops the whole validator after the first rule that fails. The client gets one field error at a time.",
+      "fix": "Remove the line. RuleLevelCascadeMode = CascadeMode.Stop gives one message for each field.",
+      "match": [
+        "        ClassLevelCascadeMode = CascadeMode.Stop;",
+        "ClassLevelCascadeMode=CascadeMode.Stop;"
+      ],
+      "nomatch": [
+        "        RuleLevelCascadeMode = CascadeMode.Stop;",
+        "ClassLevelCascadeMode = CascadeMode.Continue;"
+      ]
     }
   ]
 }

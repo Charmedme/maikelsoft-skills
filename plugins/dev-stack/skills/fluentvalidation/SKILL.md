@@ -2,7 +2,7 @@
 name: fluentvalidation
 description: Validators with FluentValidation 12 in .NET code. Covers rules, cascade mode, error codes, child and collection validators, async rules, DI registration, the call from a minimal API endpoint filter, a controller, or a worker, the error response with stable codes, and validator tests. Use when code or a review touches AbstractValidator, RuleFor, RuleForEach, MustAsync, WithErrorCode, CascadeMode, SetValidator, IValidator, ValidateAsync, AddValidatorsFromAssemblyContaining, TestValidate, InlineValidator, FluentValidation.AspNetCore, or a move from DataAnnotations or AddValidation to FluentValidation. Not for the built-in AddValidation with DataAnnotations alone, ProblemDetails wiring, or endpoint design (dev-stack:aspnetcore), options validation at startup, or domain invariants inside entities (dev-stack:csharp).
 metadata:
-  verified: "2026-10-19"
+  verified: "2026-10-25"
   versions: "FluentValidation 12.2.0 and FluentValidation.DependencyInjectionExtensions 12.2.0 (net8.0 and later), .NET 10 (SDK 10.0.402)"
 ---
 
@@ -58,16 +58,18 @@ Filter, controller, worker, and the error shape: `references/call-sites.md`.
 
 9. Set `WithErrorCode` after each validator that a client acts on. It applies to the last validator before it, not to the whole chain. Use the format of API-04 (`order.lines_too_many`).
 10. Set `RuleLevelCascadeMode = CascadeMode.Stop` in the constructor when a later check needs an earlier one (`NotEmpty`, then `Matches`, then `MustAsync`). It stops a second message and a null access in `Must`.
-11. Compose with `RuleForEach(x => x.Lines).SetValidator(lineValidator)` and the child validator from the constructor. FluentValidation 12.0 removed `InjectValidator` (CS1061).
-12. Validate the shape of the input: required, length, range, format, and cross-field rules inside one request. Keep state rules in the domain, for example "only a placed order can ship". Keep uniqueness in a unique index with a 409. A validator runs only on the paths that call it. Two requests can pass the same check at the same time.
-13. Read limits from the options class that holds them (`IOptions<T>` in the validator constructor). Do not copy a number into a second place. When a request names a limit that differs from the option, ask which one wins.
-14. Write two validators for two contracts. Do not use rule sets for it: they hide which rules run, and they pass into child validators.
+11. Do not set `ClassLevelCascadeMode = CascadeMode.Stop`. It stops the whole validator after the first rule that fails, not each field. The client then gets one field error at a time (tested).
+12. Compose with `RuleForEach(x => x.Lines).SetValidator(lineValidator)` and the child validator from the constructor. FluentValidation 12.0 removed `InjectValidator` (CS1061).
+13. Put `.NotNull().WithErrorCode(...)` before `SetValidator` in `RuleForEach`: `SetValidator` skips a null item, and the handler then throws. With `CascadeMode.Stop`, a `RuleForEach` stops at the first bad item and does not check the other items. Add `.Cascade(CascadeMode.Continue)` to that rule when the client needs an error for each item (tested).
+14. Validate the shape of the input: required, length, range, format, and cross-field rules inside one request. Keep state rules in the domain, for example "only a placed order can ship". Keep uniqueness in a unique index with a 409. A validator runs only on the paths that call it. Two requests can pass the same check at the same time.
+15. Read limits from the options class that holds them (`IOptions<T>` in the validator constructor). Do not copy a number into a second place. When a request names a limit that differs from the option, ask which one wins.
+16. Write two validators for two contracts. Do not use rule sets for it: they hide which rules run, and they pass into child validators.
 
 Rule examples and the 12.0 removals: `references/validators.md`.
 
 ### Tests
 
-15. Test the real validator with `TestValidateAsync` (valid and invalid case per rule, and the code). Use `InlineValidator<T>` when a consumer test needs a validator that fails. Do not mock `IValidator<T>`: the mock hides a missing registration and a sync call.
+17. Test the real validator with `TestValidateAsync` (valid and invalid case per rule, and the code). Use `InlineValidator<T>` when a consumer test needs a validator that fails. Do not mock `IValidator<T>`: the mock hides a missing registration and a sync call.
 
 Test examples: `references/testing.md`.
 
@@ -82,6 +84,8 @@ Test examples: `references/testing.md`.
 | `var result = validator.Validate(request);` in an endpoint or filter | `var result = await validator.ValidateAsync(request, ct);` |
 | `context.GetArgument<T>(0)` passed to the validator as is | `context.Arguments.OfType<T>().FirstOrDefault() is not { } argument` and a 400 |
 | `CascadeMode = CascadeMode.StopOnFirstFailure;` | `RuleLevelCascadeMode = CascadeMode.Stop;` |
+| `ClassLevelCascadeMode = CascadeMode.Stop;` to get one message for each field | `RuleLevelCascadeMode = CascadeMode.Stop;` (rule 11) |
+| `RuleForEach(x => x.Lines).SetValidator(lineValidator)` when an item can be null | `RuleForEach(x => x.Lines).NotNull().WithErrorCode("order.line_required").SetValidator(lineValidator)` |
 | `RuleFor(x => x.Address).InjectValidator();` | Inject `IValidator<Address>` and call `SetValidator(addressValidator)` |
 | `Transform(x => x.Name, n => n.Trim())` | Project the value in the rule expression or in the request mapping |
 | `.NotEmpty().MaximumLength(32).WithErrorCode("sku_invalid")` for both checks | `.NotEmpty().WithErrorCode("order.sku_required").MaximumLength(32).WithErrorCode("order.sku_too_long")` |
@@ -129,16 +133,27 @@ The full list is in `references/review-checklist.md`.
 5. The lifetime is the default, or no validator takes a scoped service. tool (FV-SINGLETON) and judge
 6. One library per request type: no DataAnnotations and no `AddValidation` filter next to a validator. judge
 7. Each rule that a client acts on has its own `WithErrorCode`. The codes reach the response (API-20). tool (FV-MANUAL-DICTIONARY) and judge
-8. `RuleLevelCascadeMode = CascadeMode.Stop` where a check needs an earlier one. tool (FV-CASCADE-DEPENDENT)
-9. Child validators come in through the constructor and `SetValidator`. tool (CS1061 for `InjectValidator`)
+8. `RuleLevelCascadeMode = CascadeMode.Stop` where a check needs an earlier one. No `ClassLevelCascadeMode = CascadeMode.Stop`. tool (FV-CASCADE-DEPENDENT, FV-CLASS-CASCADE-STOP)
+9. Child validators come in through the constructor and `SetValidator`. A `RuleForEach` with items that can be null has `NotNull()`. tool (CS1061 for `InjectValidator`) and judge
 10. No state rule or uniqueness check as the only guard in a validator. judge
 11. Limits come from the options class, not from a second literal. judge
 12. Tests use the real validator or `InlineValidator<T>`, not a mock. tool (FV-MOCK-VALIDATOR)
 13. The endpoint documents its 400 (`ProducesValidationProblem`, `dev-stack:aspnetcore-openapi`). judge
 
+## Existing code
+
+Stack rule 3 applies. For this skill, check these defects in the existing code that the change touches:
+
+- A sync `Validate` call on a validator that gets a `MustAsync` rule, also in an import or a worker without an HTTP test (rule 5).
+- A filter without a null check, or that returns `ToDictionary()` without the codes (rules 6 and 8).
+- DataAnnotations on a type that gets a validator while `AddValidation()` is on (rule 7).
+- One `WithErrorCode` after a chain of validators (rule 9), and a limit that the handler checks a second time (rule 15).
+
 ## Report
 
 End with the report of stack rule 8 (`references/stack-rules.md`). Output text follows `references/language.md`.
+
+After a change to an endpoint, add a table of the error codes below the "Changes" table. Give each code that a client can get from the endpoint, with its field (the property path, for example `Lines[0].Sku`) and the HTTP status. Also give where the code is in the response (the `errorCodes` extension, decision API-20). Include the existing codes that the endpoint keeps. The client team builds on this list.
 
 ## References
 

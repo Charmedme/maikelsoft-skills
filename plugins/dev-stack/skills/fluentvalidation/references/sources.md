@@ -1,6 +1,6 @@
 # Sources: fluentvalidation
 
-The author checked all facts on 2026-10-19, unless a line says otherwise. Look them up again when `metadata.verified` in `SKILL.md` is older than 6 months.
+The author checked all facts on 2026-10-19, unless a line says otherwise. The versions and the cascade facts were checked again on 2026-10-25. Look them up again when `metadata.verified` in `SKILL.md` is older than 6 months.
 
 ## Contents
 
@@ -11,13 +11,14 @@ The author checked all facts on 2026-10-19, unless a line says otherwise. Look t
 
 ## Versions
 
-| Item | Version on 2026-10-19 | Source |
+| Item | Version on 2026-10-25 | Source |
 |------|-----------------------|--------|
-| FluentValidation | 12.2.0 (2026-10-10), target `net8.0`, Apache-2.0 | https://www.nuget.org/packages/FluentValidation |
+| FluentValidation | 12.2.0 (2026-10-10, still the newest on 2026-10-25), target `net8.0`, Apache-2.0 | https://www.nuget.org/packages/FluentValidation |
 | FluentValidation.DependencyInjectionExtensions | 12.2.0 | https://www.nuget.org/packages/FluentValidation.DependencyInjectionExtensions |
 | FluentValidation.AspNetCore | 11.3.1, deprecated on NuGet (reason "Legacy") | https://www.nuget.org/packages/FluentValidation.AspNetCore |
 | SharpGrip.FluentValidation.AutoValidation.Endpoints | 2.0.0, MIT (not used, decision API-08) | https://www.nuget.org/packages/SharpGrip.FluentValidation.AutoValidation.Endpoints |
-| Microsoft.Extensions.Validation (built-in `AddValidation`) | 10.0.13 | https://learn.microsoft.com/aspnet/core/fundamentals/minimal-apis |
+| Microsoft.Extensions.Validation (built-in `AddValidation`) | 10.0.13 (11.0.0 is at rc.2 only) | https://www.nuget.org/packages/Microsoft.Extensions.Validation |
+| .NET 10 | runtime 10.0.13 (2026-10-13), SDK 10.0.402 | https://dotnetcli.blob.core.windows.net/dotnet/release-metadata/10.0/releases.json |
 
 ## Documentation
 
@@ -43,7 +44,10 @@ The author compiled and ran these on 2026-10-19 with SDK 10.0.402 and FluentVali
 - `SetValidator` on a null child and `RuleForEach` on a null collection give no error.
 - `CascadeMode = CascadeMode.StopOnFirstFailure` (CS0118, CS0117), `InjectValidator` (CS1061), `Transform` (CS0103), and `ShouldHaveAnyValidationError` (CS1061) do not compile with 12.2.0.
 - With `AddValidation()` and DataAnnotations on the request, the built-in filter answered the 400 before the FluentValidation filter: no codes in the response.
-- A minimal API with an endpoint filter and a JSON `null` body: in Production the filter ran with a null argument. In Development `BadHttpRequestException` ("Implicit body inferred ... but no body was provided") came first, and `UseExceptionHandler` returned 500. A nullable body parameter reached the filter as null in both environments.
+- A minimal API with an endpoint filter and a JSON `null` body: in Production the filter ran with a null argument. In Development `BadHttpRequestException` came first (message "Implicit body inferred ..."). Then `UseExceptionHandler` returned 500. A nullable body parameter reached the filter as null in both environments.
+- `ClassLevelCascadeMode = CascadeMode.Stop`: an invalid email and an empty name gave only the email error (2026-10-25). Source: `AbstractValidator.cs` breaks the rule loop when a rule adds a failure, https://github.com/FluentValidation/FluentValidation/blob/main/src/FluentValidation/AbstractValidator.cs
+- `RuleForEach(...).SetValidator(...)` with a null item gave no error. `.NotNull()` before it gave `Lines[0]` `NotNullValidator` (2026-10-25).
+- `RuleForEach` with `RuleLevelCascadeMode = CascadeMode.Stop` stopped at the first bad item: `[null, {Sku: ""}]` gave only the `Lines[0]` error. Without `Stop`, both items had an error (2026-10-25). Source: `CollectionPropertyRule.cs` jumps out of the item loop, https://github.com/FluentValidation/FluentValidation/blob/main/src/FluentValidation/Internal/CollectionPropertyRule.cs
 - `FluentValidation.AspNetCore` 11.3.1 restores and runs next to FluentValidation 12.2.0, and gives no build warning. Only `dotnet list package --deprecated` shows it.
 
 ## Credits
