@@ -2,7 +2,7 @@
 
 Read this file only when the project targets `net11.0`. For `net10.0`, the rules in `SKILL.md` apply without change.
 
-Status on 2026-10-16: .NET 11 is at RC 2 (11.0.0-rc.2, 2026-10-13), with "go-live" support. Microsoft expects GA in November 2026. .NET 11 is STS (24 months of support). .NET 10 is LTS. It stays the default for new projects (decision SOL-01 in `dev-stack:csharp`). The facts in this file come from the RC 2 documentation. Check them again after GA (stack rule 2). This file has no code examples, because the .NET 11 SDK is not installed in the authoring environment.
+Status on 2026-10-27: .NET 11 is at RC 3 (11.0.0-rc.3, 2026-10-25), with "go-live" support. Microsoft expects GA in November 2026. .NET 11 is STS (24 months of support). .NET 10 is LTS. It stays the default for new projects (decision SOL-01 in `dev-stack:csharp`). The facts in this file come from the RC 2 documentation, and the list of breaking changes of 2026-10-27 adds no item for this file. Check the facts again after GA (stack rule 2). This file has no code examples, because the .NET 11 SDK is not installed in the authoring environment.
 
 ## Contents
 
@@ -41,7 +41,7 @@ Status on 2026-10-16: .NET 11 is at RC 2 (11.0.0-rc.2, 2026-10-13), with "go-liv
 ## Endpoints and middleware
 
 - `[ShortCircuit]` attribute: the attribute form of `.ShortCircuit()`. It works on minimal API handlers and on controllers. `.ShortCircuit()` still works.
-- ASP.NET Core 11 removes the `ConcurrencyLimiter` middleware (obsolete since ASP.NET Core 8, ASP0025). There is no 11.x package. Use `AddRateLimiter` with `AddConcurrencyLimiter("policy", ...)` and `RequireRateLimiting("policy")`.
+- ASP.NET Core 11 removes the `ConcurrencyLimiter` middleware (obsolete since ASP.NET Core 8 with warning CS0618). There is no 11.x package. Use `AddRateLimiter` with `AddConcurrencyLimiter("policy", ...)` and `RequireRateLimiting("policy")`.
 - The rate limiter returns accurate `Retry-After` headers.
 - ASP.NET Core 11 removes the MVC compatibility options. Code that sets `CompatibilityVersion` or old MVC compatibility switches fails to compile.
 - Response compression always adds `Vary: Accept-Encoding` when it is on.

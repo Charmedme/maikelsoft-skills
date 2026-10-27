@@ -37,6 +37,11 @@ builder.Services.AddApiVersioning(options =>
     {
         options.ReportApiVersions = true;
         options.ApiVersionReader = new UrlSegmentApiVersionReader();
+        options.Policies.Deprecate(1.0)
+            .Effective(2026, 12, 31)
+            .Link("https://developer.example.com/orders/versioning")
+            .Title("Versioning policy")
+            .Type("text/html");
         options.Policies.Sunset(1.0)
             .Effective(2027, 6, 30)
             .Link("https://developer.example.com/orders/versioning")
@@ -100,7 +105,12 @@ internal static class OrderEndpointsV2
 public sealed record OrderResponseV2(Guid Id, DateTimeOffset CreatedAt);
 ```
 
-The hand-written form `AddOpenApi("v1", o => o.ShouldInclude = ...)` per version builds, but the analyzers warn: AV0029 ("AddApiVersioning().AddOpenApi() registers the OpenAPI services that describe API versions") and AV0030 ("Call MapOpenApi().WithDocumentPerVersion()"). The analyzer also reports AV0029 in a generated file of the XML comment generator when this form is used. Replace the form; do not suppress the warning.
+The hand-written form `AddOpenApi("v1", o => o.ShouldInclude = ...)` per version builds, but the analyzers warn:
+
+- AV0029: "AddApiVersioning().AddOpenApi() registers the OpenAPI services that describe API versions".
+- AV0030: "Call MapOpenApi().WithDocumentPerVersion()".
+
+With this form, the analyzer also reports AV0029 in a generated file of the XML comment generator. Replace the form. Do not suppress the warning.
 
 ## URL segment rules
 
@@ -113,17 +123,20 @@ The hand-written form `AddOpenApi("v1", o => o.ShouldInclude = ...)` per version
 
 1. Mark the old version: `HasDeprecatedApiVersion(1.0)` on its group. The document marks its operations `deprecated: true`.
 2. Turn on `ReportApiVersions`. Responses then carry `api-supported-versions` and `api-deprecated-versions`.
-3. Add a sunset policy with a date in the future and a `text/html` link to the versioning policy. Responses then carry the `Sunset` and `Link` headers. The date is at least 6 months after the deprecation, 12 months for partners (decision API-18).
-4. Tell the consumers. The header alone is not a notice.
-5. Remove the version after the sunset date, in a release of its own.
+3. Add a deprecation policy: `Policies.Deprecate(1.0).Effective(...)` with a `text/html` link. Responses of that version then carry the `Deprecation` header (RFC 9745, `@<unix time>`) and a `Link` with `rel="deprecation"`.
+4. Add a sunset policy with a date in the future and a `text/html` link to the versioning policy. Responses then carry the `Sunset` header and a `Link` with `rel="sunset"`. The date is at least 6 months after the deprecation, 12 months for partners (decision API-18).
+5. Tell the consumers. The header alone is not a notice.
+6. Remove the version after the sunset date, in a release of its own.
 
 A sunset date in the past gives the clients no window. In a review, it is a finding.
+
+`Effective(year, month, day)` uses the local time zone of the server (tested: `Effective(2027, 6, 30)` on a server in UTC+2 sent `Sunset: Tue, 29 Jun 2027 22:00:00 GMT`). For an exact UTC date, pass a `DateTimeOffset` with offset zero.
 
 ## Contracts per version
 
 - Each version has its own request and response records (`OrderResponseV1`, `OrderResponseV2`). A shared record changes each version when one version changes.
 - Do not return EF entities. A column change then changes the contract.
-- Put the records of a version in their own folder or namespace (`Orders/V1`, `Orders/V2`), so that a change in a pull request shows the version that it touches.
+- Put the records of a version in their own folder or namespace (`Orders/V1`, `Orders/V2`). Then a pull request shows the version that a change touches.
 - Map from the domain to each version with its own `ToResponseV1()` and `ToResponseV2()` methods.
 
 ## Breaking changes
@@ -152,4 +165,4 @@ oasdiff (`references/build-time-document.md`) finds most of these changes. A jud
 
 ## .NET 11
 
-ASP.NET Core 11 moves `Microsoft.AspNetCore.OpenApi` to Microsoft.OpenApi 3.x. `Asp.Versioning.OpenApi` 10.2.3 depends on Microsoft.OpenApi `[2.7.5, 3.0.0)`. A project with this package stays on .NET 10 until a new Asp.Versioning release supports 3.x. Look up the current release before an upgrade (stack rule 2).
+ASP.NET Core 11 moves `Microsoft.AspNetCore.OpenApi` to Microsoft.OpenApi 3.x. `Asp.Versioning.OpenApi` 10.2.3 depends on Microsoft.OpenApi `[2.7.5, 3.0.0)`. A project with this package stays on .NET 10 until a new Asp.Versioning release supports 3.x. Look up the current release before an upgrade (stack rule 2). On 2026-10-27, Asp.Versioning 10.2.3 is still the newest release.

@@ -2,8 +2,8 @@
 name: aspnetcore
 description: Host-level .NET code for ASP.NET Core 10 and worker services. Covers the Generic Host, DI lifetimes, options, middleware order, minimal API endpoints, ProblemDetails, typed HTTP clients with resilience, health checks, background services, and the wiring of CORS, rate limits, and authentication. Use when the user writes or reviews Program.cs, endpoints, controllers, middleware, DI registrations, options classes, HttpClient code, BackgroundService or IHostedService, or health checks in a project with Microsoft.NET.Sdk.Web or Microsoft.Extensions.Hosting. Not for C# language rules (dev-stack:csharp), security rules (dev-stack:secure-coding), OpenAPI and versioning detail (dev-stack:aspnetcore-openapi), FluentValidation rules (dev-stack:fluentvalidation), EF Core (dev-stack:efcore), logging setup (dev-stack:dotnet-observability), or Aspire AppHost wiring.
 metadata:
-  verified: "2026-10-16"
-  versions: ".NET 10 (10.0.13, SDK 10.0.402), ASP.NET Core 10, Microsoft.Extensions.Http.Resilience 10.11.0, .NET 11 RC 2 in references/net11.md"
+  verified: "2026-10-27"
+  versions: ".NET 10 (10.0.14, SDK 10.0.403), ASP.NET Core 10, Microsoft.Extensions.Http.Resilience 10.11.0, .NET 11 RC 3 in references/net11.md"
 ---
 
 # ASP.NET Core and the Generic Host
@@ -15,7 +15,7 @@ This skill covers code that needs a host: `IServiceCollection`, `IHost`, `HttpCo
 1. Read `references/stack-rules.md`.
 2. Read the version gate:
    - Read `TargetFramework` in the `*.csproj` files and in `Directory.Build.props`, and the `Sdk` attribute.
-   - `net10.0`: use this file.
+   - `net10.0`: use this file. The app runs on runtime 10.0.14 or later, a security release of 2026-10-25. Check the base image tag or the runtime version in CI.
    - `net11.0`: also read `references/net11.md`. Its rules apply only when the project targets `net11.0`.
    - `net8.0` or `net9.0`: the rules apply, except `AddValidation` (rule 24) and the .NET 10 behavior changes (rules 9, 22, 34). Both versions end support on 2026-11-10. Tell the human.
    - A ServiceDefaults project (Aspire) exists: it already adds resilience, health checks, and OpenTelemetry. Do not add them a second time. Use the `aspire` skill for that project.
@@ -58,7 +58,7 @@ Existing code keeps its style. For new code, use the accepted decision in `docs/
 
 ### Host and DI
 
-1. Use `WebApplication.CreateBuilder` for web apps and `Host.CreateApplicationBuilder` for workers. `WebHost` and `Startup` classes are obsolete in .NET 10.
+1. Use `WebApplication.CreateBuilder` for web apps and `Host.CreateApplicationBuilder` for workers. `WebHost` and `WebHostBuilder` are obsolete in .NET 10. A `Startup` class still works, but it is the old model.
 2. Register the services of a feature in `AddX(this IServiceCollection)` and map its endpoints in `MapX(this IEndpointRouteBuilder)`. `Program.cs` then stays short.
 3. Turn on `ValidateScopes` and `ValidateOnBuild` in each environment with `builder.Host.UseDefaultServiceProvider`. Production turns them off by default, so a captive dependency shows only under load.
 4. A singleton or a hosted service does not take a scoped service. Create a scope per unit of work with `IServiceScopeFactory.CreateAsyncScope()`.
@@ -196,7 +196,7 @@ Run the tools in this order. Fix each error. For each warning, fix it or give th
 
 The full list is in `references/review-checklist.md`.
 
-1. `Program.cs` uses `WebApplication.CreateBuilder` or `Host.CreateApplicationBuilder`. tool (ASPDEPR008, ASP-WEBHOST)
+1. `Program.cs` uses `WebApplication.CreateBuilder` or `Host.CreateApplicationBuilder`. tool (ASPDEPR004, ASPDEPR008, ASP-WEBHOST)
 2. No `BuildServiceProvider()` during registration. tool (ASP0000, ASP-BUILD-PROVIDER)
 3. No scoped service in a singleton or hosted service, and `ValidateOnBuild` is on. judge
 4. Each options class binds a section, validates it, and uses `ValidateOnStart`. tool (ASP-OPTIONS-NO-VALIDATE, ASP-OPTIONS-CONFIGURE-SECTION)

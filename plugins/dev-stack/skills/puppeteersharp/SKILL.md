@@ -2,8 +2,8 @@
 name: puppeteersharp
 description: HTML to PDF and page screenshots in .NET with PuppeteerSharp and headless Chrome. Use when code or a review renders an invoice, a report, or another HTML page to PDF, or touches PuppeteerSharp, Puppeteer.LaunchAsync, BrowserFetcher, chrome-headless-shell, PdfDataAsync, SetContentAsync, GoToAsync, --no-sandbox, Chrome in a Docker image, or user text in rendered HTML. Not for end-to-end UI tests with Playwright (dev-stack:dotnet-testing), PDF libraries without a browser (QuestPDF, PdfPig), or Node Puppeteer.
 metadata:
-  verified: "2026-10-25"
-  versions: "PuppeteerSharp 25.15.0 (Chrome.DefaultBuildId 155.0.8059.84), chrome-headless-shell 155, .NET 10.0.13 (SDK 10.0.402), aspnet:10.0 (Ubuntu 24.04) images"
+  verified: "2026-10-27"
+  versions: "PuppeteerSharp 25.15.0 (Chrome.DefaultBuildId 155.0.8059.84), chrome-headless-shell 155, .NET 10.0.14 (SDK 10.0.403), aspnet:10.0 (Ubuntu 24.04) images"
 ---
 
 # PuppeteerSharp
@@ -14,7 +14,7 @@ HTML to PDF with PuppeteerSharp and headless Chrome: the browser lifetime, pages
 
 1. Read `references/stack-rules.md`.
 2. Find the `PuppeteerSharp` version in `*.csproj` or `Directory.Packages.props`. Each version has one Chrome build: `PuppeteerSharp.BrowserData.Chrome.DefaultBuildId` (155.0.8059.84 for 25.15.0, 155.0.8059.79 for 25.14.0). Upgrade the package and the Chrome build together.
-3. Find where Chrome comes from: `ExecutablePath`, the environment variable `PUPPETEER_EXECUTABLE_PATH`, or `BrowserFetcher`. Without the first two, PuppeteerSharp looks in `<app folder>/ChromeHeadlessShell/Linux-<build>/`.
+3. Find where Chrome comes from: `ExecutablePath`, the environment variable `PUPPETEER_EXECUTABLE_PATH`, or `BrowserFetcher`. Without the first two, PuppeteerSharp looks in the app folder. With `HeadlessMode.Shell`, the path is `<app folder>/ChromeHeadlessShell/Linux-<build>/`. With the default `HeadlessMode.True`, it uses the `Chrome` folder instead.
 4. Find the content: own templates only, or text from users (a note, a name, an address). Text from users makes the HTML untrusted.
 5. Find each `PdfOptions` in the existing code that the change touches. Find the page size of the team (for example a decision such as DOC-01). Check both against rules 15 and 16.
 

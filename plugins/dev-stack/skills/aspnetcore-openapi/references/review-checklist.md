@@ -60,7 +60,7 @@ Each check is `tool (<rule ID>)` when a tool finds it, or `judge` when a reviewe
 | 22 | One `AddOpenApi()` on the versioning builder and `MapOpenApi().WithDocumentPerVersion()`, not one document per version by hand. | tool (AV0029, AV0030) |
 | 23 | The URL segment reader has `SubstituteApiVersionInUrl = true` and no `AssumeDefaultVersionWhenUnspecified`. | tool (OAS-URL-ASSUME-DEFAULT) and judge |
 | 24 | `ReportApiVersions` is on. | judge |
-| 25 | A deprecated version has a sunset date in the future (API-18) and a `text/html` policy link. | judge |
+| 25 | A deprecated version has a deprecation policy, a sunset date in the future (API-18), and a `text/html` policy link. | judge |
 | 26 | Each version has its own request and response records. | judge |
 | 27 | A removed or renamed field, a new required field, a changed type, or a changed status code is in a new major version. | judge (oasdiff helps) |
 

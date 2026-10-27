@@ -1,11 +1,11 @@
 # Sources
 
-All sources checked on 2026-10-16. The author compiled and ran the code in `examples/` with the .NET SDK 10.0.402, MSTest 4.5.1, FluentAssertions 7.2.2, and AwesomeAssertions 9.6.0.
+All sources checked on 2026-10-16. The author compiled and ran the code in `examples/` with the .NET SDK 10.0.402, MSTest 4.5.1, FluentAssertions 7.2.2, and AwesomeAssertions 9.6.0. On 2026-10-27, the author checked the versions again on nuget.org and in the AwesomeAssertions 9.6.0 package (`lib/net47`, `lib/net6.0`, `lib/net8.0`, `lib/netstandard2.0`, `lib/netstandard2.1`). The `before` and `after` examples ran again with MSTest.Sdk 4.5.2 on SDK 10.0.113: 11 of 11 tests passed in each.
 
 ## AwesomeAssertions
 
 - Repository and FAQ (license promise, maintainers): https://github.com/AwesomeAssertions/AwesomeAssertions
-- Release notes (8.0.0 fork, 9.0.0 namespace change, 9.3.0 MSTest 4 and `ExcludingMembersNamed`, 9.6.0): https://github.com/AwesomeAssertions/AwesomeAssertions/blob/main/docs/_pages/releases.md
+- Release notes (8.0.0 fork, 9.0.0 namespace change, 9.3.0 MSTest 4 and `ExcludingMembersNamed`, 9.6.0, the next major in "Unreleased"): https://github.com/AwesomeAssertions/AwesomeAssertions/blob/main/docs/_pages/releases.md
 - Upgrading to version 9 (namespace change, global usings, no alias): https://github.com/AwesomeAssertions/AwesomeAssertions/blob/main/docs/_pages/upgradingtov9.md
 - Upgrading to version 8 (`AssertionChain`, `HttpResponseMessage` removed): https://github.com/AwesomeAssertions/AwesomeAssertions/blob/main/docs/_pages/upgradingtov8.md
 - Approved public API of 9.6.0: https://github.com/AwesomeAssertions/AwesomeAssertions/blob/9.6.0/Tests/Approval.Tests/ApprovedApi/AwesomeAssertions/net8.0.verified.txt

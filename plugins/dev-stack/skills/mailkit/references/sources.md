@@ -13,19 +13,19 @@ Checked on 2026-10-19, and again on 2026-10-25 (versions, advisories, NuGet audi
 
 ## Versions
 
-| Item | Version on 2026-10-25 | Source |
+| Item | Version on 2026-10-27 | Source |
 |------|-----------------------|--------|
 | MailKit | 4.18.2 (2026-10-23), MIT. Depends on MimeKit 4.18.2 | [nuget.org MailKit](https://www.nuget.org/packages/MailKit) |
 | MimeKit | 4.18.2 (2026-10-21), MIT. Depends on System.Security.Cryptography.Pkcs 10.0.13 for each target. Versions 4.15.0 to 4.18.1 depend on Pkcs 10.0.0 for `net10.0` and 8.0.1 for `net8.0`. Both have the two Pkcs advisories | [nuget.org MimeKit](https://www.nuget.org/packages/MimeKit) |
 | MailKit 5.0 | Not released, also not as a prerelease. The release notes list 5.0.0 as unreleased (MailKit depends on `MimeKit.Core`, S/MIME needs `MimeKit.Cryptography`) | [nuget.org MailKit versions](https://www.nuget.org/packages/MailKit#versions-body-tab) |
-| System.Security.Cryptography.Pkcs | 10.0.13 (the pin) | [nuget.org](https://www.nuget.org/packages/System.Security.Cryptography.Pkcs) |
-| Pkcs advisories | GHSA-2fmv-rv2c-59x7 (moderate), GHSA-846f-f764-76mx (high), on Pkcs 8.0.0, 8.0.1, 9.0.0, 10.0.0 and 10.0.12 (the versions checked). Not on 10.0.13. Pkcs 10.0.13 is the newest stable (11.0 is a release candidate) | [GHSA-2fmv-rv2c-59x7](https://github.com/advisories/GHSA-2fmv-rv2c-59x7), [GHSA-846f-f764-76mx](https://github.com/advisories/GHSA-846f-f764-76mx) |
+| System.Security.Cryptography.Pkcs | 10.0.14 (2026-10-25) is the newest stable. A pin is 10.0.13 or later | [nuget.org](https://www.nuget.org/packages/System.Security.Cryptography.Pkcs) |
+| Pkcs advisories | GHSA-2fmv-rv2c-59x7 (moderate), GHSA-846f-f764-76mx (high), on Pkcs 8.0.0, 8.0.1, 9.0.0, 10.0.0 and 10.0.12 (the versions checked). Not on 10.0.13 (the MimeKit 4.18.2 dependency) and 10.0.14. No newer advisory on 2026-10-27 (11.0 is a release candidate) | [GHSA-2fmv-rv2c-59x7](https://github.com/advisories/GHSA-2fmv-rv2c-59x7), [GHSA-846f-f764-76mx](https://github.com/advisories/GHSA-846f-f764-76mx) |
 | CVE-2026-41319 | MailKit below 4.16.0, moderate (NU1902), published 2026-04-17. STARTTLS response injection: a man in the middle can force a weaker SASL mechanism. Applies to `StartTls` and `StartTlsWhenAvailable`. Fixed in 4.16.0 (2026-04-15, "reset internal buffers after upgrading to SSL/TLS"). nuget.org flags 4.15.1 and lower | [GHSA-9j88-vvj5-vhgr](https://github.com/advisories/GHSA-9j88-vvj5-vhgr) |
 | CVE-2026-30227 | MimeKit 4.15.0 and older, moderate (NU1902). CR LF in a quoted local-part injects SMTP commands. Fixed in 4.15.1 (MailKit 4.15.1 depends on it) | [GHSA-g7hc-96xr-gvvx](https://github.com/advisories/GHSA-g7hc-96xr-gvvx) |
 | Mailpit | v1.32.0 (2026-10-22), MIT. Security fixes (GHSA-379p-g4f4-hq5h, `/view/{ID}.html`). No change to the API v1 in the changelog | [Mailpit CHANGELOG](https://github.com/axllent/mailpit/blob/develop/CHANGELOG.md), [Docker Hub axllent/mailpit](https://hub.docker.com/r/axllent/mailpit) |
 | Testcontainers.Mailpit | 4.16.0 (module since 4.14.0) | [nuget.org](https://www.nuget.org/packages/Testcontainers.Mailpit) |
-| Microsoft.Identity.Client | 4.90.0 (compiled against) | [nuget.org](https://www.nuget.org/packages/Microsoft.Identity.Client) |
-| Template engines | Scriban 7.5.1 (BSD-2-Clause), Fluid.Core (MIT), Razor.Templating.Core 3.1.0 (MIT), smtp4dev (BSD-3-Clause) | nuget.org package metadata |
+| Microsoft.Identity.Client | 4.90.0 (compiled against). 4.91.1 is the newest on 2026-10-27 | [nuget.org](https://www.nuget.org/packages/Microsoft.Identity.Client) |
+| Template engines | Scriban 7.5.3 (BSD-2-Clause), Fluid.Core (MIT), Razor.Templating.Core 3.1.0 (MIT), smtp4dev (BSD-3-Clause) | nuget.org package metadata |
 
 ## MailKit and MimeKit
 
@@ -40,7 +40,8 @@ Checked on 2026-10-19, and again on 2026-10-25 (versions, advisories, NuGet audi
 - [Authenticate an IMAP, POP or SMTP connection using OAuth](https://learn.microsoft.com/exchange/client-developer/legacy-protocols/how-to-authenticate-an-imap-pop-smtp-application-by-using-oauth): `SMTP.SendAsApp`, `New-ServicePrincipal`, `Add-MailboxPermission`, the scope `https://outlook.office365.com/.default`.
 - [SMTP onboarding to App RBAC](https://learn.microsoft.com/exchange/client-developer/legacy-protocols/smtp-app-rbac-onboarding): the management role instead of mailbox permissions.
 - [Enable or disable SMTP AUTH in Exchange Online](https://learn.microsoft.com/exchange/clients-and-mobile-in-exchange-online/authenticated-client-smtp-submission)
-- [Deprecation of basic authentication in Exchange Online](https://learn.microsoft.com/exchange/clients-and-mobile-in-exchange-online/deprecation-of-basic-authentication-exchange-online): SMTP AUTH basic authentication is being retired. The final date was not firm on 2026-10-19.
+- [Deprecation of basic authentication in Exchange Online](https://learn.microsoft.com/exchange/clients-and-mobile-in-exchange-online/deprecation-of-basic-authentication-exchange-online): Microsoft retires SMTP AUTH basic authentication. The page links to the updated timeline.
+- [Updated Exchange Online SMTP AUTH basic authentication deprecation timeline](https://techcommunity.microsoft.com/blog/exchange/updated-exchange-online-smtp-auth-basic-authentication-deprecation-timeline/4489835) and Message Center MC786329, updated 2026-01-27. At the end of December 2026, basic authentication is off by default in existing tenants. In the second half of 2027, Microsoft announces the final removal date. The author checked this on 2026-10-27 (check it again before the end of December 2026). A mirror of MC786329: https://mc.merill.net/message/MC786329
 - [Render Razor components outside of ASP.NET Core](https://learn.microsoft.com/aspnet/core/blazor/components/render-components-outside-of-aspnetcore): `HtmlRenderer`.
 - [NuGet audit](https://learn.microsoft.com/nuget/concepts/auditing-packages) (2026-10-25): `NuGetAuditLevel` default `low`, `NuGetAuditMode` default `all` for `net10.0`, NU1902 is moderate and NU1903 high, `NuGetAuditSuppress` is "a last resort". And [Central package management, transitive pinning](https://learn.microsoft.com/nuget/consume-packages/central-package-management#transitive-pinning).
 

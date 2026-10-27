@@ -2,8 +2,8 @@
 name: dotnet-analyzers
 description: Code quality tools for .NET and the agent loop that uses them. Covers SDK analyzers (AnalysisLevel), EnforceCodeStyleInBuild, warnings as errors, Roslynator, Meziantou, VS Threading analyzers, BannedApiAnalyzers, .editorconfig, Directory.Build.props, dotnet format, and SARIF. Use when C# code must be checked or cleaned before a commit, a build shows CA, IDE, RCS, MA, VSTHRD, RS, or MSTEST warnings, a task touches .editorconfig, Directory.Build.props, NoWarn, pragma warning, analyzer packages, or warnings as errors, or a repo needs an analyzer baseline. Not for the C# language rules (dev-stack:csharp), test code (dev-stack:dotnet-testing), writing a new Roslyn analyzer, or linters for other languages.
 metadata:
-  verified: "2026-10-16"
-  versions: ".NET SDK 10.0.402 (Roslyn 5.9), Roslynator.Analyzers 5.0.1, Roslynator CLI 1.0.1, Meziantou.Analyzer 3.0.303, Microsoft.VisualStudio.Threading.Analyzers 18.12.1, Microsoft.CodeAnalysis.BannedApiAnalyzers 5.6.0, MSTest 4"
+  verified: "2026-10-27"
+  versions: ".NET SDK 10.0.403 (tested on 10.0.402 with Roslyn 5.9), Roslynator.Analyzers 5.0.1, Roslynator CLI 1.0.1, Meziantou.Analyzer 3.0.317, Microsoft.VisualStudio.Threading.Analyzers 18.12.1, Microsoft.CodeAnalysis.BannedApiAnalyzers 5.6.0, MSTest 4"
 ---
 
 # .NET analyzers
@@ -16,7 +16,7 @@ This skill covers the tools that keep .NET code clean and the same in each run. 
 2. Read the SDK version in `global.json` (else `dotnet --version`) and the analyzer packages in `Directory.Packages.props` or `Directory.Build.props`. Done when you can name the SDK major and each analyzer version.
 3. Version gate:
    - SDK 10: use this skill as written.
-   - SDK 11: `AnalysisLevel=latest` uses the .NET 11 rules (a .NET 10 SDK bug used .NET 9 rules). CA1873 no longer flags property access: remove the CA1873 line from `.editorconfig`.
+   - SDK 11: `AnalysisLevel=latest` uses the .NET 11 rules (an earlier SDK bug used .NET 9 rules). CA1873 no longer flags property access, and by default it flags only log calls at level Information and lower: remove the CA1873 line from `.editorconfig`.
    - Roslynator CLI 1.0.1 runs on Roslyn 5.0. It cannot load an analyzer built for a newer Roslyn, and it skips that analyzer without an error. Use the build as the gate, never the CLI.
 4. In an existing repo, read `references/adoption.md` before you change a severity or a build property.
 

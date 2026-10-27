@@ -80,7 +80,7 @@
         "**/*.cs"
       ],
       "pattern": "\\bWebHost\\.CreateDefaultBuilder\\s*\\(|\\bnew\\s+WebHostBuilder\\s*\\(",
-      "message": "WebHost and WebHostBuilder are obsolete in .NET 10 (ASPDEPR008).",
+      "message": "WebHost and WebHostBuilder are obsolete in .NET 10 (WebHostBuilder: ASPDEPR004, WebHost: ASPDEPR008).",
       "fix": "Use WebApplication.CreateBuilder(args) in Program.cs.",
       "match": [
         "WebHost.CreateDefaultBuilder(args).UseStartup<Startup>();",

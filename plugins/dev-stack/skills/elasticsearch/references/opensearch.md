@@ -17,10 +17,10 @@ Decision SEARCH-04 chooses Elasticsearch 9.5. Choose OpenSearch when:
 
 ## Client
 
-| Item | Version on 2026-10-19 |
+| Item | Version on 2026-10-27 |
 |------|-----------------------|
 | OpenSearch.Client (high level) and OpenSearch.Net (low level) | 2.2.0 |
-| OpenSearch server | 3.9.0, and 2.19.6 for the 2.x line |
+| OpenSearch server | 3.9.0, and 2.19.7 (2026-10-20) for the 2.x line |
 
 `Elastic.Clients.Elasticsearch` does not work with OpenSearch: it checks the `X-Elastic-Product` header. OpenSearch.Client is a fork of NEST 7, so its API looks like NEST (`OpenSearchClient`, `ConnectionSettings`, `IsValid`), not like client 9.
 

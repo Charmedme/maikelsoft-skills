@@ -2,8 +2,8 @@
 name: csharp
 description: C# code and project conventions for .NET 10 and C# 14, with a reference for .NET 11 and C# 15. Covers nullability, records, pattern matching, async and cancellation, disposal, exceptions, TimeProvider, collections and LINQ, naming, Directory.Build.props, Central Package Management, and global.json. Use when writing, reviewing, or refactoring C# in any .NET project, when editing .csproj or props files, or when fixing async, null, or disposal bugs. Not for host, DI, endpoints, options, or HttpClient setup (dev-stack:aspnetcore), analyzer severities (dev-stack:dotnet-analyzers), test code (dev-stack:dotnet-testing), Unity C#, or .NET Framework 4.x.
 metadata:
-  verified: "2026-10-16"
-  versions: ".NET 10 (SDK 10.0.402), C# 14. Reference for .NET 11 RC 2 and C# 15."
+  verified: "2026-10-27"
+  versions: ".NET 10 (runtime 10.0.14, SDK 10.0.403), C# 14. Reference for .NET 11 RC 3 and C# 15."
 ---
 
 # C#
@@ -30,7 +30,7 @@ Existing code keeps its style (stack rule 3). For new code, these are the recomm
 
 | Area | Default | Decision |
 |------|---------|----------|
-| SDK pin | `global.json`: `10.0.402`, `rollForward: latestFeature` | SOL-05 |
+| SDK pin | `global.json`: `10.0.403`, `rollForward: latestFeature` | SOL-05 |
 | Solution shape | One project, feature folders | SOL-01, SOL-02 |
 | Build policy | `Directory.Build.props`: `net10.0`, `Nullable`, `ImplicitUsings`, `AnalysisLevel latest-recommended`, no `LangVersion` | SOL-03 |
 | Warnings | Nullable warnings are errors. All warnings are errors in CI. | SOL-06 |

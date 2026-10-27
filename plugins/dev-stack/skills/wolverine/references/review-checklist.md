@@ -49,7 +49,7 @@ Each check is `tool (<rule ID>)` when a tool finds it, or `judge` when a reviewe
 
 | # | Check | Type |
 |---|-------|------|
-| 18 | `UseQuorumQueues()` and both publisher confirm flags on the RabbitMQ transport. | judge |
+| 18 | `UseQuorumQueues()` and both publisher confirm flags on the RabbitMQ transport. WolverineFx 6.51.3 or later. Quorum queues of a durable inbox have delivery limit -1 (`DeliveryLimitForDurableQuorumQueues(-1)` or a broker policy). | judge |
 | 19 | The topology is declared (`AutoProvision()` or by operations). The exchange type fits the consumers (fanout is the default). A queue or exchange that another team owns is `ExternallyOwned()`. | judge |
 | 20 | One dead-letter queue per service with `CustomizeDeadLetterQueueing`. | judge |
 | 21 | The listener mode fits each endpoint. No `BufferedInMemory` for business messages. | judge |

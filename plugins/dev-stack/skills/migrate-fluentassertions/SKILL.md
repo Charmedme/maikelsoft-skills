@@ -3,8 +3,8 @@ name: migrate-fluentassertions
 description: Migration of a .NET test project from FluentAssertions (version 5, 6, or 7) to AwesomeAssertions 9, step by step, with a build, a test run, and an assertion count after each step. A person starts it, because it changes packages. Use when the user asks to replace FluentAssertions with AwesomeAssertions, to move off FluentAssertions because of the version 8 license, or to remove the FluentAssertions MSTest 4 bridge. Not for writing new tests (dev-stack:dotnet-testing), an upgrade to FluentAssertions 8, or a move to Shouldly or MSTest Assert.
 disable-model-invocation: true
 metadata:
-  verified: "2026-10-16"
-  versions: "From FluentAssertions 5.x, 6.x, 7.x (7.2.2) to AwesomeAssertions 9.6.0. MSTest 4.5.1, .NET 10 (SDK 10.0.402)."
+  verified: "2026-10-27"
+  versions: "From FluentAssertions 5.x, 6.x, 7.x (7.2.2) to AwesomeAssertions 9.6.0. MSTest 4.5.2, .NET 10 (SDK 10.0.403)."
 ---
 
 # Migrate FluentAssertions to AwesomeAssertions
@@ -21,7 +21,7 @@ A procedure that moves a test project from FluentAssertions to AwesomeAssertions
    | FluentAssertions version per test project | `*.csproj`, `Directory.Packages.props` |
    | Companion packages | `FluentAssertions.Web`, `FluentAssertions.Json`, `FluentAssertions.Analyzers` |
    | Test framework and version | `MSTest.Sdk` in `global.json`, `MSTest*`, `xunit*`, `NUnit*` packages |
-   | Target framework | `TargetFramework` (AwesomeAssertions 9 targets .NET 8, .NET Standard 2.0 and 2.1, .NET Framework 4.7) |
+   | Target framework | `TargetFramework` (AwesomeAssertions 9.6 targets .NET 6, .NET 8, .NET Standard 2.0 and 2.1, .NET Framework 4.7) |
 
 3. Read `references/api-changes.md` before step 4. A version 5 project also needs the "From FluentAssertions 5" section.
 4. Read `references/decisions.md`. TEST-02 must have the answer "AwesomeAssertions" before you change a package.
@@ -31,7 +31,7 @@ A procedure that moves a test project from FluentAssertions to AwesomeAssertions
 | Area | Default | Decision |
 |------|---------|----------|
 | Assertion library after the migration | AwesomeAssertions 9.6.0 | TEST-02 |
-| Version pin | Exact version `9.6.0`, updates by the dependency bot | TEST-02 |
+| Version pin | Exact version `9.6.0`, updates by the dependency bot. On .NET 6, .NET 7, or .NET Framework below 4.7.2: `[9.6.0,10.0.0)`, because the next major version drops these targets. | TEST-02 |
 
 ## Rules
 
@@ -47,7 +47,7 @@ A procedure that moves a test project from FluentAssertions to AwesomeAssertions
 
 Stop and tell the human when one of these is true:
 
-- The project targets .NET 6, .NET 7, or .NET Framework below 4.7, and cannot move. AwesomeAssertions 9 does not target them.
+- The project targets a framework that .NET Standard 2.0 does not support (for example .NET Framework 4.6 or older), and cannot move. AwesomeAssertions 9 does not support it.
 - The project has many custom assertion classes built on `Execute.Assertion`. Each class needs a manual rewrite to `AssertionChain`. Give the human the count first.
 - The project uses FluentAssertions 8 with a paid license. The license is not the problem then.
 - A release is close, and the test suite is the safety net for it. Migrate after the release.

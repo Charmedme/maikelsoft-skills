@@ -2,8 +2,8 @@
 name: fluentvalidation
 description: Validators with FluentValidation 12 in .NET code. Covers rules, cascade mode, error codes, child and collection validators, async rules, DI registration, the call from a minimal API endpoint filter, a controller, or a worker, the error response with stable codes, and validator tests. Use when code or a review touches AbstractValidator, RuleFor, RuleForEach, MustAsync, WithErrorCode, CascadeMode, SetValidator, IValidator, ValidateAsync, AddValidatorsFromAssemblyContaining, TestValidate, InlineValidator, FluentValidation.AspNetCore, or a move from DataAnnotations or AddValidation to FluentValidation. Not for the built-in AddValidation with DataAnnotations alone, ProblemDetails wiring, or endpoint design (dev-stack:aspnetcore), options validation at startup, or domain invariants inside entities (dev-stack:csharp).
 metadata:
-  verified: "2026-10-25"
-  versions: "FluentValidation 12.2.0 and FluentValidation.DependencyInjectionExtensions 12.2.0 (net8.0 and later), .NET 10 (SDK 10.0.402)"
+  verified: "2026-10-27"
+  versions: "FluentValidation 12.2.0 and FluentValidation.DependencyInjectionExtensions 12.2.0 (net8.0 and later), .NET 10 (SDK 10.0.403)"
 ---
 
 # FluentValidation
@@ -40,7 +40,7 @@ Existing code keeps its style. For new code, use the accepted decision in `docs/
 
 ### Packages and registration
 
-1. Reference `FluentValidation` and `FluentValidation.DependencyInjectionExtensions` with the same 12.x version. Do not add `FluentValidation.AspNetCore`: its owner deprecated it, it works for MVC only, and it runs async rules synchronously.
+1. Reference `FluentValidation` and `FluentValidation.DependencyInjectionExtensions` with the same 12.x version. Do not add `FluentValidation.AspNetCore`: its owner deprecated it, and it works for MVC only. Its auto-validation cannot run async rules: a validator with an async rule throws `AsyncValidatorInvokedSynchronouslyException` at run time.
 2. Register with `services.AddValidatorsFromAssemblyContaining<T>()` and `using FluentValidation;`. The namespace `FluentValidation.DependencyInjectionExtensions` does not exist, although a docs page shows it (CS0234).
 3. Make validators `public`, or pass `includeInternalTypes: true`. The scan skips `internal` validators, and the gap shows only at runtime as a DI error.
 4. Keep the default lifetime (scoped). A singleton validator that takes a `DbContext` or another scoped service holds one instance for all requests.

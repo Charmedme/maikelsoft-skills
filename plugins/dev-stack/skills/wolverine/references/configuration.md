@@ -1,6 +1,11 @@
 # Configuration
 
-The full `UseWolverine` setup for a web service with EF Core on PostgreSQL and the RabbitMQ transport, then the parts one by one. The code compiles with WolverineFx 6.51.0 on .NET 10. The `Program.cs` below passed tests with a real RabbitMQ 4.3 broker: a cancel command, a business error that is not retried, a quorum queue, and a message that reached the exchange after the broker was down and the service restarted.
+The full `UseWolverine` setup for a web service with EF Core on PostgreSQL and the RabbitMQ transport, then the parts one by one. The code compiles with WolverineFx 6.51.0 on .NET 10. The line `.DeliveryLimitForDurableQuorumQueues(-1)` needs 6.51.3 or later, and compiled with 6.56.0 on 2026-10-27. Use 6.51.3 or later in a project. The `Program.cs` below passed these tests with a real RabbitMQ 4.3 broker:
+
+- A cancel command.
+- A business error that is not retried.
+- A quorum queue.
+- A message that reached the exchange after the broker was down and the service restarted.
 
 ## Contents
 
@@ -37,6 +42,8 @@ builder.UseWolverine(opts =>
 
     opts.UseRabbitMq(new Uri(rabbitMq))
         .UseQuorumQueues()
+        // The durable inbox owns the retries. No broker limit on its quorum queues.
+        .DeliveryLimitForDurableQuorumQueues(-1)
         .ConfigureChannelCreation(o =>
         {
             o.PublisherConfirmationsEnabled = true;
@@ -86,6 +93,7 @@ The configuration values are read when the builder runs. `WebApplicationFactory`
 | Setting | Default | Set |
 |---------|---------|-----|
 | Queue type | classic | `.UseQuorumQueues()` |
+| `x-delivery-limit` on a quorum queue of a durable inbox | none, so the broker default of 20 applies. Wolverine logs a startup warning | `.DeliveryLimitForDurableQuorumQueues(-1)`, or `.DeliveryLimit(-1)` on one listener (6.51.3 or later) |
 | Publisher confirms | off | `.ConfigureChannelCreation(o => { o.PublisherConfirmationsEnabled = true; o.PublisherConfirmationTrackingEnabled = true; })` |
 | Topology | not declared | `.AutoProvision()`, or declared by operations |
 | Dead-letter queue | one shared `wolverine-dead-letter-queue` | `.CustomizeDeadLetterQueueing(new DeadLetterQueue("{service}.dlq"))` |

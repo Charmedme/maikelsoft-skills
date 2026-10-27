@@ -96,6 +96,7 @@ public async Task SendStatusMailAsync(string recipient, string customerName, str
 - TLS mode: `SslOnConnect` on port 465, `StartTls` on port 587. `Auto` maps port 587 to `StartTlsWhenAvailable`. That mode continues in plain text when the server does not offer STARTTLS. `None` is for a local test server only.
 - Do not set `ServerCertificateValidationCallback` to accept everything. Install `ca-certificates` in the container.
 - MimeKit 4.15.0 and older: CR and LF in a quoted local part allowed SMTP command injection (CVE-2026-30227, GHSA-g7hc-96xr-gvvx). Use 4.15.1 or later, and reject CR and LF in addresses from users.
+- MailKit older than 4.16.0: a STARTTLS response injection allows a SASL mechanism downgrade (CVE-2026-41319, GHSA-9j88-vvj5-vhgr). Use 4.16.0 or later.
 - Use typed setters (`Subject`, `From`, `To`, `ReplyTo`), not `Headers.Add` with raw user input.
 - Do not let users choose `From`. Put the user address in `ReplyTo`. Else the app becomes a spoofing relay, and SPF, DKIM and DMARC fail.
 - HTML-encode each user value in an HTML body. Use a template engine that encodes by default. `HtmlToHtml.FilterHtml` is not an XSS filter (obsolete since MimeKit 4.17.0).

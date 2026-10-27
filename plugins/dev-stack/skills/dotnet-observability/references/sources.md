@@ -11,7 +11,7 @@ Checked on 2026-10-19, and again on 2026-10-25. The facts of this skill come fro
 
 ## Versions
 
-| Item | Version on 2026-10-25 | Source |
+| Item | Version on 2026-10-27 | Source |
 |------|-----------------------|--------|
 | OpenTelemetry .NET (SDK, Hosting, OTLP, InMemory, ASP.NET Core and Http instrumentation) | 1.20.1 (2026-10-20) | [nuget.org OpenTelemetry](https://www.nuget.org/packages/OpenTelemetry) |
 | Microsoft.OpenTelemetry (Microsoft OpenTelemetry Distro) | 1.2.0 | [nuget.org](https://www.nuget.org/packages/Microsoft.OpenTelemetry) |
@@ -23,9 +23,11 @@ Checked on 2026-10-19, and again on 2026-10-25. The facts of this skill come fro
 | Serilog, Serilog.AspNetCore, Serilog.Settings.Configuration | 4.4.0, 10.0.0, 10.0.1 | [nuget.org](https://www.nuget.org/packages/Serilog.AspNetCore) |
 | Serilog.Sinks.OpenTelemetry | 4.2.0 | [nuget.org](https://www.nuget.org/packages/Serilog.Sinks.OpenTelemetry) |
 | Serilog.Sinks.ApplicationInsights | 5.0.1, needs Microsoft.ApplicationInsights below 3.0 | [nuget.org](https://www.nuget.org/packages/Serilog.Sinks.ApplicationInsights) |
-| .NET 10 runtime and SDK | 10.0.13 and SDK 10.0.402 (2026-10-13) | [release metadata](https://builds.dotnet.microsoft.com/dotnet/release-metadata/10.0/releases.json) |
+| .NET 10 runtime and SDK | 10.0.14 and SDK 10.0.403 (a security release of 2026-10-25) | [release metadata](https://builds.dotnet.microsoft.com/dotnet/release-metadata/10.0/releases.json) |
 
-All other versions in this table did not change between 2026-10-19 and 2026-10-25 (nuget.org flat container index, stable versions only).
+All other versions in this table did not change between 2026-10-19 and 2026-10-27 (nuget.org flat container index, stable versions only).
+
+OpenTelemetry.Exporter.OpenTelemetryProtocol before 1.15.3 has 3 moderate advisories (CVE-2026-42191, CVE-2026-40891, CVE-2026-40182). An existing project on an old OTLP exporter needs 1.15.3 or later. Source: `gh api "/advisories?ecosystem=nuget&affects=OpenTelemetry.Exporter.OpenTelemetryProtocol"`, checked 2026-10-27.
 
 ## Documentation
 
@@ -64,6 +66,10 @@ With SDK 10.0.402 on 2026-10-25:
 - Azure.Monitor.OpenTelemetry.AspNetCore 1.6.0, 50 root activities in a loop: `SamplingRatio = 1.0F` alone recorded 2 of 50. With `TracesPerSecond = null`, 50 of 50 were recorded (ran).
 - Microsoft.OpenTelemetry 1.2.0 with `ExportTarget.AzureMonitor` and a local fake ingestion endpoint: 50 of 50 spans exported with the default, with `TracesPerSecond = 1.0`, and with `SamplingRatio = 0.1F` plus `TracesPerSecond = null`. The tracer provider sampler was `ParentBasedSampler` with root `AlwaysOnSampler` (ran). This disagrees with Learn (default 5 traces per second).
 - Microsoft.OpenTelemetry 1.2.0: without `IncludeScopes`, the exported log record has no scope value. With `Configure<OpenTelemetryLoggerOptions>(o => o.IncludeScopes = true)`, it has the value (ran).
+
+With SDK 10.0.113 on 2026-10-27, `AnalysisLevel` `latest-recommended`, CA1848 off:
+
+- CA1873 warned on `LogInformation` with a `string` argument, an `int` argument, a property, and a method call. It did not warn on `LogInformation` without arguments or on `LogWarning` with an `int` argument (compiled). Microsoft Learn says that the rule is for "potentially expensive" arguments, but the compiler flagged each argument in this lab.
 
 ## Credits
 

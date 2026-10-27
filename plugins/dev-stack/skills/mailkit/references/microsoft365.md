@@ -11,7 +11,14 @@ How to send through Exchange Online or Gmail (decision MAIL-05). The MailKit and
 
 ## Why not basic authentication
 
-Microsoft is retiring basic authentication (user name and password) for SMTP AUTH in Exchange Online. Microsoft moved the dates more than one time. Treat basic authentication as gone for new code. Many tenants also turn off SMTP AUTH for each mailbox. Check that the sending mailbox has SMTP AUTH on, or use Graph.
+Microsoft is retiring basic authentication (user name and password) for SMTP AUTH in Exchange Online. Microsoft moved the dates more than one time. The timeline of 2026-01-27 (Message Center MC786329) is:
+
+- Until December 2026: no change.
+- End of December 2026: basic authentication is off by default in existing tenants. An admin can turn it on again.
+- Tenants that Microsoft creates after December 2026 do not have basic authentication by default.
+- Second half of 2027: Microsoft announces the final removal date.
+
+Microsoft cancelled the earlier plan (removal from March to April 2026). Treat basic authentication as gone for new code. Many tenants also turn off SMTP AUTH for each mailbox, and Microsoft Entra security defaults block it. Check that the sending mailbox has SMTP AUTH on, or use Graph.
 
 ## OAuth2 SMTP for Microsoft 365
 

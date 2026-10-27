@@ -11,7 +11,7 @@ Checked on 2026-10-19, and again on 2026-10-25. The facts of this skill come fro
 
 ## Versions
 
-| Item | Version on 2026-10-25 | Source |
+| Item | Version on 2026-10-27 | Source |
 |------|-----------------------|--------|
 | Elastic.Clients.Elasticsearch | 9.5.3 (2026-09-28), needs Elastic.Transport 1.1.0 or later | [nuget.org](https://www.nuget.org/packages/Elastic.Clients.Elasticsearch) |
 | Elastic.Clients.Elasticsearch 8.x | 8.19.27 | [nuget.org](https://www.nuget.org/packages/Elastic.Clients.Elasticsearch) |
@@ -19,7 +19,7 @@ Checked on 2026-10-19, and again on 2026-10-25. The facts of this skill come fro
 | Testcontainers.Elasticsearch | 4.16.0 (default image 8.6.1) | [nuget.org](https://www.nuget.org/packages/Testcontainers.Elasticsearch) |
 | NEST | 7.17.5, deprecated | [nuget.org](https://www.nuget.org/packages/NEST) |
 | OpenSearch.Client | 2.2.0 | [nuget.org](https://www.nuget.org/packages/OpenSearch.Client) |
-| OpenSearch server | 3.9.0, 2.19.6 | [Docker Hub opensearchproject/opensearch](https://hub.docker.com/r/opensearchproject/opensearch/tags) |
+| OpenSearch server | 3.9.0, 2.19.7 (2026-10-20) | [Docker Hub opensearchproject/opensearch](https://hub.docker.com/r/opensearchproject/opensearch/tags) |
 
 ## Documentation
 
@@ -32,7 +32,7 @@ Checked on 2026-10-19, and again on 2026-10-25. The facts of this skill come fro
 - [Optimistic concurrency and versioning](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/optimistic-concurrency-control): `version_type=external`.
 - [Paginate search results](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/paginate-search-results): `max_result_window`, `search_after`, point in time.
 - [Query and filter context](https://www.elastic.co/docs/explore-analyze/query-filter/languages/querydsl): filters do not score and are cached.
-- [Tune for indexing speed](https://www.elastic.co/docs/deploy-manage/production-guidance/optimize-performance/indexing-speed): replicas 0 and refresh `-1` for a bulk load, bulk size.
+- [Tune for indexing speed](https://www.elastic.co/docs/deploy-manage/production-guidance/optimize-performance/indexing-speed): replicas 0 and refresh `-1` for a bulk load, bulk size by benchmark, "a couple tens of megabytes" at most. Checked 2026-10-27.
 - [Language analyzers](https://www.elastic.co/docs/reference/text-analysis/analysis-lang-analyzer): `dutch`, `german`.
 - [PostgreSQL: transaction ID wraparound](https://www.postgresql.org/docs/current/routine-vacuuming.html#VACUUM-FOR-WRAPAROUND): `xmin` is 32 bits.
 

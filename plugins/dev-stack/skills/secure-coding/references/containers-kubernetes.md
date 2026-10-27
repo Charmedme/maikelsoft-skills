@@ -16,7 +16,7 @@ Only the code and configuration side: Dockerfiles, manifests, secrets. Image bui
 - On a non-chiseled image, set `USER $APP_UID` as the last user. Use the number: Kubernetes `runAsNonRoot` cannot verify a user name and gives `CreateContainerConfigError` for `USER app`.
 - Prefer `aspnet:10.0-noble-chiseled` (no shell, no package manager, fewer CVEs). Use `-chiseled-extra` when the app needs ICU or time zones.
 - Keep port 8080. Port 80 needs root or `NET_BIND_SERVICE`.
-- Multi-stage build. Pin the base image to a patch tag or a digest, and let a bot raise the pins.
+- Multi-stage build. Pin the base image to a patch tag or a digest, and let a bot raise the pins. For .NET 10 the tag is 10.0.14 or later, a security release of 2026-10-25.
 - No secrets in `ARG` or `ENV`: they stay in the image metadata and history (build check `SecretsUsedInArgOrEnv`). Use a secret mount:
 
   ```dockerfile

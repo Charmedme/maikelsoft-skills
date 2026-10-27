@@ -13,16 +13,19 @@
         "**/*.sh",
         "**/*.conf"
       ],
-      "pattern": "\"x-queue-(mode|version|master-locator)\"|\\bWithQueueMode\\s*\\(|\"ha-(mode|params|sync-mode)\"",
-      "message": "RabbitMQ 4.x removed lazy mode, the queue version and master locator arguments, and classic mirrored queues. The broker rejects the declaration or the policy.",
+      "pattern": "\"x-queue-(mode|master-locator)\"|\"x-queue-version\"\\s*\\]?\\s*[=:,]\\s*\"?1\\b|\\bWithQueueMode\\s*\\(|\"ha-(mode|params|sync-mode)\"",
+      "message": "RabbitMQ 4.3 rejects x-queue-mode (any value) and x-queue-version 1 (classic queues v1 are removed), and 4.x removed classic mirrored queues (ha-* policies). x-queue-master-locator is a deprecated feature that 4.3 denies by default.",
       "fix": "Declare durable work queues with [\"x-queue-type\"] = \"quorum\". Replace ha-* policies with quorum queues.",
       "match": [
         "[\"x-queue-mode\"] = \"lazy\",",
         "c => c.WithQueueMode(QueueMode.Lazy)",
-        "rabbitmqctl set_policy ha-all \".*\" '{\"ha-mode\":\"all\"}'"
+        "rabbitmqctl set_policy ha-all \".*\" '{\"ha-mode\":\"all\"}'",
+        "[\"x-queue-version\"] = 1,",
+        "[\"x-queue-master-locator\"] = \"client-local\","
       ],
       "nomatch": [
         "[\"x-queue-type\"] = \"quorum\",",
+        "[\"x-queue-version\"] = 2,",
         "c => c.WithQueueType(QueueType.Quorum)"
       ]
     },

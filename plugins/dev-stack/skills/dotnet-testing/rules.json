@@ -217,8 +217,8 @@
         "global.json"
       ],
       "pattern": "\"runner\"\\s*:\\s*\"Microsoft\\.Testing\\.Platform\"",
-      "message": "global.json does not select Microsoft.Testing.Platform for dotnet test. On the .NET 10 SDK, MSTest 4 test projects (MTP v2) fail on the old VSTest path.",
-      "fix": "When the test projects use MSTest.Sdk or EnableMSTestRunner, add \"test\": { \"runner\": \"Microsoft.Testing.Platform\" } to global.json. A VSTest-only repo keeps its setup."
+      "message": "global.json does not select Microsoft.Testing.Platform for dotnet test. On the .NET 10 SDK, MSTest.Sdk projects (MTP v2 by default) fail on the old VSTest path.",
+      "fix": "When the test projects use MSTest.Sdk or EnableMSTestRunner, add \"test\": { \"runner\": \"Microsoft.Testing.Platform\" } to global.json. Then each test project in the repo must use MTP. A VSTest-only repo keeps its setup."
     },
     {
       "id": "TST-DET-TEST-01",

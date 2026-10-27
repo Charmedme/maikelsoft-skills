@@ -45,12 +45,13 @@ USER $APP_UID
 ENTRYPOINT ["/usr/bin/tini", "--", "dotnet", "Orders.Api.dll"]
 ```
 
-Checked on 2026-10-19: the runtime stage builds on `aspnet:10.0` (Ubuntu 24.04), and Chrome renders a PDF as user `app` (uid 1654) with the sandbox on, under the seccomp profile below.
+Checked on 2026-10-19: the runtime stage builds on `aspnet:10.0` (Ubuntu 24.04). Chrome renders a PDF as user `app` (uid 1654) with the sandbox on, under the seccomp profile of the next section.
 
 ## Why each line is there
 
 - Separate `chrome` stage: `curl` and `unzip` do not go into the final image.
 - `CHROME_BUILD`: the build of `Chrome.DefaultBuildId`. Change it with the package version. The zip lists its Debian dependencies in `deb.deps`.
+- The renderer of untrusted HTML runs this Chrome build, and Chrome security fixes come only with a newer build. On 2026-10-27, Chrome for Testing Stable is 156.0.8078.47, and PuppeteerSharp 25.15.0 has 155. Upgrade the package when a release moves to a new Chrome build.
 - The `t64` package names are the Ubuntu 24.04 names. A Debian base uses the names without `t64`.
 - `tini`: Chrome starts child processes. Without an init process, they become zombies when the parent ends. `docker run --init` is the alternative.
 - `fonts-liberation`, `fonts-noto-core`, `LANG`: without fonts, text renders as boxes or with fallback glyphs.
@@ -81,7 +82,7 @@ A host with an AppArmor rule against unprivileged user namespaces (Ubuntu 23.10 
 ## Kubernetes
 
 - `securityContext.runAsNonRoot: true`, `runAsUser: 1654`, `allowPrivilegeEscalation: false`, `capabilities.drop: ["ALL"]`.
-- `seccompProfile: { type: Localhost, localhostProfile: profiles/chrome.json }`, with the profile on each node. The `RuntimeDefault` profile blocks the sandbox like the Docker default (inferred: the container runtimes ship a similar profile; prove it with the smoke test).
+- `seccompProfile: { type: Localhost, localhostProfile: profiles/chrome.json }`, with the profile on each node. The `RuntimeDefault` profile blocks the sandbox like the Docker default (inferred: the container runtimes ship a similar profile. Prove it with the smoke test).
 - Memory: each open page is a renderer process. Measure the memory of the browser plus the maximum number of pages under load. Set the memory request equal to the limit (OPS-13) above that value.
 - `readOnlyRootFilesystem: true` needs a writable `emptyDir` on `/tmp` for the Chrome profile folder.
 - A default-deny egress NetworkPolicy for the renderer (SEC-21). The renderer needs no egress when all assets are inline.

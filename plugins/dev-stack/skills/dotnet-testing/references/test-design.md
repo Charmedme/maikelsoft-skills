@@ -151,4 +151,4 @@ Stryker.NET changes the code (for example `>` to `>=`) and runs the tests. A mut
 
 - No automatic retry (TEST-18). A retry hides a race condition.
 - Fix a flaky test the same day, or mark it `[Ignore("Flaky: <reason>, <issue link>")]` and open an issue.
-- Common causes: shared state in parallel tests, real time, a fixed port, a container without a wait strategy, test order. MSTEST0074 to MSTEST0077 find parallel tests that change culture, the current folder, or environment variables.
+- Common causes: shared state in parallel tests, real time, a fixed port, a container without a wait strategy, test order. MSTEST0074 to MSTEST0077 find parallel tests that change global state without `[ResourceLock]`, the current folder, or the culture. They also find shared file paths.

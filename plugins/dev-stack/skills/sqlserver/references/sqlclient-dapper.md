@@ -15,11 +15,11 @@ Plain Microsoft.Data.SqlClient and Dapper code against SQL Server, the rules for
 
 ## Packages
 
-| Package | Version on 2026-10-19 | Note |
+| Package | Version on 2026-10-27 | Note |
 |---------|-----------------------|------|
-| `Microsoft.Data.SqlClient` | 7.1.1, and 6.1.7 with EF Core 10.0.13 | Not `System.Data.SqlClient` (old, no new features). |
+| `Microsoft.Data.SqlClient` | 7.1.1, and 6.1.7 with EF Core 10.0.14 | Not `System.Data.SqlClient` (old, no new features). SqlClient 6.1.6 and later depend on `Microsoft.Identity.Client.Broker`. Without Entra ID, reference 7.1.x directly, also with EF Core 10 (EF Core 10 breaking changes). |
 | `Microsoft.Data.SqlClient.Extensions.Azure` | 7.1.1 | Entra ID sign-in with SqlClient 7. SqlClient 6 has it built in. |
-| `System.Security.Cryptography.Pkcs` | 10.0.13 | Pin it: SqlClient 6.1.7 pulls 9.0.11 and 7.1.1 pulls 9.0.18, both with NU1902 and NU1903 (standing rule, stack rule 5). |
+| `System.Security.Cryptography.Pkcs` | 10.0.14 (10.0.13 or later) | Pin it: SqlClient 6.1.7 pulls 9.0.11 and 7.1.1 pulls 9.0.18, both with NU1902 and NU1903 (standing rule, stack rule 5). |
 | `Dapper` | 2.1.89 (Apache-2.0) | Ask the human before you add it (stack rule 5, DATA-02). |
 
 ```xml
@@ -27,14 +27,14 @@ Plain Microsoft.Data.SqlClient and Dapper code against SQL Server, the rules for
   <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
 </PropertyGroup>
 <ItemGroup>
-  <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+  <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
 </ItemGroup>
 ```
 
 ## Connections
 
 - `new SqlConnection(connectionString)` and `await using`. SqlClient pools by connection string, so a new object for each operation is correct.
-- Set `Application Name=<service>` in the connection string. It shows in monitoring and keeps the pool key stable.
+- Set `Application Name=<service>` in the connection string. It shows in monitoring and keeps the pool key stable. EF Core 10 adds its own `Application Name` to a connection string without one. Then EF Core and Dapper on the same string use two pools, and a `TransactionScope` over both can become a distributed transaction.
 - Azure: `Authentication=Active Directory Default` (managed identity) instead of a password.
 - `Encrypt=True` is the default since SqlClient 4. Use `TrustServerCertificate=True` only for a local container.
 
@@ -132,7 +132,7 @@ EXEC sys.sp_executesql @sql, N'@prefix varchar(32)', @prefix = @SkuPrefix;
 ## Retries
 
 - EF: `EnableRetryOnFailure` retries transient errors (also 1205) inside the execution strategy.
-- Dapper and SqlClient: retry the whole unit of work on 1205 (and on transient connection errors), 3 tries with a short random delay, with a new connection and a new transaction for each try. Make the unit idempotent, or check its result before a new try.
+- Dapper and SqlClient: retry the whole unit of work on 1205 (and on transient connection errors). Use 3 tries with a short random delay, and a new connection and a new transaction for each try. Make the unit idempotent, or check its result before a new try.
 - SqlClient has configurable retry logic (`SqlRetryLogicBaseProvider`). It retries one command or one open, not a transaction. Do not use it for a unit of work with a transaction.
 
 ## Bulk copy

@@ -2,16 +2,18 @@
 
 All sources checked on 2026-10-16. The researcher read the Microsoft Learn pages. The versions and licenses come from nuget.org (registration API and nuspec files). The author compiled and ran the code in `examples/` with the .NET SDK 10.0.402 and a real Docker daemon.
 
+On 2026-10-27, the author checked the versions again. The four test projects of `examples/` ran with MSTest.Sdk 4.5.2 and Microsoft.AspNetCore.Mvc.Testing 10.0.14 (SDK 10.0.113, real Docker daemon). All 54 tests passed.
+
 ## MSTest and Microsoft.Testing.Platform
 
 - MSTest releases: https://github.com/microsoft/testfx/releases
-- MSTest changelog (4.0.0, 4.5.1, 4.5.0 not published): https://github.com/microsoft/testfx/blob/main/docs/Changelog.md
+- MSTest changelog (4.0.0, 4.5.1, 4.5.2, 4.5.0 not published): https://github.com/microsoft/testfx/blob/main/docs/Changelog.md
 - MSTest overview and support policy: https://learn.microsoft.com/dotnet/core/testing/unit-testing-mstest-intro
 - MSTest 3 to 4 migration: https://learn.microsoft.com/dotnet/core/testing/unit-testing-mstest-migration-v3-v4
 - MSTest.Sdk: https://learn.microsoft.com/dotnet/core/testing/unit-testing-mstest-sdk
 - Run tests (EnableMSTestRunner): https://learn.microsoft.com/dotnet/core/testing/unit-testing-mstest-running-tests
 - dotnet test and the global.json runner: https://learn.microsoft.com/dotnet/core/tools/dotnet-test
-- MTP v1 to v2: https://learn.microsoft.com/dotnet/core/testing/microsoft-testing-platform-migration-from-v1-to-v2
+- MTP v1 to v2: https://learn.microsoft.com/dotnet/core/testing/microsoft-testing-platform-migration-from-v1-to-v2 (only MTP v2 projects fail on the VSTest path)
 - MTP code coverage: https://learn.microsoft.com/dotnet/core/testing/microsoft-testing-platform-code-coverage
 - MTP retry extension: https://learn.microsoft.com/dotnet/core/testing/microsoft-testing-platform-retry
 - Assertions: https://learn.microsoft.com/dotnet/core/testing/unit-testing-mstest-writing-tests-assertions
@@ -19,7 +21,7 @@ All sources checked on 2026-10-16. The researcher read the Microsoft Learn pages
 - Data-driven tests: https://learn.microsoft.com/dotnet/core/testing/unit-testing-mstest-writing-tests-data-driven
 - Execution control (parallel, timeout): https://learn.microsoft.com/dotnet/core/testing/unit-testing-mstest-writing-tests-controlling-execution
 - TestContext: https://learn.microsoft.com/dotnet/core/testing/unit-testing-mstest-writing-tests-testcontext
-- MSTest analyzers: https://learn.microsoft.com/dotnet/core/testing/mstest-analyzers/overview
+- MSTest analyzers: https://learn.microsoft.com/dotnet/core/testing/mstest-analyzers/overview (MSTEST0074 to MSTEST0077, checked 2026-10-27)
 - Analyzer severities in Recommended mode: `globalconfigs/mstest-recommended.globalconfig` in the MSTest.Analyzers 4.5.1 package
 
 ## FluentAssertions

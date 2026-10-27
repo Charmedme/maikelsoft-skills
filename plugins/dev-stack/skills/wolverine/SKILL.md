@@ -2,8 +2,8 @@
 name: wolverine
 description: Messaging code with Wolverine 6 (WolverineFx) in .NET 9 and 10 services. Use when code or a review touches UseWolverine, message handlers, IMessageBus, InvokeAsync, SendAsync, PublishAsync, cascading messages, the durable outbox and inbox on EF Core with PostgreSQL or SQL Server, AutoApplyTransactions, IDbContextOutbox, error policies and retries, the dead-letter queue, local queues, scheduled messages, code generation (TypeLoadMode, codegen write), tracked session tests, or the Wolverine RabbitMQ transport. Not for raw RabbitMQ.Client or EasyNetQ code and broker topology (dev-stack:rabbitmq), DbContext design (dev-stack:efcore), Wolverine.HTTP endpoints, Marten, or MassTransit and NServiceBus.
 metadata:
-  verified: "2026-10-25"
-  versions: "WolverineFx 6.53.0, JasperFx 2.95, RabbitMQ 4.3, EF Core 10, .NET 9 and 10"
+  verified: "2026-10-27"
+  versions: "WolverineFx 6.56.0 (6.51.3 or later), JasperFx 2.96, RabbitMQ 4.3, EF Core 10, .NET 9 and 10"
 ---
 
 # Wolverine
@@ -103,6 +103,10 @@ private static async Task<Created<OrderResponse>> CreateAsync(
 ### RabbitMQ transport
 
 14. Call `.UseQuorumQueues()` and `.ConfigureChannelCreation(o => { o.PublisherConfirmationsEnabled = true; o.PublisherConfirmationTrackingEnabled = true; })`. The transport declares classic queues and turns confirms off by default. Wolverine deletes the outbox row when it writes the frame. So the outbox alone does not protect against a broker refusal (Wolverine documentation).
+
+    Use WolverineFx 6.51.3 or later with the RabbitMQ transport and the durable inbox. Versions before 6.51.3 can lose messages after a broker outage (issue GH-5123). On quorum queues that a durable inbox reads, add `.DeliveryLimitForDurableQuorumQueues(-1)` on the transport, or `.DeliveryLimit(-1)` on one listener. Each restart, reconnect, or shutdown returns the in-flight messages to the queue, and RabbitMQ 4 drops or dead-letters a message at its 21st return. The inbox owns the retries (MSG-08).
+
+    `Inline` and buffered listeners keep the broker limit of 20. Wolverine sets the limit only on a queue that it declares. For an existing queue, set `delivery-limit` -1 in a broker policy instead (`dev-stack:rabbitmq`).
 15. Declare the topology: `.AutoProvision()`, or exchanges and bindings that operations declares. Wolverine publishes with `mandatory: false`, so a message to an exchange without a binding is dropped. Mark a queue or exchange that another team owns `.ExternallyOwned()`. Else `AutoProvision()` declares it with Wolverine's own arguments, the broker refuses with `PRECONDITION_FAILED`, and Wolverine retries the broker start.
 16. Choose the listener mode for each endpoint. The RabbitMQ listener default is `Inline` with prefetch 100. Use the durable inbox for business messages. `BufferedInMemory` acks at receipt and loses buffered messages in a crash. Use `ProcessInParallelWithNativeAcks()` for parallel work without a database, and `ListenerCount(n)` for parallel `Inline` work.
 
@@ -138,7 +142,7 @@ Wolverine 6 defects build and pass the tests, and show only in production. In a 
 | `public static bool Handle(CheckStock m)` and `InvokeAsync<bool>(...)` | `public static StockResult Handle(CheckStock m)` with `record StockResult(bool InStock)` |
 | `class OrderPlacedConsumer : IConsumer<OrderPlaced>` with `ConsumeContext<T>` | `public static class OrderPlacedHandler { public static void Handle(OrderPlaced message, ...) }` |
 | `await db.SaveChangesAsync(ct); await bus.PublishAsync(evt);` in an endpoint | `IDbContextOutbox<T>`: `PublishAsync`, then `SaveChangesAndFlushMessagesAsync(ct)` |
-| `opts.UseRabbitMq(uri).AutoProvision();` and nothing else | `.UseQuorumQueues().ConfigureChannelCreation(o => { both confirm flags }).AutoProvision()` |
+| `opts.UseRabbitMq(uri).AutoProvision();` and nothing else | `.UseQuorumQueues().DeliveryLimitForDurableQuorumQueues(-1).ConfigureChannelCreation(o => { both confirm flags }).AutoProvision()` |
 | `x.Production.GeneratedCodeMode = TypeLoadMode.Dynamic` | `TypeLoadMode.Static` and `codegen write` in CI |
 | A handler that injects `ICarrierClient` from `AddHttpClient<ICarrierClient, HttpCarrierClient>(...)` | `opts.CodeGeneration.AlwaysUseServiceLocationFor<ICarrierClient>()` with a reason |
 | `opts.RestoreV5Defaults()` to make the host start | Fix the registrations (rule 4), or `AlwaysUseServiceLocationFor<T>()` for one type with a reason |
@@ -185,7 +189,7 @@ The full list is in `references/review-checklist.md`.
 2. No `RestoreV5Defaults()`. tool (WOLV-RESTORE-V5)
 3. Endpoints and background services use `IDbContextOutbox<T>` or `InvokeAsync`. No `SaveChangesAsync` followed by `PublishAsync`. judge
 4. The durable outbox has all its parts (rule 11). judge
-5. The RabbitMQ transport has `UseQuorumQueues()` and both confirm flags, and the topology is declared. Queues of another team are `ExternallyOwned()`. judge
+5. The RabbitMQ transport has `UseQuorumQueues()` and both confirm flags, and the topology is declared. WolverineFx is 6.51.3 or later, and quorum queues of a durable inbox have delivery limit -1. Queues of another team are `ExternallyOwned()`. judge
 6. Handlers return records, tuples, or `OutgoingMessages`, never a primitive. judge
 7. Handlers do not catch and log exceptions. judge
 8. Error policies exist for each exception type. Business errors go to the error queue at once. judge

@@ -2,7 +2,7 @@
 
 Read this file only when the project targets `net11.0`. On `net10.0`, none of these features compile.
 
-Status on 2026-10-16: .NET 11 is at RC 2 (11.0.0-rc.2, SDK 11.0.100-rc.2.26504.105) with go-live support. GA is expected in November 2026. .NET 11 is an STS release (24 months of support). C# 15 is the default language version for `net11.0`. The examples in this file compile with SDK 11.0.100-rc.2. Check the features again after GA (stack rule 2): the docs say that some parts of the union specification are not implemented yet.
+Status on 2026-10-27: .NET 11 is at RC 3 (11.0.0-rc.3 of 2026-10-25, SDK 11.0.100-rc.3.26522.148) with go-live support. GA is expected in November 2026. .NET 11 is an STS release (24 months of support). C# 15 is the default language version for `net11.0`. The examples in this file compiled with SDK 11.0.100-rc.2. Check the features again after GA (stack rule 2).
 
 ## Contents
 
@@ -22,6 +22,7 @@ Status on 2026-10-16: .NET 11 is at RC 2 (11.0.0-rc.2, SDK 11.0.100-rc.2.26504.1
 - .NET 10 is LTS (support until 2028-11-14). .NET 11 is STS. Moving a project to `net11.0` is a decision: ask the human (SOL-03 "Revisit when").
 - Update `global.json` (SOL-05) and `TargetFramework` together. Do not set `LangVersion`.
 - A library that also targets `net10.0` cannot use C# 15 features. Write for the lowest target.
+- On the .NET 11 SDK, the environment variable `DOTNET_TEST_RUNNER` (`VSTest` or `Microsoft.Testing.Platform`) overrides the `test` runner of `global.json`. Keep the runner in `global.json`, so that each machine and CI use the same runner.
 
 ## Union types
 
@@ -143,5 +144,6 @@ Changes that can affect C# library code (from the .NET 11 breaking changes list)
 
 ## Not for app code
 
+- Non-virtual static interface members on older runtimes are a C# 15 feature for libraries that target an older runtime with a newer `LangVersion`. This skill does not set `LangVersion`, so they do not apply.
 - Memory safety changes (`unsafe` expressions, the `safe` keyword, pointer types without `unsafe`) need `LangVersion preview`. Do not use them.
 - The Roslyn breaking changes list already names C# 16 changes. They do not apply to `net11.0`.

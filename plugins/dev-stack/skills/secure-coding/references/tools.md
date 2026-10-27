@@ -93,7 +93,7 @@ Exit code 0: no leaks. Exit code 1: leaks or an error. `detect` and `protect` ar
 
 ## Trivy
 
-Pin the version. Trivy 0.69.4 was malicious (March 2026). Current: 0.74.0.
+Pin the version. Trivy 0.69.4 was malicious (March 2026). Current: 0.76.1 (2026-10-21). It has a fix for the eMudhra CA incident: redeploy older Trivy images.
 
 ```
 trivy fs --scanners vuln,secret,misconfig --severity HIGH,CRITICAL --exit-code 1 .

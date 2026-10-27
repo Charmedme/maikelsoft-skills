@@ -2,8 +2,8 @@
 name: rabbitmq
 description: Messaging code on RabbitMQ 4.3 and 4.4 with RabbitMQ.Client 7, and the messaging principles that all message flows share (at-least-once delivery, idempotent consumers, outbox, contracts, names, dead letters). Use when code or a review touches a broker, an exchange, a queue, a routing key, a publisher or a consumer, IChannel, ConnectionFactory, BasicPublishAsync, BasicConsumeAsync, acks, prefetch, publisher confirms, quorum queues, dead-letter exchanges, an outbox table with a background publisher, EasyNetQ, or a RabbitMQ test container. Not for Wolverine handlers, its outbox, or its transport settings (dev-stack:wolverine), Kafka or Azure Service Bus, or broker users, vhosts and TLS (dev-stack:secure-coding).
 metadata:
-  verified: "2026-10-25"
-  versions: "RabbitMQ 4.4.0 and 4.3.7, RabbitMQ.Client 7.2.2, EasyNetQ 8.1.11, Testcontainers.RabbitMq 4.16.0, .NET 10.0.13"
+  verified: "2026-10-27"
+  versions: "RabbitMQ 4.4.0 and 4.3.7, RabbitMQ.Client 7.2.2, EasyNetQ 8.1.11, Testcontainers.RabbitMq 4.16.0, .NET 10.0.14"
 ---
 
 # RabbitMQ
@@ -35,7 +35,7 @@ Ask the human before you apply a default that has no accepted decision (stack ru
 | Contracts | `<Service>.Contracts`, records, pinned wire names, additive changes, JSON sample tests. | MSG-05 |
 | Names | Exchange `{publisher}.events` (topic). Routing key `{entity}.{event}.v{n}`. Queue `{consumer}.{purpose}`. Dead letters `{service}.dlq`. | MSG-06 |
 | Queue type | Quorum, declared in code, plus `default_queue_type = quorum` on each vhost. | MSG-07 |
-| Failures | Dead-letter policy on each work queue, `delivery-limit` 20, alert on dead-letter depth greater than 0. | MSG-08 |
+| Failures | Dead-letter policy on each work queue, `delivery-limit` 20, alert when a dead-letter queue is not empty. Exception: a quorum queue that a Wolverine durable inbox reads gets `delivery-limit` -1. | MSG-08 |
 | Outbox | Without Wolverine: own outbox table in the same `SaveChangesAsync`, background publisher with confirms. | MSG-09 |
 | Idempotency | Natural key or upsert. Message ID table only for effects that cannot be idempotent. | MSG-10 |
 | Wire format | System.Text.Json, `application/json`, camelCase, wire name in the AMQP `type` property. | MSG-11 |
@@ -53,7 +53,7 @@ Existing code keeps its style (stack rule 3).
 ### Topology
 
 3. Declare each durable work queue with `x-queue-type: quorum`, and set `default_queue_type = quorum` on the vhost as a safety net (MSG-07). A classic queue lives on one node, so it does not survive the loss of that node.
-4. Do not send `x-queue-mode`, `x-queue-version`, `x-queue-master-locator`, or `ha-*` policies. Do not declare a queue that is not durable and not exclusive. RabbitMQ 4.x removed these features and rejects the declaration.
+4. Do not send `x-queue-mode` (any value), `x-queue-version: 1`, or `ha-*` policies: RabbitMQ 4.3 rejects them (`x-queue-version: 2` is valid). Do not send `x-queue-master-locator`, and do not declare a queue that is not durable and not exclusive. From 4.3, both are deprecated features that the broker denies by default.
 5. Put dead-lettering, `delivery-limit`, and length limits in a policy when operations owns the broker. Queue arguments cannot change after the declaration, and a second declaration with other arguments fails with `PRECONDITION_FAILED`. Detail: `references/broker.md`.
 
 ### Publishing
@@ -167,7 +167,7 @@ The full consumer and the topology code are in `references/client.md`.
 
 The full list is in `references/review-checklist.md`.
 
-1. No `x-queue-mode`, `x-queue-version`, or `ha-*` policy. tool (RMQ-REMOVED-ARGS)
+1. No `x-queue-mode`, `x-queue-version: 1`, `x-queue-master-locator`, or `ha-*` policy. tool (RMQ-REMOVED-ARGS)
 2. Each durable work queue is a quorum queue. tool (`rabbitmqctl`), judge
 3. No global QoS. tool (RMQ-GLOBAL-QOS)
 4. Consumers use `autoAck: false` and ack after the commit. tool (RMQ-AUTOACK), judge

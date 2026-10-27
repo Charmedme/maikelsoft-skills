@@ -93,7 +93,7 @@ A bulk response is HTTP 200 when the request itself worked. Each item has its ow
 
 Do not write `if (!bulk.IsValidResponse) throw`: it throws for a stale 409 item, the worker retries the whole batch, and the batch fails again each time.
 
-Keep a bulk request between 5 and 15 MB. Split larger batches.
+Find the bulk size with a benchmark on one node with one shard. Start with 100 documents per request. Double the count until the indexing speed stops going up. When two sizes give the same speed, take the smaller one. Stay below a few tens of MB per request, also when larger requests look faster (Elastic, "Tune for indexing speed").
 
 ## Debugging
 

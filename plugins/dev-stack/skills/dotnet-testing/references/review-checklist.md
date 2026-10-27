@@ -101,6 +101,6 @@ The full list for a review of .NET test code. `tool` means a tool finds it: a ru
 | # | Check | How |
 |---|-------|-----|
 | 49 | Each assembly declares `[assembly: Parallelize]` or `[assembly: DoNotParallelize]`. | tool (MSTEST0001) |
-| 50 | Parallel tests do not change culture, the current folder, or environment variables without `[ResourceLock]`. | tool (MSTEST0074 to MSTEST0077), judge |
+| 50 | Parallel tests do not change culture, the current folder, or environment variables without `[ResourceLock]`, and do not use shared file paths. | tool (MSTEST0074 to MSTEST0077), judge |
 | 51 | No automatic retry. A flaky test has `[Ignore("reason, issue link")]`. | judge |
 | 52 | CI collects and shows coverage. No percentage gate unless the accepted TEST-11 says so. | judge |

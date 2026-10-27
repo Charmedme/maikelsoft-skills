@@ -21,7 +21,7 @@ The team decisions that cache code needs. The order is the order in which a new 
 - Recommended: No cache until a measurement shows a need (latency, database load). Then HybridCache: L1 only for one instance, with Redis or Valkey as L2 for more than one instance. HybridCache gives L1, L2, stampede protection, and tags in one API.
 - Choose another option when: the service already uses `IMemoryCache` or `IDistributedCache` (existing code keeps its style). Many cached types need a fresh L1 on all nodes: FusionCache with its backplane (see CACHE-07).
 - Depends on: none.
-- Revisit when: HybridCache gets a backplane (github.com/dotnet/runtime issue 125602).
+- Revisit when: HybridCache gets a backplane (github.com/dotnet/extensions issue 5517).
 - Check: judge.
 - Detect: DET-CACHE-01.
 
@@ -93,7 +93,7 @@ The team decisions that cache code needs. The order is the order in which a new 
 - Recommended: No backplane. Use `DisableLocalCache` for data that must be fresh on each node, so each read goes to L2. Use FusionCache with its backplane when many cached types need a fresh L1.
 - Choose another option when: L2 latency for the fresh data is too high in a measurement. Then FusionCache.
 - Depends on: CACHE-01, CACHE-05.
-- Revisit when: HybridCache ships a backplane (github.com/dotnet/runtime issue 125602).
+- Revisit when: HybridCache ships a backplane (github.com/dotnet/extensions issue 5517).
 - Check: judge, and a test with two app instances on one cache (`references/testing.md`).
 - Detect: DET-CACHE-07.
 

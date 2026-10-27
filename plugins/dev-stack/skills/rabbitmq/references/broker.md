@@ -39,17 +39,17 @@ rabbitmqctl set_policy billing-work "^billing\." \
   --apply-to quorum_queues --priority 10
 ```
 
-- On 4.3 and older, a quorum queue reads `delivery-limit` from a policy only when the queue starts. A later change of the policy does not change the limit of an existing queue. From 4.4, the queue takes the new value, and the default of 20 comes back when the policy is removed. (docs, 4.4.0 release notes)
+- Before 4.3, a quorum queue reads `delivery-limit` from a policy only when the queue starts. A later change of the policy does not change the limit of an existing queue. From 4.3.0 (and in 4.4), a policy change of `delivery-limit` applies to existing quorum queues. When you remove the policy, the default of 20 comes back. A negative value means no limit. (4.3.0 and 4.4.0 release notes)
 
 When nobody runs policies (a small service, a test), arguments in the declaration are acceptable. Do not mix both for the same key.
 
 ## Dead letters
 
 - Give each service one dead-letter exchange and one dead-letter queue `{service}.dlq` (MSG-06). A dead-letter queue per listener only when another team owns the queue.
-- A message goes to the dead-letter exchange on `BasicNack` or `BasicReject` with `requeue: false`, on an expired TTL, on a length overflow, and when it passes the `delivery-limit` of a quorum queue.
-- `delivery-limit` on quorum queues: keep 20 (the 4.x default). A requeue loop then ends in the dead-letter queue, not in a hot loop forever. From 4.3, the limit counts only failed deliveries (`delivery-count`): `basic.reject`, and a closed channel or connection. A `basic.nack` with requeue only increments `acquired-count`, and does not count.
+- A message goes to the dead-letter exchange after `BasicNack` or `BasicReject` with `requeue: false`. It also goes there after an expired TTL, a length overflow, or more deliveries than the `delivery-limit` of a quorum queue.
+- `delivery-limit` on quorum queues: keep 20 (the 4.x default). A requeue loop then ends in the dead-letter queue, not in a hot loop forever. Exception: a quorum queue that a Wolverine durable inbox reads gets -1, because the inbox owns the retries (MSG-08, `dev-stack:wolverine`). From 4.3, the limit counts only failed deliveries (`delivery-count`): `basic.reject`, and a closed channel or connection. A `basic.nack` with requeue only increments `acquired-count`, and does not count.
 - Quorum queues dead-letter with `at-most-once` by default: a message can get lost on the way to the dead-letter queue. For a queue whose dead letters must not get lost, set `dead-letter-strategy=at-least-once` and `overflow=reject-publish` in the policy. (docs)
-- Alert on a dead-letter depth greater than 0. Each dead-letter queue has an owner and a replay procedure: read, fix the cause, and publish again to the original exchange with a new message ID.
+- Alert when a dead-letter queue is not empty. Each dead-letter queue has an owner and a replay procedure. Read the message, fix the cause, and publish again to the original exchange with a new message ID.
 
 ## Delayed retry
 
@@ -65,7 +65,7 @@ Wolverine and EasyNetQ have their own scheduling (`dev-stack:wolverine`, `easyne
 
 ## Limits and timeouts
 
-- Consumer timeout: 30 minutes by default. From 4.3, the quorum queue enforces it itself. On a timeout, the broker returns the message to the queue and sends `basic.cancel` to a client with the `consumer_cancel_notify` capability (RabbitMQ.Client 7 has it). Other clients lose the channel. From 4.3.7, `consumer_timeout_response = close_channel` in `rabbitmq.conf` restores the old behavior. (docs)
+- Consumer timeout: 30 minutes by default. From 4.3, the quorum queue enforces it itself, and classic queues and streams have no consumer timeout. On a timeout, the broker returns the message to the queue and sends `basic.cancel` to a client with the `consumer_cancel_notify` capability (RabbitMQ.Client 7 has it). Other clients lose the channel. From 4.3.7, `consumer_timeout_response = close_channel` in `rabbitmq.conf` restores the old behavior. (docs)
 - RabbitMQ.Client 7 does not register a cancelled consumer again: it calls `HandleBasicCancelAsync`, and `AsyncEventingBasicConsumer` raises `UnregisteredAsync`. Without code that consumes again, the consumer stops and the queue grows. Automatic recovery helps only after a connection failure.
 - A consumer timeout does not count toward the `delivery-limit` (it increments only `acquired-count`). A handler that always takes too long loops. Keep handlers short, or move long work to a job with its own state.
 - Message size: the default maximum is 16 MiB. Send a reference (a blob URL) for larger content.
@@ -83,9 +83,10 @@ Wolverine and EasyNetQ have their own scheduling (`dev-stack:wolverine`, `easyne
 | 3.13 and older | 4.x |
 |----------------|-----|
 | Classic mirrored queues (`ha-mode`, `ha-params`, `ha-sync-mode` policies) | Removed. Use quorum queues. |
-| `x-queue-mode: lazy` | Removed. Classic queues v2 always store on disk. The declaration fails. |
-| `x-queue-version`, `x-queue-master-locator` | Removed. |
-| A queue that is not durable and not exclusive (transient) | Rejected. |
+| `x-queue-mode` (any value) | Rejected from 4.3.0, which removed classic queues v1. 4.0 to 4.2 accepted it. Classic queues v2 always store on disk. |
+| `x-queue-version: 1` | Rejected from 4.3.0. `x-queue-version: 2` is still valid. |
+| `x-queue-master-locator` | A deprecated feature, denied by default from 4.3.0. |
+| A queue that is not durable and not exclusive (transient) | A deprecated feature, denied by default from 4.3.0. |
 | `delivery-limit` unset (unlimited) on quorum queues | Default 20. |
 | Global QoS allowed | Denied by default in 4.3 (a deprecated feature). |
 | AMQP 1.0 as a plugin | Built in. |
@@ -97,8 +98,7 @@ Check the deprecated features of the target version before an upgrade: `rabbitmq
 RabbitMQ 4.4.0 came out on 2026-10-20 (community support to 2027-07-31). 4.3 has community support to 2027-01-31. (docs)
 
 - No removed feature for an AMQP 0-9-1 app. The rules of this skill for 4.3 stay the same: `basic.nack` with requeue still does not count toward the `delivery-limit`.
-- `delivery-limit` in a policy now changes existing quorum queues (section "Arguments or policies").
-- A passive declaration needs one of the `configure`, `write`, or `read` permissions on the queue or exchange.
+- A passive declaration needs one of the `configure`, `write`, or `read` permissions on the queue or exchange. On 4.3.x it needs `configure`: an app user with only `read` or `write` permission fails a passive declaration on 4.3 and succeeds on 4.4.
 - `GET /api/auth/hash_password/{password}` is replaced by `POST /api/auth/hash_password`.
 - A node with classic queue files in the new v2 format cannot go back to 4.3.
 - When you upgrade Erlang to 28 or later at the same time, upgrade to 4.3.7 or later first.

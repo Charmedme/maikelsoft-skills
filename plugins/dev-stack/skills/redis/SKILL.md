@@ -2,8 +2,8 @@
 name: redis
 description: Caching and Redis or Valkey code in .NET with HybridCache and StackExchange.Redis 3. Use when code or a review touches a cache (HybridCache, IDistributedCache, IMemoryCache, GetOrCreateAsync, cache keys, TTLs, invalidation, tags), AddStackExchangeRedisCache, IConnectionMultiplexer, Redis or Valkey keys, a distributed lock, pub/sub, streams, or a cached value that must be fresh on more than one instance. Not for output caching middleware or HTTP cache headers (dev-stack:aspnetcore), EF Core queries without a cache (dev-stack:efcore), or a message broker (dev-stack:rabbitmq, dev-stack:wolverine).
 metadata:
-  verified: "2026-10-25"
-  versions: "Microsoft.Extensions.Caching.Hybrid 10.11.0, Microsoft.Extensions.Caching.StackExchangeRedis 10.0.13, StackExchange.Redis 3.4.20, Valkey 9.1, Redis Open Source 8.10, .NET 10"
+  verified: "2026-10-27"
+  versions: "Microsoft.Extensions.Caching.Hybrid 10.11.0, Microsoft.Extensions.Caching.StackExchangeRedis 10.0.14, StackExchange.Redis 3.4.20, Valkey 9.1, Redis Open Source 8.10, .NET 10"
 ---
 
 # Redis and caching
@@ -55,7 +55,7 @@ New code that copies one of these patterns depends on the defect. So does new co
 ### Connection
 
 1. Register one `IConnectionMultiplexer` as a singleton. Connect with `ConnectAsync` at startup, set `AbortOnConnectFail = false` and `ClientName`, and give the same instance to `AddStackExchangeRedisCache` through `ConnectionMultiplexerFactory`. A multiplexer per call uses up sockets, and `abortConnect=true` stops the app when the server is down for a moment.
-2. Reference `StackExchange.Redis` 3.x directly, or add a `PackageVersion` when the repository uses `CentralPackageTransitivePinningEnabled`. `Microsoft.Extensions.Caching.StackExchangeRedis` 10.0.13 declares `StackExchange.Redis >= 2.7.27`, so NuGet takes 2.7.27 from 2023.
+2. Reference `StackExchange.Redis` 3.x directly, or add a `PackageVersion` when the repository uses `CentralPackageTransitivePinningEnabled`. `Microsoft.Extensions.Caching.StackExchangeRedis` 10.0.14 declares `StackExchange.Redis >= 2.7.27`, so NuGet takes 2.7.27 from 2023.
 3. Await each Redis call. Set SER305 to SER308 to `error` in `.editorconfig`. Do not raise `ThreadPool.SetMinThreads` to fix timeouts. A thread that blocks on a Redis task starves the pool that must process the reply.
 
 ```csharp
@@ -208,7 +208,7 @@ The full list is in `references/review-checklist.md`.
 11. Each direct Redis key has a TTL. L1 is shorter than L2. judge
 12. Correctness does not depend on a Redis lock. judge
 13. Work goes through streams with acknowledgement, not pub/sub. tool (CS0618 for string channels), judge
-14. No deprecated packages (`Microsoft.Extensions.Caching.Redis`, `RedLock.net`). tool (RDS-PKG-OLD, RDS-PKG-REDLOCK)
+14. No old or unsafe packages (`Microsoft.Extensions.Caching.Redis`, `RedLock.net`). `dotnet package list --deprecated` does not flag them. tool (RDS-PKG-OLD, RDS-PKG-REDLOCK)
 
 ## Report
 

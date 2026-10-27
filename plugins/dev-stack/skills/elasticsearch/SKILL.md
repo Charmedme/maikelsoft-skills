@@ -2,7 +2,7 @@
 name: elasticsearch
 description: Search code with Elasticsearch 9 and the .NET client Elastic.Clients.Elasticsearch 9. Use when code or a review touches ElasticsearchClient, an index mapping, aliases, a reindex, bulk indexing, the sync from the database to a search index, search queries, filters, paging, point in time, search_after, an export of many hits, or an upgrade from NEST or client 8. Not for database full-text search (PostgreSQL tsvector, SQL Server full-text index; dev-stack:efcore, dev-stack:postgresql, dev-stack:sqlserver), the outbox mechanism itself (dev-stack:wolverine), or log search in Kibana.
 metadata:
-  verified: "2026-10-25"
+  verified: "2026-10-27"
   versions: "Elastic.Clients.Elasticsearch 9.5.3, Elasticsearch 9.5.5, .NET 10. Client 8.19.27 for 8.x clusters and NEST migration in references/migration.md"
 ---
 

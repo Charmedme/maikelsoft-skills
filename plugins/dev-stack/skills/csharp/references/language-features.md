@@ -17,7 +17,7 @@ The features of C# 12, 13, and 14, the version that each one needs, how to use i
 | Primary constructors on classes, collection expressions, `ref readonly` parameters, alias any type | 12 | `net8.0` |
 | `params` collections (`params ReadOnlySpan<T>`, `params IEnumerable<T>`), `System.Threading.Lock`, `\e` escape, partial properties and indexers, `field` (preview only) | 13 | `net9.0` |
 | `extension` blocks, `field`, null-conditional assignment, `nameof(List<>)`, span conversions, lambda parameter modifiers, partial constructors and events, compound assignment operators | 14 | `net10.0` |
-| `union`, `closed`, `with(...)` in collection expressions, extension indexers, labeled `break`/`continue` | 15 | `net11.0`, see `net11.md` |
+| `union`, `closed`, `with(...)` in collection expressions, extension indexers, labeled `break`/`continue`, non-virtual static interface members on older runtimes | 15 | `net11.0`, see `net11.md` |
 
 `params` collections came in C# 13, not in C# 14. Collection expression arguments (`with(...)`) came in C# 15, not in C# 14.
 
