@@ -1,6 +1,6 @@
 <Project>
   <!--
-    Analyzer part of Directory.Packages.props (dev-stack:dotnet-analyzers, verified 2026-10-16).
+    Analyzer part of Directory.Packages.props (dev-stack:dotnet-analyzers, verified 2026-10-27).
     Merge the GlobalPackageReference items into the Directory.Packages.props in the repository root.
     A GlobalPackageReference applies to each project and is PrivateAssets="all" by default,
     so the analyzers do not flow to the consumers of a library.
@@ -11,7 +11,7 @@
 
   <ItemGroup>
     <GlobalPackageReference Include="Roslynator.Analyzers" Version="5.0.1" />
-    <GlobalPackageReference Include="Meziantou.Analyzer" Version="3.0.303" />
+    <GlobalPackageReference Include="Meziantou.Analyzer" Version="3.0.317" />
     <GlobalPackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="18.12.1" />
     <GlobalPackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="5.6.0" />
   </ItemGroup>

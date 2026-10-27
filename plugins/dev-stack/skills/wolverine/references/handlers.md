@@ -1,6 +1,6 @@
 # Handlers and messages
 
-How Wolverine finds a handler, what a handler can take and return, and how messages get their names. The code compiles with WolverineFx 6.51.0.
+How Wolverine finds a handler, what a handler can take and return, and how messages get their names. The code compiles with WolverineFx 6.51.0 (runs of 2026-10-19). Use 6.51.3 or later in a project (rule 14).
 
 ## Contents
 

@@ -51,7 +51,7 @@ The team decisions that Wolverine code needs. The order is the order in which a 
 - Question: How do handlers retry, and where do failed messages go?
 - Ask when: the first handler that can fail.
 - Options: The catalog chain below. Retries only. The Wolverine default (3 attempts, then the error queue).
-- Recommended: For transient exceptions: 3 immediate retries with cooldown (50 ms, 250 ms, 1 s), then 2 scheduled retries with jitter (10 s, 1 min), then the error queue. Validation and business errors go to the error queue at once. One dead-letter queue per service (`{service}.dlq`, `CustomizeDeadLetterQueueing`).
+- Recommended: For transient exceptions, use 3 immediate retries with cooldown (50 ms, 250 ms, 1 s). Then use 2 scheduled retries with jitter (10 s, 1 min), then the error queue. Validation and business errors go to the error queue at once. One dead-letter queue per service (`{service}.dlq`, `CustomizeDeadLetterQueueing`). On the broker, a quorum queue that a durable inbox reads has `delivery-limit` -1 (`DeliveryLimitForDurableQuorumQueues(-1)`). Other work queues keep the limit of 20 (`dev-stack:rabbitmq`).
 - Choose another option when: a message has no value after a short time: `Discard()` on purpose, with a log line.
 - Depends on: MSG-04, MSG-06.
 - Revisit when: the dead-letter queue fills in normal operation.

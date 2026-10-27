@@ -93,7 +93,7 @@ Squawk (`squawk-cli` on npm, 2.70.0 on 2026-10-15, Apache-2.0 or MIT) checks a S
 npx squawk-cli@2.70.0 db/0004_stock.sql
 ```
 
-The rules for live tables: `require-lock-timeout`, `require-concurrent-index-creation`, `adding-field-with-default`, `adding-foreign-key-constraint`, `constraint-missing-not-valid`, `adding-not-nullable-field`, `renaming-column`, and `changing-column-type`. Type rules: `prefer-timestamp-tz`, `prefer-identity`, `prefer-bigint-over-int`. Use the rule names as the review checklist for a migration.
+The rules for live tables: `require-lock-timeout`, `require-concurrent-index-creation`, `adding-field-with-default`, `adding-foreign-key-constraint`, `constraint-missing-not-valid`, `adding-not-nullable-field`, `renaming-column`, and `changing-column-type`. Type rules: `prefer-timestamptz`, `prefer-identity`, `prefer-bigint-over-int`. Use the rule names as the review checklist for a migration.
 
 Squawk exits with code 1 on any warning. On the review fixture of this skill (2026-10-19) it found the blocking index, the volatile default, the missing `lock_timeout`, `timestamp`, and `serial`. It also reported style rules (`prefer-text-field` for each `varchar(n)`, `prefer-robust-stmts` for each statement without `IF NOT EXISTS`, `require-statement-timeout`). Turn off the style rules that the team does not want in `.squawk.toml`.
 

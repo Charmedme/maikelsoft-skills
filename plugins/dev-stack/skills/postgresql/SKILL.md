@@ -2,7 +2,7 @@
 name: postgresql
 description: PostgreSQL engine rules and SQL text for .NET services. Use when code or a review touches SQL for PostgreSQL (a .sql script, FromSql, SqlQuery, ExecuteSql, migrationBuilder.Sql, Dapper, or plain Npgsql), column types, keys, indexes, EXPLAIN, isolation levels, row locks, a queue table with SKIP LOCKED, an upsert, DDL on a live table, NpgsqlDataSource, COPY, or a report per local day. Not for EF Core mapping, LINQ, or generated EF migrations (dev-stack:efcore), SQL Server or T-SQL (dev-stack:sqlserver), or server operations (backup, replication, postgresql.conf tuning).
 metadata:
-  verified: "2026-10-25"
+  verified: "2026-10-27"
   versions: "PostgreSQL 18.6 (19 is RC 1), Npgsql 10.0.3, Dapper 2.1.89, EFCore.PG 10.0.3, .NET 10"
 ---
 
@@ -202,7 +202,7 @@ Detail on the data source, Dapper mapping, multiple results, and COPY: `referenc
    npx squawk-cli@2.70.0 migration.sql
    ```
 
-   Pass: no finding of the lock rules (`require-concurrent-index-creation`, `adding-field-with-default`, `constraint-missing-not-valid`, `require-lock-timeout`, `prefer-timestamp-tz`, `prefer-identity`). Squawk exits with 1 on any warning. Style rules such as `prefer-text-field` and `prefer-robust-stmts` are team choices: turn them off in `.squawk.toml`, or give the reason in the report.
+   Pass: no finding of the lock rules (`require-concurrent-index-creation`, `adding-field-with-default`, `constraint-missing-not-valid`, `require-lock-timeout`, `prefer-timestamptz`, `prefer-identity`). Squawk exits with 1 on any warning. Style rules such as `prefer-text-field` and `prefer-robust-stmts` are team choices: turn them off in `.squawk.toml`, or give the reason in the report.
 4. Check a new hot query: `EXPLAIN (ANALYZE, BUFFERS) <query>` on data like production. Pass: an index scan or a bitmap scan on the hot path, no sequential scan of a big table.
 5. Run the rules of this skill:
 

@@ -14,7 +14,7 @@ namespace Shop.ContainerSamples;
 public static class Images
 {
     // One place for the pinned tags. Use the tags that production uses.
-    public const string SqlServer = "mcr.microsoft.com/mssql/server:2025-CU9-ubuntu-24.04";
+    public const string SqlServer = "mcr.microsoft.com/mssql/server:2025-CU10-ubuntu-24.04";
     public const string Redis = "redis:8.2";
     public const string RabbitMq = "rabbitmq:4.3-management-alpine";
 }

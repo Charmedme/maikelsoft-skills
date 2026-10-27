@@ -21,7 +21,8 @@ The EF side of SQL Server: provider options, type mapping, and model APIs. T-SQL
 
 - `Microsoft.EntityFrameworkCore.SqlServer` 10.0.x (EF 10 uses Microsoft.Data.SqlClient 6.x).
 - SQL Server 2025 (17.x) is the current version, with compatibility level 170. Azure SQL Database runs the newest engine.
-- `dotnet build` with SqlClient 6.1.7 reports NU1902 and NU1903 for the transitive package `System.Security.Cryptography.Pkcs` 9.0.11 (checked 2026-10-16). Add a direct reference to the current 10.0.x version of that package, after the approval of the human (stack rule 5).
+- `dotnet build` with SqlClient 6.1.7 reports NU1902 and NU1903 for the transitive package `System.Security.Cryptography.Pkcs` 9.0.11 (checked 2026-10-16). Add a direct reference to the current 10.0.x version of that package, after the approval of the human (stack rule 5). EF Core SqlServer 10.0.14 still uses SqlClient 6.1.7.
+- SqlClient 6.1.6 and later depend on `Microsoft.Identity.Client.Broker`, which makes the published app much larger. When the app does not use Microsoft Entra ID authentication, Microsoft recommends a direct reference to Microsoft.Data.SqlClient 7.1.x (7.1.1 on 2026-10-27). Entra ID with SqlClient 7 needs the package Microsoft.Data.SqlClient.Extensions.Azure. SqlClient 7.1.1 also pulls a vulnerable Pkcs (9.0.18 on `net10.0`), so keep the Pkcs 10.0.x reference. Ask the human before you add a package (stack rule 5).
 
 ## Registration
 

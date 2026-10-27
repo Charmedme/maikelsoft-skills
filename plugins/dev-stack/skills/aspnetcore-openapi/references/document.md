@@ -58,6 +58,8 @@ The generator reads the return type and the metadata of the endpoint. It does no
 
 Tested with Microsoft.AspNetCore.OpenApi 10.0.13 on 2026-10-25. `Produces<Stream>` and `Produces<IFormFile>` give `type: string, format: binary`. Do not use `Produces<byte[]>`: it gives `format: byte` (a base64 string), so a generator expects text. `Produces(200, typeof(FileContentHttpResult), ...)` gives the properties of the result class as an object schema.
 
+ASP.NET Core 11 changes this. `FileContentResult`, `FileContentHttpResult`, `FileStreamResult`, and `FileStreamHttpResult` get a `type: string, format: binary` schema. On `net11.0`, `.Produces<FileContentHttpResult>(contentType: "application/pdf")` documents a binary body (Microsoft Learn, ASP.NET Core 11 release notes). Keep `Produces<Stream>` on .NET 10.
+
 The generator reads metadata, not the handler body. So a wrong status or a wrong `Required` value stays in the document without a warning. Compare the metadata with the handler and its filters. Find each status that the code returns (`Problems.X`, `TypedResults.X`). Find each header or parameter that a filter rejects when it is missing.
 
 ```csharp

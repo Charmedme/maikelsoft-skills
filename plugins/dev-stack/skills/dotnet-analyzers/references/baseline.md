@@ -33,7 +33,7 @@
 | `NoWarn` | `$(NoWarn);CS1591` | Apps do not need XML docs on each public member (QUAL-06). Remove CS1591 from `NoWarn` in package projects. |
 | `WarningsAsErrors` | `$(WarningsAsErrors);nullable` | The keyword `nullable` covers all nullable warnings. They stop each build, also on the local machine. |
 | `TreatWarningsAsErrors` | `true` when `CI=true` | All warnings stop the CI build. GitHub Actions and Azure Pipelines set `CI=true`. |
-| `MSTestAnalysisMode` | `Recommended` | MSTest Info rules become warnings, MSTEST0003 becomes an error. No condition: `IsTestProject` is not set yet when `Directory.Build.props` loads (tested). Projects without MSTest ignore the property. |
+| `MSTestAnalysisMode` | `Recommended` | MSTest Info rules become warnings. MSTEST0003 (test method layout) and MSTEST0043 (retry attribute) become errors. No condition: `IsTestProject` is not set yet when `Directory.Build.props` loads (tested). Projects without MSTest ignore the property. |
 | `ErrorLog` | `$(MSBuildProjectDirectory)/obj/$(MSBuildProjectName).sarif,version=2.1` | One SARIF 2.1 file per project. The `obj/` folder exists when the compiler runs. |
 | `AdditionalFiles` | `BannedSymbols.txt` | BannedApiAnalyzers reads the list from this item. |
 
@@ -41,10 +41,10 @@
 
 ## Directory.Packages.props
 
-| Package | Version (2026-10-16) | License | Reason |
+| Package | Version (2026-10-27) | License | Reason |
 |---|---|---|---|
 | Roslynator.Analyzers | 5.0.1 | Apache-2.0 | Readability and correctness rules that the SDK does not have (RCS1075, RCS1155, RCS1210, RCS1229). |
-| Meziantou.Analyzer | 3.0.303 | MIT | Async, culture, and design rules (MA0016, MA0040, MA0042, MA0048). |
+| Meziantou.Analyzer | 3.0.317 | MIT | Async, culture, and design rules (MA0016, MA0040, MA0042, MA0048). |
 | Microsoft.VisualStudio.Threading.Analyzers | 18.12.1 | MIT | Async bugs: VSTHRD002 (sync over async), VSTHRD100 (async void), VSTHRD103 (blocking call in async code), VSTHRD110 (unobserved task). |
 | Microsoft.CodeAnalysis.BannedApiAnalyzers | 5.6.0 | MIT | Project API rules as build errors (RS0030). |
 
@@ -96,7 +96,7 @@ Format: one entry per line, `<documentation comment ID>;<message>`. `P:` is a pr
 
 ## Test result
 
-Tested on 2026-10-16 with .NET SDK 10.0.402 on Linux, with the four files of `assets/` and MSTest 4.0.2:
+Tested on 2026-10-16 with .NET SDK 10.0.402 on Linux, with the four files of `assets/` (then with Meziantou.Analyzer 3.0.303) and MSTest 4.0.2. The release notes of Meziantou.Analyzer 3.0.304 to 3.0.317 add no rules, only fixes. The test was not run again with 3.0.317.
 
 | Test | Command | Result |
 |---|---|---|

@@ -2,8 +2,8 @@
 name: sqlserver
 description: SQL Server and Azure SQL engine rules and T-SQL for .NET services. Use when code or a review touches T-SQL (a .sql script, a stored procedure, FromSql, SqlQuery, ExecuteSql, migrationBuilder.Sql, Dapper, or SqlClient code), column types, keys, indexes, isolation levels, RCSI, optimized locking, lock hints such as NOLOCK or UPDLOCK, deadlocks, MERGE or another upsert, a queue table, AT TIME ZONE, SqlBulkCopy, or SQL Server 2025 features. Not for EF Core mapping, LINQ, or generated EF migrations (dev-stack:efcore), PostgreSQL (dev-stack:postgresql), or server administration (backup, Always On, instance settings).
 metadata:
-  verified: "2026-10-25"
-  versions: "SQL Server 2025 (17.x, CU10), compatibility level 170, Azure SQL Database, Microsoft.Data.SqlClient 6.1.7 and 7.1.1, Dapper 2.1.89, EF Core 10.0.13, .NET 10.0.13"
+  verified: "2026-10-27"
+  versions: "SQL Server 2025 (17.x, CU10), compatibility level 170, Azure SQL Database, Microsoft.Data.SqlClient 6.1.7 and 7.1.1, Dapper 2.1.89, EF Core 10.0.14, .NET 10.0.14"
 ---
 
 # SQL Server
@@ -27,7 +27,7 @@ Write all output except code in the rules of `references/language.md`.
    ```
 
    A new SQL Server database has all three off. Azure SQL Database has all three on.
-4. Find the SqlClient version: 6.1 (with EF Core 10) or 7.1. Both pull a vulnerable `System.Security.Cryptography.Pkcs`. Pin Pkcs 10.0.x (standing rule, stack rule 5).
+4. Find the SqlClient version: 6.1 (with EF Core 10) or 7.1. Both pull a vulnerable `System.Security.Cryptography.Pkcs`. Pin Pkcs 10.0.x (standing rule, stack rule 5). SqlClient 6.1.6 and later also pull `Microsoft.Identity.Client.Broker`. For an app without Entra ID sign-in, Microsoft advises a direct reference to SqlClient `7.1.x` (also with EF Core 10). With Entra ID on SqlClient 7, also add `Microsoft.Data.SqlClient.Extensions.Azure`.
 5. Read the existing data code that the change edits, calls, or copies: raw SQL, reports, upserts, and key generators. These defects give wrong results without an error, and the existing tests pass:
    - `AT TIME ZONE '<zone>'` on a `datetime2` column without `AT TIME ZONE 'UTC'` first: the report counts UTC days (rule 12).
    - An interpolated string or `AddWithValue` on a `varchar` column: `nvarchar(4000)`, `CONVERT_IMPLICIT`, and an index scan (rule 10).

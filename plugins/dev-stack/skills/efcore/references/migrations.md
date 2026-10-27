@@ -36,6 +36,7 @@ public sealed class DesignTimeFactory : IDesignTimeDbContextFactory<AppDbContext
 ```
 
 - Install the tools as a local tool with the same version as EF: `dotnet tool install dotnet-ef --version 10.0.x`, recorded in `.config/dotnet-tools.json`.
+- EF Core 10 tools need `--framework` for a project with `<TargetFrameworks>` (more than one target), for example `dotnet ef migrations add AddOrderDeliveryDate --framework net10.0`. Without it, the tools stop with "The project targets multiple frameworks".
 
 ## Add a migration
 

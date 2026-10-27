@@ -14,14 +14,14 @@ Checked on 2026-10-19. On 2026-10-25, a second audit checked the versions again 
 
 ## Versions
 
-| Item | Version on 2026-10-25 | Source |
+| Item | Version on 2026-10-27 | Source |
 |------|-----------------------|--------|
 | SQL Server 2025 (17.x) | CU10 17.0.5035.5 (2026-10-22), compatibility level 170. Before: CU9 17.0.5005.3, CU9 + GDR 17.0.5015.4 (2026-10-13) | [SQL Server 2025 build versions](https://learn.microsoft.com/troubleshoot/sql/releases/sqlserver-2025/build-versions) |
 | Container image | `mcr.microsoft.com/mssql/server:2025-CU10-ubuntu-24.04` (tag in the MCR tag list on 2026-10-25). The runs below used `2025-CU9-ubuntu-24.04` | [mcr.microsoft.com](https://mcr.microsoft.com/product/mssql/server/about) |
-| Microsoft.Data.SqlClient | 7.1.1, and 6.1.7 (the version of EF Core 10.0.13) | [nuget.org](https://www.nuget.org/packages/Microsoft.Data.SqlClient) |
+| Microsoft.Data.SqlClient | 7.1.1, and 6.1.7 (the version of EF Core 10.0.14) | [nuget.org](https://www.nuget.org/packages/Microsoft.Data.SqlClient) |
 | Microsoft.Data.SqlClient.Extensions.Azure | 7.1.1 | [nuget.org](https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) |
-| Microsoft.EntityFrameworkCore.SqlServer | 10.0.13 | [nuget.org](https://www.nuget.org/packages/Microsoft.EntityFrameworkCore.SqlServer) |
-| System.Security.Cryptography.Pkcs | 10.0.13 (the pin) | [nuget.org](https://www.nuget.org/packages/System.Security.Cryptography.Pkcs) |
+| Microsoft.EntityFrameworkCore.SqlServer | 10.0.14 | [nuget.org](https://www.nuget.org/packages/Microsoft.EntityFrameworkCore.SqlServer) |
+| System.Security.Cryptography.Pkcs | 10.0.14 is the newest. A pin is 10.0.13 or later (GHSA-2fmv-rv2c-59x7, GHSA-846f-f764-76mx are fixed in 10.0.13) | [nuget.org](https://www.nuget.org/packages/System.Security.Cryptography.Pkcs) |
 | Dapper | 2.1.89 (Apache-2.0) | [nuget.org](https://www.nuget.org/packages/Dapper) |
 | Testcontainers.MsSql | 4.16.0 | [nuget.org](https://www.nuget.org/packages/Testcontainers.MsSql) |
 
@@ -29,9 +29,9 @@ Checked on 2026-10-19. On 2026-10-25, a second audit checked the versions again 
 
 | Fact | Version | Source |
 |------|---------|--------|
-| Latest stable packages: SqlClient 7.1.1, and 6.1.7 for EF Core 10.0.13. Extensions.Azure 7.1.1, EF Core SqlServer 10.0.13, Pkcs 10.0.13. Dapper 2.1.89, Testcontainers.MsSql 4.16.0. No change since 2026-10-19 | nuget.org | [nuget.org](https://www.nuget.org/packages/Microsoft.Data.SqlClient) |
-| .NET 10 latest runtime 10.0.13 (2026-10-13), SDK 10.0.402 | .NET 10 | [releases.json](https://builds.dotnet.microsoft.com/dotnet/release-metadata/10.0/releases.json) |
-| SQL Server 2025 CU10 is 17.0.5035.5, released 2026-10-22 | SQL Server 2025 | [Build versions](https://learn.microsoft.com/troubleshoot/sql/releases/sqlserver-2025/build-versions) |
+| Latest stable packages on 2026-10-27: SqlClient 7.1.1, and 6.1.7 for EF Core 10.0.14. Extensions.Azure 7.1.1, EF Core SqlServer 10.0.14, Pkcs 10.0.14. Dapper 2.1.89, Testcontainers.MsSql 4.16.0 | nuget.org | [nuget.org](https://www.nuget.org/packages/Microsoft.Data.SqlClient) |
+| .NET 10 latest runtime 10.0.14 (a security release of 2026-10-25), SDK 10.0.403 | .NET 10 | [releases.json](https://builds.dotnet.microsoft.com/dotnet/release-metadata/10.0/releases.json) |
+| SQL Server 2025 CU10 is 17.0.5035.5, released 2026-10-22 (still the newest on 2026-10-27) | SQL Server 2025 | [Build versions](https://learn.microsoft.com/troubleshoot/sql/releases/sqlserver-2025/build-versions) |
 | SQL Server sorts `uniqueidentifier` with the last 6 bytes as most significant. `SqlGuid.CompareTo` has the same order | SQL Server, .NET 10 | [Comparing GUID and uniqueidentifier values](https://learn.microsoft.com/sql/connect/ado-net/sql/compare-guid-uniqueidentifier-values), [SqlGuid.CompareTo](https://learn.microsoft.com/dotnet/api/system.data.sqltypes.sqlguid.compareto) |
 | 1000 values of `Guid.CreateVersion7()` with growing timestamps: in order with `Guid` sort, not in order with `SqlGuid` sort (run with SDK 10.0.402) | .NET 10.0.13 | Run in the workspace |
 | Three defects in existing code: UTC days with `AT TIME ZONE` on `datetime2`, `nvarchar(4000)` on `varchar`, and UUIDv7 keys. The skill runs fixed or reported them in 0 of 3 runs, because the rules were only for new code. `SKILL.md` now has First, step 5 | Hard-case round 1.1.0 | `docs/work/dev-stack/hard-cases/results.md` (C10, C11, J4) |
@@ -62,6 +62,7 @@ Checked on 2026-10-19. On 2026-10-25, a second audit checked the versions again 
 ## SqlClient and Dapper
 
 - [Microsoft.Data.SqlClient release notes](https://github.com/dotnet/SqlClient/tree/main/release-notes)
+- [Breaking changes in EF Core 10](https://learn.microsoft.com/ef/core/what-is-new/ef-core-10.0/breaking-changes#low-impact-changes) (checked 2026-10-27): SqlClient 6.1.6 adds a dependency on `Microsoft.Identity.Client.Broker`. Without Entra ID, reference SqlClient 7.1.x directly. EF Core 10 adds an `Application Name` to a connection string without one. Then EF Core and other data code on the same string use different pools.
 - [SqlBulkCopy](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-operations-sql-server)
 - [Configurable retry logic in SqlClient](https://learn.microsoft.com/sql/connect/ado-net/configurable-retry-logic)
 - [Dapper README](https://github.com/DapperLib/Dapper): `DbString`, list expansion, `DynamicParameters`.

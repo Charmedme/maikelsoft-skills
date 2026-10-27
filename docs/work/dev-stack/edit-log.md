@@ -156,6 +156,14 @@ This log records each change to a skill or to an eval case, the test that measur
 - Verdict: helped (14 gap items), hurt (one decoy, fixed and not tested)
 - Evidence: `docs/work/dev-stack/hard-cases/results.md`
 
+### E17: fact audit and version update of all 18 skills
+- Date and version: 2026-10-27, dev-stack 1.2.1
+- Change: each version and each fact that a rule uses was checked against the primary sources (Microsoft Learn, DeepWiki, NuGet, GitHub source and releases). The update corrects the wrong facts and adds the missing safety facts. All versions are now the versions of 2026-10-27. The rule `RMQ-REMOVED-ARGS` is narrower.
+- Test: `tests.test_stack_rules` and doccheck on each changed file. The example tests of `dotnet-testing` (54 of 54 pass) and `migrate-fluentassertions` (11 of 11 pass). Lab projects for the Asp.Versioning `Deprecation` header and the Wolverine delivery limit. No eval run.
+- Observed: the tool tests pass. No eval case measured the changes.
+- Verdict: proposed
+- Evidence: the audit and change lists of the session (not in the repository), and the sources in `references/sources.md` of each skill
+
 ## Lessons
 
 ### Round 1.1.0 (2026-10-21)

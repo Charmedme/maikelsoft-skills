@@ -19,7 +19,7 @@ Each check has a type. `tool` means an analyzer, the compiler, or a `rules.json`
 
 | # | Check | Type |
 |---|-------|------|
-| 1 | The host uses `WebApplication.CreateBuilder` or `Host.CreateApplicationBuilder`. No `WebHost`, no new `Startup` class. | tool (ASPDEPR008, ASP-WEBHOST, ASP-STARTUP-CLASS) |
+| 1 | The host uses `WebApplication.CreateBuilder` or `Host.CreateApplicationBuilder`. No `WebHost`, no new `Startup` class. | tool (ASPDEPR004, ASPDEPR008, ASP-WEBHOST, ASP-STARTUP-CLASS) |
 | 2 | No `BuildServiceProvider()` in application code. | tool (ASP0000, ASP-BUILD-PROVIDER) |
 | 3 | `ValidateScopes` and `ValidateOnBuild` are on in each environment, or a startup test covers the DI graph. | judge |
 | 4 | No scoped service in a singleton or hosted service. Hosted services use `CreateAsyncScope()` per unit of work. | judge (`ValidateScopes` at run time) |

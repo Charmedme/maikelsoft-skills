@@ -11,16 +11,16 @@ Checked on 2026-10-19, and again on 2026-10-25. The facts of this skill come fro
 
 ## Versions
 
-| Item | Version on 2026-10-25 | Source |
+| Item | Version on 2026-10-27 | Source |
 |------|-----------------------|--------|
 | StackExchange.Redis | 3.4.20 (2026-10-23, stability fixes only, no breaking change). 4.0 alpha. Depends on `RESPite` 3.4.20. | [nuget.org](https://www.nuget.org/packages/StackExchange.Redis), [release 3.4.20](https://github.com/StackExchange/StackExchange.Redis/releases/tag/3.4.20) |
-| Microsoft.Extensions.Caching.StackExchangeRedis | 10.0.13 and 11.0.0 RC 2. Both declare `StackExchange.Redis >= 2.7.27` (nuspec checked 2026-10-25) | [nuget.org](https://www.nuget.org/packages/Microsoft.Extensions.Caching.StackExchangeRedis) |
-| Microsoft.Extensions.Caching.Hybrid | 10.11.0 (2026-10-14), no backplane | [nuget.org](https://www.nuget.org/packages/Microsoft.Extensions.Caching.Hybrid), [dotnet/runtime issue 125602](https://github.com/dotnet/runtime/issues/125602) |
+| Microsoft.Extensions.Caching.StackExchangeRedis | 10.0.14 and 11.0.0 RC 3. Both declare `StackExchange.Redis >= 2.7.27` (nuspec checked 2026-10-27) | [nuget.org](https://www.nuget.org/packages/Microsoft.Extensions.Caching.StackExchangeRedis) |
+| Microsoft.Extensions.Caching.Hybrid | 10.11.0 (2026-10-14), no backplane | [nuget.org](https://www.nuget.org/packages/Microsoft.Extensions.Caching.Hybrid), [dotnet/extensions issue 5517](https://github.com/dotnet/extensions/issues/5517) |
 | Testcontainers.Redis | 4.16.0 | [nuget.org](https://www.nuget.org/packages/Testcontainers.Redis) |
 | DistributedLock.Redis | 1.1.1 | [nuget.org](https://www.nuget.org/packages/DistributedLock.Redis) |
 | ZiggyCreatures.FusionCache | 2.9.0 | [nuget.org](https://www.nuget.org/packages/ZiggyCreatures.FusionCache) |
-| Valkey server | 9.1.2, 9.0.6, 8.1.10 | [Docker Hub valkey/valkey](https://hub.docker.com/r/valkey/valkey/tags) |
-| Redis Open Source | 8.10.2 | [Docker Hub redis](https://hub.docker.com/_/redis/tags) |
+| Valkey server | 9.1.3, 9.0.7, 8.1.11 (2026-10-26, security releases, GHSA-f4q9-j22m-xqq9: heap buffer overflow in cluster pub/sub) | [Valkey releases](https://github.com/valkey-io/valkey/releases), [Docker Hub valkey/valkey](https://hub.docker.com/r/valkey/valkey/tags) |
+| Redis Open Source | 8.10.3 (2026-10-26, security release: heap buffer overflow when a `PUBLISH` or `SPUBLISH` message larger than 4 GB goes over the cluster bus) | [Redis releases](https://github.com/redis/redis/releases), [Docker Hub redis](https://hub.docker.com/_/redis/tags) |
 
 ## Documentation
 
@@ -61,9 +61,9 @@ With the .NET SDK 10.0.402 (.NET 10.0.13, the newest on 2026-10-25):
 | SER305 (await a batch or transaction command before `Execute`) and SER306 (read a fire-and-forget result) ship in the analyzer `StackExchange.Redis.Build.dll`. | 3.4.20 | Diagnostic texts in the analyzer assembly. Not reproduced in the lab |
 | `AbortOnConnectFail` is `true` for a plain endpoint. Only Azure endpoints default to `false`. | 3.4.20 | Lab (`ConfigurationOptions.Parse`), [Configuration](https://stackexchange.github.io/StackExchange.Redis/Configuration) |
 | Without `LocalCacheExpiration`, L1 uses the `Expiration` of the same options object. With neither, both are 5 minutes. | Caching.Hybrid 10.11.0 | [DefaultHybridCache.cs](https://github.com/dotnet/extensions/blob/main/src/Libraries/Microsoft.Extensions.Caching.Hybrid/Internal/DefaultHybridCache.cs), `GetEffectiveLocalCacheExpiration` |
-| HybridCache has no backplane. The proposal is still an issue. | Caching.Hybrid 10.11.0 | [dotnet/runtime issue 125602](https://github.com/dotnet/runtime/issues/125602) |
+| HybridCache has no backplane. The proposal is still an open issue (on 2026-03-16 the .NET team closed dotnet/runtime issue 125602 as a duplicate of dotnet/extensions issue 5517, checked 2026-10-27). | Caching.Hybrid 10.11.0 | [dotnet/extensions issue 5517](https://github.com/dotnet/extensions/issues/5517) |
 | `MaximumPayloadBytes` default 1 MB, `MaximumKeyLength` 1024. | Caching.Hybrid 10.11.0 | [HybridCache library](https://learn.microsoft.com/aspnet/core/performance/caching/hybrid#limits) |
-| Newest versions: Caching.Hybrid 10.11.0, Testcontainers.Redis 4.16.0, DistributedLock.Redis 1.1.1, FusionCache 2.9.0, Valkey 9.1.2, Redis Open Source 8.10.2. No change since 2026-10-19. | - | nuget.org flat container, Docker Hub tags |
+| Newest versions: Caching.Hybrid 10.11.0, Testcontainers.Redis 4.16.0, DistributedLock.Redis 1.1.1, FusionCache 2.9.0, Valkey 9.1.2, Redis Open Source 8.10.2 on 2026-10-25. On 2026-10-27: Valkey 9.1.3 and Redis Open Source 8.10.3. | - | nuget.org flat container, Docker Hub tags |
 
 ## Credits
 

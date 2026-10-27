@@ -16,7 +16,7 @@ All sources checked on 2026-10-16. Microsoft Learn pages were read with the Micr
 
 ## .NET 11 and C# 15
 
-- New features in .NET 11 (RC 2): https://learn.microsoft.com/dotnet/core/whats-new/dotnet-11/overview
+- New features in .NET 11 (RC 3): https://learn.microsoft.com/dotnet/core/whats-new/dotnet-11/overview
 - New features in the .NET 11 runtime (runtime async): https://learn.microsoft.com/dotnet/core/whats-new/dotnet-11/runtime
 - New features in C# 15: https://learn.microsoft.com/dotnet/csharp/whats-new/csharp-15
 - Union types reference: https://learn.microsoft.com/dotnet/csharp/language-reference/builtin-types/union
@@ -56,6 +56,7 @@ All sources checked on 2026-10-16. Microsoft Learn pages were read with the Micr
 
 - All C# examples compile with SDK 10.0.402, `AnalysisLevel latest-recommended`, and `-warnaserror`. The `FakeTimeProvider` tests pass with MSTest 4.5.1.
 - The examples of `net11.md` compile with SDK 11.0.100-rc.2.26504.105.
+- 2026-10-27: versions checked again against the .NET release metadata (10.0.14, SDK 10.0.403, 11.0.0-rc.3) and the C# 15 page. The examples were not compiled again.
 
 ## Credits
 

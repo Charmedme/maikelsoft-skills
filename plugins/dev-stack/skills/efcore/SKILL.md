@@ -2,8 +2,8 @@
 name: efcore
 description: Data access code with Entity Framework Core 10 on SQL Server or PostgreSQL. Use when code or a review touches DbContext, DbSet, LINQ queries, Include, SaveChanges, ExecuteUpdate, raw SQL through EF, transactions, concurrency tokens, value objects, query filters, interceptors, migrations (dotnet ef, Migrations folder), seed data, or migration deployment in CI. Not for Dapper or plain ADO.NET code, T-SQL or PostgreSQL engine work (indexes, isolation, locks), or EF6 on .NET Framework.
 metadata:
-  verified: "2026-10-16"
-  versions: "EF Core 10.0 (LTS), EFCore.PG 10.0, SQL Server 2025, PostgreSQL 18, .NET 10. EF Core 11 RC 2 in references/ef11.md"
+  verified: "2026-10-27"
+  versions: "EF Core 10.0 (LTS), EFCore.PG 10.0, SQL Server 2025, PostgreSQL 18, .NET 10. EF Core 11 RC 3 in references/ef11.md"
 ---
 
 # EF Core

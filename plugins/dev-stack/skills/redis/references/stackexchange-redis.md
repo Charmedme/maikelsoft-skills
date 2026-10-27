@@ -15,7 +15,7 @@ Direct Redis or Valkey code with StackExchange.Redis 3.x: the connection, keys a
 
 ## Package version
 
-`Microsoft.Extensions.Caching.StackExchangeRedis` 10.0.13 (and 11.0 RC 2) declares `StackExchange.Redis >= 2.7.27`. NuGet takes the lowest version that matches, so the app runs on 2.7.27 from 2023 unless the project references 3.x.
+`Microsoft.Extensions.Caching.StackExchangeRedis` 10.0.14 (and 11.0 RC 3) declares `StackExchange.Redis >= 2.7.27`. NuGet takes the lowest version that matches, so the app runs on 2.7.27 from 2023 unless the project references 3.x.
 
 With central package management and transitive pinning, a `PackageVersion` is enough:
 
@@ -132,7 +132,8 @@ For messages between services, use a broker (`dev-stack:rabbitmq`, `dev-stack:wo
 - Put cache data and durable data (streams, locks that matter, counters) on separate instances or databases with separate settings.
 - On the cache instance, set `maxmemory` and `maxmemory-policy allkeys-lru`. Without `maxmemory`, the server uses all memory of the host.
 - On a durable instance, use `noeviction` and persistence (AOF).
-- Pin the image tag (`valkey/valkey:9.1`, not `latest`).
+- Pin the image tag (`valkey/valkey:9.1`, not `latest`). Pin the minor version and take each patch release.
+- Use Valkey 9.1.3, 9.0.7, or 8.1.11 or later, or Redis Open Source 8.10.3 or later. These security releases of 2026-10-26 fix a heap buffer overflow when a client publishes an oversized message in cluster mode (Valkey GHSA-f4q9-j22m-xqq9).
 
 ## Timeouts
 

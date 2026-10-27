@@ -2,8 +2,8 @@
 name: mailkit
 description: Outgoing mail code with MailKit 4 and MimeKit 4 in .NET. Use when code or a review sends email over SMTP, for example MailKit SmtpClient, MimeMessage, BodyBuilder, SecureSocketOptions, SMTP settings and the SMTP password, a mail outbox or a background mail sender, retries after a relay failure, mail templates, OAuth2 SMTP for Microsoft 365 or Gmail, the Pkcs audit warning after MailKit is added, or mail tests with Mailpit. Not for reading mail (IMAP, POP3), Microsoft Graph sendMail, the Azure Communication Services Email SDK, or messages between services (dev-stack:rabbitmq, dev-stack:wolverine).
 metadata:
-  verified: "2026-10-25"
-  versions: "MailKit 4.18.2, MimeKit 4.18.2, System.Security.Cryptography.Pkcs 10.0.13, Mailpit v1.32.0, Testcontainers.Mailpit 4.16.0, .NET 10"
+  verified: "2026-10-27"
+  versions: "MailKit 4.18.2, MimeKit 4.18.2, System.Security.Cryptography.Pkcs 10.0.14, Mailpit v1.32.0, Testcontainers.Mailpit 4.16.0, .NET 10"
 ---
 
 # MailKit
@@ -50,7 +50,7 @@ Existing code keeps its style (stack rule 3).
 
 ```xml
 <!-- Only for MimeKit 4.18.1 and lower, which pull a vulnerable Pkcs (GHSA-2fmv-rv2c-59x7, GHSA-846f-f764-76mx). -->
-<PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+<PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
 ```
 
 ### Settings and TLS
@@ -185,7 +185,7 @@ The full test and a fake relay for the TLS test are in `references/testing.md`.
 | `_ = Task.Run(() => sender.SendAsync(mail));` in an endpoint | An outbox row and a `BackgroundService` |
 | `await mail.SendAsync(...)` after `SaveChangesAsync` in the endpoint | The outbox row in the same `SaveChangesAsync` |
 | `await using var client = new SmtpClient();`, `SendResult r = await client.SendAsync(...)` | MailKit 4: `using var client`, and `string response = await client.SendAsync(message, ct)` |
-| `<NoWarn>NU1903</NoWarn>` after you add MailKit | `<PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />` |
+| `<NoWarn>NU1903</NoWarn>` after you add MailKit | `<PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />` |
 | `<NuGetAuditSuppress Include="https://github.com/advisories/GHSA-9j88-vvj5-vhgr" />` | MailKit 4.18.2, and no suppression |
 | `<NuGetAuditLevel>high</NuGetAuditLevel>` | The default level `low`. The MailKit and MimeKit advisories are moderate |
 | `HtmlBody = $"<p>Hello {name}</p>"` | A Razor component, or `HtmlEncoder.Default.Encode(name)` |

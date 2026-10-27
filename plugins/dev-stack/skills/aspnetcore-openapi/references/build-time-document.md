@@ -48,6 +48,8 @@ To write one document only, or to change the file name, set `<OpenApiGenerateDoc
 
 The build starts the app to make the document. It needs `dotnet` on the `PATH`. Without it, the build fails with "dotnet: not found".
 
+In .NET 11, the MSBuild property `OpenApiGenerationEnvironment` selects the environment of this run (Microsoft Learn, ASP.NET Core 11 release notes). On .NET 10, the run is always `Production`.
+
 Tested with SDK 10.0.402: in this mode the whole app runs in the `Production` environment. That includes the code after `builder.Build()` and `StartAsync` of each hosted service. The entry assembly is `GetDocument.Insider`. Code that connects to a database, reads a secret from a vault, or calls a network service makes the build fail or hang. Rules:
 
 - Keep connections lazy. `AddDbContext` and `AddHttpClient` do not connect at registration.

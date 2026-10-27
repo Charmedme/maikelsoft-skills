@@ -1,6 +1,6 @@
 # Testcontainers, Respawn, and WebApplicationFactory
 
-Facts for Testcontainers 4.16.0, Respawn 7.0.0, and Microsoft.AspNetCore.Mvc.Testing 10.0.13 with MSTest 4.5.1. Checked on 2026-10-16. The code compiled and passed against a real Docker daemon: `examples/tests/Shop.IntegrationTests/` and `examples/tests/Shop.ContainerSamples/`.
+Facts for Testcontainers 4.16.0, Respawn 7.0.0, and Microsoft.AspNetCore.Mvc.Testing 10.0.14 with MSTest 4.5.2. Checked on 2026-10-16, versions checked again on 2026-10-27. The code compiled and passed against a real Docker daemon: `examples/tests/Shop.IntegrationTests/` and `examples/tests/Shop.ContainerSamples/`.
 
 ## Contents
 
@@ -124,7 +124,7 @@ public sealed class OrdersEndpointTests
 ## Respawn reset and parallel runs
 
 - `Respawner.CreateAsync` reads the schema one time. `ResetAsync` deletes all rows in foreign-key order. A reset takes milliseconds.
-- Set `DbAdapter` (`Postgres`, `SqlServer`, `MySql`, `Oracle`) and `SchemasToInclude`. Add the tables that the reset must keep to `TablesToIgnore`: the EF Core history table (`new Table("__EFMigrationsHistory")`) and tables with reference data that the migrations seed. Otherwise the reset deletes them.
+- Respawn 7 infers `DbAdapter` from the connection (SQL Server, PostgreSQL, MySQL, Oracle, Informix). Set it only for another database. Set `SchemasToInclude`. Add the tables that the reset must keep to `TablesToIgnore`: the EF Core history table (`new Table("__EFMigrationsHistory")`) and tables with reference data that the migrations seed. Otherwise the reset deletes them.
 - Default (TEST-08, TEST-17): `[assembly: Parallelize(Scope = ExecutionScope.ClassLevel)]` and `[DoNotParallelize]` on each class that uses the database.
 - When the suite is slow: create one database per test class in the same container. A transaction per test is faster, but it breaks when the code opens its own transaction or a second connection, and `WebApplicationFactory` tests often do.
 
@@ -136,7 +136,7 @@ Pass the image to the constructor. Keep the tags in one place and use the tags o
 public static class Images
 {
     // One place for the pinned tags. Use the tags that production uses.
-    public const string SqlServer = "mcr.microsoft.com/mssql/server:2025-CU9-ubuntu-24.04";
+    public const string SqlServer = "mcr.microsoft.com/mssql/server:2025-CU10-ubuntu-24.04";
     public const string Redis = "redis:8.2";
     public const string RabbitMq = "rabbitmq:4.3-management-alpine";
 }

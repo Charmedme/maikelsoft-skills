@@ -1,6 +1,6 @@
 # Sources: aspnetcore-openapi
 
-The author checked all facts on 2026-10-19, unless a line says otherwise. The author checked the versions again on 2026-10-25 on nuget.org and in the .NET release metadata. Look them up again when `metadata.verified` in `SKILL.md` is older than 6 months.
+The author checked all facts on 2026-10-19, unless a line says otherwise. The author checked the versions again on 2026-10-25 and on 2026-10-27 on nuget.org and in the .NET release metadata. Look them up again when `metadata.verified` in `SKILL.md` is older than 6 months.
 
 ## Contents
 
@@ -12,17 +12,17 @@ The author checked all facts on 2026-10-19, unless a line says otherwise. The au
 
 ## Versions
 
-| Item | Version on 2026-10-25 | Source |
+| Item | Version on 2026-10-27 | Source |
 |------|-----------------------|--------|
-| Microsoft.AspNetCore.OpenApi | 10.0.13 (11.0.0-rc.2 is a preview). Depends on Microsoft.OpenApi `[2.12.2, 3.0.0)` | https://www.nuget.org/packages/Microsoft.AspNetCore.OpenApi |
-| Microsoft.OpenApi | 2.12.2 is the minimum of .NET 10 (`[2.12.2, 3.0.0)`), 2.13.0 is the newest 2.x. 3.11.0 is the newest | https://www.nuget.org/packages/Microsoft.OpenApi |
-| Microsoft.Extensions.ApiDescription.Server | 10.0.13 | https://www.nuget.org/packages/Microsoft.Extensions.ApiDescription.Server |
+| Microsoft.AspNetCore.OpenApi | 10.0.14 (11.0.0-rc.3 is a preview). Depends on Microsoft.OpenApi `[2.12.2, 3.0.0)` | https://www.nuget.org/packages/Microsoft.AspNetCore.OpenApi |
+| Microsoft.OpenApi | 2.12.2 is the minimum of .NET 10 (`[2.12.2, 3.0.0)`), 2.13.0 is the newest 2.x. 3.11.0 is the newest. Versions 2.0.0 to 2.7.4 and 3.0.0 to 3.5.3 have a high advisory (CVE-2026-49451, GHSA-v5pm-xwqc-g5wc). A direct pin is 2.7.5 or later | https://www.nuget.org/packages/Microsoft.OpenApi |
+| Microsoft.Extensions.ApiDescription.Server | 10.0.14 | https://www.nuget.org/packages/Microsoft.Extensions.ApiDescription.Server |
 | Asp.Versioning.Http and Asp.Versioning.OpenApi | 10.2.3. `.OpenApi` depends on Microsoft.OpenApi `[2.7.5, 3.0.0)` | https://www.nuget.org/packages/Asp.Versioning.OpenApi |
 | Asp.Versioning.Mvc and Asp.Versioning.Mvc.ApiExplorer | 10.2.1 | https://www.nuget.org/packages/Asp.Versioning.Mvc.ApiExplorer |
 | Scalar.AspNetCore | 2.18.3 | https://www.nuget.org/packages/Scalar.AspNetCore |
 | Swashbuckle.AspNetCore | 10.3.1, depends on Microsoft.OpenApi 2.7.5 or later | https://www.nuget.org/packages/Swashbuckle.AspNetCore |
 | NSwag.AspNetCore | 14.7.1 | https://www.nuget.org/packages/NSwag.AspNetCore |
-| .NET | 10.0.13 (SDK 10.0.402, released 2026-10-13, LTS to 2028-11-14), 11.0.0-rc.2 | https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core |
+| .NET | 10.0.14 (SDK 10.0.403, a security release of 2026-10-25, LTS to 2028-11-14), 11.0.0-rc.3 | https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core |
 
 ## Documentation
 
@@ -38,6 +38,9 @@ The author checked all facts on 2026-10-19, unless a line says otherwise. The au
 - Asp.Versioning diagnostics AV0029 and AV0030: https://dotnet.github.io/aspnet-api-versioning/diagnostic/av0029.html, https://dotnet.github.io/aspnet-api-versioning/diagnostic/av0030.html
 - Microsoft REST API guidelines (breaking changes): https://github.com/microsoft/api-guidelines
 - Scalar for ASP.NET Core: https://github.com/scalar/scalar/tree/main/integrations/aspnetcore
+
+- Asp.Versioning deprecation policy (`Policies.Deprecate`, RFC 9745 `Deprecation` header): https://github.com/dotnet/aspnet-api-versioning/blob/main/wiki/src/shared/version-policies.md
+- ASP.NET Core 11 release notes (file results as binary, `OpenApiGenerationEnvironment`): https://learn.microsoft.com/aspnet/core/release-notes/aspnetcore-11
 
 ## Tools
 
@@ -67,6 +70,13 @@ SDK 10.0.402, Microsoft.AspNetCore.OpenApi 10.0.13, a small lab project, `/opena
 - `.WithOpenApi(op => { op.Summary = ...; op.Description = ...; return op; })` compiles (with ASPDEPR002) and runs, but the summary and the description are not in the document. `WithSummary` and `AddOpenApiOperationTransformer` on the same kind of endpoint are in the document. Microsoft Learn says only that the call "still compiles and executes": https://learn.microsoft.com/aspnet/core/breaking-changes/10/withopenapi-deprecated
 - An `IResult` handler with `.Produces(200, contentType: "application/pdf")` gives a 200 with no content. A handler that returns `TypedResults.File(...)` gives the same. `Results<FileContentHttpResult, NotFound>` gives only the 404.
 - `.Produces<Stream>(200, "application/pdf")` and `.Produces<IFormFile>(...)` give `type: string, format: binary`. `.Produces<byte[]>(...)` gives `format: byte`. `.Produces(200, typeof(FileContentHttpResult), ...)` gives an object schema with the properties of the result class.
+
+### Checked on 2026-10-27
+
+SDK 10.0.113 with Microsoft.AspNetCore.OpenApi 10.0.14, Asp.Versioning.Http and Asp.Versioning.OpenApi 10.2.3, warnings as errors, a small lab project:
+
+- `options.Policies.Deprecate(1.0).Effective(2026, 12, 31).Link(...)` next to `Policies.Sunset(1.0)` compiles. A v1 response carries `api-deprecated-versions: 1.0`, `Deprecation: @<unix time>`, `Sunset`, and two `Link` headers (`rel="deprecation"` and `rel="sunset"`). A v2 response carries neither `Deprecation` nor `Sunset`.
+- `Effective(2027, 6, 30)` on a server in UTC+2 sent `Sunset: Tue, 29 Jun 2027 22:00:00 GMT`: the date is local time.
 
 ## Credits
 

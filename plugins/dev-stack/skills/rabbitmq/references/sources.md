@@ -13,15 +13,15 @@ Checked on 2026-10-25 (versions and the facts in "Checked on 2026-10-25"), 2026-
 
 ## Versions
 
-| Item | Version on 2026-10-25 | Source |
+| Item | Version on 2026-10-27 | Source |
 |------|-----------------------|--------|
 | RabbitMQ server | 4.4.0 (2026-10-20), support to 2027-07-31. 4.3.7 (image 2026-10-22), support to 2027-01-31 | [Release information](https://www.rabbitmq.com/release-information), [4.4.0 release notes](https://github.com/rabbitmq/rabbitmq-server/blob/main/release-notes/4.4.0.md), [4.3.7 release notes](https://github.com/rabbitmq/rabbitmq-server/blob/main/release-notes/4.3.7.md) |
 | Docker image | `rabbitmq:4.4.0-management-alpine`, `rabbitmq:4.3.7-management`, `rabbitmq:4.3-management-alpine` | [Docker Hub rabbitmq](https://hub.docker.com/_/rabbitmq) |
 | RabbitMQ.Client | 7.2.2 (2026-08-05), Apache-2.0 OR MPL-2.0, still the newest | [nuget.org RabbitMQ.Client](https://www.nuget.org/packages/RabbitMQ.Client) |
 | RabbitMQ.Client.OpenTelemetry | 1.0.0-rc.2 (prerelease) | [nuget.org](https://www.nuget.org/packages/RabbitMQ.Client.OpenTelemetry) |
 | EasyNetQ | 8.1.11 (2026-10-14), MIT. 9.0.0-alpha.3 | [nuget.org EasyNetQ](https://www.nuget.org/packages/EasyNetQ) |
-| Testcontainers.RabbitMq | 4.16.0, default image `rabbitmq:3.11`, still the newest |
-| .NET | 10.0.13 (2026-10-13), SDK 10.0.402 | [releases.json](https://builds.dotnet.microsoft.com/dotnet/release-metadata/10.0/releases.json) | [nuget.org](https://www.nuget.org/packages/Testcontainers.RabbitMq) |
+| Testcontainers.RabbitMq | 4.16.0, default image `rabbitmq:3.11`, still the newest | [nuget.org](https://www.nuget.org/packages/Testcontainers.RabbitMq) |
+| .NET | 10.0.14 (a security release of 2026-10-25), SDK 10.0.403 | [releases.json](https://builds.dotnet.microsoft.com/dotnet/release-metadata/10.0/releases.json) |
 | MassTransit | 9.2.4, commercial license (context only) | [nuget.org MassTransit](https://www.nuget.org/packages/MassTransit) |
 
 ## RabbitMQ documentation
@@ -59,7 +59,9 @@ On 2026-10-19 with SDK 10.0.402 and the image `rabbitmq:4.3-management-alpine`:
 | `basic.nack` increments only `acquired-count`. `basic.reject` and a lost connection increment `delivery-count`, which the `delivery-limit` counts. A consumer timeout does not count. | 4.3, 4.4 | [Quorum queues, poison message handling](https://www.rabbitmq.com/docs/quorum-queues) |
 | Delayed retry: `x-delayed-retry-type` (`disabled`, `all`, `failed`, `returned`), `-min`, `-max` in ms, policy keys `delayed-retry-*`. Not run. | 4.3, 4.4 | [Quorum queues](https://www.rabbitmq.com/docs/quorum-queues) |
 | Quorum queues hold a message with `x-opt-delivery-time` until that time. Not run. | 4.4.0 | 4.4.0 release notes |
-| A change of `delivery-limit` in a policy now applies to existing quorum queues. Before 4.4 it did not. | 4.4.0 | 4.4.0 release notes |
+| A change of `delivery-limit` in a policy applies to existing quorum queues. Before 4.3 it did not (corrected on 2026-10-27: the change is in 4.3.0, issue #16035, and 4.4.0 repeats it). | 4.3.0, 4.4.0 | [4.3.0 release notes](https://github.com/rabbitmq/rabbitmq-server/blob/main/release-notes/4.3.0.md), 4.4.0 release notes |
+| 4.3.0 removes classic queues v1: a declaration with `x-queue-mode` (any value) or `x-queue-version: 1` fails. `queue_master_locator`, `transient_nonexcl_queues`, and `global_qos` are denied by default. Classic queues and streams have no consumer timeout. A passive declaration needs `configure` (#16085). 4.4.0 accepts any one of `configure`, `write`, or `read`. | 4.3.0, 4.4.0 | [4.3.0 release notes](https://github.com/rabbitmq/rabbitmq-server/blob/main/release-notes/4.3.0.md), 4.4.0 release notes (checked 2026-10-27) |
+| Wolverine advises `delivery-limit` -1 for a quorum queue that a durable inbox reads (`DeliveryLimitForDurableQuorumQueues(-1)`). | WolverineFx 6.51.3+ | [Wolverine RabbitMQ object management](https://wolverinefx.net/guide/messaging/transports/rabbitmq/object-management.html), issue JasperFx/wolverine#5123 (checked 2026-10-27) |
 | On a consumer timeout, the broker sends `basic.cancel` to a client with `consumer_cancel_notify`. `consumer_timeout_response` setting. | 4.3, 4.3.7 | [Quorum queues](https://www.rabbitmq.com/docs/quorum-queues), 4.3.7 release notes |
 | The docs say that global QoS on a quorum queue gives a channel error. The run of 2026-10-24 on 4.3.6 got no error. The skill keeps "do not depend on an error". | 4.3.6 | [Quorum queues](https://www.rabbitmq.com/docs/quorum-queues) |
 | The client advertises `consumer_cancel_notify` (string in `RabbitMQ.Client.dll`), and does not consume again after `basic.cancel`: it calls `HandleBasicCancelAsync`, then `UnregisteredAsync`. | 7.2.2 | DeepWiki rabbitmq/rabbitmq-dotnet-client, the nuget package |

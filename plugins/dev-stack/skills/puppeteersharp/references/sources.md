@@ -12,14 +12,14 @@ Checked on 2026-10-19, and again on 2026-10-25. The facts of this skill come fro
 
 ## Versions
 
-| Item | Version on 2026-10-25 | Source |
+| Item | Version on 2026-10-27 | Source |
 |------|-----------------------|--------|
 | PuppeteerSharp, PuppeteerSharp.Cdp | 25.15.0 (MIT, net8.0, net10.0, netstandard2.0). 25.14.0 was the version of 2026-10-19 | [nuget.org PuppeteerSharp](https://www.nuget.org/packages/PuppeteerSharp) |
 | Chrome build of PuppeteerSharp 25.15.0 | 155.0.8059.84 (`Chrome.DefaultBuildId`). 25.14.0 has 155.0.8059.79 | [BrowserData/Chrome.cs at v25.15.0](https://github.com/hardkoded/puppeteer-sharp/blob/v25.15.0/lib/PuppeteerSharp/BrowserData/Chrome.cs) |
-| chrome-headless-shell linux64 | 155.0.8059.84 | [Chrome for Testing](https://googlechromelabs.github.io/chrome-for-testing/) |
+| chrome-headless-shell linux64 | 155.0.8059.84. Chrome for Testing Stable is 156.0.8078.47 on 2026-10-27 | [Chrome for Testing](https://googlechromelabs.github.io/chrome-for-testing/), [last-known-good-versions.json](https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions.json) |
 | Microsoft.Playwright (alternative) | 1.64.1 (MIT) | [nuget.org](https://www.nuget.org/packages/Microsoft.Playwright) |
 | .NET runtime images | `mcr.microsoft.com/dotnet/aspnet:10.0` (Ubuntu 24.04), user `app` 1654 | [.NET container images](https://learn.microsoft.com/dotnet/core/docker/container-images) |
-| .NET 10 | Runtime 10.0.13 (2026-10-13), SDK 10.0.402 | [.NET 10 release metadata](https://builds.dotnet.microsoft.com/dotnet/release-metadata/10.0/releases.json) |
+| .NET 10 | Runtime 10.0.14 (a security release of 2026-10-25), SDK 10.0.403 | [.NET 10 release metadata](https://builds.dotnet.microsoft.com/dotnet/release-metadata/10.0/releases.json) |
 
 ## Documentation
 
@@ -63,6 +63,7 @@ With SDK 10.0.402, PuppeteerSharp 25.15.0, and chrome-headless-shell 155.0.8059.
 | A CSS `@page { size: A4 }` without `PreferCSSPageSize = true` gives Letter. With `PreferCSSPageSize = true`, it gives `[0 0 594.95996 841.91998]` (ran). | Ran |
 | `PdfOptions.PrintBackground` is `false` by default. The fill color of a `div` with a CSS background is in the inflated page content only with `PrintBackground = true` (ran). | [PdfOptions.cs](https://github.com/hardkoded/puppeteer-sharp/blob/v25.15.0/lib/PuppeteerSharp/PdfOptions.cs), ran |
 | `chrome-headless-shell-linux64.zip` of 155.0.8059.84 is on Chrome for Testing. | [known-good-versions.json](https://googlechromelabs.github.io/chrome-for-testing/known-good-versions.json) |
+| The `ChromeHeadlessShell` cache folder is used only with `HeadlessMode.Shell` and the Chrome browser. The default `HeadlessMode` is `True`, and then the `Chrome` folder is used (checked 2026-10-27). | [Launcher.cs at v25.15.0](https://github.com/hardkoded/puppeteer-sharp/blob/v25.15.0/lib/PuppeteerSharp/Launcher.cs), [LaunchOptions.cs](https://github.com/hardkoded/puppeteer-sharp/blob/v25.15.0/lib/PuppeteerSharp/LaunchOptions.cs) |
 
 ## Credits
 

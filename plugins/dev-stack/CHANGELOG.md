@@ -6,6 +6,42 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-10-27
+
+### Added
+
+- `wolverine`: with the RabbitMQ transport and a durable inbox, use WolverineFx 6.51.3 or later. Version 6.51.0 can lose messages after a broker outage (issue 5123). A quorum queue that a durable inbox reads gets `DeliveryLimitForDurableQuorumQueues(-1)`.
+- `rabbitmq`: MSG-08 keeps a delivery limit of 20, except on a queue that a Wolverine durable inbox reads.
+- `redis`: use Valkey 9.1.3, 9.0.7, or 8.1.11, or Redis 8.10.3 or later. These security releases of 2026-10-26 fix a heap overflow in cluster pub/sub.
+- `secure-coding` and `aspnetcore`: NuGetAudit does not check the shared framework, so the runtime and the base image must be 10.0.14 or later. Also MailKit CVE-2026-41319 (below 4.16.0).
+- `aspnetcore-openapi`: a deprecated API version also gets `Policies.Deprecate(...)`, which sends the RFC 9745 `Deprecation` header. `Effective(y, m, d)` uses the local time zone of the server.
+- `sqlserver` and `efcore`: SqlClient 6.1.6 and later pull the Entra ID broker. An app without Entra ID can reference SqlClient 7.1.x directly and keep the Pkcs pin.
+- `mailkit`: Microsoft 365 turns off SMTP AUTH basic auth by default at the end of December 2026.
+- `dotnet-observability`: the OTLP exporter before 1.15.3 has 3 advisories.
+- `migrate-fluentassertions`: on .NET 6 or 7, pin AwesomeAssertions `[9.6.0,10.0.0)`.
+
+### Changed
+
+- Each skill has `verified: 2026-10-27`. New versions:
+  - .NET 10.0.14 and SDK 10.0.403 (a security release of 2026-10-25), and .NET 11 and EF Core 11 RC 3. EFCore.PG 11 RC 2.
+  - MSTest 4.5.2, Microsoft.Testing.Platform 2.5.2, and the SQL Server test image `2025-CU10-ubuntu-24.04`.
+  - Meziantou.Analyzer 3.0.317, StyleCop.Analyzers 1.3.151-beta, `actions/checkout@v7`, and `actions/setup-dotnet@v6`.
+  - Trivy 0.76.1, WolverineFx 6.56.0, OpenSearch 2.19.7, and Scriban 7.5.3.
+- `aspnetcore-openapi`: .NET 11 notes for the binary schema of file results and for `OpenApiGenerationEnvironment`.
+
+### Fixed
+
+- `rabbitmq`: RabbitMQ 4.3.0 rejects only `x-queue-mode` and `x-queue-version` 1. Version 2 is valid, and `RMQ-REMOVED-ARGS` no longer flags it. A `delivery-limit` policy reaches existing queues from 4.3.0, not from 4.4. On 4.3, a passive declare needs the `configure` permission.
+- `fluentvalidation`: auto-validation in FluentValidation.AspNetCore cannot run async rules. It throws at runtime.
+- `dotnet-testing`: only MSTest.Sdk projects (MTP v2) fail on the VSTest path. The meaning of MSTEST0074 to MSTEST0077. Respawn 7 finds the adapter from the connection.
+- `dotnet-analyzers`: MSTEST0003 checks the test method layout. The skipped test rule is MSTEST0015.
+- `migrate-fluentassertions`: AwesomeAssertions 9 targets .NET 6 too, so .NET 6 and 7 projects can move.
+- `aspnetcore`: a `Startup` class still works. `WebHostBuilder` gives ASPDEPR004, and `WebHost` gives ASPDEPR008.
+- `postgresql`: the Squawk rule is `prefer-timestamptz`.
+- `redis`: the old cache packages are not marked deprecated on NuGet. The backplane issue is dotnet/extensions 5517.
+- `elasticsearch`: find the bulk size with a benchmark. Stay below a few tens of MB.
+- `puppeteersharp`: PuppeteerSharp uses the `ChromeHeadlessShell` folder only with `HeadlessMode.Shell`.
+
 ## [1.2.0] - 2026-10-25
 
 ### Added

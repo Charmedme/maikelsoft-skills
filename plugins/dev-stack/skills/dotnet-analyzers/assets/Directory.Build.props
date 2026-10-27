@@ -1,6 +1,6 @@
 <Project>
   <!--
-    Analyzer baseline of the dev-stack:dotnet-analyzers skill (verified 2026-10-16, .NET SDK 10.0.402).
+    Analyzer baseline of the dev-stack:dotnet-analyzers skill (verified 2026-10-27, .NET SDK 10.0.403).
     Put this file in the repository root. Merge it into an existing Directory.Build.props.
     The analyzer packages are in Directory.Packages.props (GlobalPackageReference).
   -->
@@ -19,7 +19,7 @@
     <WarningsAsErrors>$(WarningsAsErrors);nullable</WarningsAsErrors>
     <TreatWarningsAsErrors Condition="'$(CI)' == 'true'">true</TreatWarningsAsErrors>
 
-    <!-- MSTest analyzers: Info rules become warnings, MSTEST0003 (skipped test) becomes an error.
+    <!-- MSTest analyzers: Info rules become warnings, MSTEST0003 (test method layout) and MSTEST0043 (retry attribute) become errors.
          No condition: IsTestProject is not set yet when this file loads. Projects without MSTest ignore it. -->
     <MSTestAnalysisMode>Recommended</MSTestAnalysisMode>
 

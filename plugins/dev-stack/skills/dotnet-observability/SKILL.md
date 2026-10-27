@@ -2,7 +2,7 @@
 name: dotnet-observability
 description: Logs, traces, and metrics in .NET code with ILogger, LoggerMessage, OpenTelemetry, and Azure Monitor (Application Insights). Use when code or a review touches ILogger, log levels, message templates, LoggerMessage, BeginScope, personal data or secrets in logs, log redaction, ActivitySource and spans, Meter, IMeterFactory, counters, OpenTelemetry setup (AddOpenTelemetry, UseOtlpExporter), Application Insights (connection string, UseMicrosoftOpenTelemetry, UseAzureMonitor, TelemetryClient), Serilog, trace sampling, or tests with FakeLogger and MetricCollector. Not for the middleware order or exception handlers (dev-stack:aspnetcore), an Aspire ServiceDefaults project (aspire), or dashboards and alert rules in a monitoring tool.
 metadata:
-  verified: "2026-10-25"
+  verified: "2026-10-27"
   versions: ".NET 10, OpenTelemetry .NET 1.20.1, Microsoft.OpenTelemetry 1.2, Azure.Monitor.OpenTelemetry.AspNetCore 1.6, Microsoft.Extensions.Telemetry and Compliance.Redaction 10.11, Serilog 4.4 with Serilog.AspNetCore 10.0"
 ---
 

@@ -15,7 +15,7 @@ The author checked all facts on 2026-10-16, unless a line says otherwise. The au
 
 ## Versions and support
 
-- .NET support policy (10.0.13, LTS to 2028-11-14. .NET 8 and 9 end on 2026-11-10): https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core
+- .NET support policy (10.0.14 of 2026-10-25, LTS to 2028-11-14. .NET 8 and 9 end on 2026-11-10): https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core
 - Release metadata: https://builds.dotnet.microsoft.com/dotnet/release-metadata/10.0/releases.json
 - Breaking changes in .NET 10: https://learn.microsoft.com/dotnet/core/compatibility/10
 - Breaking changes in ASP.NET Core 10: https://learn.microsoft.com/aspnet/core/breaking-changes/10/overview
@@ -74,7 +74,7 @@ The author checked all facts on 2026-10-16, unless a line says otherwise. The au
 - RunAsync throws on a failed BackgroundService: https://learn.microsoft.com/dotnet/core/compatibility/extensions/11/ihost-runasync-stopasync-throw-backgroundservice-failure
 - Synchronous access to async-validated options throws: https://learn.microsoft.com/dotnet/core/compatibility/extensions/11/async-options-validation-sync-access
 - Microsoft.Extensions packages in the shared framework: https://learn.microsoft.com/dotnet/core/compatibility/extensions/11/extensions-in-shared-framework
-- ConcurrencyLimiter removed: https://learn.microsoft.com/aspnet/core/breaking-changes/11/concurrencylimiter-removed
+- ConcurrencyLimiter removed: https://learn.microsoft.com/aspnet/core/breaking-changes/11/concurrencylimiter-removed. The page names ASP0025 for the obsolete warning. That is wrong: ASP0025 is "Use AddAuthorizationBuilder". The `[Obsolete]` attribute on `UseConcurrencyLimiter` in the release/8.0 source has no diagnostic ID, so the warning is CS0618 (checked 2026-10-27).
 - Kestrel protocol compliance: https://learn.microsoft.com/aspnet/core/breaking-changes/11/kestrel-strict-protocol-compliance
 - Hosting OpenTelemetry tags: https://learn.microsoft.com/aspnet/core/breaking-changes/11/http-activity-otel-semconv
 - Microsoft.OpenApi 3.x: https://learn.microsoft.com/aspnet/core/breaking-changes/11/microsoft-openapi-3x
@@ -94,6 +94,13 @@ The author checked these facts again with a build or a run on 2026-10-16:
 - `RemoveAllResilienceHandlers()` gives EXTEXP0001 as an error with version 10.11.0.
 - A client with a handler from `ConfigureHttpClientDefaults` and a second `AddStandardResilienceHandler` made 16 attempts against an always-failing handler. With `RemoveAllResilienceHandlers()` first, or with one handler, it made 4.
 - The .NET 11 facts come from the RC 2 documentation pages listed in the ".NET 11" section.
+
+## Checked on 2026-10-27
+
+- .NET 10.0.14 and SDK 10.0.403 (2026-10-25, security release), .NET 11 RC 3: release metadata https://dotnetcli.blob.core.windows.net/dotnet/release-metadata/10.0/releases.json and the 11.0 file.
+- `WebHostBuilder` gives ASPDEPR004, `WebHost` and `IWebHost` give ASPDEPR008: https://learn.microsoft.com/aspnet/core/breaking-changes/10/webhostbuilder-deprecated
+- ASP.NET Core supports a `Startup` class, but Microsoft does not recommend it: https://learn.microsoft.com/aspnet/core/fundamentals/startup
+- On nuget.org: Microsoft.AspNetCore.OpenApi, Microsoft.AspNetCore.Authentication.JwtBearer, and Microsoft.Extensions.Http.Polly 10.0.14. Microsoft.Extensions.Http.Resilience 10.11.0 and FluentValidation.DependencyInjectionExtensions 12.2.0 are still the latest.
 
 ## Credits
 

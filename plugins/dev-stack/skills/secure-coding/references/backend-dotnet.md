@@ -515,6 +515,7 @@ public static IApplicationBuilder UseSecurityHeaders(this IApplicationBuilder ap
 - .NET 10: `KnownNetworks` and `Microsoft.AspNetCore.HttpOverrides.IPNetwork` are obsolete (ASPDEPR005). Use `KnownIPNetworks` with `System.Net.IPNetwork`. On .NET 8 and 9, use `KnownNetworks`.
 - .NET 10: cookie authentication returns 401 and 403 for API endpoints.
 - .NET 10 SDK: NuGetAudit checks transitive packages by default. `dotnet package list` and `dotnet package update --vulnerable` are the new command forms.
-- EF Core 10: analyzers EF1002 and EF1003 for raw SQL.
+- .NET 10 servicing: use runtime and ASP.NET Core 10.0.14 or later, a security release of 2026-10-25. 10.0.13 (2026-10-13) fixed 8 ASP.NET Core advisories, two of them critical (security feature bypass, CVE-2026-88092 and CVE-2026-70188). 8.0.32 and 9.0.21 fix the same advisories. Update the shared framework and the base image digest.
+- EF Core 10: analyzer EF1003 for concatenation in raw SQL is new. EF1002 for interpolation in raw SQL existed before.
 - .NET 9: BinaryFormatter throws at run time.
 - .NET 8 and 9 end support on 2026-11-10. Tell the human.

@@ -53,5 +53,5 @@ Mark each check `tool` (a command or a rule ID gives the answer) or `judge` (a p
 | 30 | No unused usings, members, parameters, or assignments | tool (IDE0005, IDE0051, IDE0052, IDE0059, IDE0060) |
 | 31 | Names follow the naming rules | tool (IDE1006) |
 | 32 | No unused private code left | tool (`roslynator find-symbol --unused --visibility private`) |
-| 33 | Test methods are valid and not skipped without notice | tool (MSTEST0003, MSTEST0030) |
+| 33 | Test methods have a valid layout and are in a test class | tool (MSTEST0003, MSTEST0030) |
 | 34 | A rule that fired is real, not a false positive that needs a tuned config | judge |

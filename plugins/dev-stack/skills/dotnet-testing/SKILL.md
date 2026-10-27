@@ -2,8 +2,8 @@
 name: dotnet-testing
 description: .NET test code and test project setup with MSTest 4 (MSTest.Sdk, Microsoft.Testing.Platform), FluentAssertions 7.2.2 or AwesomeAssertions 9, NSubstitute, hand-written fakes, FakeTimeProvider, WebApplicationFactory, Testcontainers 4, and Respawn. Covers what to test, test names, data rows, equivalency traps, the FluentAssertions 7 bridge for MSTest 4, integration test fixtures, parallel runs, coverage, and mutation testing. Use when writing, reviewing, or fixing .NET tests, setting up a test project or global.json for tests, choosing which tests a C# class or API needs, or when a test fails with "threw exception FluentAssertions.Execution.AssertionFailedException". Not for xUnit or NUnit API details, Angular or TypeScript tests, Playwright end-to-end tests, load tests, or the move from FluentAssertions to AwesomeAssertions (dev-stack:migrate-fluentassertions).
 metadata:
-  verified: "2026-10-16"
-  versions: ".NET 10 (SDK 10.0.402), MSTest 4.5.1, Microsoft.Testing.Platform 2.5, FluentAssertions 7.2.2, AwesomeAssertions 9.6.0, NSubstitute 6.2.0, Microsoft.Extensions.TimeProvider.Testing 10.11.0, Microsoft.AspNetCore.Mvc.Testing 10.0.13, Testcontainers 4.16.0, Respawn 7.0.0, Stryker.NET 5.0.0"
+  verified: "2026-10-27"
+  versions: ".NET 10 (SDK 10.0.403), MSTest 4.5.2, Microsoft.Testing.Platform 2.5.2, FluentAssertions 7.2.2, AwesomeAssertions 9.6.0, NSubstitute 6.2.0, Microsoft.Extensions.TimeProvider.Testing 10.11.0, Microsoft.AspNetCore.Mvc.Testing 10.0.14, Testcontainers 4.16.0, Respawn 7.0.0, Stryker.NET 5.0.0"
 ---
 
 # .NET testing
@@ -49,7 +49,7 @@ Existing code keeps its style (stack rule 3). For new code, these are the recomm
 ### Test project
 
 1. Use `<Project Sdk="MSTest.Sdk">` and pin the version once in `global.json` under `msbuild-sdks`. The SDK adds the framework, the adapter, the analyzers, the runner, and code coverage. Dependabot and the NuGet UI do not update SDK versions, so bump it by hand.
-2. Select the runner in `global.json`: `"test": { "runner": "Microsoft.Testing.Platform" }`. On the .NET 10 SDK, MSTest 4 projects fail on the old VSTest path of `dotnet test`.
+2. Select the runner in `global.json`: `"test": { "runner": "Microsoft.Testing.Platform" }`. On the .NET 10 SDK, MSTest.Sdk projects (MTP v2 by default) fail on the old VSTest path of `dotnet test`. When `global.json` selects MTP, each test project in the repository must use MTP.
 3. Set `<MSTestAnalysisMode>Recommended</MSTestAnalysisMode>` and build with warnings as errors in CI. The analyzers find removed APIs, wrong argument order, and missing cancellation.
 4. Declare parallel runs in each test assembly: `[assembly: Parallelize(Scope = ExecutionScope.MethodLevel)]`. MSTest runs tests one by one when you declare nothing (MSTEST0001).
 5. Keep unit tests and integration tests in separate projects. Then the unit test run needs no Docker and stays fast.

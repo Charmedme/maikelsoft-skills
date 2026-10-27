@@ -1,13 +1,13 @@
 # Sources
 
-All sources checked on 2026-10-16. "Tested" means: run on .NET SDK 10.0.402 on Linux in the scratch project of this skill.
+All sources checked on 2026-10-16, versions checked again on 2026-10-27. "Tested" means: run on .NET SDK 10.0.402 on Linux in the scratch project of this skill.
 
 ## Primary sources
 
 | Fact | Source |
 |---|---|
 | `AnalysisLevel`, `AnalysisMode`, `EnforceCodeStyleInBuild`, `GenerateDocumentationFile` | [MSBuild code analysis properties](https://learn.microsoft.com/dotnet/core/project-sdk/msbuild-props#code-analysis-properties) |
-| Rule counts per mode (92, 145, 280) | SDK files `sdk/10.0.402/Sdks/Microsoft.NET.Sdk/analyzers/build/config/analysislevel_10_*.globalconfig` (tested) |
+| Rule counts per mode (92, 145, 280) | SDK files `sdk/10.0.402/Sdks/Microsoft.NET.Sdk/analyzers/build/config/analysislevel_10_*.globalconfig` (tested). Counted again on 2026-10-27 in `buildTransitive/config/` of the Microsoft.CodeAnalysis.NetAnalyzers 10.0.403 package: same counts. |
 | Code style rules on build | [Code analysis overview](https://learn.microsoft.com/dotnet/fundamentals/code-analysis/overview) |
 | `ErrorLog`, `WarningsAsErrors` with `nullable`, `TreatWarningsAsErrors` and `-warnaserror` | [Compiler options for errors and warnings](https://learn.microsoft.com/dotnet/csharp/language-reference/compiler-options/errors-warnings) |
 | IDE0005 needs the documentation file | [IDE0005](https://learn.microsoft.com/dotnet/fundamentals/code-analysis/style-rules/ide0005) |

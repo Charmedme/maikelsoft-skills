@@ -2,8 +2,8 @@
 name: aspnetcore-openapi
 description: OpenAPI documents and API versions for ASP.NET Core 10 APIs. Covers the built-in generator (Microsoft.AspNetCore.OpenApi), response metadata for client generators, Scalar and Swagger UI, transformers on Microsoft.OpenApi 2.x, the build-time document in the repository, versioning with Asp.Versioning (URL segment, deprecation, sunset), and breaking-change checks with oasdiff. Use when code or a review touches AddOpenApi, MapOpenApi, MapScalarApiReference, Swashbuckle, Produces or ProducesProblem, WithName or operationId, a document, operation or schema transformer, Microsoft.Extensions.ApiDescription.Server, OpenApiDocumentsDirectory, AddApiVersioning, NewVersionedApi, a deprecated API version, or a contract that an external client generates code from. Not for endpoint design, ProblemDetails wiring, or JSON options (dev-stack:aspnetcore), client generation with Kiota or NSwag, or validation rules (dev-stack:fluentvalidation).
 metadata:
-  verified: "2026-10-25"
-  versions: ".NET 10 (SDK 10.0.402), Microsoft.AspNetCore.OpenApi 10.0.13, Microsoft.OpenApi 2.12.2, Microsoft.Extensions.ApiDescription.Server 10.0.13, Asp.Versioning 10.2.3, Scalar.AspNetCore 2.18.3, Swashbuckle.AspNetCore 10.3.1"
+  verified: "2026-10-27"
+  versions: ".NET 10 (SDK 10.0.403), Microsoft.AspNetCore.OpenApi 10.0.14, Microsoft.OpenApi 2.12.2, Microsoft.Extensions.ApiDescription.Server 10.0.14, Asp.Versioning 10.2.3, Scalar.AspNetCore 2.18.3, Swashbuckle.AspNetCore 10.3.1"
 ---
 
 # ASP.NET Core OpenAPI and versioning
@@ -65,7 +65,7 @@ Commands, CI steps, and the startup guard: `references/build-time-document.md`.
 
 14. Use `AddApiVersioning(...).AddApiExplorer(...).AddOpenApi()`, `app.NewVersionedApi()`, and `app.MapOpenApi().WithDocumentPerVersion()`. Do not write one `AddOpenApi("v1")` per version with `ShouldInclude`. The analyzers AV0029 and AV0030 warn, and each new version needs new code.
 15. URL segment: set `ApiVersionReader = new UrlSegmentApiVersionReader()` and `SubstituteApiVersionInUrl = true`. Without the substitution, the document shows `/api/v{version}/orders` with a version parameter. `AssumeDefaultVersionWhenUnspecified` has no effect for a URL segment: a missing or unknown version gives 404, not 400.
-16. Turn on `ReportApiVersions`. Deprecate before you remove: `HasDeprecatedApiVersion(1.0)` and `Policies.Sunset(1.0).Effective(...)`. Give a date in the future (API-18) and a `text/html` link to the policy. Clients then get `api-deprecated-versions`, `Sunset`, and `Link` headers.
+16. Turn on `ReportApiVersions`. Deprecate before you remove: `HasDeprecatedApiVersion(1.0)`, `Policies.Deprecate(1.0).Effective(...)`, and `Policies.Sunset(1.0).Effective(...)`. Give a sunset date in the future (API-18) and a `text/html` link to the policy. Clients then get `api-deprecated-versions`, `Deprecation` (RFC 9745), `Sunset`, and `Link` headers (tested with Asp.Versioning 10.2.3).
 17. Give each version its own request and response records. Do not share one record between versions, and do not expose EF entities. A change in a shared type changes each version.
 18. A breaking change needs a new major version. Examples: a removed or renamed field, endpoint, or enum value. A new required request field. A changed type, format, or status code. Add a response field or an endpoint in the same version.
 
@@ -135,7 +135,7 @@ The full list is in `references/review-checklist.md`.
 9. Startup code does not need a database or a secret when the build makes the document. judge
 10. Versioning uses `AddApiExplorer().AddOpenApi()` and `WithDocumentPerVersion`. tool (AV0029, AV0030, OAS-VERSIONING-OLD)
 11. The URL segment reader has `SubstituteApiVersionInUrl` and no `AssumeDefaultVersionWhenUnspecified`. tool (OAS-URL-ASSUME-DEFAULT) and judge
-12. A deprecated version has a sunset date in the future and a policy link. judge
+12. A deprecated version has a deprecation policy, a sunset date in the future, and a policy link. judge
 13. Each version has its own contract records. A rename or removal is in a new major version. judge
 14. CI checks the document diff and runs oasdiff for an external consumer. judge
 

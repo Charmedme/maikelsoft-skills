@@ -2,8 +2,8 @@
 name: secure-coding
 description: Security rules for writing and reviewing code in the .NET 10, ASP.NET Core, EF Core, Angular and AngularJS stack, with its integrations, supply chain, containers and Kubernetes config. Covers authentication, authorization and tenant isolation, injection, deserialization, SSRF, file upload, secrets, crypto, CSRF, CORS, headers, logging, dependencies and LLM calls, mapped to OWASP Top 10 2025, API Top 10 2023, ASVS 5.0 level 2 and CWE Top 25 2025. Use when code adds or changes an endpoint, sign-in, a permission check, input binding, SQL, a file or path, an outbound URL, a serializer, a secret or key, a cookie or token, a log of user data, a dependency, a Dockerfile, a manifest, a CI workflow or an LLM call, or when the user asks for a security review, a threat model, or "is this safe". Not for general code review without a security question, pure styling or text changes, or token issuing inside the identity provider.
 metadata:
-  verified: "2026-10-16"
-  versions: ".NET 10 (SDK 10.0.402, ASP.NET Core 10.0.13), EF Core 10, Angular 22, AngularJS 1.8, FileSignatures 7.3.0, MailKit 4.18.1, PuppeteerSharp 25.14.0, Trivy 0.74.0, OWASP Top 10:2025, API Security Top 10:2023, ASVS 5.0.0, CWE Top 25:2025, OWASP LLM Top 10:2026"
+  verified: "2026-10-27"
+  versions: ".NET 10 (SDK 10.0.403, ASP.NET Core 10.0.14), EF Core 10, Angular 22, AngularJS 1.8, FileSignatures 7.3.0, MailKit 4.18.2, PuppeteerSharp 25.15.0, Trivy 0.76.1, OWASP Top 10:2025, API Security Top 10:2023, ASVS 5.0.0, CWE Top 25:2025, OWASP LLM Top 10:2026"
 ---
 
 # Secure coding
@@ -101,7 +101,7 @@ Existing code keeps its style. Ask each open decision when the work first needs 
 ### Supply chain and platform (A03, A02)
 
 26. Before you add a package, check that it exists, its age, its owner and its license. Then ask the human (stack rule 5).
-27. Commit lock files. Restore with `--locked-mode` and `npm ci`. Keep NuGetAudit on. Pin CI actions and scanners by SHA or digest.
+27. Commit lock files. Restore with `--locked-mode` and `npm ci`. Keep NuGetAudit on. Pin CI actions and scanners by SHA or digest. NuGetAudit does not check the shared framework: the runtime and the base image must be .NET 10.0.14 or later.
 28. Run containers as non-root (`USER $APP_UID`), and meet Pod Security `restricted`. Detail: `references/containers-kubernetes.md`.
 
 ## Never write

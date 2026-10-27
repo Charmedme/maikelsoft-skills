@@ -17,7 +17,7 @@ Primary sources for this skill. Checked on 2026-10-16 unless a line says otherwi
 
 ## Reference lists
 
-- OWASP Top 10:2025: https://owasp.org/Top10/2025/
+- OWASP Top 10:2025: https://top10.owasp.org/2025/
 - OWASP API Security Top 10:2023: https://api-security.owasp.org/editions/2023/en/0x11-t10/
 - OWASP ASVS 5.0.0: https://owasp.org/www-project-ASVS/ and https://github.com/OWASP/ASVS/releases
 - CWE Top 25:2025: https://cwe.mitre.org/top25/archive/2025/2025_cwe_top25.html
@@ -123,6 +123,11 @@ Primary sources for this skill. Checked on 2026-10-16 unless a line says otherwi
 - Checked: `ILoggingBuilder.EnableRedaction` is in the package Microsoft.Extensions.Telemetry 10.11.0. Source: compile error without it, 2026-10-16.
 - Checked: `IPage.SetContentAsync(string, NavigationOptions)` is obsolete in PuppeteerSharp 25.14.0. Use `SetContentOptions`. Source: CS0618 in the build, 2026-10-16.
 - Checked: `dotnet package update --vulnerable` exists in SDK 10.0.402 and fixed a transitive package. Source: command run, 2026-10-16.
+- Checked: .NET 10.0.14 and SDK 10.0.403 (2026-10-25, security release). Source: .NET release metadata, 2026-10-27.
+- Checked: 8 ASP.NET Core advisories of 2026-10-13, fixed in 10.0.13, 9.0.21 and 8.0.32. Source: `gh api "/advisories?ecosystem=nuget&affects=Microsoft.AspNetCore.App.Runtime.linux-x64"`, 2026-10-27.
+- Checked: MailKit before 4.16.0 has CVE-2026-41319 (GHSA-9j88-vvj5-vhgr). Source: GitHub advisory database, 2026-10-27.
+- Checked: latest versions MailKit and MimeKit 4.18.2, PuppeteerSharp 25.15.0, Trivy 0.76.1 (fix for the eMudhra CA incident). Source: nuget.org and the Trivy release notes, 2026-10-27.
+- Checked: EF1002 shipped in EF Core 8, EF1003 in EF Core 10. Source: `AnalyzerReleases.Shipped.md` in dotnet/efcore, from the audit of 2026-10-25.
 - Checked: gitleaks subcommands `git` and `dir`, flags `--redact` and `--log-opts`, exit codes 0 and 1. Source: github.com/gitleaks/gitleaks README, 2026-10-16.
 
 ## Credits

@@ -40,6 +40,7 @@ The same rules apply: one call, a connection string from configuration, explicit
 - Version 1.5.0 (2026-04-30) changed the default sampler from 100 % to `RateLimitedSampler` with 5 traces per second. Code that set only `SamplingRatio = 1.0F` before 1.5.0 kept all traces. After the upgrade it keeps 5 traces per second. `SamplingRatio` already defaults to 1.0, so that line does nothing. Checked by run with 1.6.0: `SamplingRatio = 1.0F` alone recorded 2 of 50 root spans, and with `TracesPerSecond = null` 50 of 50.
 - The fix: `options.TracesPerSecond = null;` next to `SamplingRatio`, or the environment variables `OTEL_TRACES_SAMPLER=microsoft.fixed_percentage` and `OTEL_TRACES_SAMPLER_ARG=1.0`.
 - `EnableTraceBasedLogsSampler` is on by default, so the logs of the dropped traces are lost too.
+- Version 1.6.0 (2026-07-27) brings Azure.Monitor.OpenTelemetry.Exporter 1.8.3 or later. The exporter sends customer SDK statistics by default. To stop them, set `APPLICATIONINSIGHTS_SDKSTATS_DISABLED=true`.
 
 ## Log scopes with a distro
 

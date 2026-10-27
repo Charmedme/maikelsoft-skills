@@ -57,7 +57,7 @@ The team decisions that messaging code needs. The order is the order in which a 
 - Question: Where do the message types live, and how do they change?
 - Ask when: the first message that another service reads.
 - Options: One `<Service>.Contracts` project per publishing service. A shared contracts project for all services. JSON schema files only.
-- Recommended: One `<Service>.Contracts` project per publishing service: records only, no dependencies, pinned wire names, additive changes, and contract tests that compare the serialized JSON with stored samples. Consumers in other languages get the JSON samples.
+- Recommended: One `<Service>.Contracts` project per publishing service. It has records only, no dependencies, pinned wire names, additive changes, and contract tests that compare the serialized JSON with stored samples. Consumers in other languages get the JSON samples.
 - Choose another option when: the consumers are not .NET: JSON schema or samples as the main contract, generated types optional.
 - Depends on: MSG-04.
 - Revisit when: a breaking change is needed: add `v2` next to `v1`.
@@ -93,7 +93,7 @@ The team decisions that messaging code needs. The order is the order in which a 
 - Question: How does the service make a database write and a publish happen together?
 - Ask when: the first publish that follows a database write.
 - Options: Wolverine durable outbox and inbox. An own outbox table and a background publisher with confirms. Publish after the commit (loses messages).
-- Recommended: The Wolverine durable outbox when the service uses Wolverine (`dev-stack:wolverine`). Without Wolverine: an own outbox table, written in the same `SaveChangesAsync`, and a `BackgroundService` that publishes with confirms and marks a row sent after the confirm (`references/outbox.md`).
+- Recommended: The Wolverine durable outbox when the service uses Wolverine (`dev-stack:wolverine`). Without Wolverine: an own outbox table, written in the same `SaveChangesAsync`. A `BackgroundService` publishes with confirms and marks a row sent after the confirm (`references/outbox.md`).
 - Choose another option when: a lost message is acceptable (a cache refresh hint): publish after the commit, and say so in a comment.
 - Depends on: MSG-04.
 - Revisit when: the outbox table grows: add a cleanup job for sent rows.
@@ -106,7 +106,7 @@ The team decisions that messaging code needs. The order is the order in which a 
 - Ask when: the first consumer that writes data.
 - Options: Natural idempotency: a unique index on the business key, an upsert with a version check, or a state check. A table of handled message IDs. No protection.
 - Recommended: Make the effect naturally idempotent (unique index on the business key, or an upsert with a version check). A table of handled message IDs only for an effect that cannot be idempotent, written in the same transaction as the effect.
-- Choose another option when: the effect is an external call (payment, mail): the message ID table, and pass an idempotency key to the external API when it has one.
+- Choose another option when: the effect is an external call (payment, mail). Then use the message ID table, and pass an idempotency key to the external API when it has one.
 - Depends on: MSG-09.
 - Revisit when: duplicates show in the data.
 - Check: judge (a test that handles the same message two times).
@@ -117,7 +117,7 @@ The team decisions that messaging code needs. The order is the order in which a 
 - Question: How does the consumer retry, and where do failed messages go?
 - Ask when: the first consumer.
 - Options: Wolverine error policies (`dev-stack:wolverine`). Raw client: `requeue: false` to a dead-letter exchange, DLX plus TTL for delayed retry, or the quorum delayed retry of RabbitMQ 4.3. EasyNetQ: no built-in retry.
-- Recommended: Transient errors: 3 immediate retries with cooldown, then 2 delayed retries with jitter, then the dead-letter queue. Permanent errors: the dead-letter queue at once. On the broker: a dead-letter policy on each work queue, `delivery-limit` 20, and an alert on dead-letter depth greater than 0.
+- Recommended: Transient errors: 3 immediate retries with cooldown, then 2 delayed retries with jitter, then the dead-letter queue. Permanent errors: the dead-letter queue at once. On the broker: a dead-letter policy on each work queue, `delivery-limit` 20, and an alert when a dead-letter queue is not empty. Exception: a quorum queue that a Wolverine durable inbox reads gets `delivery-limit` -1 (Wolverine `DeliveryLimitForDurableQuorumQueues(-1)`, WolverineFx 6.51.3 or later). The inbox owns the retries, and each reconnect or restart returns the in-flight messages to the queue (`dev-stack:wolverine`).
 - Choose another option when: a message is worthless after a short time: a TTL and discard on purpose.
 - Depends on: MSG-04, MSG-06.
 - Revisit when: the dead-letter queue fills in normal operation.

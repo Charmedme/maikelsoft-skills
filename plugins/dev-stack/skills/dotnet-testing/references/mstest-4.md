@@ -1,6 +1,6 @@
 # MSTest 4
 
-Facts for MSTest 4.5.1 with Microsoft.Testing.Platform (MTP) 2.5 on the .NET 10 SDK. Checked on 2026-10-16. Only the latest MSTest release gets support.
+Facts for MSTest 4.5.2 with Microsoft.Testing.Platform (MTP) 2.5.2 on the .NET 10 SDK. Checked on 2026-10-16, versions checked again on 2026-10-27. Only the latest MSTest release gets support.
 
 ## Contents
 
@@ -21,7 +21,7 @@ Facts for MSTest 4.5.1 with Microsoft.Testing.Platform (MTP) 2.5 on the .NET 10 
 ```json
 {
   "msbuild-sdks": {
-    "MSTest.Sdk": "4.5.1"
+    "MSTest.Sdk": "4.5.2"
   },
   "test": {
     "runner": "Microsoft.Testing.Platform"
@@ -90,7 +90,7 @@ With MTP, each test project builds to an executable that runs its own tests.
 | MSTEST0052 | Explicit `DynamicDataSourceType`: let MSTest detect it |
 | MSTEST0065 | `Assert.AreEqual` on a collection compares references |
 | MSTEST0067 | `Thread.Sleep`, `.Wait()`, `.Result` in tests (off in Recommended, turn it on with `dotnet_diagnostic.MSTEST0067.severity = warning`) |
-| MSTEST0074 to MSTEST0077 | Parallel tests that change culture, the current folder, or environment variables |
+| MSTEST0074 to MSTEST0077 | Parallel tests: 0074 process-global state (for example environment variables) without `[ResourceLock]`. 0075 the current folder. 0076 the culture. 0077 hardcoded or shared file paths. |
 | MSTEST0082 | A base class from another MSTest major version: MSTest loses its tests |
 
 ## Lifecycle

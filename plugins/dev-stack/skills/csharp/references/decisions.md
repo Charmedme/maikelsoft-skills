@@ -22,7 +22,7 @@ Ask SOL-05, SOL-01, SOL-03, SOL-06, SOL-07, SOL-08, and SOL-04 together as one "
 - Question: Do we pin the .NET SDK in `global.json`, and with which roll-forward rule?
 - Ask when: the first commit of a repository.
 - Options: Pin the feature band: `rollForward: latestFeature`, `allowPrerelease: false`. Pin the exact patch: `rollForward: disable`. No `global.json`: each machine uses its newest SDK.
-- Recommended: `10.0.402` with `latestFeature` and `allowPrerelease: false`. CI and each developer then use the same compiler, and patches and newer feature bands still roll forward.
+- Recommended: `10.0.403` with `latestFeature` and `allowPrerelease: false`. CI and each developer then use the same compiler, and patches and newer feature bands still roll forward.
 - Choose another option when: an audit needs builds that are the same byte for byte (pin the exact patch).
 - Depends on: none.
 - Revisit when: a new SDK feature band ships, or the team moves to .NET 11.

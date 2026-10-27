@@ -16,7 +16,7 @@ The files at the repository root that control the build: `global.json`, `Directo
 ```json
 {
   "sdk": {
-    "version": "10.0.402",
+    "version": "10.0.403",
     "rollForward": "latestFeature",
     "allowPrerelease": false
   },
@@ -27,7 +27,8 @@ The files at the repository root that control the build: `global.json`, `Directo
 ```
 
 - `latestFeature` accepts newer patches and feature bands of the same major version. CI and developers use the same compiler.
-- `dotnet test` with MSTest 4 on SDK 10 needs the `test` section. Without it, `dotnet test` fails with "Testing with VSTest target is no longer supported". With it, use `dotnet test --project <path>`.
+- The pin sets the lowest SDK. The runtime in CI and in the container image must be 10.0.14 or later, a security release of 2026-10-25.
+- `dotnet test` with an MSTest.Sdk 4 project (Microsoft.Testing.Platform 2) on SDK 10 needs the `test` section. Without it, `dotnet test` fails with "Testing with VSTest target is no longer supported". With it, use `dotnet test --project <path>`.
 
 ## Directory.Build.props
 

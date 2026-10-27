@@ -94,7 +94,7 @@ LLMs invent package names: at least 5.2% of the names from commercial models and
 
 On 2026-03-19, Trivy itself was compromised: the v0.69.4 binary was malicious and the `trivy-action` tags pointed to malware (CVE-2026-33634). The scanners run with the secrets of the pipeline.
 
-- Pin each scanner by version and checksum, or by image digest. Current Trivy: 0.74.0 (2026-08-14).
+- Pin each scanner by version and checksum, or by image digest. Current Trivy: 0.76.1 (2026-10-21).
 - Verify the signature or checksum of a downloaded binary.
 - When a pipeline ran Trivy 0.69.4 or a moved `trivy-action` tag, rotate each secret that the pipeline could read.
 
@@ -110,5 +110,5 @@ Produce a CycloneDX or SPDX SBOM per build, for example `trivy fs --format cyclo
 | `<NuGetAudit>false</NuGetAudit>` | `NuGetAuditSuppress` per advisory, with a reason |
 | `npm install` in CI | `npm ci` |
 | `uses: actions/checkout@v4` | `uses: actions/checkout@<sha> # v4.x.y` |
-| `aquasec/trivy:latest` | `aquasec/trivy:0.74.0@sha256:<digest>` |
+| `aquasec/trivy:latest` | `aquasec/trivy:0.76.1@sha256:<digest>` |
 | `dotnet list package --vulnerable` (still works) | `dotnet package list --vulnerable --include-transitive` |

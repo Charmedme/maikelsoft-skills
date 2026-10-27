@@ -26,7 +26,7 @@ Each check is `tool (<rule ID>)` when a tool finds it, or `judge` when a reviewe
 
 | # | Check | Type |
 |---|-------|------|
-| 5 | No `x-queue-mode`, `x-queue-version`, `x-queue-master-locator`, or `ha-*` policy. | tool (RMQ-REMOVED-ARGS) |
+| 5 | No `x-queue-mode`, `x-queue-version: 1`, `x-queue-master-locator`, or `ha-*` policy. | tool (RMQ-REMOVED-ARGS) |
 | 6 | Each durable work queue is a quorum queue. No transient (not durable, not exclusive) queue. | tool (`rabbitmqctl list_queues`), judge |
 | 7 | Each work queue has a dead-letter exchange and a delivery limit, in a policy or in the declaration. | judge |
 | 8 | Names follow MSG-06. The consumer declares its queue and binding. | judge |

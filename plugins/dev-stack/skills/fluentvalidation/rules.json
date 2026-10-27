@@ -8,7 +8,7 @@
       "package": "FluentValidation.AspNetCore",
       "versions": "*",
       "severity": "warning",
-      "message": "FluentValidation.AspNetCore is deprecated (NuGet reason: Legacy), works for MVC only, and runs async rules synchronously.",
+      "message": "FluentValidation.AspNetCore is deprecated (NuGet reason: Legacy), works for MVC only, and its auto-validation throws AsyncValidatorInvokedSynchronouslyException on an async rule.",
       "fix": "Reference FluentValidation and FluentValidation.DependencyInjectionExtensions 12.x, and call ValidateAsync in an endpoint filter or the action."
     },
     {
@@ -19,7 +19,7 @@
         "**/*.cs"
       ],
       "pattern": "\\.AddFluentValidation(AutoValidation|ClientsideAdapters)?\\s*\\(",
-      "message": "The FluentValidation.AspNetCore integration is deprecated, does nothing for minimal APIs, and runs async rules synchronously.",
+      "message": "The FluentValidation.AspNetCore integration is deprecated, does nothing for minimal APIs, and throws AsyncValidatorInvokedSynchronouslyException on an async rule.",
       "fix": "Register with AddValidatorsFromAssemblyContaining<T>() and call ValidateAsync in a generic endpoint filter (references/call-sites.md).",
       "match": [
         "builder.Services.AddFluentValidationAutoValidation();",

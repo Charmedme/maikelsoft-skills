@@ -1,6 +1,6 @@
 # Sources: fluentvalidation
 
-The author checked all facts on 2026-10-19, unless a line says otherwise. The versions and the cascade facts were checked again on 2026-10-25. Look them up again when `metadata.verified` in `SKILL.md` is older than 6 months.
+The author checked all facts on 2026-10-19, unless a line says otherwise. The author checked the versions and the cascade facts again on 2026-10-25, and the versions and the async fact of `FluentValidation.AspNetCore` on 2026-10-27. Look them up again when `metadata.verified` in `SKILL.md` is older than 6 months.
 
 ## Contents
 
@@ -11,21 +11,21 @@ The author checked all facts on 2026-10-19, unless a line says otherwise. The ve
 
 ## Versions
 
-| Item | Version on 2026-10-25 | Source |
+| Item | Version on 2026-10-27 | Source |
 |------|-----------------------|--------|
-| FluentValidation | 12.2.0 (2026-10-10, still the newest on 2026-10-25), target `net8.0`, Apache-2.0 | https://www.nuget.org/packages/FluentValidation |
+| FluentValidation | 12.2.0 (2026-10-10, still the newest on 2026-10-27), target `net8.0`, Apache-2.0 | https://www.nuget.org/packages/FluentValidation |
 | FluentValidation.DependencyInjectionExtensions | 12.2.0 | https://www.nuget.org/packages/FluentValidation.DependencyInjectionExtensions |
 | FluentValidation.AspNetCore | 11.3.1, deprecated on NuGet (reason "Legacy") | https://www.nuget.org/packages/FluentValidation.AspNetCore |
 | SharpGrip.FluentValidation.AutoValidation.Endpoints | 2.0.0, MIT (not used, decision API-08) | https://www.nuget.org/packages/SharpGrip.FluentValidation.AutoValidation.Endpoints |
-| Microsoft.Extensions.Validation (built-in `AddValidation`) | 10.0.13 (11.0.0 is at rc.2 only) | https://www.nuget.org/packages/Microsoft.Extensions.Validation |
-| .NET 10 | runtime 10.0.13 (2026-10-13), SDK 10.0.402 | https://dotnetcli.blob.core.windows.net/dotnet/release-metadata/10.0/releases.json |
+| Microsoft.Extensions.Validation (built-in `AddValidation`) | 10.0.14 (11.0.0 is at rc.3 only) | https://www.nuget.org/packages/Microsoft.Extensions.Validation |
+| .NET 10 | runtime 10.0.14 (a security release of 2026-10-25), SDK 10.0.403 | https://dotnetcli.blob.core.windows.net/dotnet/release-metadata/10.0/releases.json |
 
 ## Documentation
 
 - 12.0 upgrade guide: https://docs.fluentvalidation.net/en/latest/upgrading-to-12.html
 - Cascade mode: https://docs.fluentvalidation.net/en/latest/cascade.html
 - Dependency injection (scan, lifetime, `includeInternalTypes`): https://docs.fluentvalidation.net/en/latest/di.html
-- ASP.NET Core (the deprecated auto-validation and the manual call): https://docs.fluentvalidation.net/en/latest/aspnet.html
+- ASP.NET Core (the deprecated auto-validation and the manual call). The page says that auto-validation cannot run an async rule and throws at run time: https://docs.fluentvalidation.net/en/latest/aspnet.html
 - Async validation: https://docs.fluentvalidation.net/en/latest/async.html
 - Test extensions: https://docs.fluentvalidation.net/en/latest/testing.html
 - Source repository: https://github.com/FluentValidation/FluentValidation

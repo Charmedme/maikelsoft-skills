@@ -12,10 +12,10 @@ Checked on 2026-10-16. The facts of this skill come from these primary sources. 
 
 ## Versions
 
-| Item | Version on 2026-10-16 | Source |
+| Item | Version on 2026-10-27 | Source |
 |------|-----------------------|--------|
-| EF Core | 10.0.13 (LTS, support to 2028-11-10) | [nuget.org Microsoft.EntityFrameworkCore](https://www.nuget.org/packages/Microsoft.EntityFrameworkCore), [EF Core releases](https://learn.microsoft.com/ef/core/what-is-new/) |
-| EF Core 11 | 11.0.0-rc.2.26504.105 | [What is new in EF Core 11](https://learn.microsoft.com/ef/core/what-is-new/ef-core-11.0/whatsnew) |
+| EF Core | 10.0.14 (LTS, support to 2028-11-10). 10.0.14 is part of the .NET security release of 2026-10-25. | [nuget.org Microsoft.EntityFrameworkCore](https://www.nuget.org/packages/Microsoft.EntityFrameworkCore), [EF Core releases](https://learn.microsoft.com/ef/core/what-is-new/) |
+| EF Core 11 | 11.0.0-rc.3.26522.148. EFCore.PG 11: 11.0.0-rc.2 | [What is new in EF Core 11](https://learn.microsoft.com/ef/core/what-is-new/ef-core-11.0/whatsnew) |
 | EF Core 8 and 9 | End of support 2026-11-10 | [EF Core releases](https://learn.microsoft.com/ef/core/what-is-new/) |
 | Npgsql.EntityFrameworkCore.PostgreSQL | 10.0.3 | [nuget.org](https://www.nuget.org/packages/Npgsql.EntityFrameworkCore.PostgreSQL) |
 | EFCore.NamingConventions | 10.0.1 | [nuget.org](https://www.nuget.org/packages/EFCore.NamingConventions) |
@@ -25,7 +25,7 @@ Checked on 2026-10-16. The facts of this skill come from these primary sources. 
 ## EF Core documentation
 
 - [What is new in EF Core 10](https://learn.microsoft.com/ef/core/what-is-new/ef-core-10.0/whatsnew): complex types and JSON, named query filters, `LeftJoin`, block lambda in `ExecuteUpdate`, parameterized collections.
-- [Breaking changes in EF Core 10](https://learn.microsoft.com/ef/core/what-is-new/ef-core-10.0/breaking-changes): `Application Name`, collection parameter mode, JSON column type.
+- [Breaking changes in EF Core 10](https://learn.microsoft.com/ef/core/what-is-new/ef-core-10.0/breaking-changes): `Application Name`, collection parameter mode, JSON column type. Checked again on 2026-10-27: `--framework` for multi-targeted projects, and the SqlClient broker dependency with the advice to use SqlClient 7.1.x.
 - [Breaking changes in EF Core 11](https://learn.microsoft.com/ef/core/what-is-new/ef-core-11.0/breaking-changes): checked again on 2026-10-16 for `ef11.md`.
 - [DbContext lifetime, configuration, and initialization](https://learn.microsoft.com/ef/core/dbcontext-configuration/)
 - [Advanced performance topics](https://learn.microsoft.com/ef/core/performance/advanced-performance-topics): pooling, compiled queries.
@@ -75,6 +75,7 @@ On 2026-10-16, with .NET SDK 10.0.402, EF Core 10.0.13, EFCore.PG 10.0.3, EFCore
 - `UseXminAsConcurrencyToken` does not exist in EFCore.PG 10.0.3.
 - `dotnet ef migrations has-pending-model-changes` returns exit code 1 for a missing migration and 0 when the model matches.
 - Tests against PostgreSQL 18.6: an `xmin` token gives `DbUpdateConcurrencyException` to the second writer. A nondeterministic ICU collation finds an email with another case. `MigrateAsync` applies a concurrent index. The idempotent script with the same index fails with SQLSTATE 25001.
+- On 2026-10-27 in the EFCore.PG v10.0.3 source (`NpgsqlGuidTranslator`): `Guid.CreateVersion7()` translates to `uuidv7()` only when the provider version is 18 or later.
 - `ToQueryString()` throws `NullReferenceException` for `EF.Parameter(list).Contains(...)` on SQL Server (the query itself is fine). Do not use `ToQueryString` to check that form.
 
 ## Credits
