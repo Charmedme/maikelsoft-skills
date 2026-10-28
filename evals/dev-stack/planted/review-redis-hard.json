@@ -113,6 +113,24 @@
       "file": "src/Orders.Api/Catalog/PromotionExpiryJob.cs",
       "line": 19,
       "description": "The direct Redis key orders:v1:lock:promotion-expiry carries the service prefix itself. That is correct: the raw multiplexer has no InstanceName (only the IDistributedCache adds it)."
+    },
+    {
+      "id": "D6",
+      "file": "src/Orders.Api/Catalog/PromotionExpiryJob.cs",
+      "line": 43,
+      "description": "LockTakeAsync and LockReleaseAsync without a CancellationToken are correct: StackExchange.Redis has no overload with a token for these calls. A finding that asks to pass the token, or to add a timeout token, is a false positive."
+    },
+    {
+      "id": "D7",
+      "file": "src/Orders.Api/Catalog/PromotionExpiryJob.cs",
+      "line": 32,
+      "description": "catch (Exception ex) when (ex is not OperationCanceledException) that logs and lets the loop run again is correct for a periodic job: one failed tick must not stop the job, and cancellation still passes. A finding that calls it a swallowed exception is a false positive."
+    },
+    {
+      "id": "D8",
+      "file": "src/Orders.Api/Catalog/PromotionExpiryJob.cs",
+      "line": 25,
+      "description": "new PeriodicTimer(s_interval, time) with the injected TimeProvider is correct and makes the tick testable. A finding that asks for Task.Delay or for the system clock is a false positive."
     }
   ]
 }

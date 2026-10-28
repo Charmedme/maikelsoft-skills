@@ -164,6 +164,14 @@ This log records each change to a skill or to an eval case, the test that measur
 - Verdict: proposed
 - Evidence: the audit and change lists of the session (not in the repository), and the sources in `references/sources.md` of each skill
 
+### E18: sweep for the same defect, and a section on indexes that need more than a seek (sqlserver)
+- Date and version: 2026-10-27, dev-stack 1.2.1 (not released)
+- Change: `sqlserver` step 5 now tells the skill to search for the same defect on a table that the change uses, after it fixes one. It fixes each site that needs no migration and changes no result. It reports the others. Judge item 15 checks this. `references/indexes.md` has a new section, "When a seek is not the answer" (covering index, statistics, filtered `IS NULL` index, columnstore index), with sources.
+- Test: `sqlserver-hard`, skill variant, 3 runs on Opus, scored with the check items. `score.py` now starts a test again when a container does not stay up.
+- Observed: the skill variant went from 33/36 to 36/36. C11 went from 0/3 to 3/3. The baseline scored 30/36 and still fails C10 and C11. Each run fixed the typed parameter and `HOLDLOCK` in `InventoryEndpoints.cs`, and reported the `NEWID()` key because it needs a migration. No eval case has a trap for the new index section yet.
+- Verdict: helped (C11), index section not measured
+- Evidence: `docs/work/dev-stack/hard-cases/results.md`
+
 ## Lessons
 
 ### Round 1.1.0 (2026-10-21)

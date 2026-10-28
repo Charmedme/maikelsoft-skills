@@ -76,7 +76,7 @@ Two patterns:
 
 - 3 runs per variant. An item with 1 failed run of 3 can be noise.
 - One model (Sonnet). The batch 2 results are on Opus, so the two rounds are not comparable item by item.
-- `sqlserver-hard` is not stable on this machine (2 CPUs, 7 GB). SQL Server sometimes does not start in the test container. Two runs (baseline 1, skill 3) failed each probe for that reason, also after a second scoring. Their scores are in the table, so `sqlserver-hard` is too low for both variants.
+- `sqlserver-hard` was not stable in the first round. SQL Server sometimes did not start in the test container. The scorer has a fix, refer to the section after the audit. Two runs (baseline 1, skill 3) failed each probe for that reason, also after a second scoring. Their scores are in the table, so `sqlserver-hard` is too low for both variants.
 - The judge items depend on the grader. A two-part judge item can look like a gap.
 - The first scoring of `puppeteersharp-hard` ran without the Chrome of the case (`EVAL_CHROME` and `PUPPETEER_EXECUTABLE_PATH`). A second scoring with Chrome changed the skill variant from 39/57 to 54/57 and the baseline from 16/57 to 22/57. The table shows the second scoring.
 
@@ -99,7 +99,12 @@ Then the 9 cases with a gap ran again, skill variant only, 3 runs each on Sonnet
 | wolverine-review-hard | 16/24 (67%) | 16/24 (67%) | 21/24 (88%) | J2 0/3 to 3/3, P2 0/3 to 3/3 |
 
 - 14 of the 16 real gap items now pass in each valid run. The 2 that stay are in `sqlserver-hard`.
-- `fluentvalidation-review-hard` went down. The new rule "put `NotNull()` before `SetValidator`" made each review flag an optional child on an update (decoy D1). The rule now says that `SetValidator` without `NotNull()` is correct when null is a valid value. This fix is not tested yet.
-- `sqlserver-hard` is not a valid measure on this machine. In 2 of the 3 runs, SQL Server did not start in the test container, so each test failed. The run that started passed C10.
+- `fluentvalidation-review-hard` went down. The new rule "put `NotNull()` before `SetValidator`" made each review flag an optional child on an update (decoy D1). The rule now says that `SetValidator` without `NotNull()` is correct when null is a valid value. A new run of 3 reviews (2026-10-25, skill variant) tested the fix. No review flags decoy D1, and each review finds the missing `NotNull()` on create.
+- I read the reviews of that run by hand, with no grader. No review flags D2, D3, or D4.
+- `sqlserver-hard` ran again on a machine with 12 CPUs and 17 GB (2026-10-25, 3 runs for each variant, check items only). The skill variant scored 11/12 in each run, and the baseline scored 10/12. C10 (the Amsterdam day) went from 0/3 to 3/3 with the skill.
+- In `sqlserver-hard`, C11 (implicit conversion in the SQL plans) still fails in all 6 runs. The skill runs fix the SKU parameter in `StockReservationService`, but the probe still finds a plan with a conversion, so C11 stays an open gap.
+- Then the skill got a rule to search for the same defect after a fix. A new run (3 skill runs) scored 36/36 on the check items, and C11 passed in 3 of 3 runs. The baseline scored 30/36.
+- SQL Server on Linux sometimes crashes when it starts (a fatal error in `sqlpal.dll`), more often when several containers start together. `score.py` now starts the tests again, up to 3 times, when a container does not stay up. Two scorings after this change gave the same score for each run.
 - Run 3 of `puppeteersharp-hard` has no grade: the disk filled up during the run, and its output stops before the end.
-- `redis-review-hard` did not run again. Its review checklist now lists correct patterns ("Do not flag"). They match the decoys of that case, so a rerun would not be a fair measure for those items.
+- `redis-review-hard` has 3 new decoys, D6 to D8. The "Do not flag" list of the checklist does not name them. D1 to D3 and D5 stay in the answer sheet, but the checklist names them, so they do not count. A new run (3 per variant) found no false positive on D6 to D8 in either variant. I counted the planted mistakes by keyword, with no grader. The baseline found 7, 7, and 5 of 10. The skill found 8, 10, and 8.
+- In `redis-review-hard`, the skill finds P2 (cache removal before `SaveChanges`) in 3 of 3 runs. The baseline finds it in none.
