@@ -46,6 +46,9 @@ Checked on 2026-10-19. On 2026-10-25, a second audit checked the versions again 
 - [ALTER DATABASE compatibility level](https://learn.microsoft.com/sql/t-sql/statements/alter-database-transact-sql-compatibility-level): level 170.
 - [Clustered and nonclustered indexes](https://learn.microsoft.com/sql/relational-databases/indexes/clustered-and-nonclustered-indexes-described) and the [index architecture and design guide](https://learn.microsoft.com/sql/relational-databases/sql-server-index-design-guide)
 - [Create filtered indexes](https://learn.microsoft.com/sql/relational-databases/indexes/create-filtered-indexes)
+- [Columnstore indexes: overview](https://learn.microsoft.com/sql/relational-databases/indexes/columnstore-indexes-overview) and [design guidance](https://learn.microsoft.com/sql/relational-databases/indexes/columnstore-indexes-design-guidance): rowstore against columnstore, the 10% change rate, one million rows for each partition.
+- [Statistics](https://learn.microsoft.com/sql/relational-databases/statistics/statistics): the histogram of 200 steps on the first key column.
+- [A filtered index with IS NULL is not used](https://learn.microsoft.com/troubleshoot/sql/database-engine/performance/filtered-index-with-column-is-null)
 - [Data type precedence](https://learn.microsoft.com/sql/t-sql/data-types/data-type-precedence-transact-sql): why `nvarchar` converts a `varchar` column.
 
 ## Microsoft Learn: T-SQL

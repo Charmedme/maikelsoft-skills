@@ -13,7 +13,7 @@
     {"id": "J1", "judge": "The review finds at least 8 of the 10 planted mistakes."},
     {"id": "J2", "judge": "The review finds every planted mistake with severity 'high' (P3, P4, P5)."},
     {"id": "J3", "judge": "The review finds at least 3 of the 5 planted mistakes marked 'subtle' (P1, P3, P5, P6, P8)."},
-    {"id": "J4", "judge": "The review flags none of the decoys (D1 to D5), and has at most 2 other false positives. A false positive is a claim that is wrong, or a fix that would break the code or that uses an API that does not exist or is outdated (for example GetOrSetAsync, RemoveByPrefixAsync, or a backplane option of HybridCache). A real problem that is not on the answer sheet is not a false positive."},
+    {"id": "J4", "judge": "The review flags none of the decoys (D1 to D8), and has at most 2 other false positives. A false positive is a claim that is wrong, or a fix that would break the code or that uses an API that does not exist or is outdated (for example GetOrSetAsync, RemoveByPrefixAsync, or a backplane option of HybridCache). A real problem that is not on the answer sheet is not a false positive."},
     {"id": "J5", "judge": "For P1, the review says that StackExchange.Redis 2.13.17 is the old 2.x line and recommends 3.x (3.4.5). It does not recommend keeping 2.x."},
     {"id": "J6", "judge": "Each finding gives the file and the line (or quotes the code) and a concrete fix."},
     {"id": "J7", "judge": "The review separates blocking issues from minor ones and ends with a clear merge verdict that does not approve the change as it is."}

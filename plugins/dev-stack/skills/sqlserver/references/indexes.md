@@ -8,6 +8,7 @@ How to choose an index and prove that a query uses it. EF index APIs (`HasIndex`
 - Nonclustered column order
 - Filtered indexes
 - Implicit conversion
+- When a seek is not the answer
 - Foreign keys
 - Prove the plan
 - Find missing and unused indexes
@@ -54,6 +55,26 @@ When a parameter type has a higher precedence than the column type, SQL Server c
 | `varchar(32)` | `varchar(32)` | Seek |
 
 The sources of `nvarchar`: `AddWithValue`, a Dapper `string` without `DbString`, and an interpolated string in EF `SqlQuery` or `FromSql`. LINQ uses the type of the mapping (`IsUnicode(false)` gives `varchar`). The plan shows the problem as a warning on the `SELECT` operator.
+
+## When a seek is not the answer
+
+A `WHERE` on an indexed column does not promise an index seek. Check the estimated and the actual rows in the plan before you add an index.
+
+- Rowstore indexes fit a seek on one value or a small range. They fit transactional work.
+- A nonclustered seek costs one key lookup for each row. When the query reads a large share of the table, the optimizer picks a scan. This is correct, not a defect.
+- Remove the lookups with `INCLUDE` for each column that the query reads. The index then covers the query.
+- Statistics keep a histogram of 200 steps or fewer, on the first key column only. A skewed column or a stale statistic gives a wrong row estimate and a wrong plan. Update the statistics, or add a filtered index for the hot subset.
+- A filtered index on `WHERE Col IS NULL` is not used when `Col` is not a key or an included column of that index. Add `Col` with `INCLUDE`.
+
+A report or an aggregate that scans a large range of a big table is an analytic query. For it, use a columnstore index:
+
+- A columnstore index reads only the columns of the query. It skips row groups by their minimum and maximum values. It compresses about 10 times and uses batch mode.
+- On a rowstore table, add one nonclustered columnstore index. Transactions keep the rowstore indexes, and reports use the columnstore. Plan extra space and extra cost for each write.
+- Use it for stable data. Queries that update or delete more than 10% of the rows suit it less.
+- Use few partitions. A partition with fewer than one million rows keeps its rows in the delta store, without the full gain.
+- Keep a rowstore index for the lookup by key. A columnstore index is not for the seek on one value.
+
+Prove the gain with the actual plan and the real row count. A small table in a test shows no difference.
 
 ## Foreign keys
 

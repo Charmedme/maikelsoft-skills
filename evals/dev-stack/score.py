@@ -327,10 +327,24 @@ def parse_trx(folder):
     return out
 
 
+TEST_START_ATTEMPTS = 3
+
+
+def container_start_failed(out, parsed):
+    """True when a test container did not stay up. SQL Server on Linux sometimes crashes at start."""
+    marker = "ContainerNotRunningException"
+    return marker in out or any(marker in msg for _, msg in parsed.values())
+
+
 def run_tests(copy, results, extra=()):
     cmd = ["dotnet", "test", *NO_WARN_AS_ERROR, "--report-trx", "--results-directory", str(results), *extra]
-    code, out = run(cmd, copy, TIMEOUT_TEST)
-    return code, out, parse_trx(results)
+    for attempt in range(TEST_START_ATTEMPTS):
+        shutil.rmtree(results, ignore_errors=True)
+        code, out = run(cmd, copy, TIMEOUT_TEST)
+        parsed = parse_trx(results)
+        if not container_start_failed(out, parsed):
+            break
+    return code, out, parsed
 
 
 def probe_results(repo, probe):

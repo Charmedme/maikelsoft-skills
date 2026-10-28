@@ -36,6 +36,8 @@ Write all output except code in the rules of `references/language.md`.
 
    Fix the defect when the change edits, calls, or copies that code, and list the fix under Changes. Otherwise report it as an open point. Stack rule 3 keeps the style of existing code, not its defects.
 
+   After you fix a defect, search the repository for the same defect. Use `grep` for the table name and the call. Fix each other site on a table that the change uses when the fix changes no result and needs no migration. A typed parameter is an example. List each site under Changes. Report a site that needs a decision, a migration, or a change of behavior as an open point.
+
 Done when you can name the engine, the compatibility level, the RCSI and optimized locking settings, and the SqlClient version. Also name the defects in the existing code that the change touches.
 
 ## Defaults for new code
@@ -136,7 +138,7 @@ ORDER BY Day;
 
 ### Indexes and plans
 
-16. Design an index from the query. Put the equality columns first, then the range or sort column. Add the columns that the query only reads with `INCLUDE`. Index each foreign key column that a join or a delete uses. Use a filtered index for a hot subset (`WHERE Status = 'Placed'`). Prove a plan with the actual execution plan on data like production.
+16. Design an index from the query. Put the equality columns first, then the range or sort column. Add the columns that the query only reads with `INCLUDE`. Index each foreign key column that a join or a delete uses. Use a filtered index for a hot subset (`WHERE Status = 'Placed'`). Prove a plan with the actual execution plan on data like production. A seek is not always the goal. A query that reads much of a big table can need a covering, filtered, or columnstore index. Refer to "When a seek is not the answer" in `references/indexes.md`.
 
 Detail and diagnostic queries: `references/indexes.md`.
 
@@ -217,6 +219,7 @@ The full list is in `references/review-checklist.md`.
 12. Each index serves a query. Foreign keys have an index. No filter on `nvarchar(max)`. judge
 13. New functions of SQL Server 2025 match the compatibility level. judge
 14. Existing code that the change edits, calls, or copies has none of the defects of First, step 5. judge
+15. Each other site of a fixed defect on a table of the change is fixed or reported. judge
 
 ## Report
 
