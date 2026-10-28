@@ -25,8 +25,8 @@ The prompt gives a mode and a run folder (`docs/work/<slug>/`). The run folder h
 | `reflect` | Review the design of another senior one time. Change no file but your own. | `reflection.md` | `REFLECTION_READY` |
 | `apply-reflection` | Apply the improvements that you accept. Give a reason for each one that you reject. | `design.md` (section Reflection), packages | `DESIGN_READY` |
 | `build-core` | Log the G1 answers (ADRs, index rows, profile), then build and test the critical core | ADRs, `docs/dev-team/decisions.md`, code, tests, `core-report.md` | `CORE_DONE`, `CORE_DONE_WITH_CONCERNS`, `NEEDS_HUMAN`, `BLOCKED` |
-| `review-core` | Review the core code of another senior one time | `core-review.md` | `APPROVED`, `APPROVED_WITH_COMMENTS`, `CHANGES_REQUIRED` |
-| `fix` | One fix pass for the blocking findings of a review (`core-review.md`, `security-review.md`, or `ux-review.md`). No new review. | code, tests, a log row | `FIX_DONE`, `BLOCKED` |
+| `review-core` | Review the core code of another senior one time. In a follow-up, review the diff that the prompt names. | `core-review.md` | `APPROVED`, `APPROVED_WITH_COMMENTS`, `CHANGES_REQUIRED` |
+| `fix` | One fix pass for the blocking findings of a review (`core-review.md`, `security-review.md`, or `ux-review.md`), or for the fix rows of `follow-ups/NN-comments.md`. No new review. | code, tests, a log row | `FIX_DONE`, `BLOCKED` |
 | `packages` | Lead the mediors through each package (section Packages) | `packages/NN-plan-feedback.md`, `packages/NN-review.md` | `PACKAGES_DONE`, `PACKAGES_DONE_WITH_CONCERNS`, `BLOCKED` |
 
 The rules and templates of each mode are in the `senior-practice` skill. Follow them.

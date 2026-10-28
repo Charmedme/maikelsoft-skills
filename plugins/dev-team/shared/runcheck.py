@@ -11,12 +11,14 @@ What it checks:
                   on the first line under a "## Verdict" heading.
     RUN-COUNTER   each counter in run.md is at or below its limit. At G2, security-review is 1.
                   A light run (run.md field Mode: light) has no reflection and no security review.
-                  When the run folder has ux-design.md, ux-review is 1 at G2 and ux-review.md exists.
+                  When the run folder has ux-design.md, or story.md lists a mock-up (a line "Mock-up: ..."), ux-review is 1 at G2 and ux-review.md exists.
     RUN-ROUNDS    each package has at most one plan feedback, one review, and one fix.
     RUN-STEPS     the files of each step exist (plan, feedback, report, review per package).
     RUN-FIX       a review with CHANGES_REQUIRED has a fix row in log.md.
     RUN-LOG       log.md has the columns of the template, and each row has a valid status.
     RUN-EVIDENCE  a log row that says a check passed has a matching command in commands.jsonl.
+    RUN-HOOK      commands.jsonl exists and has commands when a log row says a check passed.
+                  One finding for the cause, not one for each row.
 
 Output: one line per finding, `<file>: <RULE> <message>`, then a summary line.
 Exit code: 1 when there is a finding, else 0.
@@ -45,8 +47,9 @@ PACKAGE_STATUS = {
 }
 ALL_STATUS = set().union(*STATUS.values(), *PACKAGE_STATUS.values(), {
     "STARTED", "PACKAGES_DONE", "PACKAGES_DONE_WITH_CONCERNS", "FIXED", "FIX_DONE", "NEEDS_CONTEXT",
-    "G1_APPROVED", "G1_CHANGED", "G2_SHOWN", "DONE", "DONE_WITH_CONCERNS", "NEEDS_HUMAN", "BLOCKED"})
+    "G1_APPROVED", "G1_CHANGED", "G2_SHOWN", "FOLLOWUP_STARTED", "FOLLOWUP_DONE", "DONE", "DONE_WITH_CONCERNS", "NEEDS_HUMAN", "BLOCKED"})
 LOG_COLUMNS = ["time", "agent", "step", "status", "files", "commit", "checks", "decisions", "assumptions", "reason"]
+MOCKUP_LINE = re.compile(r"^[ \t]*(?:[-*][ \t]+)?Mock-up[ \t]*:", re.MULTILINE | re.IGNORECASE)
 STATUS_LINE = re.compile(r"^\s*(?:\*\*)?(?:Status|Verdict)(?:\*\*)?\s*:\s*(?:\*\*)?`?([A-Z_]+)`?", re.MULTILINE)
 PACKAGE_FILE = re.compile(r"^(\d{2})-(?!plan|plan-feedback|report|review|checks|fix)[a-z0-9-]+\.md$")
 CHECK_WORDS = re.compile(r"\b(build|test|tests|format|checks?)\b[^|,;]*\bpass", re.IGNORECASE)
@@ -135,11 +138,14 @@ def check(run, stage):
                 add(run / "run.md", "RUN-COUNTER", f"{name} is {value}, the limit is {limit}")
         if stage != "g1" and not light and counters.get("security-review", (1, 0))[1] != 1:
             add(run / "run.md", "RUN-COUNTER", "security-review must be 1 before G2")
-        if stage != "g1" and (run / "ux-design.md").is_file():
+        story = run / "story.md"
+        has_mockup = story.is_file() and MOCKUP_LINE.search(story.read_text(encoding="utf-8", errors="ignore"))
+        if stage != "g1" and ((run / "ux-design.md").is_file() or has_mockup):
+            source = "ux-design.md" if (run / "ux-design.md").is_file() else "a mock-up in story.md"
             if counters.get("ux-review", (1, 0))[1] != 1:
-                add(run / "run.md", "RUN-COUNTER", "ux-review must be 1 before G2 (the run has ux-design.md)")
+                add(run / "run.md", "RUN-COUNTER", f"ux-review must be 1 before G2 (the run has {source})")
             if not (run / "ux-review.md").is_file():
-                add(run / "ux-review.md", "RUN-FILE", "file is missing (the run has ux-design.md)")
+                add(run / "ux-review.md", "RUN-FILE", f"file is missing (the run has {source})")
 
     log_rows = []
     if (run / "log.md").is_file():
@@ -190,15 +196,21 @@ def check(run, stage):
                 commands.append(json.loads(line))
             except ValueError:
                 continue
-    for row in log_rows:
-        if CHECK_WORDS.search(row.get("checks", "")):
-            agent = row.get("agent", "").strip("` ").lower()
-            agent_type = AGENT_TYPES.get(agent, agent)
-            ran = [c for c in commands if CHECK_COMMAND.search(c.get("command", ""))
-                   and (not agent_type or agent_type in (c.get("agent_type") or "main").lower())]
-            if not ran:
-                add(run / "log.md", "RUN-EVIDENCE",
-                    f"row {row.get('step', '?')!r} says a check passed, but commands.jsonl has no check command by {agent or 'any agent'}")
+    claims = [r for r in log_rows if CHECK_WORDS.search(r.get("checks", ""))]
+    if claims and not commands:
+        add(commands_file if commands_file.is_file() else run / "log.md", "RUN-HOOK",
+            f"commands.jsonl is {'empty' if commands_file.is_file() else 'missing'}, so the logging hook did not run. "
+            f"{len(claims)} log rows say a check passed, and nothing proves it. Find out why the hook did not run "
+            f"(for example no working python command) before you show G2.")
+        claims = []
+    for row in claims:
+        agent = row.get("agent", "").strip("` ").lower()
+        agent_type = AGENT_TYPES.get(agent, agent)
+        ran = [c for c in commands if CHECK_COMMAND.search(c.get("command", ""))
+               and (not agent_type or agent_type in (c.get("agent_type") or "main").lower())]
+        if not ran:
+            add(run / "log.md", "RUN-EVIDENCE",
+                f"row {row.get('step', '?')!r} says a check passed, but commands.jsonl has no check command by {agent or 'any agent'}")
     return findings
 
 

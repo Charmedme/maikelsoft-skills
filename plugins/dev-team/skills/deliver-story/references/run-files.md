@@ -27,6 +27,7 @@ All files of one story are in the run folder `docs/work/<slug>/`. The files are 
 | `security-review.md` | security reviewer | 8 |
 | `g2-checks.md`, `g2.md` | main | 9 |
 | `commands.jsonl` | the plugin hook | each Bash command |
+| `follow-ups/NN-comments.md`, `NN-replies.md`, `NN-review.md` | main (process-review), senior | After G2 |
 
 ## run.md
 
@@ -58,7 +59,9 @@ All files of one story are in the run folder `docs/work/<slug>/`. The files are 
 | ux-fix | 1 | 0 |
 ```
 
-The senior adds three rows per package when it starts the package: `NN plan-feedback`, `NN review`, and `NN fix`, each with limit 1. Only the agent of a step changes the counter of that step. `runcheck.py` reads the counters.
+After G2, each follow-up adds two rows: `followup NN fix` and `followup NN review`. Each has limit 1. An example of a follow-up is the comments of a pull request review. A second round is a new follow-up with the next number.
+
+The senior adds three rows for each package when it starts the package: `NN plan-feedback`, `NN review`, and `NN fix`. Each has limit 1. Only the agent of a step changes the counter of that step. `runcheck.py` reads the counters.
 
 ## log.md
 
@@ -85,7 +88,7 @@ The hook writes each Bash command to `commands.jsonl`. `runcheck.py` fails a row
 
 | Step | Status words |
 |------|--------------|
-| main | `STARTED`, `G1_APPROVED`, `G1_CHANGED`, `G2_SHOWN`, `NEEDS_HUMAN`, `BLOCKED` |
+| main | `STARTED`, `G1_APPROVED`, `G1_CHANGED`, `G2_SHOWN`, `FOLLOWUP_STARTED`, `FOLLOWUP_DONE`, `NEEDS_HUMAN`, `BLOCKED` |
 | design, apply-reflection | `DESIGN_READY`, `NEEDS_HUMAN`, `BLOCKED` |
 | reflect | `REFLECTION_READY` |
 | build-core | `CORE_DONE`, `CORE_DONE_WITH_CONCERNS`, `NEEDS_HUMAN`, `BLOCKED` |
