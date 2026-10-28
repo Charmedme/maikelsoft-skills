@@ -1,7 +1,7 @@
 {
   "name": "ux-design",
   "displayName": "UX design",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "A UX designer agent and its practice skills: a fixed method, pattern rules, visual craft, states, prototypes, and reviews, with a source for each design decision. Tool skills for Claude Design, Figma, and OpenPencil, brand files and DTCG tokens, WCAG 2.2 accessibility, and a project setup. Output in ASD-STE100 Simplified Technical English or Begrijpelijk Nederlands (B1).",
   "author": {
     "name": "Maikel",

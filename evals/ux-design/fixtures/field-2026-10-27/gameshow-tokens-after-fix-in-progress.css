@@ -1,0 +1,77 @@
+/* Naar-de-kloten: Gameshow foundation (proposed, UXD-014).
+   Source: richting/Gameshow.dc.html, chosen by the owner on 2026-10-27.
+   One theme: a dark stage. No light theme (UXD-015, proposed).
+   Fonts: Bungee (display) and Atkinson Hyperlegible (text), both SIL OFL. Self-host in the app (UXD-024). */
+@import url("https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bungee&display=swap");
+
+:root {
+  color-scheme: dark;
+
+  /* Stage (neutral) */
+  --color-bg: #140830;            /* podium: the stage (UXD-029: darker than the direction #1a0b3b) */
+  --color-surface-sunken: #0d0620; /* inside the marquee, the deepest */
+  --color-surface: #3a2480;        /* raised: chips, rows, tiles, fields. 1.6:1 on bg: always with a 2 px border */
+  --color-surface-spot: #42277f;   /* the spotlight (blurred shape, decoration only) */
+  --color-border: #a08bff;         /* edge of every raised surface, field and empty slot: 6.9:1 on bg, 4.4:1 on surface (WCAG 1.4.11) */
+  --color-text: #ffffff;           /* 18.9:1 on bg */
+  --color-text-muted: #e3daff;     /* 14.2:1 on bg, 9.0:1 on surface */
+  --color-text-inverse: #1a0b3b;   /* on lamp, card, goed, fout */
+
+  /* Accents: each has one job */
+  --color-lamp: #ffd23f;           /* marquee bulbs, the lifted card, the leader, attention. Text on it: text-inverse 12.0:1 */
+  --color-knal: #e01f63;           /* the one main action and the clock. White text on it 4.6:1 */
+  --color-knal-licht: #ff3d7f;     /* the pink of the direction: glow and the shadow of the lifted card only, never under text */
+  --color-knal-lip: #a3134a;       /* the 3D lip under a main button */
+  --color-on-card-accent: #d1005a; /* pink text on a white card: 5.4:1 */
+  --color-violet: #8a6cff;         /* the offset shadow of a card; secondary focus */
+
+  /* Cards */
+  --color-card: #ffffff;
+  --color-on-card: #1a0b3b;      /* 17.8:1 */
+  --color-on-card-muted: #5b4a8a;     /* 7.5:1 on card */
+  --color-card-border: #1a0b3b;
+
+  /* Status: always with a word */
+  --color-goed: #3ddc97;           /* klaar, gelukt. text-inverse on it 10.3:1 */
+  --color-fout: #ff6b4a;           /* fout, geen verbinding. text-inverse on it 6.5:1; as text on bg 6.5:1 */
+
+  /* Type: 2 families, 2 weights, 6 sizes. Minimum 18 px (Q32). */
+  --font-display: "Bungee", "Arial Black", system-ui, sans-serif;
+  --font-text: "Atkinson Hyperlegible", system-ui, sans-serif;
+  --font-weight-regular: 400;
+  --font-weight-bold: 700;
+  --font-size-text: 18px;          /* body, chips, labels (Q32 minimum) */
+  --font-size-kaart: 20px;         /* card text in the hand overview and the answer lists (Q32) */
+  --font-size-kaart-groot: 22px;   /* the lifted card and the answer in the vak */
+  --font-size-display: 24px;       /* Bungee: stelling, main button, clock, h2 */
+  --font-size-display-groot: 32px; /* Bungee: wide stelling, winner name, code */
+  --font-size-show: 44px;          /* Bungee: logo, "BAS WINT!", PAUZE */
+
+  /* Space: 4 px base */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* Shape */
+  --radius-chip: 10px;
+  --radius-card: 16px;
+  --radius-marquee: 18px;
+  --radius-pill: 999px;
+  --border-card: 4px;
+  --border-lifted: 5px;
+
+  /* Size */
+  --control-height: 48px;          /* every tap target, Q32 asks 44 */
+  --main-button-height: 60px;
+
+  /* Motion: only a change of place or a show moment. Reduced motion: fade 150 ms or nothing. */
+  --duration-quick: 150ms;         /* press, toggle */
+  --duration-move: 250ms;          /* a card moves to the vak, the scoreboard drops */
+  --duration-show: 600ms;          /* a card flips at the reveal, the winner pops */
+  --ease-pop: cubic-bezier(.34, 1.56, .64, 1);
+  --ease-move: cubic-bezier(.2, .8, .2, 1);
+}

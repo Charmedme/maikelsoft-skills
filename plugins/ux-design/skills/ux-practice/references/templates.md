@@ -5,6 +5,7 @@
 ## Contents
 
 - ux-design.md
+- Sections for full and new-direction mode
 - Decision log
 - Research backlog
 
@@ -13,7 +14,7 @@
 ````markdown
 # UX design: <story title>
 
-Mode: full | light
+Mode: light | full | new-direction
 Surface: operate | read | persuade
 
 ## Sources
@@ -53,6 +54,16 @@ Decision points: <where the flow branches, and on which fact>.
 | 3 | The undo fails | error-undo |
 | 1 | The list does not load | error-load |
 
+## Style direction
+
+| Direction | Color | Type | Shape | Moodboard |
+|-----------|-------|------|-------|-----------|
+| Neon night | black stage, acid green and pink accents | condensed sans, large numbers | sharp cards, thin outlines | mockups/direction-1.html |
+| Paper table | warm off-white, ink blue | serif titles, plain sans body | round cards with a paper shadow | mockups/direction-2.html |
+| Arcade | deep blue, yellow, red | pixel display font for titles | chunky tiles, thick borders | mockups/direction-3.html |
+
+Chosen: Paper table (owner, 2026-10-27)
+
 ## Options
 
 | Option | Structure | Task fit | Clarity | Consistency | Risk | Cost | Total |
@@ -61,6 +72,12 @@ Decision points: <where the flow branches, and on which fact>.
 | B | ... | | | | | | |
 
 Selected: A. Reason: <one or two sentences>.
+
+In new-direction mode, the Options table has a Difference column, and the Total follows the new-direction variant of the `ui-craft` option rubric:
+
+| Option | Structure | Task fit | Clarity | Consistency | Risk | Cost | Difference | Total |
+|--------|-----------|----------|---------|-------------|------|------|------------|-------|
+| A | <layout, order, main action> | 3 | 2 | 2 | 2 | 1 | 3 | 14.5 |
 
 ## Screen: <screen-id>
 
@@ -99,6 +116,22 @@ Selected: A. Reason: <one or two sentences>.
 - Focus after an action: ...
 - Labels and announcements: ...
 
+## Element inventory
+
+| Element | Home | Component | Screens |
+|---------|------|-----------|---------|
+| music toggle | top-bar | IconToggle | lobby, round, score |
+| leave game | top-bar | IconButton with label | lobby, round |
+| players | panel | PlayerList | lobby, round, score |
+
+## Non-text contrast
+
+| Part | Color | Next to | Ratio | Needs |
+|------|-------|---------|-------|-------|
+| input border | #8a7fb0 | #1a0b3b | 4.9 | 3:1 |
+| toggle on-state fill | #f5c542 | #1a0b3b | 11.2 | 3:1 |
+| raised surface (decorative card) | #2e1a63 | #1a0b3b | 1.4 | none |
+
 ## Decisions
 
 | ID | Decision | Status | Reason |
@@ -115,8 +148,33 @@ Rules for `uxcheck.py`:
 - Each `## Screen: <id>` has all 10 decisions, each with a value and a source tag (`product:`, `system:`, `pattern:`, `decision:`).
 - A `pattern:` tag names a rule ID that exists in `ux-patterns`. A `decision:` tag names a row in `docs/ux/decisions.md` or in the Decisions section.
 - Each screen has a states table with the required states (see `ux-states`). A state that cannot occur gets `n/a: <reason>`.
-- Full mode has an Options table with 2 or 3 options and a "Selected:" line.
+- The `Mode:` line has one of `light`, `full`, or `new-direction` (`DS-MODE`).
+- Full and new-direction mode have an Options table with 2 or 3 options and a "Selected:" line.
+- New-direction mode has a Style direction section with 3 or 4 rows and a `Chosen: <name> (owner, <date>)` line. Its Options table has a Difference column with at least one 3 (`DS-DIRECTION`).
+- Full and new-direction mode have an Element inventory. It has one row for each element that shows on more than one screen. Home is one region name, the same name as the `data-region` value in the mockups. An element with two homes is an error (`DS-INVENTORY`).
+- Full and new-direction mode have a Non-text contrast table. Needs is `3:1` for a control edge, a state indicator, or an icon that the user needs. Needs is `none` for a decorative surface. A row with Needs `3:1` and a ratio below 3 is an error (`DS-NONTEXT`).
 - Each failure path names a state that exists in a states table.
+
+## Sections for full and new-direction mode
+
+**Style direction** (new-direction mode only). Each direction is one moodboard: one key screen in HTML, default state only, with the colors, the type, and the shapes of the direction. A moodboard shows the look, not the structure. The directions differ from each other and from the existing look in color, type, and shape.
+
+Show the moodboards to the owner and stop with `NEEDS_HUMAN`. Write the `Chosen:` line only after the owner chose.
+
+**Element inventory.** List each element that shows on more than one screen. Examples: the settings toggles, the leave action, the invite action, the player list, the help. Give each element one home region and one component. The mockups use the same names: `data-element="music toggle"` inside an ancestor with `data-region="top-bar"`.
+
+A control that shows in more than one frame has the same `id` or `data-element` in each frame. The checker compares a control across frames only by these values.
+
+A user learns the place of an element one time. When the element moves, the user must look for it on each screen.
+
+**Non-text contrast.** List each part that WCAG 1.4.11 covers:
+
+- the edge of an input, a checkbox, a switch, a segmented control, or an icon-only control
+- the state indicator of a toggle
+- an icon without a text label
+- a raised surface that holds an interactive tile (a ratio below 1.5:1 against the background makes the tile hard to see)
+
+Give the ratio against the color next to it. A control with a visible text label does not need an edge. Use `uxcheck.py system` for the ratios of the tokens.
 
 ## Decision log
 

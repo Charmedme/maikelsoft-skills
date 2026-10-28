@@ -14,6 +14,7 @@ In each table, take the first rule whose condition matches. Each rule has an ID 
 - FB: feedback and waiting
 - NAV: navigation
 - IN: input controls
+- ICON and TOGGLE: icons and toggles
 - EMPTY: empty states
 - DASH: overview screens
 
@@ -116,6 +117,27 @@ In each table, take the first rule whose condition matches. Each rule has an ID 
 | PAT-IN-05 | select more than 1 of more than 7 options | A multi-select combobox with chips | Room and search. |
 | PAT-IN-06 | a date | A text input that accepts typed dates, plus a calendar picker | Typing is faster for known dates. |
 | PAT-IN-07 | always | A visible label above the field. A placeholder is never the only label. Validate a format on blur, a required field on submit. | The label stays when the user types. Early errors irritate. |
+
+## ICON and TOGGLE: icons and toggles
+
+These rules are universal: they apply on each platform. For PAT-ICON-01 to PAT-ICON-07, take the first rule whose condition matches. PAT-ICON-08 to PAT-ICON-10 apply to each icon in addition. The size values and the markup for one platform are not in this table.
+
+Terms. A universal icon is an icon that users know without a label. Examples: home, print, the magnifying glass for search, play, and bold, italic, underline in a text editor. An ambiguous icon has many meanings in common use: history (clocks, arrows), share, `@`, cloud, link, globe.
+
+| ID | Condition | Pattern | Reason |
+|----|-----------|---------|--------|
+| PAT-ICON-01 | the control is the primary action of the view (PAT-ACT-01), or risk is irreversible or high impact | A text label. An icon before the text is optional. Not icon only. | The user must know what the main action or the destructive action does before the click. An icon does not tell that the first time. For irreversible actions this rule is judgment: no source says it directly. |
+| PAT-ICON-02 | a status, an error, a warning, a success, or a required field | Text that says the state. The icon and the color only add to the text. | Color alone fails WCAG 1.4.1. An icon alone is often not understood. |
+| PAT-ICON-03 | main navigation (tab bar, side navigation, top menu) | Each item has an icon and a visible text label, also on mobile. On mobile, show 4 or fewer items. When there are more, put the rest behind a button with the visible label "Menu". | Hidden navigation cuts discoverability almost in half. Mobile users need the labels too. |
+| PAT-ICON-04 | an ambiguous icon, or no icon comes to mind in 5 seconds, or the meaning of the action changes with the context | Text only, or icon and text. Do not give a known icon a new meaning. | An icon that the designer cannot find in 5 seconds does not communicate. A known icon with a new meaning confuses the users who know the old meaning. |
+| PAT-ICON-05 | a universal icon, and the space is small (a toolbar, player controls, a compact row) | You can use the icon only. The icon has an accessible name, a tooltip that shows on hover and on keyboard focus, and the same meaning everywhere. | Users recognize a universal icon. A label that shows only on hover is not enough on touch. |
+| PAT-ICON-06 | expertise is expert, frequency is daily, and the icon passed a recognition test | You can use icon only for the frequent tools in a toolbar. The main navigation keeps its labels. | Trained daily users learn the icons. Most other users do not use the app enough to learn them. |
+| PAT-ICON-07 | always, when no rule above matches | An icon and a visible text label. The label is always visible, not only on hover. | Icons are ambiguous. The label gives the meaning, and the icon helps the user find the control again. |
+| PAT-ICON-08 | where to put the label (PAT-ICON-03, PAT-ICON-05 to PAT-ICON-07) | Buttons and list rows: the label next to the icon, the icon first. Icon tiles and tab bar items: the label directly below the icon. | The sources name both positions. No test compares them. |
+| PAT-ICON-09 | each icon in the product | One icon set and one style: the same size, detail, and stroke weight. One icon has one meaning, and one action has one icon. Use the standard icon for a standard action. No text inside an icon. A vector icon, not an emoji or a Unicode symbol. | Users cannot rely on an icon that changes its meaning. A screen reader reads the Unicode name of an emoji ("Bust in silhouette"), not the purpose. |
+| PAT-ICON-10 | each icon-only control, and each icon next to a text label | An icon-only control has an accessible name that tells the purpose ("Share", not "Arrow out of box"). Its icon has a contrast of 3:1 or more. Its target has the minimum size of the platform. An icon next to a text label is decorative and hidden from assistive technology. | WCAG 1.1.1, 1.4.11, and 4.1.2. A decorative icon that is not hidden makes the screen reader read the name two times. |
+| PAT-TOGGLE-01 | a binary on/off setting in a list or a settings screen | A switch with a visible text label next to it. The label does not change with the state. For 2 named values or more than 2 values, use PAT-IN-01. | The label in the row gives the context. A switch is for binary input only. |
+| PAT-TOGGLE-02 | a binary on/off mode that the user changes during the task, outside a list (mute, microphone, music, chat, favorite) | An icon toggle button with a fixed accessible name and an exposed pressed state. The name says what is on when pressed ("Mute"), not the next action ("Unmute"). The state shows by shape, not by color alone: a slashed icon, a filled or outlined icon, or a background shape. The state indicator has 3:1 against the colors next to it. A tooltip shows the name. Put the same setting with a text label in the settings screen too (PAT-TOGGLE-01). | A screen reader says "Mute, toggle button, pressed". A name that changes gives contradictory output. A state in color only fails users who cannot see the difference (WCAG 1.4.1, 1.4.11). |
 
 ## EMPTY: empty states
 

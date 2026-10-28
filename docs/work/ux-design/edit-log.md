@@ -238,6 +238,30 @@ This log records each change to a skill or to an eval case, the test that measur
 - Verdict: helped
 - Evidence: `evals/ux-design/results-2026-10-25-b3.md`
 
+### E28: ux-practice and ui-craft: new-direction mode with a style direction step
+- Date and version: 2026-10-28, ux-design 0.4.0
+- Change: a request for a new approach sets `Mode: new-direction`. The agent writes 3 or 4 style directions, and the rubric has a Difference criterion.
+- Test: case `party-new-direction`, 0.3.1 against 0.4.0, 3 runs each, Sonnet.
+- Observed: mode line and direction table 0 of 3 before, 3 of 3 after. A direction with a new color, type, and card look: 3 of 3 in both versions.
+- Verdict: helped (mode and directions), no observed effect (difference of the look, because 0.3.1 did not fail on this story)
+- Evidence: `docs/work/ux-design/0.4.0/results.md`
+
+### E29: ux-designer: hard gates for the direction choice and mockup pass 1
+- Date and version: 2026-10-28, ux-design 0.4.0
+- Change: the agent stops with `NEEDS_HUMAN` after the style directions, also when nobody can answer. Before the fix, the rule "take the recommended answer" won.
+- Test: case `party-new-direction`, round 1 against round 2, 3 runs each, Sonnet.
+- Observed: the stop went from 0 of 3 to 3 of 3. The cost of a run went from about $2.30 to $0.62. The stop after pass 1 is not tested: the prompt of case 2 gives the OK of the owner.
+- Verdict: helped (direction gate), proposed (pass 1 gate)
+- Evidence: `docs/work/ux-design/0.4.0/results.md`
+
+### E30: uxcheck and templates: non-text contrast, element inventory, icons, 3 widths
+- Date and version: 2026-10-28, ux-design 0.4.0
+- Change: the new checker rules, the Element inventory, the Non-text contrast table, and the icon and toggle rules, in one version.
+- Test: case `party-review-faults` (15 planted faults, 18 probes, 2 decoys), 0.3.1 against 0.4.0, 3 runs each, Sonnet. Unit tests: 33 in `tests/test_ux_040.py`.
+- Observed: faults named 5 of 15 before, 14 of 15 after. Faults avoided 1 of 18 before, 15 of 18 after. The decorative card decoy was flagged in 2 of 3 runs before and in no run after. Text toggles became icon toggles in 1 of 3 runs only.
+- Verdict: confounded (one test covers all the changes)
+- Evidence: `docs/work/ux-design/0.4.0/results.md`
+
 ## Lesson of batch 1
 
 - Cue: a design skill adds completeness rules (more states, more failure paths).

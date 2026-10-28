@@ -1,0 +1,52 @@
+{
+  "release": "ux-design 0.4.0",
+  "variants": {
+    "old": "plugins/ux-design at origin/main (0.3.1)",
+    "new": "plugins/ux-design of the branch feat/ux-design-0.4.0"
+  },
+  "runs_per_variant": 3,
+  "model": "claude-sonnet-5-5",
+  "runner": "run4.py",
+  "cases": [
+    {
+      "name": "party-new-direction",
+      "fixture": "fixtures/party-new-direction",
+      "story": "stories/party-new-direction.md",
+      "slug": "ndk-12-new-direction",
+      "prompt": "prompts4/party-new-direction.md",
+      "source": "docs/work/ux-design/0.4.0/brief.md, bad case 1 and Q2 to Q4",
+      "assertions": [
+        {"id": "C1", "kind": "check", "text": "ux-design.md has the line `Mode: new-direction`."},
+        {"id": "C2", "kind": "check", "text": "ux-design.md has a Style direction section with a table of 3 or 4 rows."},
+        {"id": "C3", "kind": "check", "text": "The run stops with NEEDS_HUMAN before the concepts and the states: no Selected line, and no mockup frame with a state other than default outside the direction files."},
+        {"id": "J1", "kind": "judge", "text": "At least one direction or concept changes the color, the type, and the card look against the existing Gameshow tokens."}
+      ]
+    },
+    {
+      "name": "party-review-faults",
+      "fixture": "fixtures/party-review-faults",
+      "story": "stories/party-review-faults.md",
+      "slug": "ndk-14-lobby-stand",
+      "prompt": "prompts4/party-review-faults.md",
+      "mode": "mockup mode on a given ux-design.md with planted faults; the agent has no mode that reviews the mockups of someone else",
+      "planted": "fixtures/party-planted/mockups (the faulty spec built as mockups, for the checker assertions)",
+      "source": "docs/work/ux-design/0.4.0/brief.md, bad cases 2 to 4 and Q5 to Q7",
+      "assertions": [
+        {"id": "F1a-avoided", "kind": "check", "text": "The player tile has a fill or a border of 1.5:1 or more against the stage."},
+        {"id": "F1b-avoided", "kind": "check", "text": "The doelscore segmented control has a track fill or border of 3:1 or more."},
+        {"id": "F2-avoided", "kind": "check", "text": "The name input has a border or fill of 3:1 or more."},
+        {"id": "F3-avoided", "kind": "check", "text": "The music toggle and the leave control are in the same region on the lobby and the stand."},
+        {"id": "F4-avoided", "kind": "check", "text": "Music, chat, and microphone are controls with a state attribute and an icon."},
+        {"id": "F5-avoided", "kind": "check", "text": "The game sounds toggle has a state attribute and one fixed name."},
+        {"id": "F1-named", "kind": "judge", "text": "The output names the low-contrast raised surfaces of the tiles or the segmented control as a problem."},
+        {"id": "F2-named", "kind": "judge", "text": "The output names the weak input edge as a problem."},
+        {"id": "F3-named", "kind": "judge", "text": "The output names the music toggle or the leave control in two places as a problem."},
+        {"id": "F4-named", "kind": "judge", "text": "The output names the text toggles as a problem, or changes them to icon toggles for that reason."},
+        {"id": "F5-named", "kind": "judge", "text": "The output names the changing toggle name as a problem."},
+        {"id": "D1-not-flagged", "kind": "judge", "text": "The output does not call the decorative card stack a contrast fault."},
+        {"id": "D2-not-flagged", "kind": "judge", "text": "The output does not call the borderless text button Spelregels an edge fault."},
+        {"id": "K-planted", "kind": "check", "text": "uxcheck.py of the variant finds the planted faults in fixtures/party-planted (system mode on the tokens, mockup mode on the mockups) and does not report the decoys."}
+      ]
+    }
+  ]
+}

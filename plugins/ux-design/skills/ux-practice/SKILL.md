@@ -1,6 +1,6 @@
 ---
 name: ux-practice
-description: UX design of a user story, a feature, or a screen, with a fixed method - Double Diamond phases, a design spec with a source for each decision, the UX decision log, evidence tags, severity, and light mode. Use when someone asks for the UX design, a design spec, or UX work before developers build, or when another UX skill names this method.
+description: UX design of a user story, a feature, or a screen, with a fixed method - Double Diamond phases, a design spec with a source for each decision, the UX decision log, evidence tags, severity, and the modes light, full, and new-direction. Use when someone asks for the UX design, a design spec, or UX work before developers build, or when another UX skill names this method.
 ---
 
 # UX practice
@@ -84,9 +84,28 @@ In the mockups, show each opportunity in its own frame, `data-state="proposed-op
 
 Before you design, check the problem. When the evidence shows that the story solves the wrong problem, or needs no UI, stop with `NEEDS_HUMAN` and the reason "problem mismatch". Give the evidence and one alternative.
 
-## Light mode
+## Mode
 
-For a small UI change (one screen, no new pattern), use light mode. Make one concept and no options step. Write the spec, the states, the copy, and the accessibility notes. Write each skipped risk in one line.
+Write the mode on the `Mode:` line of `ux-design.md`. Select the first that matches:
+
+| Mode | Use it when | What changes |
+|------|-------------|--------------|
+| `new-direction` | The request asks for something new ("new approach", "totally different", "redesign", "new look"), or the project has no design system. | Full mode, plus the style direction step before the options. The options use the new-direction variant of the option rubric. |
+| `light` | A small UI change: one screen, no new pattern. | One concept and no options step. Write the spec, the states, the copy, and the accessibility notes. Write each skipped risk in one line. One mockup pass. |
+| `full` | Each other case. | All steps. |
+
+In full and new-direction mode, `ux-design.md` also has the Element inventory and the Non-text contrast table (`references/templates.md`). The inventory gives each shared element one home, so the element has the same place on each screen. The contrast table lists the control edges, the state indicators, and the icons. WCAG 1.4.11 asks 3:1 for them, and a text-contrast check does not see them.
+
+## Style direction
+
+Only in new-direction mode, before the options. The owner asked for a new look. When the concepts start from the old look, they keep it, and the owner gets the old design again.
+
+1. Make 3 or 4 directions. Each one has its own color, type, and shape of the main element. Each one differs from the existing look in all three.
+2. Make one moodboard for each direction: one key screen in HTML, default state only.
+3. Write the Style direction table. Then stop, and return `NEEDS_HUMAN` with the directions. Ask the owner to choose. This stop is a hard gate. Stop also when nobody can answer, and also when the caller tells you not to stop. Skip the stop only when the task gives the choice of the owner. Do not make the concepts or the states before the choice, because a rejected direction makes all that work useless.
+4. After the choice, write `Chosen: <name> (owner, <date>)`. Make the concepts from the chosen direction.
+
+Done when the table has 3 or 4 rows and a `Chosen:` line from the owner.
 
 ## Severity
 

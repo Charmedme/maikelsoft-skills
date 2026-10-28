@@ -16,6 +16,8 @@ claude plugin install ux-design@maikelsoft-skills
 pip install playwright
 ```
 
+After the install, run `/reload-plugins` in each open Claude Code session, or start a new session. Until then, the `ux-designer` agent type is not available. The agent file says how a general-purpose agent can follow it in that case.
+
 ## Quick start
 
 1. Ask Claude Code to "set up this project for UX work". The `ux-setup` skill scans the project, asks one round of questions, and writes the `## Design` section of `CLAUDE.md`. You can also write the section yourself:
@@ -44,8 +46,8 @@ pip install playwright
 | Part | Name | What it does |
 |------|------|--------------|
 | Agent | `ux-designer` | Design mode: frame, opportunities, flow, patterns, options, design spec, states, copy, accessibility, self-check. Mockup mode: one frame for each state, then a check and a critique. Prototype mode: a clickable prototype with variants and a test plan. Review mode: the built feature against the design. |
-| Skill | `ux-practice` | The method: four phases, the design spec with a source for each decision, the decision log, evidence tags, opportunities, light mode, and the `uxcheck.py` checker. |
-| Skill | `ux-patterns` | Decision tables that select an interaction pattern from the facts of the task, each rule with an ID. |
+| Skill | `ux-practice` | The method: four phases, the design spec with a source for each decision, the decision log, evidence tags, and opportunities. Also the modes light, full, and new-direction, and the `uxcheck.py` checker. |
+| Skill | `ux-patterns` | Decision tables that select an interaction pattern from the facts of the task, each rule with an ID. Also the rules for icons and toggles, with their research and the web values. |
 | Skill | `ui-craft` | The visual method in a fixed order, the option and mockup rubrics, and the list of AI tells. Also a foundation for a project without a design system, and an audit for an existing one. |
 | Skill | `ux-states` | The state inventory: the core states, each error kind, and the business states. Each state says what the user sees, can do, and how the user recovers. |
 | Skill | `ux-prototype` | A prototype in the shared `proto-shell/1` standard: the same header, toolbar, variants, states, sizes, and Test mode in each prototype. The question with the highest risk, and a test plan. |

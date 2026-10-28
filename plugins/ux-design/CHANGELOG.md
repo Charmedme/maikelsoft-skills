@@ -6,6 +6,31 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-28
+
+### Added
+
+- A new-direction mode. When a request asks for a new approach, the agent makes 3 or 4 style directions as one-screen moodboards. Then it stops with `NEEDS_HUMAN`, so the owner chooses a direction before the concepts. The option rubric gets a Difference criterion, and at least one concept has Difference 3.
+- A hard gate after mockup pass 1 in full mode. Pass 1 makes the key screens at 390 and 820 px in the default state. Pass 2 makes all states after the owner gives the OK. The agent skips a gate only when the task gives the choice or the OK of the owner.
+- An Element inventory in the design: each element that shows on more than one screen has one home and one component. The mockups mark it with `data-element` and `data-region`. The critique gives one score for the set of screens.
+- A Non-text contrast table in the design (WCAG 1.4.11).
+- Icon and toggle rules in `ux-patterns`: `PAT-ICON-01` to `PAT-ICON-10`, `PAT-TOGGLE-01`, and `PAT-TOGGLE-02`. The rules say when to use an icon only, an icon with a label, or text. New references: `icons.md` (the research, with sources) and `platform-web.md` (the web values).
+- New checker rules in `uxcheck.py`:
+  - `system`: `SYS-NONTEXT` and `SYS-SURFACE`.
+  - `design`: `DS-MODE`, `DS-DIRECTION`, `DS-INVENTORY`, and `DS-NONTEXT`.
+  - `mockup`: `MK-WIDTH`, `MK-NONTEXT`, `MK-SURFACE`, `MK-REGION`, `MK-REGION-MISSING`, and `TELL-21` to `TELL-30` for icons and toggles.
+
+### Changed
+
+- `uxcheck.py mockup` renders each frame at 390, 820, and 1440 px. Before, it rendered at 1440 px only.
+- `TELL-08`: an emoji or an icon-font ligature does not count as an accessible name.
+- The README and `ux-setup` say to run `/reload-plugins` after the install. The agent file says how to run as a general-purpose agent.
+
+### Fixed
+
+- The `web-accessibility` checklist said that `uxcheck.py system` checks WCAG 1.4.11. It checked text contrast only. The checklist now names the new rules.
+- `uxcheck.py` gives a clean error for a missing file.
+
 ## [0.3.1] - 2026-10-25
 
 ### Changed

@@ -13,7 +13,7 @@ The `ux-designer` agent reads the `## Design` section of `CLAUDE.md` first in ea
 2. **Draft.** Make the answer for each line of the section from the facts (`references/section.md` has the lines and the rules). Mark each line `found` (a fact) or `guess`. Done when each line has a draft value.
 3. **Ask.** Ask one round of questions. Ask only for the `guess` lines and for the facts that a scan cannot find. Examples are the Figma plan and seat, and the Claude Design System of this product. Give your recommendation as the first answer. Use the question tool when the session has it. Max 4 questions. Done when each line has an answer, or the human said "use your choice".
 4. **Write.** Write the section in `CLAUDE.md`. Keep the other sections. When a `## Design` section exists, change only the lines that the human changed, and show the difference. Done when the section is in `CLAUDE.md`.
-5. **Tell.** Give each tool that the project names but the session does not have, with its install command (`references/section.md`). Done when the reply lists the missing tools, or says "none".
+5. **Tell.** Give each tool that the project names but the session does not have, with its install command (`references/section.md`). After a plugin install, tell the human to run `/reload-plugins`, or to start a new session. Until then, the `ux-designer` agent type is not available. Done when the reply lists the missing tools, or says "none". A reply with a plugin install also names `/reload-plugins`.
 
 ## Rules
 

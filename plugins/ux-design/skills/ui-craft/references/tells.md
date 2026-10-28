@@ -26,3 +26,13 @@ A tell is a sign that a default filled a decision, not the product or the system
 | TELL-18 | A status shown by color only | judgment |
 | TELL-19 | Lorem ipsum, "John Doe", or round fake numbers (100, 1,000) | judgment |
 | TELL-20 | A modal on top of a modal | judgment |
+| TELL-21 | A toggle name that changes with the state, or a name that tells the next action ("Unmute", "Turn on", "Enable") | uxcheck |
+| TELL-22 | An icon that changes between 2 states, with no `aria-pressed`, `aria-checked`, or `role=switch` | uxcheck |
+| TELL-23 | A toggle that shows its state by color only (the same icon and shape in the 2 states) | uxcheck |
+| TELL-24 | An icon-only control with icon contrast under 3:1 | uxcheck |
+| TELL-25 | An icon-only primary action | uxcheck |
+| TELL-26 | A status shown by an icon without visible text | uxcheck |
+| TELL-27 | An icon-only control that gets its name from `title` only | uxcheck |
+| TELL-28 | A target under 24 x 24 px that is too near to another target | uxcheck |
+| TELL-29 | Icon-only items in navigation, or an icon-only menu button | uxcheck |
+| TELL-30 | One icon with 2 or more names | uxcheck |

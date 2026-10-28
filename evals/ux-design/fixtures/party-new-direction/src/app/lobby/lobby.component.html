@@ -1,0 +1,23 @@
+<!-- Wachtkamer (lobby), current version -->
+<div class="gs-podium">
+  <header class="gs-showbalk">
+    <h1 class="gs-showbalk__titel">WACHTKAMER</h1>
+    <button type="button" class="gs-knop gs-knop--stil" (click)="toggleMuziek()">Muziek: {{ muziekAan() ? 'aan' : 'uit' }}</button>
+  </header>
+  <div class="gs-codebord">
+    <div><span class="gs-muted">Sessiecode</span><br><span class="gs-codebord__code">{{ code() }}</span></div>
+    <app-qr [code]="code()" />
+  </div>
+  <ul class="spelers">
+    @for (speler of spelers(); track speler.id) {
+      <li class="gs-tegel"><app-avatar [speler]="speler" /> {{ speler.naam }} @if (speler.host) { <span class="gs-chip">host</span> }</li>
+    }
+  </ul>
+  @if (isHost()) {
+    <div class="gs-segment" role="group" aria-label="Doelscore">
+      @for (n of [5, 7, 10]; track n) { <button type="button" [attr.aria-pressed]="doel() === n" (click)="doel.set(n)">{{ n }}</button> }
+    </div>
+    <button type="button" class="gs-knop" [disabled]="spelers().length < 3" (click)="start()">Start het spel</button>
+  }
+  <button type="button" class="gs-knop gs-knop--stil" (click)="verlaat()">Spel verlaten</button>
+</div>
