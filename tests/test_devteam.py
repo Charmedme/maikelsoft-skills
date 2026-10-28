@@ -333,8 +333,8 @@ def adr_with_id(status, decision_id):
 
 class NormIdTests(unittest.TestCase):
     def test_case_space_and_dash_variants_are_one_id(self):
-        forms = {decisioncheck.norm_id(x) for x in ("SHP-15", "shp-15", " SHP 15 ", "SHP‑15", "SHP_15")}
-        self.assertEqual(forms, {"SHP-15"})
+        forms = {decisioncheck.norm_id(x) for x in ("API-15", "api-15", " API 15 ", "API‑15", "API_15")}
+        self.assertEqual(forms, {"API-15"})
 
 
 class DuplicateTests(unittest.TestCase):
@@ -348,8 +348,8 @@ class DuplicateTests(unittest.TestCase):
 
     def test_same_id_in_other_spelling_is_a_duplicate(self):
         write(self.root / "docs/dev-team/decisions.md",
-              HEADER + "| SHP-15 | q | a | assumed | me | | | 2026-10-28 |\n"
-                       "| shp 15 | q2 | a2 | assumed | me | | | 2026-10-28 |\n")
+              HEADER + "| API-15 | q | a | assumed | me | | | 2026-10-28 |\n"
+                       "| api 15 | q2 | a2 | assumed | me | | | 2026-10-28 |\n")
         self.assertEqual(self.rules(decisioncheck.check(self.root, [], None)), ["DEC-DUPLICATE"])
 
     def test_two_accepted_adr_files_with_one_decision_id(self):

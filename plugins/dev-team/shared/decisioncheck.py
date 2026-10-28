@@ -14,7 +14,7 @@ What it checks:
     DEC-INDEX       the index exists and has the columns above.
     DEC-STATUS      each row has a valid status.
     DEC-DUPLICATE   an ID has at most one row with the status accepted or assumed. IDs compare
-                    without case, spaces, and dash differences (SHP-15, shp 15, SHP\u201115 are one ID).
+                    without case, spaces, and dash differences (API-15, api 15, API\u201115 are one ID).
     DEC-ADR-DUPLICATE  two accepted ADR files carry the same 'Decision ID:' line.
     DEC-ADR         each accepted or superseded row links an ADR file that exists.
     DEC-ADR-STATUS  the status in the ADR front matter matches the row.

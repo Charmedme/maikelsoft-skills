@@ -4,7 +4,7 @@ Source: the feedback on a run of dev-team 0.4.0 on a real .NET service (a run of
 
 ## Rule for the sort
 
-The plugin gives the mechanism. The project gives the content. Example: the plugin must run the checks that the pipeline of the project runs. Which checks those are (for example Roslynator or Sonar rules) is a fact of the project. So the plugin reads them from the project, and it names none of them.
+The plugin gives the mechanism. The project gives the content. Example: the plugin must run the checks that the pipeline of the project runs. Which checks those are (for example an analyzer step) is a fact of the project. So the plugin reads them from the project, and it names none of them.
 
 ## Taken in (plugin)
 
@@ -25,12 +25,12 @@ The plugin gives the mechanism. The project gives the content. Example: the plug
 
 | Point of the report | Reason |
 |---------------------|--------|
-| The Roslynator and Sonar rules (RCS1170, S1144) | A fact of that pipeline. P4 gives the way to declare it in the repository. The plugin names no analyzer. |
-| SDK `10.0.403` and its path | A fact of that machine. P9 gives the place to write it. |
-| The `Update(spec)` pattern of e-Balie Equipment | Code of one repository. P3 finds a pattern like it, in any repository. |
+| The analyzer rules of one pipeline (rule IDs and counts) | A fact of that pipeline. P4 gives the way to declare it in the repository. The plugin names no analyzer. |
+| One SDK version and its path | A fact of that machine. P9 gives the place to write it. |
+| A code pattern of one repository (an update by specification) | Code of one repository. P3 finds a pattern like it, in any repository. |
 | The text of the `CLAUDE.md` of that repository | The repository owns it. The hook of P1 does the job for each repository. |
-| Decision SHP-15, the Guarantor error, the early delete | Mistakes of one run. They show the causes P1, P3, P8. |
-| The comparison with the Postman plugin | Not a requirement. The hook of P1 is the same idea. |
+| A duplicate decision ID, a domain error, and an early delete | Mistakes of one run. They show the causes P1, P3, P8. |
+| The comparison with another plugin | Not a requirement. The hook of P1 is the same idea. |
 | The retro of the author | Notes of a person. No plugin change. |
 
 ## Check of the claims
