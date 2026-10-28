@@ -22,7 +22,7 @@ TEXT = """This project uses the dev-team plugin. Do development work with its sk
 - A small or medium change: skill dev-flow:plan-and-build, when it is installed.
 - The comments of a pull request review: skill dev-team:process-review.
 - Before you start, read docs/dev-team/conventions.md and docs/dev-team/decisions.md.
-- Use the build and test commands of conventions.md. Do not make a temporary global.json."""
+- Use the build and test commands of conventions.md, also the steps that get past an SDK pin."""
 
 
 def project_dir():

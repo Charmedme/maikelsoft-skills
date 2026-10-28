@@ -18,7 +18,7 @@ The plugin gives the mechanism. The project gives the content. Example: the plug
 | P6 | The logging hook failed without a message on Windows | `hooks.json` calls `python3`. On Windows this can be a Store alias that is not Python. | A command with a fallback: `python3`, then `python`, then `py -3`. |
 | P7 | Nine RUN-EVIDENCE findings that nobody read | One finding for each log row hides the cause. `deliver-story` does not tell the lead what to do. | `runcheck.py` gives one finding for a missing or empty `commands.jsonl`. Step 10 stops on it. |
 | P8 | `decisioncheck` gave 51 findings, 38 of them for existing patterns, and did not stop the duplicate ID | With `--changed` it reads whole files, not the new lines. IDs compare as exact text. ADR files are not checked for the same ID twice. | New lines only. IDs compare without case and dash differences. New rule `DEC-ADR-DUPLICATE`. The findings are sorted by rule, with the rules that matter first. |
-| P9 | Each agent made a temporary `global.json` | The build command is not written in one place. | `senior-practice` writes the build and test commands in `conventions.md`. Agents use them. No agent makes a temporary `global.json`. |
+| P9 | Each agent made its own temporary `global.json` | The way to build is not written in one place. | `senior-practice` finds a working way one time, with its undo step, and writes it with the build and test commands in `conventions.md`. Later agents use that entry. |
 | P10 | The run was lost after a cherry-pick. `run.md` stayed on `G2_SHOWN`. | The run folder is not committed. `run.md` has no state after G2. | The lead commits the run folder at G1 and at G2. New status words for follow-ups. Step 1 finds a run in a folder by its `run.md`. |
 
 ## Not taken in (project)

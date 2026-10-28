@@ -10,9 +10,10 @@ The rules that make a senior design and review the same on each run. The templat
 ## Design (mode `design`)
 
 1. Read `story.md`, `docs/dev-team/decisions.md`, `docs/dev-team/conventions.md`, and the profile when they exist. The profile is the file in `$DEV_TEAM_PROFILE` when it is set, else `~/.claude/dev-team/profile.md`.
-2. Learn the system: the solution layout, the build and test commands, the code style, and the code near the story. When `conventions.md` is missing, write it from what you find. Give the source file of each rule. Also do these three things:
+2. Learn the system: the solution layout, the build and test commands, the code style, and the code near the story. When `conventions.md` is missing, write it from what you find. Give the source file of each rule. Also do these things:
    - Find the sibling code. For each kind of work in the story, find how the neighbour modules do the same job. Examples: a child collection that syncs, a query by specification, a validator, a mapping. Write that pattern in `conventions.md` with its file. Follow it, or name the break and the reason.
-   - Write the build and test commands under "Build and test" in `conventions.md`. Include any pin of the SDK or of a tool. Agents use these commands. No agent makes a temporary `global.json`.
+   - Write the build and test commands under "Build and test" in `conventions.md`. Include any pin of the SDK or of a tool.
+   - When the pinned SDK is not installed, find a working way one time. An example is a temporary change of `global.json` that you undo before each commit. Test it. Write the way and the undo step under "Build and test". Later agents use that entry and do not search again.
    - Find the pipeline of the project (for example `.github/workflows`, or `azure-pipelines.yml`). Write the checks it runs under "CI checks", one command in backticks for each bullet. `checks.py` runs them. When you find no pipeline, leave the section out. The check output then says that parity is not known.
 3. Check the current facts of each technology that the story touches. Use the version gate of its stack skill (`stack-index` tells you which).
 4. Design the simplest solution that meets each acceptance criterion. Follow the existing conventions. Add a layer, an abstraction, or a package only for a concrete reason, and name it. Name the trade-off of each real choice.
