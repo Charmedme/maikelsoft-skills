@@ -1,0 +1,19 @@
+<!-- Spelscherm (game screen), current version -->
+<div class="gs-podium">
+  <header class="gs-showbalk">
+    <span class="gs-chip">Ronde {{ ronde() }}</span>
+    <span>{{ leider().naam }} leest voor</span>
+    <button type="button" class="gs-knop gs-knop--stil" (click)="toonStand()">Stand</button>
+  </header>
+  <div class="gs-kaart gs-kaart--stelling">{{ stelling() }}</div>
+  <div class="hand">
+    @for (kaart of hand(); track kaart.id) {
+      <button type="button" class="gs-kaart" [attr.aria-pressed]="gekozen() === kaart.id" (click)="kies(kaart)">{{ kaart.tekst }}</button>
+    }
+  </div>
+  <button type="button" class="gs-knop" [disabled]="!gekozen()" (click)="speel()">Speel deze kaart</button>
+  <footer class="gs-showbalk">
+    <button type="button" class="gs-knop gs-knop--stil">Chat</button>
+    <button type="button" class="gs-knop gs-knop--stil">Microfoon: {{ micAan() ? 'aan' : 'uit' }}</button>
+  </footer>
+</div>

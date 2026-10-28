@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="nl">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Wachtkamer</title>
+<link rel="stylesheet" href="../design-system/gameshow/tokens.css">
+<link rel="stylesheet" href="../design-system/gameshow/components.css">
+<style>
+.frame { width: 390px; margin: 0 auto 32px; }
+.toestel { min-height: 844px; }
+.stapel { position: absolute; top: 70px; right: 24px; width: 90px; height: 120px; background: var(--color-surface-sunken); border-radius: var(--radius-card); transform: rotate(6deg); }
+.gs-codebord { position: relative; }
+.spelers { list-style: none; margin: 0; padding: 0 var(--space-4); display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+.spelers button { all: unset; display: flex; gap: 8px; align-items: center; width: 100%; color: var(--color-text); }
+.rij { display: flex; gap: var(--space-2); padding: 0 var(--space-4); flex-wrap: wrap; }
+.blok { padding: var(--space-3) var(--space-4); display: flex; flex-direction: column; gap: var(--space-2); }
+</style></head>
+<body>
+<section class="frame" data-screen="lobby" data-state="default">
+<h2>Wachtkamer (default)</h2>
+<div class="gs-podium toestel">
+<header class="gs-showbalk" data-region="top-bar"><h1 class="gs-showbalk__titel">WACHTKAMER</h1>
+<button type="button" class="gs-knop gs-knop--stil" data-element="music-toggle">Muziek: aan</button></header>
+<main data-region="main">
+<div class="stapel" aria-hidden="true"></div>
+<div class="gs-codebord"><div><span class="gs-muted">Sessiecode</span><br><span class="gs-codebord__code">K7PX2Q</span></div></div>
+<div class="blok"><label for="naam-default">Jouw naam</label><input id="naam-default" class="gs-invoer" value="Anna"></div>
+<ul class="spelers">
+<li class="gs-tegel">Anna</li>
+<li class="gs-tegel"><button type="button" aria-label="Bram verwijderen">Bram</button></li>
+<li class="gs-tegel"><button type="button" aria-label="Chantal verwijderen">Chantal</button></li>
+<li class="gs-tegel"><button type="button" aria-label="Dewi verwijderen">Dewi</button></li>
+<li class="gs-tegel"><button type="button" aria-label="Erik verwijderen">Erik</button></li>
+</ul>
+<div class="blok"><span>Doelscore</span><div class="gs-segment" role="group" aria-label="Doelscore"><button type="button" aria-pressed="false">5</button><button type="button" aria-pressed="true">7</button><button type="button" aria-pressed="false">10</button></div></div>
+<div class="rij"><button type="button" class="gs-knop gs-knop--stil">Chat: aan</button><button type="button" class="gs-knop gs-knop--stil">Microfoon: uit</button></div>
+<div class="blok"><button type="button" class="gs-knop">Start het spel</button></div>
+</main>
+<footer class="blok" data-region="bottom-bar"><button type="button" class="gs-knop gs-knop--stil" style="text-decoration:none">Spelregels</button>
+<button type="button" class="gs-knop gs-knop--stil" data-element="leave-game">Spel verlaten</button></footer>
+</div></section>
+<section class="frame" data-screen="lobby" data-state="guest">
+<h2>Wachtkamer (guest)</h2>
+<div class="gs-podium toestel">
+<header class="gs-showbalk" data-region="top-bar"><h1 class="gs-showbalk__titel">WACHTKAMER</h1>
+<button type="button" class="gs-knop gs-knop--stil" data-element="music-toggle">Muziek: aan</button></header>
+<main data-region="main">
+<div class="stapel" aria-hidden="true"></div>
+<div class="gs-codebord"><div><span class="gs-muted">Sessiecode</span><br><span class="gs-codebord__code">K7PX2Q</span></div></div>
+<div class="blok"><label for="naam-guest">Jouw naam</label><input id="naam-guest" class="gs-invoer" value="Bram"></div>
+<ul class="spelers">
+<li class="gs-tegel">Anna</li>
+<li class="gs-tegel">Bram</li>
+<li class="gs-tegel">Chantal</li>
+<li class="gs-tegel">Dewi</li>
+<li class="gs-tegel">Erik</li>
+</ul>
+<div class="rij"><button type="button" class="gs-knop gs-knop--stil">Chat: aan</button><button type="button" class="gs-knop gs-knop--stil">Microfoon: uit</button></div>
+<div class="blok"><p class="gs-muted">Anna start het spel</p></div>
+</main>
+<footer class="blok" data-region="bottom-bar"><button type="button" class="gs-knop gs-knop--stil" style="text-decoration:none">Spelregels</button>
+<button type="button" class="gs-knop gs-knop--stil" data-element="leave-game">Spel verlaten</button></footer>
+</div></section>
+</body></html>

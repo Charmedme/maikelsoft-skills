@@ -58,6 +58,18 @@ Surface: operate
 
 Selected: A. Reason: fastest.
 
+## Element inventory
+
+| Element | Home | Component | Screens |
+|---------|------|-----------|---------|
+| filter bar | top-bar | FilterBar | list |
+
+## Non-text contrast
+
+| Part | Color | Next to | Ratio | Needs |
+|------|-------|---------|-------|-------|
+| input border | #6b7785 | #ffffff | 4.6 | 3:1 |
+
 ## Screen: list
 
 | Decision | Value | Source |
@@ -119,11 +131,13 @@ class SystemTests(unittest.TestCase):
         return {i["rule"] for i in report.items if i["level"] == "error"}
 
     def test_strong_system_has_no_errors(self):
-        self.assertEqual(self.audit("fieldline"), set())
+        # The input border (border-strong on the surface, 1.84:1) fails WCAG 1.4.11.
+        # The fixture stays as it is, because older eval cases use it.
+        self.assertEqual(self.audit("fieldline"), {"SYS-NONTEXT"})
 
     def test_faulty_system_shows_planted_faults(self):
         self.assertEqual(self.audit("fieldline-faulty"),
-                         {"SYS-CONTRAST", "SYS-RULE-CONTRAST", "SYS-GRADIENT", "SYS-FOCUS", "SYS-SCALE"})
+                         {"SYS-CONTRAST", "SYS-RULE-CONTRAST", "SYS-GRADIENT", "SYS-FOCUS", "SYS-SCALE", "SYS-NONTEXT"})
 
     def test_contrast_formula(self):
         self.assertAlmostEqual(uxcheck.contrast((0, 0, 0), (255, 255, 255)), 21.0, places=1)

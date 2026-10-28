@@ -1,0 +1,26 @@
+/* Naar-de-kloten: Gameshow foundation, the version the owner judged as lacking contrast (27-10-2026).
+   Reconstructed verbatim (colour part) from the file as read before the contrast fix. Raised surfaces
+   #2e1a63 on the stage #1a0b3b: about 1.4:1, used for tiles, scoreboard rows, chips and the segmented control. */
+:root {
+  color-scheme: dark;
+  --color-bg: #1a0b3b;
+  --color-surface-sunken: #0d0620;
+  --color-surface: #2e1a63;
+  --color-surface-spot: #42277f;
+  --color-border: #6e55b8;         /* 3.1:1 on bg */
+  --color-text: #ffffff;
+  --color-text-muted: #c9b8ff;
+  --color-text-inverse: #1a0b3b;
+  --color-lamp: #ffd23f;
+  --color-knal: #e01f63;
+  --color-knal-licht: #ff3d7f;
+  --color-knal-lip: #a3134a;
+  --color-on-card-accent: #d1005a;
+  --color-violet: #8a6cff;
+  --color-card: #ffffff;
+  --color-on-card: #1a0b3b;
+  --color-on-card-muted: #5b4a8a;
+  --color-card-border: #1a0b3b;
+  --color-goed: #3ddc97;
+  --color-fout: #ff6b4a;
+}

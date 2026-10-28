@@ -1,6 +1,6 @@
 ---
 name: ux-patterns
-description: Decision tables that select an interaction pattern from the facts of a task - table or cards, page or modal or side panel, inline edit or form, pagination, filters, bulk and destructive actions, feedback for slow work, empty states, and input controls. Use when a screen, a list, a form, or a flow needs a pattern, or when a design choice must be repeatable and has to name its rule.
+description: Decision tables that select an interaction pattern from the facts of a task - table or cards, page or modal or side panel, inline edit or form, pagination, filters, bulk and destructive actions, feedback for slow work, empty states, input controls, and icons and toggles. Use when a screen, a list, a form, or a flow needs a pattern, or when a design choice must be repeatable and has to name its rule.
 ---
 
 # UX patterns
@@ -23,7 +23,7 @@ A pattern choice follows from the facts of the task, not from taste. With the sa
    | device | desktop first, mobile first, both |
 
 2. **Check the decision log.** Read `docs/ux/decisions.md`. A logged decision for the same situation wins. Done when you know which decisions apply.
-3. **Select the patterns.** Read `references/patterns.md`. For each need of the screen, go to its table and take the first rule whose condition matches the facts. Done when each need has one rule ID.
+3. **Select the patterns.** Read `references/patterns.md`. For each need of the screen, go to its table and take the first rule whose condition matches the facts. When the screen has icons or toggles, also read `references/icons.md` for the detail of the ICON and TOGGLE rules. For a web screen, read `references/platform-web.md` for the target size and the markup. Done when each need has one rule ID, and each icon and each toggle has a PAT-ICON or PAT-TOGGLE rule.
 4. **Handle no match.** When no rule matches, or a fact is `unknown` and it changes the result, do not guess. Write a `proposed` decision with your recommendation and the reason, and list the fact as an open question. Done when each need has a rule ID or a proposed decision.
 5. **Write the result.** In the design spec, put the pattern name in the value and `pattern: <rule ID>` in the source. Done when each pattern row names its rule.
 
@@ -37,4 +37,6 @@ Result: data table (`PAT-LIST-01`), numbered pages (`PAT-PAGE-02`), filter panel
 | File | Read when |
 |------|-----------|
 | `references/patterns.md` | Step 3: the decision tables with the rule IDs. |
+| `references/icons.md` | Step 3, when the screen has icons or toggles. It has the detail, the evidence, and the source of each ICON and TOGGLE rule. |
+| `references/platform-web.md` | Step 3, when a web screen has icons or toggles. It has the target size in CSS px, the toggle markup, and the limits of `title`. |
 | `references/language.md` | Before you write text for the human. |
