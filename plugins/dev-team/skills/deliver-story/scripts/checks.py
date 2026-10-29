@@ -14,6 +14,11 @@ Checks (each runs only when the repository has the tool):
     tsc      npx tsc --noEmit (a tsconfig.json file)
     docker   hadolint (a Dockerfile, when hadolint is installed)
     k8s      kubeconform (Kubernetes manifests, when kubeconform is installed)
+    ci-N     each command in the section "## CI checks" of docs/dev-team/conventions.md. A bullet
+             with the command in backticks is one command. The project lists here what its pipeline
+             runs beyond the checks above (for example an analyzer step). This script names no
+             analyzer. Without the section, the output file says that the parity with the pipeline
+             is not known.
 
 Output file: a Markdown table with one row per check (pass, fail, or skipped), the command,
 and the last lines of the output of each failed check. The run time is in the file, so a
@@ -27,6 +32,8 @@ import datetime
 import json
 import os
 import pathlib
+import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -62,6 +69,21 @@ def dotnet_target(root):
     return projects[0] if len(projects) == 1 else None
 
 
+CI_SECTION = re.compile(r"^##[ \t]+CI checks[ \t]*$(.*?)(?=^##[ \t]|\Z)", re.IGNORECASE | re.MULTILINE | re.DOTALL)
+CI_COMMAND = re.compile(r"^[ \t]*[-*][ \t]+`([^`]+)`", re.MULTILINE)
+
+
+def ci_commands(root):
+    """The commands of the section "## CI checks" in conventions.md, or None when the section is missing."""
+    conventions = root / "docs" / "dev-team" / "conventions.md"
+    if not conventions.is_file():
+        return None
+    section = CI_SECTION.search(conventions.read_text(encoding="utf-8", errors="ignore"))
+    if not section:
+        return None
+    return [shlex.split(c, posix=os.name != "nt") for c in CI_COMMAND.findall(section.group(1))]
+
+
 def plan(root):
     """Return the list of (name, command, reason) for the checks that apply to this repository."""
     checks = []
@@ -92,6 +114,8 @@ def plan(root):
     if manifests and shutil.which("kubeconform"):
         checks.append(("k8s", ["kubeconform", "-strict", "-summary", *[str(p.relative_to(root)) for p in manifests]],
                        "Kubernetes manifests"))
+    for number, command in enumerate(ci_commands(root) or [], start=1):
+        checks.append((f"ci-{number}", command, 'section "CI checks" of conventions.md'))
     return checks
 
 
@@ -109,7 +133,7 @@ def run(root, name, command):
     return ("pass" if proc.returncode == 0 else "fail"), "\n".join(lines[-TAIL_LINES:])
 
 
-def write_report(out, root, results):
+def write_report(out, root, results, ci_declared=True):
     now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     lines = [
         "# Checks",
@@ -123,6 +147,9 @@ def write_report(out, root, results):
         lines.append(f"| {name} | {status} | `{' '.join(command)}` |")
     if not results:
         lines.append("| - | skipped | No build, test, or lint tool found. |")
+    if not ci_declared:
+        lines += ["", "CI parity: not known. `docs/dev-team/conventions.md` has no section `## CI checks`. "
+                  "The pipeline can run checks that this file does not."]
     for name, _, status, tail in results:
         if status != "pass" and tail:
             lines += ["", f"## {name}: {status}", "", "```", tail, "```"]
@@ -151,7 +178,7 @@ def main(argv=None):
         results.append((name, command, status, tail))
         print(f"{name}: {status}")
     out = args.out or (root / "checks.md")
-    write_report(out, root, results)
+    write_report(out, root, results, ci_declared=ci_commands(root) is not None)
     print(f"Wrote {out}")
     return 1 if any(r[2] == "fail" for r in results) else 0
 

@@ -13,15 +13,19 @@ Status is one of: accepted, assumed, superseded, rejected.
 What it checks:
     DEC-INDEX       the index exists and has the columns above.
     DEC-STATUS      each row has a valid status.
-    DEC-DUPLICATE   an ID has at most one row with the status accepted or assumed.
+    DEC-DUPLICATE   an ID has at most one row with the status accepted or assumed. IDs compare
+                    without case, spaces, and dash differences (API-15, api 15, API\u201115 are one ID).
+    DEC-ADR-DUPLICATE  two accepted ADR files carry the same 'Decision ID:' line.
     DEC-ADR         each accepted or superseded row links an ADR file that exists.
     DEC-ADR-STATUS  the status in the ADR front matter matches the row.
     DEC-SUPERSEDE   a superseded ADR links the new ADR, and the new ADR links back.
     DEC-USED        code that a detect rule ties to a decision has an accepted or assumed row.
                     It skips test code, the run files in docs/work, and the 'exclude' paths of the rule.
-                    With --changed, only files changed since the merge base are read.
+                    With --changed, only the lines that the branch added are read. Old code in a
+                    touched file is not a finding.
 
-Output: one line per finding, `<file>: <RULE> <message>`, then a summary line.
+Output: one line per finding, `<file>: <RULE> <message>`, sorted by rule (the rules about the
+index first, DEC-USED last), then a summary line with the count for each rule.
 Exit code: 1 when there is a finding, else 0.
 
 Python 3.9 or later, standard library only.
@@ -39,11 +43,20 @@ COLUMNS = ["id", "question", "answer", "status", "by", "adr", "check", "date"]
 VALID = {"accepted", "assumed", "superseded", "rejected"}
 LINK = re.compile(r"\]\(([^)]+)\)|`([^`]+\.md)`|^([\w./-]+\.md)$")
 FRONT = re.compile(r"\A---\n(.*?)\n---", re.DOTALL)
+ORDER = ["DEC-INDEX", "DEC-STATUS", "DEC-DUPLICATE", "DEC-ADR-DUPLICATE", "DEC-ADR", "DEC-ADR-STATUS",
+         "DEC-SUPERSEDE", "DEC-USED"]
+DASHES = re.compile(r"[\u2010-\u2015\u2212_\s]+")
+DECISION_ID_LINE = re.compile(r"^Decision ID:\s*([A-Za-z0-9][\w\u2010-\u2015\u2212 -]*?)\s*[.,;]?(?:\s|$)", re.MULTILINE)
 SKIP_DIRS = {".git", "bin", "obj", "node_modules", "dist", ".angular", "TestResults"}
 # DEC-USED reads only product code. The run files of dev-team (docs/work) and test code do not
 # carry a team decision, so a detect rule that matches them gives a false finding.
 NOT_PRODUCT = ["docs/work/**", "tests/**", "test/**", "**/*Tests/**", "**/*.Tests/**", "**/*Test/**",
                "**/*.spec.ts", "**/*.test.ts", "**/__tests__/**"]
+
+
+def norm_id(value):
+    """One spelling of a decision ID: no case, space, underscore, or dash differences."""
+    return DASHES.sub("-", value.strip()).upper()
 
 
 def table(text):
@@ -82,15 +95,34 @@ def adr_status(path):
     return None
 
 
-def changed_files(root, base):
+def merge_base_of(root, base):
     try:
-        merge_base = subprocess.run(["git", "merge-base", base, "HEAD"], cwd=root, capture_output=True,
-                                    text=True, check=True).stdout.strip()
+        return subprocess.run(["git", "merge-base", base, "HEAD"], cwd=root, capture_output=True,
+                              text=True, check=True).stdout.strip()
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return None
+
+
+def changed_files(root, base):
+    merge_base = merge_base_of(root, base)
+    if merge_base is None:
+        return None
+    try:
         out = subprocess.run(["git", "diff", "--name-only", "--diff-filter=AMR", merge_base], cwd=root,
                              capture_output=True, text=True, check=True).stdout
     except (subprocess.CalledProcessError, FileNotFoundError):
         return None
     return {line.strip() for line in out.splitlines() if line.strip()}
+
+
+def added_text(root, merge_base, rel):
+    """The lines that the branch added to one file, or None when git cannot tell."""
+    try:
+        out = subprocess.run(["git", "diff", "-U0", "--diff-filter=AMR", merge_base, "--", rel], cwd=root,
+                             capture_output=True, text=True, check=True).stdout
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return None
+    return "\n".join(l[1:] for l in out.splitlines() if l.startswith("+") and not l.startswith("+++"))
 
 
 def all_files(root):
@@ -103,7 +135,7 @@ def matches(rel, patterns):
     return any(fnmatch.fnmatch(rel, p) or fnmatch.fnmatch(rel, p.replace("**/", "")) for p in patterns)
 
 
-def check(root, rule_files, changed):
+def check(root, rule_files, changed, base=None):
     findings = []
 
     def add(file, rule, message):
@@ -120,7 +152,7 @@ def check(root, rule_files, changed):
             rows = []
     active = {}
     for row in rows:
-        did, status = row.get("id", ""), row.get("status", "").lower()
+        did, status = norm_id(row.get("id", "")), row.get("status", "").lower()
         if status not in VALID:
             add(INDEX, "DEC-STATUS", f"{did}: status {status!r} is not one of {sorted(VALID)}")
             continue
@@ -147,6 +179,22 @@ def check(root, rule_files, changed):
                     if not new_path.is_file() or adr.name not in new_path.read_text(encoding="utf-8"):
                         add(adr.relative_to(root), "DEC-SUPERSEDE", f"{did}: the new ADR does not link back to {adr.name}")
 
+    adr_dirs = set()
+    for row in rows:
+        adr = link_of(row.get("adr", ""), index.parent) if index.is_file() else None
+        if adr is not None:
+            adr_dirs.add(adr.parent)
+    accepted_adrs = {}
+    for adr_dir in adr_dirs:
+        for adr in sorted(adr_dir.glob("*.md")):
+            found = DECISION_ID_LINE.search(adr.read_text(encoding="utf-8", errors="ignore"))
+            if found and (adr_status(adr) or "").startswith("accepted"):
+                accepted_adrs.setdefault(norm_id(found.group(1)), set()).add(adr)
+    for did, adrs in sorted(accepted_adrs.items()):
+        if len(adrs) > 1:
+            names = ", ".join(sorted(a.name for a in adrs))
+            add(INDEX, "DEC-ADR-DUPLICATE", f"{did} is in more than one accepted ADR: {names}")
+
     detect = []
     for rf in rule_files:
         try:
@@ -160,6 +208,7 @@ def check(root, rule_files, changed):
                                re.compile(rule["pattern"], re.MULTILINE)))
     if detect:
         files = sorted(changed) if changed is not None else list(all_files(root))
+        merge_base = merge_base_of(root, base) if base else None
         seen = set()
         for rel in files:
             path = root / rel
@@ -167,10 +216,12 @@ def check(root, rule_files, changed):
                 continue
             text = None
             for rid, decision, patterns, exclude, rx in detect:
-                if decision in active or (decision, rel) in seen or not matches(rel, patterns) or matches(rel, exclude):
+                if norm_id(decision) in active or (decision, rel) in seen or not matches(rel, patterns) or matches(rel, exclude):
                     continue
                 if text is None:
-                    text = path.read_text(encoding="utf-8", errors="ignore")
+                    text = added_text(root, merge_base, rel) if merge_base and changed is not None else None
+                    if text is None:
+                        text = path.read_text(encoding="utf-8", errors="ignore")
                 if rx.search(text):
                     seen.add((decision, rel))
                     add(rel, "DEC-USED", f"uses decision {decision} (rule {rid}), but the index has no accepted or assumed row for it")
@@ -186,13 +237,18 @@ def main(argv=None):
     args = parser.parse_args(argv)
     root = args.root.resolve()
     changed = changed_files(root, args.changed) if args.changed else None
-    findings = check(root, args.rules, changed)
+    findings = check(root, args.rules, changed, args.changed)
+    findings.sort(key=lambda f: ORDER.index(f[1]) if f[1] in ORDER else len(ORDER))
     if args.format == "json":
         print(json.dumps([{"file": f, "rule": r, "message": m} for f, r, m in findings], indent=1))
     else:
         for f, r, m in findings:
             print(f"{f}: {r} {m}")
-        print(f"{len(findings)} findings")
+        counts = {}
+        for _, rule, _ in findings:
+            counts[rule] = counts.get(rule, 0) + 1
+        detail = ", ".join(f"{rule} {n}" for rule, n in sorted(counts.items(), key=lambda c: ORDER.index(c[0]) if c[0] in ORDER else len(ORDER)))
+        print(f"{len(findings)} findings" + (f" ({detail})" if detail else ""))
     return 1 if findings else 0
 
 

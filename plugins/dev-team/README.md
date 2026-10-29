@@ -33,7 +33,8 @@ claude plugin install dev-team@maikelsoft-skills
 
 | Part | Name | What it does |
 |------|------|--------------|
-| Skill | `deliver-story` | The main session leads the run: story, design, reflection, G1, core, packages, security review, UX review, G2. The UX review runs when the story has a UX design and the `ux-design` plugin is installed. |
+| Skill | `deliver-story` | The main session leads the run: story, design, reflection, G1, core, packages, security review, UX review, G2. The UX review runs when the story has UI work and a UX design or a mock-up, and the `ux-design` plugin is installed. After G2, later changes go through the agents. |
+| Skill | `process-review` | Handles the comments of a pull request review. It sorts them, has the senior fix them, has a second senior review the fix, and writes draft replies. |
 | Skill | `story-intake` | Reads the story from Jira, Azure DevOps, GitHub, GitLab, or Linear (read only) and writes `story.md`. |
 | Skill | `senior-practice` | The rules and templates of the senior: design, packages, reflection, plan feedback, review, self-check. |
 | Skill | `medior-practice` | The rules and templates of a medior: plan, build test first, report with real output, fix. |
@@ -43,7 +44,8 @@ claude plugin install dev-team@maikelsoft-skills
 | Agent | `medior` | Sonnet, effort medium. Plans and builds a standard package. |
 | Agent | `medior-large` | Sonnet, effort high. Plans and builds a hard package. |
 | Agent | `security-reviewer` | Opus, effort high. Reviews the diff one time. |
-| Hook | `log-command.py` | Writes each Bash command of a run to `commands.jsonl`. |
+| Hook | `log-command.py` | Writes each Bash command of a run to `commands.jsonl`. It tries `python3`, `python`, and `py -3`. |
+| Hook | `session-start.py` | In a project that uses dev-team, names the entry skill for each kind of work. |
 
 ## Rules of the team
 
@@ -101,4 +103,6 @@ Do not use it when:
 
 - The senior starts the mediors as nested agents. This needs `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` of 2 or more (default 3).
 - Plugin agents do not use hooks, MCP servers, or a permission mode of their own.
+- The UX review of a story with only a mock-up passes the mock-up in the prompt. The `ux-design` agent does not read it as a design source yet.
+- `checks.py` runs the checks that the project lists under "CI checks" in `docs/dev-team/conventions.md`. It names no analyzer. A project that does not list them gets the note "CI parity: not known".
 - The stack skills cover .NET in dev-stack 1.1.0: 18 skills. Angular, TypeScript, Docker, and Kubernetes use the official docs until their skills exist.

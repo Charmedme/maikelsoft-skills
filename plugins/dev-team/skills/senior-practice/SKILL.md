@@ -10,11 +10,16 @@ The rules that make a senior design and review the same on each run. The templat
 ## Design (mode `design`)
 
 1. Read `story.md`, `docs/dev-team/decisions.md`, `docs/dev-team/conventions.md`, and the profile when they exist. The profile is the file in `$DEV_TEAM_PROFILE` when it is set, else `~/.claude/dev-team/profile.md`.
-2. Learn the system: the solution layout, the build and test commands, the code style, and the code near the story. When `conventions.md` is missing, write it from what you find. Give the source file of each rule.
+2. Learn the system: the solution layout, the build and test commands, the code style, and the code near the story. When `conventions.md` is missing, write it from what you find. Give the source file of each rule. Also do these things:
+   - Find the sibling code. For each kind of work in the story, find how the neighbour modules do the same job. Examples: a child collection that syncs, a query by specification, a validator, a mapping. Write that pattern in `conventions.md` with its file. Follow it, or name the break and the reason.
+   - Write the build and test commands under "Build and test" in `conventions.md`. Include any pin of the SDK or of a tool.
+   - When the pinned SDK is not installed, find a working way one time. An example is a temporary change of `global.json` that you undo before each commit. Test it. Write the way and the undo step under "Build and test". Later agents use that entry and do not search again.
+   - Find the pipeline of the project (for example `.github/workflows`, or `azure-pipelines.yml`). Write the checks it runs under "CI checks", one command in backticks for each bullet. `checks.py` runs them. When you find no pipeline, leave the section out. The check output then says that parity is not known.
 3. Check the current facts of each technology that the story touches. Use the version gate of its stack skill (`stack-index` tells you which).
 4. Design the simplest solution that meets each acceptance criterion. Follow the existing conventions. Add a layer, an abstraction, or a package only for a concrete reason, and name it. Name the trade-off of each real choice.
 5. Write the threat model in five lines. Name the new input, the callers, and the data. Then name what can go wrong and what stops it.
-6. Split the work: the critical core (you build it) and work packages (mediors build them). The core is the part where a mistake breaks the story or the data. A package has one goal and a size (`standard` or `hard`). It names its owned files, its acceptance criteria (verbatim), its contracts, and the skills to load. Few packages are better than many. A small story has no packages.
+6. Name the aggregates first. For each entity of the story, name the aggregate root that owns it. Say who may change it. Say what stays consistent in one transaction. Feature folders and packages follow the aggregates, not the tables of a data model. An entity with two possible owners is a decision for the sheet. Use the `domain-modeling` skill when it is installed.
+   Then split the work: the critical core (you build it) and work packages (mediors build them). The core is the part where a mistake breaks the story or the data. A package has one goal and a size (`standard` or `hard`). It names its owned files, its acceptance criteria (verbatim), its contracts, and the skills to load. Few packages are better than many. A small story has no packages.
 7. List each decision that the story needs. Use the `team-decisions` skill for the decision sheet.
 8. An open question with a safe default goes to G1. A default is safe when the story supports it, and when it is easy to change later. Choose the default and write it under "Assumptions to confirm" in `design.md`, with the other options. Then go on with the design.
 9. Stop with `NEEDS_HUMAN` only when no safe default exists. Then the work needs a fact that only the human knows.
@@ -31,6 +36,8 @@ You check the work of another senior one time. Give at most 10 improvements, ran
 - a wrong or outdated API
 - a security gap
 - a package split that causes conflicts
+- a feature folder that follows a table, not an aggregate
+- code that does not follow the pattern of the sibling modules
 
 Do not repeat the design. When the work is good, say so in one line.
 
@@ -53,6 +60,8 @@ Follow the Google code review guide: approve when the change makes the code heal
 ## Build (modes `build-core` and `fix`)
 
 Write the test of the core behavior first, then the code. Follow the stack skills and the decisions. Run `checks.py` after your last change and keep its output. Commit each finished part. In `fix`, change only what the blocking findings need.
+
+Prove a cause before you fix it. A cause is a hypothesis until a test fails for it. This holds for a claim of a reviewer and for your own idea. A sync by key gets a test with two items of the same kind.
 
 ## Self-check
 

@@ -1,14 +1,24 @@
 {
-  "description": "dev-team: log each Bash command of an active story run to its commands.jsonl (Q30).",
+  "description": "dev-team: name the entry skill for each kind of work at session start, and log each Bash command of an active story run to its commands.jsonl (Q30). Each command tries python3, then python, then py -3, because python3 on Windows can be a Store alias that is not Python.",
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/session-start.py\" || python \"${CLAUDE_PLUGIN_ROOT}/hooks/session-start.py\" || py -3 \"${CLAUDE_PLUGIN_ROOT}/hooks/session-start.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "python3",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/log-command.py"],
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/log-command.py\" || python \"${CLAUDE_PLUGIN_ROOT}/hooks/log-command.py\" || py -3 \"${CLAUDE_PLUGIN_ROOT}/hooks/log-command.py\"",
             "timeout": 10
           }
         ]
