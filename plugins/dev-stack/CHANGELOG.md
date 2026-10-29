@@ -6,6 +6,13 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [1.2.2] - 2026-10-29
+
+### Added
+
+- `sqlserver`: after a fix, the skill searches the repository for the same defect on a table that the change uses. It fixes each other site that needs no migration and changes no result. It reports the other sites as open points. A new judge item checks this.
+- `sqlserver`: the section "When a seek is not the answer" in `references/indexes.md`. It covers covering indexes, statistics, a filtered `IS NULL` index, and columnstore indexes for large reports. Each fact has a Microsoft Learn source.
+
 ## [1.2.1] - 2026-10-27
 
 ### Added
