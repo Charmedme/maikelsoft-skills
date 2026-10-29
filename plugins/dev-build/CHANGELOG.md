@@ -6,6 +6,14 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-10-29
+
+### Changed
+
+- `build-skill` and `build-agent` have the new copies of the shared language checker (`doccheck.py`) and the language rules (`language.md`) from dev-docs 1.3.0 and 1.4.0. The copies in 1.1.0 were older.
+- The checker has three new accessibility warnings: `A11Y-ALT`, `A11Y-LINK`, and `A11Y-HEADING`. `HOUSE-WORDS` also finds "see below", "the following command", and "please". A sentence that starts with a lowercase word (`v4`, `npm`) is now a new sentence.
+- The language rules have the new sections "Procedures" and "Accessibility".
+
 ## [1.1.0] - 2026-10-12
 
 ### Added
