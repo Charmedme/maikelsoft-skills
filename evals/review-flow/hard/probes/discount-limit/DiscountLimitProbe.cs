@@ -189,7 +189,16 @@ public sealed class DiscountLimitProbe
         var code = Code();
         await PutCodeAsync(code, 10, Later(30), 3);
         var results = await Task.WhenAll(Enumerable.Range(0, 12).Select(_ => OrderAsync(code, Line(Sku(), 1, 5m))));
-        Assert.AreEqual(3, results.Count(r => r.Status == HttpStatusCode.Created));
+        var won = results.Count(r => r.Status == HttpStatusCode.Created);
+        Assert.IsTrue(won is >= 1 and <= 3, $"{won} orders with a limit of 3");
+
+        // A request that lost a conflict gets 409, and that is correct. Each order must still have used one use.
+        for (var i = won; i < 3; i++)
+        {
+            Assert.AreEqual(HttpStatusCode.Created, (await OrderAsync(code, Line(Sku(), 1, 5m))).Status, "a use got lost");
+        }
+
+        Assert.AreEqual(HttpStatusCode.Conflict, (await OrderAsync(code, Line(Sku(), 1, 5m))).Status, "the limit was passed");
     }
 
     [TestMethod]

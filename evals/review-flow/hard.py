@@ -109,27 +109,36 @@ def stream_facts(stream):
     return facts
 
 
-def score_run(run, story, ds):
+def score_run(run, story, ds, passes):
+    """A test counts as passed only when it passes in each pass, because a race does not show each time."""
     facts = stream_facts(run / "stream.jsonl")
     repo = run / "repo"
     facts["commits"] = len(subprocess.run([*GIT, str(repo), "log", "--oneline", "--all", "--not", "eval-start"], capture_output=True, text=True).stdout.splitlines())
-    results, note = ds.probe_results(repo, story)
-    if not results:
-        return {**facts, "built": False, "note": note, "E": "0/0", "H": "0/0", "failed": []}
-    failed = sorted(name for name, (outcome, _) in results.items() if outcome != "Passed")
+    results, note, misses = {}, "", {}
+    for _ in range(passes):
+        ds._CACHE.clear()
+        one_pass, note = ds.probe_results(repo, story)
+        if not one_pass:
+            return {**facts, "built": False, "note": note, "E": "0/0", "H": "0/0", "failed": []}
+        for name, (outcome, message) in one_pass.items():
+            if outcome != "Passed":
+                misses[name] = misses.get(name, 0) + 1
+            if name not in results or outcome != "Passed":
+                results[name] = (outcome, message)
+    failed = sorted(f"{name} ({misses[name]}/{passes})" for name in misses)
     count = lambda kind: (sum(1 for n, (o, _) in results.items() if n.startswith(kind) and o == "Passed"), sum(1 for n in results if n.startswith(kind)))
     facts.update({"built": True, "note": "", "E": "%d/%d" % count("E"), "H": "%d/%d" % count("H"), "failed": failed})
     return facts
 
 
-def score(runs):
+def score(runs, passes):
     ds = _load("devstack_score", ROOT / "evals" / "dev-stack" / "score.py")
     ds.PROBES = HARD / "probes"
     table = {}
     for stream in sorted(runs.glob("*/*/*/stream.jsonl")):
         run = stream.parent
         story, arm, number = run.relative_to(runs).parts
-        table[f"{story}/{arm}/{number}"] = score_run(run, story, ds)
+        table[f"{story}/{arm}/{number}"] = score_run(run, story, ds, passes)
         print(f"{story}/{arm}/{number}", json.dumps(table[f"{story}/{arm}/{number}"]), flush=True)
     (runs / "scores.json").write_text(json.dumps(table, indent=1), encoding="utf-8")
 
@@ -149,11 +158,12 @@ def main(argv=None):
     run_cmd.add_argument("--model", default="sonnet")
     score_cmd = sub.add_parser("score")
     score_cmd.add_argument("runs", type=pathlib.Path)
+    score_cmd.add_argument("--passes", type=int, default=3)
     args = parser.parse_args(argv)
     args.runs = args.runs.resolve()
     if args.command == "score":
         os.environ.setdefault("DOTNET_ROOT", str(pathlib.Path.home() / ".dotnet"))
-        score(args.runs)
+        score(args.runs, args.passes)
         return 0
     jobs = []
     for story in args.story:
