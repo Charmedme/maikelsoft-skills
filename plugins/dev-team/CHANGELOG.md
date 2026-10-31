@@ -19,7 +19,7 @@ The changes come from the design in `docs/work/review-flow/design.md`. A compari
 - Reviews give each finding an Origin: `new`, `exposed`, or `pre-existing`. Only the first two can block. Older problems go to the human in `older-problems.md` and at G2.
 - Reviews read `REVIEW.md` from the compare point, so a change cannot relax its own review. The template is `references/review-md.md`.
 - Reviews show at most 5 nitpicks in full. The others go on one line each.
-- G2 has a block Warnings, the lines "What changed and why", a line for what the checks do not cover, the older problems, and text for the pull request. G2 names the hash of the last code commit.
+- G2 has a block Warnings, the lines "What changed and why", and a line for what the checks do not cover. It also has the older problems and text for the pull request. G2 names the hash of the last code commit.
 - `design.md` has a section "How to undo".
 
 ### Changed
