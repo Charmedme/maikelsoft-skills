@@ -1,0 +1,38 @@
+diff --git a/src/Orders.Api/Orders/OrderContracts.cs b/src/Orders.Api/Orders/OrderContracts.cs
+index 4b62950..8d25ea2 100644
+--- a/src/Orders.Api/Orders/OrderContracts.cs
++++ b/src/Orders.Api/Orders/OrderContracts.cs
+@@ -20,6 +20,8 @@ public sealed record OrderResponse(
+     decimal Total,
+     IReadOnlyList<OrderLineResponse> Lines);
+ 
++public sealed record OrderSummaryResponse(int LineCount, int UnitCount, decimal Total);
++
+ public sealed record OrderEventResponse(string Type, DateTimeOffset OccurredAt);
+ 
+ public sealed record StockRequest(
+diff --git a/src/Orders.Api/Orders/OrderEndpoints.cs b/src/Orders.Api/Orders/OrderEndpoints.cs
+index 4812584..e0ae86f 100644
+--- a/src/Orders.Api/Orders/OrderEndpoints.cs
++++ b/src/Orders.Api/Orders/OrderEndpoints.cs
+@@ -16,6 +16,7 @@ public static class OrderEndpoints
+         group.MapGet("/", ListForCustomerAsync);
+         group.MapGet("/{id:guid}", GetAsync);
+         group.MapGet("/{id:guid}/events", GetEventsAsync);
++        group.MapGet("/{id:guid}/summary", GetSummaryAsync);
+         group.MapPost("/{id:guid}/cancel", CancelAsync);
+         group.MapPost("/{id:guid}/ship", ShipAsync);
+ 
+@@ -88,6 +89,12 @@ public static class OrderEndpoints
+         return order is null ? TypedResults.NotFound() : TypedResults.Ok(order.ToResponse());
+     }
+ 
++    private static async Task<Results<Ok<OrderSummaryResponse>, NotFound>> GetSummaryAsync(Guid id, OrdersDbContext db, CancellationToken ct)
++    {
++        var order = await db.Orders.AsNoTracking().Include(order => order.Lines).FirstOrDefaultAsync(order => order.Id == id, ct);
++        return order is null ? TypedResults.NotFound() : TypedResults.Ok(new OrderSummaryResponse(order.Lines.Count, order.Lines.Sum(line => line.Quantity), order.Total));
++    }
++
+     private static async Task<Ok<List<OrderEventResponse>>> GetEventsAsync(Guid id, OrdersDbContext db, CancellationToken ct)
+     {
+         var events = await db.Events.AsNoTracking()

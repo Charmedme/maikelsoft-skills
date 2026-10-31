@@ -106,6 +106,28 @@ class Runner(unittest.TestCase):
             self.assertEqual((facts["cost"], facts["minutes"], facts["agents"]), (1.5, 1.0, ["dev-team:senior"]))
 
 
+class HardComparison(unittest.TestCase):
+    def test_each_story_has_an_answer_sheet_a_probe_and_a_reference(self):
+        hard = load("hard")
+        for story in hard.STORIES:
+            self.assertTrue((hard.HARD / "stories" / f"{story}.answers.md").is_file(), story)
+            self.assertTrue(list((hard.HARD / "probes" / story).glob("*.cs")), story)
+            self.assertGreater((hard.HARD / "references" / f"{story}.patch").stat().st_size, 0, story)
+
+    def test_stories_do_not_give_the_hidden_rules(self):
+        hard = load("hard")
+        for story in hard.STORIES:
+            text = (hard.HARD / "stories" / f"{story}.md").read_text(encoding="utf-8").lower()
+            for word in ("away from zero", "event", "at the same time"):
+                self.assertNotIn(word, text, story)
+
+    def test_only_the_flow_differs_between_the_arms(self):
+        hard = load("hard")
+        for plugins in hard.ARMS.values():
+            self.assertIn("dev-stack", plugins)
+        self.assertEqual(hard.PROMPTS["both"], hard.PROMPTS["baseline"])
+
+
 class BugCases(unittest.TestCase):
     def test_each_case_has_a_key_and_a_branch_with_a_diff(self):
         self.assertEqual(set(bugcases.CASES), set(bugcases.KEY))
