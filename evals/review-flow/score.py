@@ -31,6 +31,7 @@ def stream_facts(stream):
         if event.get("type") == "result":
             facts["cost"] = event.get("total_cost_usd")
             facts["minutes"] = round((event.get("duration_ms") or 0) / 60000, 1)
+            facts["models"] = {k: round(v.get("costUSD", 0), 2) for k, v in (event.get("modelUsage") or {}).items()}
         elif event.get("type") == "assistant":
             for block in (event.get("message") or {}).get("content") or []:
                 if isinstance(block, dict) and block.get("type") == "tool_use" and block.get("name") in ("Agent", "Task"):
@@ -68,6 +69,11 @@ def run_facts(run):
         facts["mode"] = mode.group(1) if mode else "-"
         facts["security review"] = (folder / "security-review.md").is_file()
         facts["older-problems.md"] = (folder / "older-problems.md").is_file()
+        g2 = folder / "g2.md"
+        facts["g2 Warnings"] = g2.is_file() and "Warnings" in g2.read_text(encoding="utf-8", errors="replace")
+        facts["runcheck findings"] = sum(1 for line in subprocess.run(
+            [sys.executable, str(pathlib.Path(__file__).resolve().parents[2] / "plugins" / "dev-team" / "shared" / "runcheck.py"), str(folder)],
+            capture_output=True, text=True).stdout.splitlines() if ": RUN-" in line)
         facts["risk files"] = sorted(p.name for p in folder.rglob("*risk*.txt"))
         facts["follow-up files"] = sorted(p.name for p in folder.glob("follow-ups/*"))
     final = run / "final.md"

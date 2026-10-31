@@ -45,6 +45,10 @@ class Scenarios(unittest.TestCase):
             self.assertIn("GetTotalAsync", scenarios.git(repo, "show", f"main:{scenarios.ENDPOINTS}"))
             self.assertNotIn("CancelAsync", scenarios.git(repo, "show", f"main:{scenarios.ENDPOINTS}"))
 
+    def test_review_is_clean_for_the_build_rules_of_the_fixture(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertNotIn("is null) return", (self.build("review", tmp) / scenarios.ENDPOINTS).read_text(encoding="utf-8"))
+
     def test_cap_has_three_earlier_rounds(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = self.build("cap", tmp)
@@ -69,8 +73,17 @@ class Runner(unittest.TestCase):
 
     def test_each_arm_has_a_prompt_and_only_team_arms_name_the_skill(self):
         for name in ("story", "review", "comments", "cap"):
-            self.assertNotIn("dev-team:", scenarios.prompt_for(name, "baseline"))
-            self.assertIn("dev-team:", scenarios.prompt_for(name, "new"))
+            with tempfile.TemporaryDirectory() as tmp:
+                self.assertNotIn("dev-team:", scenarios.prompt_for(name, "baseline", tmp))
+                self.assertIn("dev-team:", scenarios.prompt_for(name, "new", tmp))
+                self.assertNotIn(str(ROOT), scenarios.prompt_for(name, "new", tmp))
+
+    def test_pinned_copy_sets_the_model_of_each_agent(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            target = runner.pinned_copy(ROOT / "plugins" / "dev-team", pathlib.Path(tmp) / "dev-team", "sonnet")
+            text = (pathlib.Path(target) / "agents" / "senior.md").read_text(encoding="utf-8")
+            self.assertIn("model: sonnet", text)
+            self.assertNotIn("model: opus", text)
 
     def test_stream_facts_read_cost_and_agents(self):
         with tempfile.TemporaryDirectory() as tmp:

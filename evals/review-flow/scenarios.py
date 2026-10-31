@@ -37,7 +37,10 @@ CANCEL_ENDPOINT = """
     {
         // get the order
         var o = await db.Orders.Include(x => x.Lines).FirstOrDefaultAsync(x => x.Id == id, ct);
-        if (o is null) return TypedResults.NotFound();
+        if (o is null)
+        {
+            return TypedResults.NotFound();
+        }
 
         var outcome = o.Cancel(time.GetUtcNow(), TimeSpan.FromHours(24));
         if (outcome == CancelOutcome.WindowClosed)
@@ -160,18 +163,21 @@ DESIGN = """# Design: Cancel an order
 Status: DESIGN_READY
 
 ## Summary
-A new endpoint POST /orders/{id}/cancel calls the existing method Order.Cancel. No schema change.
+A new endpoint POST /orders/{id}/cancel calls the existing method Order.Cancel. The human also asked for an index on status and placed time for the new support report, so the change holds one small migration.
 
 ## Design
-One endpoint in OrderEndpoints.cs. Errors use problem details (API-04). Expected failures are result values (API-05).
+One endpoint in OrderEndpoints.cs. Errors use problem details. Expected failures are result values. The migration OrderStatusIndex adds the index that the human asked for.
+
+## How to undo
+Revert the commit. The migration has a Down step.
 
 ## Work split
-- Core (senior): OrderEndpoints.cs and its tests.
+- Core (senior): OrderEndpoints.cs, its tests, and the migration.
 - Packages: None.
-- Mode: light. No new package, no schema change, no work packages, no change to sign-in or an outbound call.
+- Mode: light. No new package, no work packages, no change to sign-in or an outbound call. An index is a small change, so the senior did not count it as a schema change.
 
 ## Decisions
-API-04, API-05: accepted at G1.
+None.
 
 ## Assumptions to confirm
 None.
@@ -192,7 +198,8 @@ ROUND_RESOLVED = """# Follow-up {nn}: comments
 
 | Thread | Location | Text | Class | Reason |
 |--------|----------|------|-------|--------|
-| T{nn}1 | OrderEndpoints.cs | The window closed case must return 400, not 409. | {klass} | {reason} |
+| T{nn}1 | OrderEndpoints.cs | {text} | {klass} | {reason} |
+| T{nn}2 | CancelEndpointTests.cs | Add a test for an unknown id, case {nn}. | fix | Done in this round. |
 """
 COMMENTS = """T41, OrderEndpoints.cs, CancelAsync. A shipped order gets 200 back and looks cancelled. Criterion 2 asks for 409.
 T42, OrderEndpoints.cs, CancelAsync. nit: please rename `o` to `order`, and remove the comment "get the order".
@@ -259,8 +266,9 @@ def after_g2(repo, rounds):
     counters = ""
     for n in range(1, rounds + 1):
         nn = f"{n:02d}"
-        klass, reason = ("reject", "Team decision API-04 and criterion 3 ask for 409.") if n == 1 else ("fix", "Fixed in round.")
-        write(repo, f"docs/work/{SLUG}/follow-ups/{nn}-comments.md", ROUND_RESOLVED.format(nn=nn, klass=klass, reason=reason).replace("T" + nn + "1 | OrderEndpoints.cs | The window closed case must return 400, not 409.", "T" + nn + "1 | OrderEndpoints.cs | " + ("The window closed case must return 400, not 409." if n == 1 else "Add a test for an unknown id.")))
+        text, klass, reason = (("The window closed case must return 400, not 409.", "reject", "Criterion 3 asks for 409.") if n == 1
+                               else ("Add a log line for each cancel.", "fix", "Done in this round."))
+        write(repo, f"docs/work/{SLUG}/follow-ups/{nn}-comments.md", ROUND_RESOLVED.format(nn=nn, text=text, klass=klass, reason=reason))
         write(repo, f"docs/work/{SLUG}/follow-ups/{nn}-replies.md", f"# Replies {nn}\n\nDone.\n")
         rows += [f"| 12:0{n} | main | followup {nn} | FOLLOWUP_STARTED | - | - | - | - | - | started |\n",
                  f"| 12:1{n} | main | followup {nn} | FOLLOWUP_DONE | - | - | - | - | - | done |\n"]
@@ -289,12 +297,13 @@ def prepare_scenario(name, repo):
     git(repo, "tag", "eval-start")
 
 
-AFTER = " Nobody can answer questions in this run. Give your result and any question for the human in your final message."
+AFTER = (" Nobody can answer questions in this run. Give your result and any question for the human in your final message."
+         " The answer sheet of the human is {answers}. Take each answer of the human from that sheet.")
 SUFFIX = " Do not push. Do not call any tool whose name starts with mcp__."
 PROMPTS = {
     "story": {
-        "team": f"Use the dev-team:deliver-story skill to deliver the story in {STORY}. The answer sheet of the human is {ANSWERS}. Take each answer of the human from that sheet.",
-        "baseline": f"Deliver the story in {STORY}. The answer sheet of the human is {ANSWERS}. Take each answer of the human from that sheet. Work on a new branch and commit.",
+        "team": "Use the dev-team:deliver-story skill to deliver the story in {story}.",
+        "baseline": "Deliver the story in {story}. Work on a new branch and commit.",
     },
     "review": {
         "team": f"Use the dev-team:deliver-story skill to continue the run in docs/work/{SLUG}. G1 is approved and the core is built, so restart at step 6.",
@@ -308,6 +317,12 @@ PROMPTS = {
 PROMPTS["cap"] = PROMPTS["comments"]
 
 
-def prompt_for(name, arm):
+def prompt_for(name, arm, folder):
+    """The prompt names the input by its copy in the folder of the run, so that it shows no path of this repository."""
+    folder = pathlib.Path(folder)
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / "story.md").write_text(STORY.read_text(encoding="utf-8"), encoding="utf-8")
+    (folder / "answers.md").write_text(ANSWERS.read_text(encoding="utf-8"), encoding="utf-8")
     key = "baseline" if arm == "baseline" else "team"
-    return PROMPTS[name][key] + AFTER + SUFFIX
+    text = PROMPTS[name][key].replace("{story}", str(folder / "story.md"))
+    return text + AFTER.replace("{answers}", str(folder / "answers.md")) + SUFFIX
