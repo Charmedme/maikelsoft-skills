@@ -9,6 +9,8 @@ import unittest
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "evals" / "review-flow"))
 sys.path.insert(0, str(ROOT / "shared"))
+sys.path.insert(0, str(ROOT / "evals" / "dev-stack"))
+import bugcases  # noqa: E402
 import riskcheck  # noqa: E402
 import scenarios  # noqa: E402
 
@@ -63,6 +65,15 @@ class Scenarios(unittest.TestCase):
 
 
 class Runner(unittest.TestCase):
+    def test_a_run_that_changes_the_real_profile_stops_the_batch(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            real = pathlib.Path(tmp) / "profile.md"
+            real.write_text("a")
+            before = runner.fingerprint(real)
+            real.write_text("b")
+            self.assertNotEqual(runner.fingerprint(real), before)
+            self.assertIsNone(runner.fingerprint(pathlib.Path(tmp) / "none.md"))
+
     def test_baseline_has_no_dev_team(self):
         dirs = runner.plugin_dirs("baseline", "/old")
         self.assertEqual(dirs, ["/old/plugins/dev-stack"])
@@ -72,7 +83,7 @@ class Runner(unittest.TestCase):
         self.assertTrue(all(d.startswith(str(ROOT)) for d in runner.plugin_dirs("new", "/old")))
 
     def test_each_arm_has_a_prompt_and_only_team_arms_name_the_skill(self):
-        for name in ("story", "review", "comments", "cap"):
+        for name in ("story", "review", "comments", "cap", "recur"):
             with tempfile.TemporaryDirectory() as tmp:
                 self.assertNotIn("dev-team:", scenarios.prompt_for(name, "baseline", tmp))
                 self.assertIn("dev-team:", scenarios.prompt_for(name, "new", tmp))
@@ -93,6 +104,33 @@ class Runner(unittest.TestCase):
             stream.write_text("\n".join(json.dumps(line) for line in lines))
             facts = score.stream_facts(stream)
             self.assertEqual((facts["cost"], facts["minutes"], facts["agents"]), (1.5, 1.0, ["dev-team:senior"]))
+
+
+class BugCases(unittest.TestCase):
+    def test_each_case_has_a_key_and_a_branch_with_a_diff(self):
+        self.assertEqual(set(bugcases.CASES), set(bugcases.KEY))
+        for name in bugcases.CASES:
+            with tempfile.TemporaryDirectory() as tmp:
+                repo = bugcases.prepare_case(name, pathlib.Path(tmp) / "repo")
+                self.assertIn("CaseTests.cs", scenarios.git(repo, "diff", "--name-only", "main...HEAD"), name)
+
+    def test_collect_names_the_case_and_no_version(self):
+        bugfind = load("bugfind")
+        with tempfile.TemporaryDirectory() as tmp:
+            runs, out = pathlib.Path(tmp) / "runs", pathlib.Path(tmp) / "out"
+            review = runs / "c1-total" / "bundle" / "1" / "repo" / "docs" / "work" / bugcases.SLUG / "core-review.md"
+            review.parent.mkdir(parents=True)
+            review.write_text("Status: APPROVED\n")
+            self.assertEqual(bugfind.collect(runs, out), 1)
+            self.assertEqual(json.loads((out / "map.json").read_text())["R01"], {"case": "c1-total", "version": "bundle", "run": "1"})
+            text = (out / "R01.md").read_text()
+            self.assertIn("Case: c1-total", text)
+            self.assertNotIn("bundle", text)
+
+    def test_strip_origin_removes_the_column(self):
+        bugfind = load("bugfind")
+        text = "| # | Label | Origin | What |\n|---|---|---|---|\n| 1 | issue | exposed | x |\n\nNext\n"
+        self.assertEqual(bugfind.strip_origin(text), "| # | Label | What |\n|---|---|---|\n| 1 | issue | x |\n\nNext\n")
 
 
 if __name__ == "__main__":

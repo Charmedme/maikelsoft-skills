@@ -8,22 +8,25 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [0.6.0] - 2026-10-31
 
-The changes come from the design in `docs/work/review-flow/design.md`. A comparison run is in `docs/work/review-flow/`.
+The changes come from `docs/work/review-flow/`. Origin, `REVIEW.md`, the nit cap, and proposal rows are on hold until a test shows their value.
 
 ### Added
 
-- `process-review` stops after 3 earlier rounds when a new batch has `fix` or `prove` rows. The human can go on, close the threads, or start a new run.
-- `process-review` has the classes `nit` and `older`. Neither class starts a fix. A batch with no `fix` and no `prove` rows skips the fix and review steps.
+- `process-review` shows the line `Rounds: N` and goes on. It stops only when a cause of an earlier fix comes back, or when an earlier fix broke the behavior. The human can then go on or close the threads.
+- `process-review` has the classes `nit` and `older`. Neither class starts a fix pass. A nit on a new line goes with a fix of the same method. A batch with no `fix` and no `prove` rows skips the fix and review steps.
 - A restart of `process-review` continues the open follow-up, so one batch is one round.
-- The script `riskcheck.py` compares the diff of a run with a list of risky paths and added lines. A light run with high risk becomes `Mode: raised` and gets a security review.
-- Reviews give each finding an Origin: `new`, `exposed`, or `pre-existing`. Only the first two can block. Older problems go to the human in `older-problems.md` and at G2.
-- Reviews read `REVIEW.md` from the compare point, so a change cannot relax its own review. The template is `references/review-md.md`.
-- Reviews show at most 5 nitpicks in full. The others go on one line each.
-- G2 has a block Warnings, the lines "What changed and why", and a line for what the checks do not cover. It also has the older problems and text for the pull request. G2 names the hash of the last code commit.
-- `design.md` has a section "How to undo".
+- The script `riskcheck.py` compares the diff of a run with a list of risky paths and lines, also removed authorization lines. It runs after the core build. A reason for security gets a security review in a light run (`Mode: raised`). A migration or a package gets a warning at G2.
+- With `--since`, `riskcheck.py` shows a reason that went away, and the test edits since the last check. An edit of a test that the story itself added does not show in the diff from Base.
+- A review checks a migration: the project tool made it, the Up and Down steps ran, and "How to undo" names the data.
+- G2 has a block Warnings, the lines "What changed and why", and a line for what the checks do not cover. It also has text for the pull request, and the hash of the last code commit.
+- `runcheck.py --stage report` checks `g2.md` and `risk-2.txt` before the human sees G2 (`RUN-G2`).
+- `design.md` has a section "How to undo". Scope that the human adds gets its own acceptance row and test.
 
 ### Changed
 
+- A fix pass changes only the comments that its prompt names. The lead names the blocking comments, and each nitpick on a new line of a method that a blocking fix changes. Before this change, the lead also asked for "cheap" items.
+- A fix pass keeps the scope that G1 approved. When a named comment needs a change of that scope, the senior stops with `NEEDS_HUMAN`.
+- A fix for a bug commits the failing test first, and the fix commit does not edit that test.
 - After G2, `RUN-EVIDENCE` asks for one `checks.py` command in each follow-up. Before this change, a command from before G2 passed as proof.
 - Each route that changes code after G2 opens a follow-up with the logging marker, and it commits the run folder at the end. A human request goes in `follow-ups/NN-change.md`, and it is not a round.
 - G2 removes the marker before the commit, so `commands.jsonl` stays clean.

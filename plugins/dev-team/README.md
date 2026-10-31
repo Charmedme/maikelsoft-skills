@@ -4,7 +4,7 @@ dev-team is a Claude Code plugin that delivers one user story with a small team 
 
 English output follows ASD-STE100 Simplified Technical English. Dutch output follows Begrijpelijk Nederlands (taalniveau B1).
 
-Status: version 0.3.0, preview. Since 0.3.0, `dev-flow:plan-and-build` builds each item in one session and starts dev-team only when you ask for the team. Product questions of the senior go to the product owner as a comment on the item. Read the test results below before you use it on real work.
+Status: version 0.6.0, preview. Since 0.3.0, `dev-flow:plan-and-build` builds each item in one session and starts dev-team only when you ask for the team. Product questions of the senior go to the product owner as a comment on the item. Read the test results below before you use it on real work.
 
 ## Install
 
@@ -52,6 +52,9 @@ claude plugin install dev-team@maikelsoft-skills
 - The agents create a branch and commit on it. They do not push and do not open a pull request.
 - Each step writes a file in the run folder `docs/work/<slug>/` and a row in `log.md`. The main session can start again from the last good step.
 - One reflection, one plan feedback, one review, and one fix per part. No loops.
+- A fix changes only the comments that its prompt names, and it keeps the scope that you approved at G1. For a bug, it commits the failing test first.
+- `riskcheck.py` runs after the core build and again at G2. It adds a security review for a sign-in or authorization reason. It gives a warning for a migration or a package, for a reason that went away, and for a fix that changed a test. It is a path and pattern check. It cannot say that a change is safe.
+- `process-review` shows the number of rounds. It stops only when a cause comes back or when an earlier fix broke the behavior.
 - A team decision or a new package needs the approval of the human.
 - `runcheck.py` compares the log with the command log. A claimed check without a command is a finding.
 

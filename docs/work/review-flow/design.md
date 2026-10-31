@@ -1,5 +1,7 @@
 # Review flow design
 
+> **Status 2026-10-31:** this file records the design as it was before the cut. Origin (Part B), the nit cap (Part C), and `REVIEW.md` (Part E) are on hold. The hard round cap of Part A became a count with a stop on a cause that comes back. `docs/work/review-flow/comparison.md` has the reasons and the results.
+
 Status: the owner approved the first version of the build on 2026-10-31, and asked for two more rounds. The owner approved the decisions of the rounds on 2026-10-31. The file `build-notes.md` holds the small fixes for the builder. No part of this design exists in a plugin yet. Date: 2026-10-31.
 
 This document tells how review must work in the `dev-team`, `dev-flow`, and `dev-stack` plugins. It covers review loops, nits, older code, and risk. The file `evals.md` holds the evals that measure the reviewers. The file `retrospective.md` tells how this design came to be.

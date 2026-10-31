@@ -27,3 +27,11 @@ This log records each change to a skill, an agent, or a script of the plugin, th
 - Observed: a nit in a comment no longer starts a change, and the round cap stops the loop. The hidden tests gave the same result. A raised story cost 68% more, and its security review found nothing. The nit rule did not hold in the fix pass of the core review.
 - Verdict: confounded. One test covers all the parts.
 - Evidence: `docs/work/review-flow/comparison.md`
+
+## E3: cut and second test (2026-10-31)
+
+- Change: after an independent review, the owner cut Origin, `REVIEW.md`, the nit cap, proposal rows, and option c of the round stop. The risk check moved to before the core review. New: the fix scope, remedy by reason, removed authorization lines, the check of G2, an advisory round count.
+- Test: see `docs/work/review-flow/comparison.md`, part "Second test".
+- Observed: the fix pass kept the migration in 3 of 3 runs, and the round stop fired only on its trigger. Bug finding gave no difference between the cut version and the held rules (10 of 10 each).
+- Verdict: keep the cut. Each result comes from a small sample with fixtures that the author wrote.
+- Evidence: `docs/work/review-flow/comparison.md`

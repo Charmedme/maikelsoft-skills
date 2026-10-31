@@ -11,7 +11,8 @@ that has a final.md is skipped. The arms:
     current   dev-team and dev-stack from --current-root
     new       dev-team and dev-stack from this worktree
 
-The runs read no user settings, so no installed plugin, hook, or router reaches them. Each arm runs from a copy of
+The runs read no user settings, so no installed plugin, hook, or router reaches them. Each run has its own empty
+profile, and a run that changes the real profile of the user stops the batch. Each arm runs from a copy of
 its plugins with the model of each agent file set to --model. An agent file overrides the model of the session.
 Then score with: python3 evals/review-flow/score.py <runs>
 
@@ -19,6 +20,7 @@ Needs claude, git, the dotnet CLI, and Docker.
 """
 import argparse
 import concurrent.futures
+import hashlib
 import json
 import os
 import pathlib
@@ -33,8 +35,17 @@ sys.path.insert(0, str(HERE))
 import runwatch  # noqa: E402
 import scenarios  # noqa: E402
 
-SKIP_ARM = {"cap": {"baseline"}}  # A plain session has no round rule, and the comments scenario shows its handling.
+SKIP_ARM = {"cap": {"baseline"}, "recur": {"baseline"}}  # A plain session has no round rule, and the comments scenario shows its handling.
 PARENT_PREFIXES = ("CLAUDE_CODE_", "CLAUDE_AUTO_", "CLAUDE_AFTER_")
+REAL_PROFILE = pathlib.Path.home() / ".claude" / "dev-team" / "profile.md"
+
+
+def fingerprint(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() else None
+
+
+class ProfileChanged(Exception):
+    """A run wrote to the profile of the user. Stop the batch: the next runs can read the test answers."""
 
 
 def pinned_copy(folder, target, model):
@@ -92,10 +103,16 @@ def start(run, scenario, arm, args):
     if not repo.exists():
         scenarios.prepare_scenario(scenario, repo)
     env = environment()
-    env["DEV_TEAM_PROFILE"] = str(run.resolve() / "profile.md")
+    profile = run.resolve() / "profile.md"
+    if not profile.exists():
+        profile.write_text("# Dev-team profile\n\n| ID | Answer | Date |\n|----|--------|------|\n", encoding="utf-8")
+    env["DEV_TEAM_PROFILE"] = str(profile)
+    before = fingerprint(REAL_PROFILE)
     limits = {"max_minutes": args.max_minutes, "stall_minutes": args.stall_minutes}
     code = runwatch.run_watched(command(scenarios.prompt_for(scenario, arm, run.resolve() / "input"), arm, args), repo, env, run, limits)
     (run / "final.md").write_text(final_message(run / "stream.jsonl"), encoding="utf-8")
+    if fingerprint(REAL_PROFILE) != before:
+        raise ProfileChanged(f"{run} changed {REAL_PROFILE}. Restore the file before the next run.")
     return f"{run.relative_to(args.runs)} exit {code}"
 
 
@@ -103,7 +120,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("runs", type=pathlib.Path)
     parser.add_argument("--current-root", required=True, type=pathlib.Path)
-    parser.add_argument("--scenario", nargs="*", default=["story", "review", "comments", "cap"])
+    parser.add_argument("--scenario", nargs="*", default=["story", "review", "comments", "cap", "recur"])
     parser.add_argument("--arm", nargs="*", default=["baseline", "current", "new"])
     parser.add_argument("--parallel", type=int, default=2)
     parser.add_argument("--budget", type=float, default=8)

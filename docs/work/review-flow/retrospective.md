@@ -4,7 +4,7 @@ Date: 2026-10-31. This document looks back at the work that led to `design.md`, 
 
 ## Summary
 
-- The result is a design, an eval plan, build notes, a comparison, this retrospective, and the new `dev-team`. The only change outside this folder is one setting that the owner approved.
+- The result is a design, an eval plan, build notes, a comparison, this retrospective, and the new `dev-team`. Outside this folder, the owner approved one setting. The test runs also wrote 3 rows to the real profile of the owner, which was not approved: see "The first comparison".
 - The first two cycles changed the design a lot. The independent reviews gave 27 findings: 15 in cycle 1 and 12 in cycle 2. Rounds 3 and 4 gave 50 more.
 - The owner found three gaps that the session had missed: the nit cap, the size of the evals, and the order "raise first, then warn".
 - The largest mistake of the session was late use of the primary source.
@@ -121,6 +121,18 @@ Earlier rounds read the design. The rehearsal built it, and it found more. The m
 
 **The trend.** Four rounds gave 15, 12, 16, and 34 findings. The number did not fall, because each round used a new method. The major findings moved from the flow rules to measurement and to detail at the edges. A fifth round on paper has a low value. The first real run is the next good test.
 
+## The first comparison
+
+The session built the version and tested it, and it recommended a push. An independent review then said not to ship it as it was, and the session withdrew the recommendation. The owner cut the release.
+
+Mistakes of the session:
+
+1. **A test that changed real data.** The runner set a path for the profile and did not make the file. The seniors used the home path, and 3 test answers went into the real profile. The report said that user settings did not reach the runs. The session did not check this claim.
+2. **A rule in the wrong file.** The tighter fix rule went into `senior-practice`, but the lead writes the fix prompt. The session had the prompt in its run files and did not read it.
+3. **A cause without evidence.** The report gave the security review as the cause of the higher cost. The time data did not support that.
+4. **A test written by the author of the rules.** The fixtures gave the classes away, and the bugs were easy. So the test showed that rules fire, not that they help.
+5. **Late use of the premise.** The review work did not start from the earlier decision that executable specifications are the main control (`docs/work/flow-scale/executable-specs-concept.md`). A review catches what a locked test does not. The session treated the review as the main control.
+
 ## Lessons for the skills
 
 These lessons can go into the plugins. The plugins do not have them yet.
@@ -152,5 +164,5 @@ These lessons can go into the plugins. The plugins do not have them yet.
 | Source folder `docs/drive-download-20261030T142542Z-1-001/` | Not changed. Not tracked in git. Do not commit it, because it holds third-party material. |
 | Skills, agents, checkers | Not changed |
 | Gate G1 of the build | The owner said yes to each decision on 2026-10-31. |
-| `dev-team` 0.6.0, `dev-stack` 1.3.0 | Built on the branch `feat/review-flow-dev-team`. Committed, not pushed. See `comparison.md`. |
+| `dev-team` 0.6.0 | Built on the branch `feat/review-flow-dev-team`, then cut. `dev-stack` stays at 1.2.2. Not pushed. See `comparison.md`. |
 | The `dev-flow` parts and Part J | Not built. |

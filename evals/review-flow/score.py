@@ -56,10 +56,19 @@ def code_facts(repo):
     }
 
 
+def _risk_before_review(folder):
+    """True when the log has the risk row before the review row of the core."""
+    log = (folder / "log.md").read_text(encoding="utf-8", errors="replace") if (folder / "log.md").is_file() else ""
+    risk, review = log.find("RISK_CHECKED"), log.find("review-core")
+    review = review if review >= 0 else log.find("core review")
+    return risk >= 0 and (review < 0 or risk < review)
+
+
 def run_facts(run):
     repo = run / "repo"
     facts = stream_facts(run / "stream.jsonl")
     facts["commits"] = len(git(repo, "log", "--oneline", "eval-start..HEAD").splitlines())
+    facts["migration kept"] = any(repo.glob("src/Orders.Api/Data/Migrations/*OrderStatusIndex*"))
     facts.update(code_facts(repo))
     folders = list(repo.glob("docs/work/*/run.md"))
     if folders:
@@ -74,6 +83,13 @@ def run_facts(run):
         facts["runcheck findings"] = sum(1 for line in subprocess.run(
             [sys.executable, str(pathlib.Path(__file__).resolve().parents[2] / "plugins" / "dev-team" / "shared" / "runcheck.py"), str(folder)],
             capture_output=True, text=True).stdout.splitlines() if ": RUN-" in line)
+        risk2 = folder / "risk-2.txt"
+        facts["risk-1 before the review"] = _risk_before_review(folder)
+        facts["risk-2 lines"] = [line for line in (risk2.read_text(encoding="utf-8").splitlines() if risk2.is_file() else [])
+                                 if line.startswith(("raise:", "new reason:", "gone reason:", "test edits since"))]
+        facts["report rule"] = sum(1 for line in subprocess.run(
+            [sys.executable, str(pathlib.Path(__file__).resolve().parents[2] / "plugins" / "dev-team" / "shared" / "runcheck.py"), str(folder), "--stage", "report"],
+            capture_output=True, text=True).stdout.splitlines() if ": RUN-G2" in line)
         facts["risk files"] = sorted(p.name for p in folder.rglob("*risk*.txt"))
         facts["follow-up files"] = sorted(p.name for p in folder.glob("follow-ups/*"))
     final = run / "final.md"

@@ -4,7 +4,8 @@ Each scenario builds on the orders-api fixture of evals/dev-stack. The story is 
     story     no prepared code. The arm delivers the story.
     review    a built core with planted problems and a migration, in a run of mode light, at step 6.
     comments  a run after G2, with one earlier round and a new batch of pull request comments.
-    cap       the same run with 3 earlier rounds. The new version must stop.
+    cap       the same run with 3 earlier rounds. The new version shows the count and goes on.
+    recur     the same run, and one comment says that an earlier fix broke the behavior. The new version must stop.
 """
 import pathlib
 import subprocess
@@ -206,6 +207,7 @@ T42, OrderEndpoints.cs, CancelAsync. nit: please rename `o` to `order`, and remo
 T43, OrderEndpoints.cs, GetTotalAsync. This endpoint always returns 0, because the lines are not loaded. Line is from before this PR.
 T44, OrderEndpoints.cs, CancelAsync. The closed window case must return 400, not 409.
 """
+RECUR_COMMENT = "T45, OrderEndpoints.cs, CancelAsync. The log line that follow-up 02 added broke the behavior: the fix logs each cancel before the save, so a failed save still logs a cancel.\n"
 
 
 def git(repo, *args):
@@ -292,6 +294,14 @@ def prepare_scenario(name, repo):
         after_g2(repo, 1)
     elif name == "cap":
         after_g2(repo, 3)
+    elif name == "recur":
+        after_g2(repo, 3)
+        path = repo / ENDPOINTS
+        text = path.read_text(encoding="utf-8")
+        write(repo, ENDPOINTS, text.replace("        await db.SaveChangesAsync(ct);\n        return TypedResults.Ok(o.ToResponse());",
+                                            '        Console.WriteLine($"Order {o.Id} cancelled.");\n        await db.SaveChangesAsync(ct);\n        return TypedResults.Ok(o.ToResponse());'))
+        git(repo, "add", "-A")
+        git(repo, "commit", "-qm", "Follow-up 02: log each cancel")
     else:
         raise ValueError(name)
     git(repo, "tag", "eval-start")
@@ -315,6 +325,7 @@ PROMPTS = {
     },
 }
 PROMPTS["cap"] = PROMPTS["comments"]
+PROMPTS["recur"] = {"team": PROMPTS["comments"]["team"] + RECUR_COMMENT, "baseline": PROMPTS["comments"]["baseline"] + RECUR_COMMENT}
 
 
 def prompt_for(name, arm, folder):
