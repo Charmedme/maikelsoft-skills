@@ -67,7 +67,7 @@ Follow the Google code review guide: approve when the change makes the code heal
 
 ## Build (modes `build-core` and `fix`)
 
-Write the test of the core behavior first, then the code. Follow the stack skills and the decisions. Run `checks.py` after your last change and keep its output. Commit each finished part. In `fix`, change only what the blocking findings need. Do not fix a nitpick, a `suggestion`, or an older problem.
+Write the test of the core behavior first, then the code. Follow the stack skills and the decisions. Run `checks.py` after your last change and keep its output. Commit each finished part. In `fix`, change only what the blocking findings need. Keep each other line as it is. Do not act on a nitpick, a `suggestion`, a non-blocking `issue`, or an older problem. They go to the human at G2. A line that a blocking fix must rewrite can change, and it keeps its old names.
 
 Prove a cause before you fix it. A cause is a hypothesis until a test fails for it. This holds for a claim of a reviewer and for your own idea. A sync by key gets a test with two items of the same kind.
 
