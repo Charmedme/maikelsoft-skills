@@ -176,6 +176,74 @@ def adr(status, extra=""):
     return f"---\nstatus: {status}\ndate: 2026-10-18\n---\n\n# Decision\n{extra}\n"
 
 
+FOLLOWUP_ROWS = """| 12:00 | main | G2 | G2_SHOWN | g2.md | - | - | - | - | shown |
+| 09:00 | main | followup 01 | FOLLOWUP_STARTED | - | - | - | - | - | started {time} |
+| 09:30 | senior | followup 01 fix | FIX_DONE | - | abc | node --test 57/57 geslaagd | - | - | fixed |
+| 09:40 | main | followup 01 | FOLLOWUP_DONE | - | - | - | - | - | Rounds: 1 |
+"""
+
+
+class FollowUpEvidence(unittest.TestCase):
+    def run_with(self, tmp, commands, time="2026-10-30T09:00:00Z"):
+        run = make_run(pathlib.Path(tmp), extra=FOLLOWUP_ROWS.format(time=time))
+        write(run / "commands.jsonl", "".join(json.dumps(c) + "\n" for c in commands))
+        return rules(runcheck.check(run, "g2"))
+
+    BEFORE = {"command": "python3 checks.py", "agent_type": "dev-team:medior", "time": "2026-10-29T15:00:00Z"}
+
+    def test_checks_command_in_the_window_passes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            inside = {"command": "python3 scripts/checks.py --root .", "time": "2026-10-30T09:35:00Z"}
+            self.assertEqual(self.run_with(tmp, [self.BEFORE, inside]), [])
+
+    def test_command_from_before_the_window_is_a_hook_finding(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(self.run_with(tmp, [self.BEFORE]), ["RUN-HOOK"])
+
+    def test_window_with_commands_and_no_checks_is_an_evidence_finding(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            other = {"command": "git status", "time": "2026-10-30T09:35:00Z"}
+            self.assertEqual(self.run_with(tmp, [self.BEFORE, other]), ["RUN-EVIDENCE"])
+
+    def test_old_run_folder_with_no_time_gives_no_finding(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(self.run_with(tmp, [self.BEFORE], time="no time"), [])
+
+    def test_free_text_row_after_g2_needs_no_own_command(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            inside = {"command": "checks.py", "agent_type": None, "time": "2026-10-30T09:35:00Z"}
+            self.assertEqual(self.run_with(tmp, [self.BEFORE, inside]), [])
+
+    def test_follow_up_fix_row_does_not_count_as_a_package_fix(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            run = make_run(pathlib.Path(tmp), review="CHANGES_REQUIRED", extra="| 09:30 | senior | followup 01 fix | FIX_DONE | - | - | - | - | - | x |\n")
+            self.assertIn("RUN-FIX", rules(runcheck.check(run, "g2")))
+
+
+class RaisedRun(unittest.TestCase):
+    def mode_run(self, tmp):
+        run = make_run(pathlib.Path(tmp))
+        text = (run / "run.md").read_text()
+        (run / "run.md").write_text(text.replace("| Status | G2 |", "| Status | G2 |\n| Mode | raised |"))
+        (run / "reflection.md").unlink()
+        return run
+
+    def test_raised_needs_no_reflection(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(rules(runcheck.check(self.mode_run(tmp), "g2")), [])
+
+    def test_raised_needs_the_security_review(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            run = self.mode_run(tmp)
+            (run / "security-review.md").unlink()
+            self.assertIn("RUN-FILE", rules(runcheck.check(run, "g2")))
+
+    def test_risk_checked_is_a_valid_status(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            run = make_run(pathlib.Path(tmp), extra="| 09:30 | main | risk check | RISK_CHECKED | risk-1.txt | - | - | - | - | high |\n")
+            self.assertEqual(rules(runcheck.check(run, "g2")), [])
+
+
 class DecisionCheck(unittest.TestCase):
     def repo(self, rows, files=None):
         tmp = tempfile.TemporaryDirectory()

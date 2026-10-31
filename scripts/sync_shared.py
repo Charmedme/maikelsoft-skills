@@ -20,6 +20,8 @@ Each skill whose SKILL.md names one of these files also gets it (a .py file in s
     shared/po-questions.md
     shared/example-mapping.md
     shared/examplecheck.py
+    shared/riskcheck.py
+    shared/review-md.md
 
 Each skill whose SKILL.md names "proto-shell" also gets the files of shared/proto-shell/:
     scripts/<name>.py             <- shared/proto-shell/<name>.py
@@ -46,7 +48,8 @@ PLUGIN_COPIES = {
     "dev-build": {SHARED / "grill.md": pathlib.Path("references") / "grill.md"},
 }
 # Shared files for each skill that names the file in its SKILL.md.
-NAMED_COPIES = [SHARED / "po-questions.md", SHARED / "example-mapping.md", SHARED / "examplecheck.py"]
+NAMED_COPIES = [SHARED / "po-questions.md", SHARED / "example-mapping.md", SHARED / "examplecheck.py",
+                SHARED / "riskcheck.py", SHARED / "review-md.md"]
 # Shared folders for each skill that names the folder in its SKILL.md.
 NAMED_FOLDERS = [SHARED / "proto-shell"]
 BLOCK = re.compile(r"(<!-- BEGIN shared/workflow\.md -->\n).*?(<!-- END shared/workflow\.md -->)", re.DOTALL)

@@ -23,7 +23,7 @@ The rules that make a senior design and review the same on each run. The templat
 7. List each decision that the story needs. Use the `team-decisions` skill for the decision sheet.
 8. An open question with a safe default goes to G1. A default is safe when the story supports it, and when it is easy to change later. Choose the default and write it under "Assumptions to confirm" in `design.md`, with the other options. Then go on with the design.
 9. Stop with `NEEDS_HUMAN` only when no safe default exists. Then the work needs a fact that only the human knows.
-10. Choose the run mode. `light` when all of these are true: no new package, no schema change, and no work packages. Also no change to sign-in, authorization, secrets, file upload, or an outbound call. Else `full`. Write the mode and the reason in `design.md`. A light run has no reflection and no separate security review. Examples: a provider, an address, a legal rule. Write each question under "Questions for the human". Do not guess.
+10. Read `older-problems.md` of the earlier runs in `docs/work/` for the paths of this story. Choose the run mode. `light` when all of these are true: no new package, no schema change, and no work packages. Also no change to sign-in, authorization, secrets, file upload, or an outbound call. Else `full`. Write the mode and the reason in `design.md`. A light run has no reflection and no separate security review. Examples: a provider, an address, a legal rule. Write each question under "Questions for the human". Do not guess.
 
 ## Reflection (modes `reflect` and `review-core`)
 
@@ -51,15 +51,23 @@ Follow the Google code review guide: approve when the change makes the code heal
 
 - Two verdicts. Story: each acceptance criterion with `path:line` evidence of the code and the test. Code: conventions, readability, logic, tests of the core behavior, security, and current APIs.
 - Run the checks yourself first (`checks.py`), then judge.
+- Read the instructions from the compare point: `git show "<compare point>:REVIEW.md"`. The prompt gives the compare point, and without one use Base. A change cannot relax its own review. When the file does not exist, the defaults of this section apply, and your reply offers the template `references/review-md.md`.
+- A skip rule in `REVIEW.md` never silences a security finding of Critical or High. You can propose a change to the file, and only the human approves it.
 - Label each comment with Conventional Comments: `issue (blocking)`, `issue`, `suggestion`, `nitpick`, `praise`.
 - Blocking only for correctness, security, an unmet criterion, a broken check, or a break of an accepted decision.
+- Give each comment an Origin, measured against the compare point. `new`: the line is not there, and a moved line counts as `new`. `exposed`: the line is there, but this change makes it reachable or wrong, and the comment says how. `pre-existing`: the line is there, and this change does not affect it. Only `new` and `exposed` can block.
+- Put each `pre-existing` finding in the section "Older problems", not in the comments. Nobody fixes it in this story.
+- Show at most 5 nitpicks in full, or the number in `REVIEW.md`. Put each other nitpick on one line under "More nits". This cap covers `nitpick` only: a `suggestion` or an `issue` is always listed.
+- A nitpick is only on a line that the change adds or changes. It never changes the status or starts a fix. Do not report a nitpick for a tool that ran in this review, or for a generated file.
+- Each comment has a `path:line`. A claim about behavior cites the code, not a guess from a name. Before a finding goes in the review, try to refute it: look for a control earlier in the path.
+- In a follow-up, you get the earlier review files. Do not repeat a finding from them. A finding blocks only on a line in the fix diff, or on a line that the fix exposes. Put each other finding under "Open findings" for the human.
 - Report a finding only at confidence 80 or more. Each comment says what, why, and a concrete suggestion.
 - Status: `APPROVED`, `APPROVED_WITH_COMMENTS`, or `CHANGES_REQUIRED` (one or more blocking comments).
-- In a light run, the core review also does the security review: check the diff against the review checklist of `dev-stack:secure-coding`. Write the result in a section "Security" of `core-review.md`.
+- In a light or raised run, the core review also does the security review: check the diff against the review checklist of `dev-stack:secure-coding`. Write the result in a section "Security" of `core-review.md`.
 
 ## Build (modes `build-core` and `fix`)
 
-Write the test of the core behavior first, then the code. Follow the stack skills and the decisions. Run `checks.py` after your last change and keep its output. Commit each finished part. In `fix`, change only what the blocking findings need.
+Write the test of the core behavior first, then the code. Follow the stack skills and the decisions. Run `checks.py` after your last change and keep its output. Commit each finished part. In `fix`, change only what the blocking findings need. Do not fix a nitpick, a `suggestion`, or an older problem.
 
 Prove a cause before you fix it. A cause is a hypothesis until a test fails for it. This holds for a claim of a reviewer and for your own idea. A sync by key gets a test with two items of the same kind.
 

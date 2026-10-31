@@ -19,3 +19,10 @@ This log records each change to a skill, an agent, or a script of the plugin, th
 - Not measured: `process-review`, the After G2 flow, and the CI checks section. The eval set has no story that uses them.
 - Verdict: proposed
 - Evidence: `docs/work/dev-team/field-report-2026-10-28.md`
+
+### E2: the review flow
+- Date and version: 2026-10-31, dev-team 0.6.0, dev-stack 1.3.0
+- Change: Parts A to G of `docs/work/review-flow/design.md`, for `dev-team` and the security report. The `dev-flow` parts and Part J are not in this version.
+- Test: `tests/test_riskcheck.py` and new tests in `tests/test_devteam.py`. A comparison on 3 scenarios, with 3 arms, on Sonnet. See `docs/work/review-flow/comparison.md`.
+- Verdict: confounded. One test covers all the parts.
+- Evidence: `docs/work/review-flow/comparison.md`
