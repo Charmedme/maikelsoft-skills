@@ -157,7 +157,9 @@ Five cases hold one bug, and a test proved 4 of these bugs. The fifth is a race,
 | Old bug in `c6-clean` reported | 0 of 2 | 1 of 2 |
 | Cost | $4.02 | $4.11 |
 
-Result: no difference. The test does not show that Origin hides a bug: both old-helper cases stayed blocking in the bundle. It also does not show that Origin helps. The tags were not stable: the same `c2-deadline` bug had the tag `new` in both runs, at the line of the new caller, and `c1-total` had `exposed` in the run that was checked. Each arm found each bug, so the test has no room to show a difference. Each bug also breaks a written criterion, so the review had a pointer to it. A later test needs bugs that no criterion names.
+Result: no difference. The test does not show that Origin hides a bug: both old-helper cases stayed blocking in the bundle. It also does not show that Origin helps.
+
+The tags were not stable. The `c2-deadline` bug had the tag `new` in both runs, at the line of the new caller. The `c1-total` bug had `exposed` in the one run that the session checked. Each arm found each bug, so the test has no room to show a difference. Each bug also breaks a written criterion, so the review had a pointer to it. A later test needs bugs that no criterion names.
 
 The grader saw the reviews with no name of the version. It scored `false_blocks` only from the code that the reviews quote. A fault in `bugfind.py` showed the version names to the first grader. The session discarded that grade and fixed the fault with a test. A new agent then graded again. The layout of a review can still show the version.
 
