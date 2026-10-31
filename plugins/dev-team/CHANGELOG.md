@@ -35,6 +35,7 @@ The changes come from `docs/work/review-flow/`. Origin, `REVIEW.md`, the nit cap
 
 - `RUN-FIX` no longer takes a row `followup 01 fix` as the fix of package 01.
 - The marker is excluded from git on a linked worktree too.
+- `team-decisions` names `DEV_TEAM_PROFILE` first. A senior followed the old text and wrote to the home profile while the variable was set.
 
 ## [0.5.0] - 2026-10-28
 
