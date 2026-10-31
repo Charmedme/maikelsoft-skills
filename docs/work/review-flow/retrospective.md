@@ -4,7 +4,7 @@ Date: 2026-10-31. This document looks back at the work that led to `design.md`, 
 
 ## Summary
 
-- The result is a design, an eval plan, build notes, and this retrospective. No skill, agent, or checker changed. The only change outside this folder is one setting that the owner approved.
+- The result is a design, an eval plan, build notes, a comparison, this retrospective, and the new `dev-team`. The only change outside this folder is one setting that the owner approved.
 - The first two cycles changed the design a lot. The independent reviews gave 27 findings: 15 in cycle 1 and 12 in cycle 2. Rounds 3 and 4 gave 50 more.
 - The owner found three gaps that the session had missed: the nit cap, the size of the evals, and the order "raise first, then warn".
 - The largest mistake of the session was late use of the primary source.
@@ -151,4 +151,6 @@ These lessons can go into the plugins. The plugins do not have them yet.
 | `skillListingBudgetFraction` | Set to `0.02`. Effect not confirmed. |
 | Source folder `docs/drive-download-20261030T142542Z-1-001/` | Not changed. Not tracked in git. Do not commit it, because it holds third-party material. |
 | Skills, agents, checkers | Not changed |
-| Gate G1 of the build | The owner said yes on 2026-10-31. Decisions 5 to 13 in `design.md` wait for an answer. |
+| Gate G1 of the build | The owner said yes to each decision on 2026-10-31. |
+| `dev-team` 0.6.0, `dev-stack` 1.3.0 | Built on the branch `feat/review-flow-dev-team`. Committed, not pushed. See `comparison.md`. |
+| The `dev-flow` parts and Part J | Not built. |

@@ -23,6 +23,7 @@ This log records each change to a skill, an agent, or a script of the plugin, th
 ### E2: the review flow
 - Date and version: 2026-10-31, dev-team 0.6.0, dev-stack 1.3.0
 - Change: Parts A to G of `docs/work/review-flow/design.md`, for `dev-team` and the security report. The `dev-flow` parts and Part J are not in this version.
-- Test: `tests/test_riskcheck.py` and new tests in `tests/test_devteam.py`. A comparison on 3 scenarios, with 3 arms, on Sonnet. See `docs/work/review-flow/comparison.md`.
+- Test: `tests/test_riskcheck.py` and new tests in `tests/test_devteam.py`. A comparison on 4 scenarios, with 1 run for each arm, on Sonnet. See `docs/work/review-flow/comparison.md`.
+- Observed: a nit in a comment no longer starts a change, and the round cap stops the loop. The hidden tests gave the same result. A raised story cost 68% more, and its security review found nothing. The nit rule did not hold in the fix pass of the core review.
 - Verdict: confounded. One test covers all the parts.
 - Evidence: `docs/work/review-flow/comparison.md`
