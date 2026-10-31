@@ -171,15 +171,8 @@ Status: APPROVED | APPROVED_WITH_COMMENTS | CHANGES_REQUIRED
 <light or raised run: the result of the secure-coding review checklist on the diff. Full run: "Security review by the security reviewer.">
 
 ## Comments
-| # | Label | Origin | Location | What | Why | Suggestion |
-|---|-------|--------|----------|------|-----|------------|
-
-## More nits
-<nitpicks after the cap, one line each. Or "None.">
-
-## Older problems
-| Label | Location | What |
-|-------|----------|------|
+| # | Label | Location | What | Why | Suggestion |
+|---|-------|----------|------|-----|------------|
 
 ## Open findings
 <follow-up only: a finding outside the fix diff, for the human. Or "None.">

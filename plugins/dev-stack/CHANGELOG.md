@@ -6,13 +6,6 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
-## [1.3.0] - 2026-10-31
-
-### Changed
-
-- The report of a `secure-coding` security review gives each finding an Origin: `new`, `exposed`, or `pre-existing`. A `pre-existing` finding goes in the report and does not block the change.
-- The report template runs `stackcheck.py` from the base of the review, not from `main`.
-
 ## [1.2.2] - 2026-10-29
 
 ### Added

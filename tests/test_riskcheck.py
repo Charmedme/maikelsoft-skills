@@ -133,7 +133,7 @@ class Rules(RepoCase):
                  ("src/SignIn.tsx", True), ("OAuthHandler.cs", True), ("JWTService.cs", True), ("tests/AuthTests.cs", False),
                  ("docs/auth.md", False), ("db/Migrations/1.cs", True), (".github/workflows/ci.yml", True), ("run.log", False)]
         for path, high in cases:
-            self.assertEqual(bool(riskcheck.path_reasons(path, [])), high, path)
+            self.assertEqual(bool(riskcheck.path_reasons(path)), high, path)
 
     def test_minor_version_is_normal(self):
         line = '<PackageReference Include="A" Version="%s" />\n'
@@ -161,12 +161,16 @@ class Rules(RepoCase):
         result = self.change("CLAUDE.md", "a\n", "b\n")
         self.assertEqual((result["level"], result["guide"]), ("normal", ["CLAUDE.md"]))
 
-    def test_review_md_comes_from_the_compare_point(self):
-        base = self.repo.commit("REVIEW.md", "# R\n\n## Sensitive paths\nsrc/pay/\n")
-        self.repo.git("switch", "-qc", "story")
-        self.repo.commit("REVIEW.md", "# R\n")
-        self.repo.commit("src/pay/x.py", "1\n")
-        self.assertIn(("sensitive-path", "src/pay/x.py"), self.repo.risk(base)["reasons"])
+    def test_removed_auth_line_is_a_security_reason(self):
+        result = self.change("a.cs", "app.MapGet(x).RequireAuthorization();\n", "app.MapGet(x);\n")
+        self.assertEqual((result["reasons"], result["raise"]), ([("auth-removed", "a.cs")], True))
+
+    def test_removed_auth_line_in_a_comment_is_normal(self):
+        self.assertEqual(self.change("a.cs", "// .RequireAuthorization() was here\n", "x\n")["level"], "normal")
+
+    def test_migration_is_high_with_no_raise(self):
+        result = self.change("db/Migrations/1.cs", "a\n", "b\n")
+        self.assertEqual((result["level"], result["raise"]), ("high", False))
 
     def test_test_edits_are_reported_and_do_not_raise(self):
         result = self.change("tests/t.py", "self.assertEqual(a,1)\nself.assertEqual(b,2)\n", "self.assertEqual(a,1)\n@unittest.skip('x')\n")
@@ -179,6 +183,28 @@ class Rules(RepoCase):
         result = self.change("auth/a.py", "1\n", "2\n")
         self.assertIn("new reason: auth-name auth/a.py", riskcheck.render(result, []))
         self.assertNotIn("new reason:", riskcheck.render(result, ["reason: auth-name auth/a.py"]))
+
+    def test_since_prints_a_reason_that_went_away(self):
+        result = self.change("a.py", "1\n", "2\n")
+        self.assertIn("gone reason: migration db/Migrations/1.cs", riskcheck.render(result, ["reason: migration db/Migrations/1.cs"]))
+
+    def test_edit_of_a_test_that_this_change_added_shows_since_the_last_check(self):
+        base = self.repo.git("rev-parse", "HEAD")
+        self.repo.git("switch", "-qc", "s")
+        first = self.repo.commit("tests/t.py", "self.assertEqual(a, 1)\nself.assertEqual(b, 2)\n")
+        self.repo.commit("tests/t.py", "self.assertEqual(a, 1)\n")
+        result = riskcheck.run(str(self.repo.dir), base, None, first)
+        self.assertEqual((result["lost"], len(result["since"][0])), ([], 1))
+        self.assertIn("test edits since the last check: 1 assertions removed", riskcheck.render(result, []))
+
+    def test_since_head_that_is_not_an_ancestor_gives_no_line(self):
+        base = self.repo.git("rev-parse", "HEAD")
+        self.repo.git("switch", "-qc", "other")
+        other = self.repo.commit("o.py", "1\n")
+        self.repo.git("switch", "-q", "main")
+        self.repo.git("switch", "-qc", "s")
+        self.repo.commit("s.py", "1\n")
+        self.assertNotIn("since the last check", riskcheck.render(riskcheck.run(str(self.repo.dir), base, None, other), []))
 
 
 if __name__ == "__main__":

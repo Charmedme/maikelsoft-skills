@@ -3,6 +3,7 @@
 
     python3 runcheck.py docs/work/<slug>            # check the run folder
     python3 runcheck.py docs/work/<slug> --stage g1 # check only what must exist at G1
+    python3 runcheck.py docs/work/<slug> --stage report # check only g2.md and risk-2.txt, after you write g2.md
     python3 runcheck.py docs/work/<slug> --format json
 
 What it checks:
@@ -17,9 +18,12 @@ What it checks:
     RUN-STEPS     the files of each step exist (plan, feedback, report, review per package).
     RUN-FIX       a review with CHANGES_REQUIRED has a fix row in log.md.
     RUN-LOG       log.md has the columns of the template, and each row has a valid status.
+    RUN-G2        stage report: risk-2.txt exists, and g2.md has the line Result, the table of the acceptance criteria
+                  with one or more rows, and the text for the pull request.
     RUN-EVIDENCE  before G2, a log row that says a check passed has a matching command in commands.jsonl.
                   After G2, each follow-up window has a checks.py command. A window starts at a FOLLOWUP_STARTED
-                  row whose Reason holds the full UTC time, and it ends at the next such row.
+                  row whose Reason holds the full UTC time, and it ends at the next such row. A follow-up that
+                  waits for the human (the last log row is NEEDS_HUMAN) has no finding yet.
     RUN-HOOK      commands.jsonl exists and has commands when a log row says a check passed, and a follow-up
                   window has commands.
                   One finding for the cause, not one for each row.
@@ -104,7 +108,27 @@ def status_of(path):
     return match.group(1) if match else None
 
 
+def check_report(run):
+    """The rule RUN-G2: the report that the human reads is complete."""
+    findings = []
+    if not (run / "risk-2.txt").is_file():
+        findings.append((str(run / "risk-2.txt"), "RUN-G2", "file is missing, so G2 has no second risk check"))
+    path = run / "g2.md"
+    if not path.is_file():
+        return findings + [(str(path), "RUN-G2", "file is missing")]
+    text = path.read_text(encoding="utf-8")
+    if not re.search(r"^Result:", text, re.MULTILINE):
+        findings.append((str(path), "RUN-G2", "the line 'Result:' is missing"))
+    if len(table_rows(text, "criterion (verbatim)")) < 2:
+        findings.append((str(path), "RUN-G2", "the table of the acceptance criteria has no rows"))
+    if not re.search(r"^#+\s*Text for the pull request", text, re.MULTILINE):
+        findings.append((str(path), "RUN-G2", "the section 'Text for the pull request' is missing"))
+    return findings
+
+
 def check(run, stage):
+    if stage == "report":
+        return check_report(run)
     findings = []
 
     def add(file, rule, message):
@@ -234,6 +258,8 @@ def check(run, stage):
             add(run / "log.md", "RUN-EVIDENCE",
                 f"row {row.get('step', '?')!r} says a check passed, but commands.jsonl has no check command by {agent or 'any agent'}")
     starts = [m.group(0) for m in windows if m]  # A window with no time comes from an old run folder.
+    if log_rows and log_rows[-1].get("status", "").strip("` ") == "NEEDS_HUMAN":
+        starts = starts[:-1]
     for start, end in zip(starts, starts[1:] + [None]):
         inside = [c for c in commands if c.get("time", "") >= start and (end is None or c.get("time", "") < end)]
         if not inside:
@@ -248,7 +274,7 @@ def check(run, stage):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("run", type=pathlib.Path)
-    parser.add_argument("--stage", choices=("g1", "g2"), default="g2")
+    parser.add_argument("--stage", choices=("g1", "g2", "report"), default="g2")
     parser.add_argument("--format", choices=("text", "json"), default="text")
     args = parser.parse_args(argv)
     if not args.run.is_dir():

@@ -8,7 +8,6 @@ The format of the report that the security reviewer writes for the human. The hu
 - Severity
 - Confidence
 - Verdict
-- Origin
 - Report template
 - Example finding row
 - Rules for the text
@@ -49,17 +48,9 @@ A number from 1 to 10: how sure you are that the finding is real and reachable.
 
 One word at the top of the report:
 
-- `PASS`: no finding of Critical or High with Origin `new` or `exposed`.
-- `PASS_WITH_FINDINGS`: no such finding, and one or more other findings.
-- `BLOCKED`: one or more Critical or High findings with Origin `new` or `exposed`. The senior assigns one fix pass.
-
-## Origin
-
-Each finding has one Origin, measured against the base of the review.
-
-- `new`: the line is not in the base. A moved line counts as `new`.
-- `exposed`: the line is in the base, but this change makes it reachable or wrong. The finding says how.
-- `pre-existing`: the line is in the base, and this change does not affect it. It does not block this change. The human decides. A Critical or High one goes to the top of the report to the human.
+- `PASS`: no finding of Critical or High.
+- `PASS_WITH_FINDINGS`: no Critical or High, one or more Medium or Low.
+- `BLOCKED`: one or more Critical or High findings. The senior assigns one fix pass.
 
 ## Report template
 
@@ -72,7 +63,7 @@ Use the headings of the review report in stack rule 8 (`stack-rules.md`), in the
 ## Checks
 | Check | Command | Result |
 |-------|---------|--------|
-| stackcheck | `python3 .../stackcheck.py --root . --changed <base>` | <summary line> |
+| stackcheck | `python3 .../stackcheck.py --root . --changed main` | <summary line> |
 | analyzers | `dotnet build -warnaserror` | <summary line> |
 | packages | `dotnet package list --vulnerable --include-transitive` | <summary line> |
 | secrets | `gitleaks git --redact` | <exit code, or "not run: reason"> |
@@ -80,9 +71,9 @@ Use the headings of the review report in stack rule 8 (`stack-rules.md`), in the
 Checked and clean: <the checklist IDs with no finding, on one line, comma-separated>.
 
 ## Findings
-| # | Severity | Origin | Conf. | Location | Problem and exploit path | Fix | How to verify |
-|---|----------|--------|-------|----------|--------------------------|-----|---------------|
-| SR-1 | High | new | 9 | `path:line` | <what is wrong; who sends what, what the attacker gets> | <the exact API or setting> | <test name, request, or tool line, with the expected result> |
+| # | Severity | Conf. | Location | Problem and exploit path | Fix | How to verify |
+|---|----------|-------|----------|--------------------------|-----|---------------|
+| SR-1 | High | 9 | `path:line` | <what is wrong; who sends what, what the attacker gets> | <the exact API or setting> | <test name, request, or tool line, with the expected result> |
 
 ## Decisions
 | ID | Question | Answer | Status |
@@ -104,7 +95,7 @@ Rules for the findings table:
 ## Example finding row
 
 ```markdown
-| SR-1 | High | new | 9 | `src/Shipments/ShipmentQueries.cs:31` | The Dapper query has no tenant condition and the EF Core query filter does not apply to Dapper. A user of tenant A sends `GET /shipments/{id}` with an id of tenant B and gets that shipment. | Add `AND tenant_id = @TenantId` from the claims; return `TypedResults.NotFound()` when null. Decision SEC-05. | `dotnet test --filter Shipment_of_other_tenant_gives_404` passes; manual call with a token of tenant A and an id of tenant B gives 404. |
+| SR-1 | High | 9 | `src/Shipments/ShipmentQueries.cs:31` | The Dapper query has no tenant condition and the EF Core query filter does not apply to Dapper. A user of tenant A sends `GET /shipments/{id}` with an id of tenant B and gets that shipment. | Add `AND tenant_id = @TenantId` from the claims; return `TypedResults.NotFound()` when null. Decision SEC-05. | `dotnet test --filter Shipment_of_other_tenant_gives_404` passes; manual call with a token of tenant A and an id of tenant B gives 404. |
 ```
 
 ## Rules for the text

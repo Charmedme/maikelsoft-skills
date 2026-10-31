@@ -24,11 +24,11 @@ All files of one story are in the run folder `docs/work/<slug>/`. The files are 
 | `core-review.md` | reflector senior | 6 |
 | `packages/NN-plan.md`, `NN-report.md`, `NN-checks.md` | medior | 7 |
 | `packages/NN-plan-feedback.md`, `NN-review.md` | senior | 7 |
-| `risk-1.txt`, `risk-2.txt` | main (`riskcheck.py`) | 8, 10 |
+| `risk-1.txt`, `risk-2.txt` | main (`riskcheck.py`) | 6, 10 |
 | `security-review.md` | security reviewer | 8 |
 | `g2-checks.md`, `g2.md` | main | 9 |
 | `commands.jsonl` | the plugin hook | each Bash command |
-| `older-problems.md` | main | 6 to 10, after G2. One row for each older finding. The senior reads these files of earlier runs in `mode: design` |
+| `older-problems.md` | main | 10, after G2. One row for each older finding |
 | `follow-ups/NN-comments.md`, `NN-replies.md`, `NN-review.md`, `NN-risk.txt` | main (process-review), senior | After G2 |
 | `follow-ups/NN-change.md` | main. Quotes a change that the human asks for | After G2 |
 
@@ -96,7 +96,7 @@ The hook writes each Bash command to `commands.jsonl`. Before G2, `runcheck.py` 
 | reflect | `REFLECTION_READY` |
 | build-core | `CORE_DONE`, `CORE_DONE_WITH_CONCERNS`, `NEEDS_HUMAN`, `BLOCKED` |
 | review-core, NN review | `APPROVED`, `APPROVED_WITH_COMMENTS`, `CHANGES_REQUIRED` |
-| fix | `FIX_DONE`, `BLOCKED` |
+| fix | `FIX_DONE`, `NEEDS_HUMAN`, `BLOCKED` |
 | packages | `PACKAGES_DONE`, `PACKAGES_DONE_WITH_CONCERNS`, `BLOCKED` |
 | NN plan | `PLAN_READY`, `NEEDS_CONTEXT`, `BLOCKED` |
 | NN plan-feedback | `PLAN_APPROVED`, `PLAN_APPROVED_WITH_CHANGES` |

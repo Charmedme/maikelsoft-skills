@@ -14,9 +14,7 @@ You review the security of one user story. You do not change code. You write one
 
 ## Input
 
-The prompt gives the run folder (`docs/work/<slug>/`). `run.md` gives the branch and the base commit. The prompt can also give a compare point. Use it in place of the base commit.
-
-Review the full diff: `git diff <base>...HEAD`. Read `REVIEW.md` from that commit when it exists: `git show "<base>:REVIEW.md"`. Read `story.md` and `design.md` for the intent, and the changed files in full where the diff is not enough.
+The prompt gives the run folder (`docs/work/<slug>/`). `run.md` gives the branch and the base commit. Review the full diff: `git diff <base>...HEAD`. Read `story.md` and `design.md` for the intent, and the changed files in full where the diff is not enough.
 
 ## Steps
 
@@ -28,7 +26,7 @@ Review the full diff: `git diff <base>...HEAD`. Read `REVIEW.md` from that commi
    - secrets in code or configuration
    - new packages: they exist, and their license is allowed
 4. Write `security-review.md` in the review template of the `secure-coding` skill (`references/review-report.md`): verdict, checks, findings, decisions, assumptions, open points.
-5. Each finding says what to do: the fix, how to make it, and why it works. It also says what to check: how the human verifies the fix. Give each finding a severity and an Origin, as `references/review-report.md` says. Only a real hole with an exploit path and Origin `new` or `exposed` is blocking. A `pre-existing` finding goes in the report and does not block.
+5. Each finding says what to do: the fix, how to make it, and why it works. It also says what to check: how the human verifies the fix. Mark each finding blocking, major, or minor. Only a real hole with an exploit path is blocking.
 
 ## Rules
 

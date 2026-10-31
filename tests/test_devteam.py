@@ -220,6 +220,41 @@ class FollowUpEvidence(unittest.TestCase):
             self.assertIn("RUN-FIX", rules(runcheck.check(run, "g2")))
 
 
+class ReportStage(unittest.TestCase):
+    GOOD = "## G2: x\n\nResult: DONE on branch b, at abc\n\n### Acceptance criteria\n\n| Criterion (verbatim) | Test or evidence |\n|---|---|\n| 1. A | t:1 |\n\n### Text for the pull request\n\nTesting: x\n"
+
+    def report(self, tmp, text, risk=True):
+        run = make_run(pathlib.Path(tmp))
+        if text is not None:
+            write(run / "g2.md", text)
+        if risk:
+            write(run / "risk-2.txt", "level: normal\n")
+        return [m for _, r, m in runcheck.check(run, "report") if r == "RUN-G2"]
+
+    def test_full_report_passes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(self.report(tmp, self.GOOD), [])
+
+    def test_stub_gives_each_finding(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(len(self.report(tmp, "## G2: x\n\nAll done.\n")), 3)
+
+    def test_missing_files(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(len(self.report(tmp, None, risk=False)), 2)
+
+
+class PausedFollowUp(unittest.TestCase):
+    def test_follow_up_that_waits_for_the_human_has_no_finding(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            pause = "| 09:40 | main | followup 01 round stop | NEEDS_HUMAN | - | - | - | - | - | waits for the answer |\n"
+            started = FOLLOWUP_ROWS.format(time="2026-10-30T09:00:00Z").splitlines()[:2]
+            run = make_run(pathlib.Path(tmp), extra="\n".join(started) + "\n" + pause)
+            lines = [FollowUpEvidence.BEFORE, {"command": "git status", "time": "2026-10-30T09:35:00Z"}]
+            write(run / "commands.jsonl", "".join(json.dumps(c) + "\n" for c in lines))
+            self.assertEqual(rules(runcheck.check(run, "g2")), [])
+
+
 class RaisedRun(unittest.TestCase):
     def mode_run(self, tmp):
         run = make_run(pathlib.Path(tmp))

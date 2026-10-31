@@ -17,7 +17,7 @@ Show one message. Keep it short: the human reads the full files only when needed
 Design: <3 to 5 lines from the summary of design.md>
 Core (senior): <one line>
 Packages: <NN title (size), one line each, or "none: the senior builds all">
-Mode: <light or full, with the reason. Light: no reflection and no separate security review. A later high risk check raises a light run.>
+Mode: <light or full, with the reason. Light: no reflection and no separate security review. A later risk check with `raise: yes` raises a light run.>
 
 ### Decisions to approve
 
@@ -42,7 +42,7 @@ After the answer:
 
 - Write each answer into `decision-sheet.md` (column Answer, column By = human).
 - An "ok" approves each recommendation in the sheet, each assumption, and each new package.
-- A change to the design goes back to the senior (`mode: design`) one time. Then show G1 again.
+- A change to the design goes back to the senior (`mode: design`) one time. Then show G1 again. Scope that the human adds gets its own row in the acceptance criteria table of `design.md`, with a test.
 - "full" for a light run: write `Mode: full` in `run.md`, run the reflection (step 4), then show G1 again.
 - Write the mode of `design.md` in the field Mode of `run.md`.
 - Write `G1 | approved by <name> on <date>` in `run.md` and a log row `G1_APPROVED` or `G1_CHANGED`.
@@ -62,8 +62,10 @@ Write `g2.md`, then show it.
 - <the RUN-HOOK finding>
 - <the risk has no cover: why>
 - <raised: "The design said light. The build touched <paths>. The section How to undo does not cover these paths.">
-- <REVIEW.md changed: "A guide file changed. Read it.">
-- <an older Critical or High security finding: file and problem>
+- <gone reason: "<kind> <path> went away after the build. Check that this is what you want.">
+- <migration, new package, or major version: "<kind> <path>. How to undo: <the steps>.">
+- <test edits since the last check: "A fix changed a test: <path>. Read it.">
+- <a guide file changed: "<path> changed. Read it.">
 - <CI parity "not known": the pipeline can run checks that did not run here>
 
 Result: <DONE / DONE_WITH_CONCERNS / BLOCKED> on branch <branch>, at <hash> (<N> commits since <base>)
@@ -113,6 +115,6 @@ How to revert: <the steps, from "How to undo" in design.md. A schema or data cha
 Next step for you: review the branch, then push it and open the pull request.
 ```
 
-The hash is the last commit outside the run folder: `git log -1 --format=%h -- ':/' ':!/<run folder>'`. The tree must be clean, because the command ignores uncommitted code. A later commit needs a new report: `FOLLOWUP_DONE` shows the new hash. The risk check is a path and pattern check. Do not say that the change is safe.
+The hash is the last commit outside the run folder: `git log -1 --format=%h -- ':/' ':!/<run folder>'`. The tree must be clean, because the command ignores uncommitted code. Keep the headings of the template as written, because `runcheck.py --stage report` reads them. A later commit needs a new report: `FOLLOWUP_DONE` shows the new hash. The risk check is a path and pattern check. Do not say that the change is safe.
 
 The acceptance criteria table takes each criterion from `story.md` verbatim, and the test name or `path:line` from the reports. A criterion without a test is an open finding.
