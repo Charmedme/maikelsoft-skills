@@ -1,4 +1,4 @@
-You work in the folder `<repo>`. It is the repository of the product Naar de Kloten. Read `CLAUDE.md` first.
+You work in the folder `<repo>`. It is the repository of the product Party Cards. Read `CLAUDE.md` first.
 
 The product owner wants the UX design for this story, before the developers build it:
 

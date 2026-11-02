@@ -17,7 +17,7 @@ Date: 2026-10-27. Variant old: ux-design 0.3.1 (origin/main). Variant new: ux-de
 - 3 runs for each variant and each case. All binary assertions are in `evals/ux-design/evals4.json`.
 - The `check` assertions: `evals/ux-design/score4.py`. For case 1, it reads `ux-design.md`, the reply, and the frames of the mockups. For case 2, a Playwright probe renders each frame at 390 px and measures the planted faults in the produced mockups. I tested the probe on the planted mockups (each fault present) and on a fixed copy (each fault absent).
 - The `judge` assertions: `evals/ux-design/grade4.py`. One grader run for each eval run. The grader sees the context and the output of one run, without the variant name.
-- Fixtures: `evals/ux-design/fixtures/party-new-direction/` and `party-review-faults/`. The product is the Dutch party card game Naar de Kloten (Angular, mobile first). The design system is the Gameshow tokens before the contrast fix (`fixtures/field-2026-10-27/gameshow-tokens-before-fix.css`), with invented type, space, and component rules. `fixtures/party-planted/` holds the faulty spec of case 2 as mockups, for the checker assertion.
+- Fixtures: `evals/ux-design/fixtures/party-new-direction/` and `party-review-faults/`. The product is a Dutch party card game, here called Party Cards (Angular, mobile first). The design system is the Gameshow tokens before the contrast fix (`fixtures/field-2026-10-27/gameshow-tokens-before-fix.css`), with invented type, space, and component rules. `fixtures/party-planted/` holds the faulty spec of case 2 as mockups, for the checker assertion.
 
 ## Case 1: party-new-direction
 
