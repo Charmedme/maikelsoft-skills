@@ -175,5 +175,5 @@ These lessons can go into the plugins. The plugins do not have them yet.
 | Source folder `docs/drive-download-20261030T142542Z-1-001/` | Not changed. Not tracked in git. Do not commit it, because it holds third-party material. |
 | Skills, agents, checkers | Not changed |
 | Gate G1 of the build | The owner said yes to each decision on 2026-10-31. |
-| `dev-team` 0.6.0 | Built on the branch `feat/review-flow-dev-team`, then cut. The branch was pushed on 2026-11-04 and is not merged. `dev-stack` is at 1.3.0 for the `angular` skill, also not released. Both wait for plan version 7. See `comparison.md`. |
+| `dev-team` 0.6.0 | Built on the branch `feat/review-flow-dev-team`, then cut. The session pushed the branch on 2026-11-04. Nobody merged it. `dev-stack` is at 1.3.0 for the `angular` skill, also not released. Both wait for plan version 7. See `comparison.md`. |
 | The `dev-flow` parts and Part J | Not built. |
