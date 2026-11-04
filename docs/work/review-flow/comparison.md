@@ -165,6 +165,93 @@ The grader saw the reviews with no name of the version. It scored `false_blocks`
 
 Cost of the second test: about $13.40, with no cost for the graders.
 
+## Hard comparison
+
+The owner asked two questions. Can `dev-team` scale down, so that `dev-flow` is not necessary? Or does a setup plugin that writes the route into `CLAUDE.md` give a better result?
+
+### Method
+
+- 4 stories on a new fixture, `evals/review-flow/fixtures/shop-api`: one small story and three complex stories.
+- 4 arms, each with `dev-stack`: `baseline` (no flow plugin), `flow`, `team`, and `both`. The arm `both` has the neutral prompt of the baseline, so the run selects the route.
+- 3 runs for each story and arm: 48 runs on Sonnet, for a cost of $70.23.
+- Hidden tests that no run sees. Each hidden test passes on a reference solution. A test passes only when it passes in 3 of 3 passes, because a race does not show each time.
+
+### Results
+
+Each cell gives the hidden tests passed, the mean cost, and the mean time. The runs had 3 parallel slots, so the times are not exact.
+
+| Story | baseline | flow | team | both |
+|-------|----------|------|------|------|
+| order-summary (small) | 6/6, $0.18, 0.9 min | 6/6, $0.36, 2.0 min | 6/6, $1.46, 7.7 min | 6/6, $0.37, 2.8 min |
+| partial-cancel | 38/39, $0.33, 1.8 min | 38/39, $0.75, 8.4 min | 39/39, $3.38, 21.8 min | 39/39, $0.53, 3.8 min |
+| discount-limit | 39/39, $0.32, 1.6 min | 39/39, $1.05, 7.6 min | 39/39, $4.72, 30.3 min | 39/39, $1.98, 12.6 min |
+| returns | 42/42, $0.36, 2.0 min | 41/42, $0.83, 11.0 min | 42/42, $4.55, 27.9 min | 42/42, $2.25, 14.9 min |
+| **Total** | **125/126**, $3.59 | **124/126**, $8.96 | **126/126**, $42.31 | **126/126**, $15.37 |
+
+The stories do not separate the arms. The difference is 2 tests of 126, so these runs do not show that one flow gives a better result. The cost difference is clear.
+
+The three failures:
+
+| Run | Test | Cause |
+|-----|------|-------|
+| `partial-cancel/baseline/3` | H6, failed in 1 of 3 passes | A real race |
+| `partial-cancel/flow/1` | H6, failed in 1 of 3 passes | A real race |
+| `returns/flow/1` | H3, failed in 3 of 3 passes | The run saw that "holds" has two meanings. It sent the question to the product owner, built the narrow meaning, and reported the risk. Nobody could answer in the test. So this is partly a limit of the test. |
+
+### What the numbers do not measure
+
+The hidden tests measure behavior at the end of one run. They do not measure the items below.
+
+| Item | baseline | flow | team |
+|------|----------|------|------|
+| Test lines, complex stories | 96 to 214 | 293 to 590 | 577 to 1140 |
+| Added documentation lines, complex stories | 0 to 2 | 142 to 199 | 666 to 1320 |
+| Added documentation lines, small story | 0 | 31 to 33 | 470 to 516 |
+| Locked acceptance tests | 0 of 12 | 12 of 12 | 0 of 12 |
+| Independent core review | 0 of 12 | Not measured | 12 of 12 |
+
+No test here shows that the extra tests catch a later fault, or that the documents help a later change. These runs do not show the value of these items, and they do not show that the value is absent.
+
+### What the reviews did
+
+The runs on the team route had 14 core reviews and 9 security reviews.
+
+- 13 core reviews gave `APPROVED_WITH_COMMENTS`. One gave `CHANGES_REQUIRED`, in `discount-limit/team/2`. The reviewer measured 3 orders and 17 answers of 409 from 20 parallel orders. The domain rules give 409 to the loser of a conflict. So the finding enforced a promise in the design of that run, and not a domain rule.
+- The security reviews gave 8 `PASS_WITH_FINDINGS` and one `PASS`. No security review stopped a run. The findings include one high finding on missing authorization, which the answer sheet puts out of scope.
+
+So on these stories the reviews did not change a hidden test result. The hidden tests can see only the rules that the fixture has in writing, and each of these rules was also available to the baseline.
+
+### Scale
+
+`dev-team` scales already, from 3 agents on the small story to 7 or more on most complex runs. Partial-cancel used 3 agents in 2 of 3 runs. The floor is the problem: on a change of about 15 lines it costs $1.46 and writes about 500 lines of documents. That is 4 times the cost of `flow` and 8 times the cost of the baseline. The likely cause is the run folder, the design, the two gates, and the core review, but the session did not measure the split. If these parts go, the result is `dev-flow` with another name.
+
+One small run on the team route also changed behavior that nobody asked for: `order-summary/team/1` changed the rounding of `Order.Total`. Two other runs on the small story (`order-summary/team/3` and `order-summary/both/3`) added a harmless computed property.
+
+`dev-flow` also has parts that `dev-team` does not have: the locked acceptance tests, the guard hook, and support for each language. `dev-team` needs `dev-stack`, which is .NET.
+
+### Route when both plugins are installed
+
+| Route that the run selected | Runs |
+|-----------------------------|------|
+| `dev-flow:plan-and-build` | 9 |
+| `dev-team:deliver-story` | 2 |
+| No flow skill | 1 |
+
+The route is not stable. `discount-limit` cost $0.63 on the flow route and $4.68 on the team route, for the same 13 of 13 tests. `returns` cost $0.44 and $5.12, also for the same score. The two plugins do not call each other. The route depends only on how the session reads the skill descriptions.
+
+### Conclusion
+
+- Do not merge the plugins, and do not replace `dev-flow` with a smaller `dev-team`. A team mode at the cost of `dev-flow` must drop the parts that make it a team. It must also add the spec lock and the support for other languages.
+- A route rule has evidence: the same story costs up to 11 times more on a route that the session selects by chance. These runs did not test a rule in `CLAUDE.md`, so the effect of such a rule is not known.
+- The data does not show that the team route is worth its cost on stories of this size. It also does not show the opposite for real risk: unwritten rules, large code, and work over many sessions are not in this test.
+
+### Faults in this test
+
+- The first H4 test of `discount-limit` required exactly 3 wins. A correct optimistic 409 gave 2. The session changed the test after the first score, before this final score. All 12 runs now pass.
+- A senior in `order-summary/team/2` wrote to the real profile, because `formats.md` named the home path first. The run removed its own rows 3 seconds later, and the guard stopped the batch. The file has its old content again. The session changed the text of `formats.md` and started the next runs with a new plugin copy. The runs before this change used the old text. Only that sentence differs.
+- The session wrote the stories and the hidden tests, so each trap is in a written rule or criterion. This can explain why the baseline passes nearly all tests.
+- 3 runs for each cell show large differences only. 3 test passes do not prove that a race is absent.
+
 ## Source check
 
 The owner asked to check the playbook of Anthropic and the premise of the earlier work.
@@ -183,6 +270,6 @@ The owner asked to check the playbook of Anthropic and the premise of the earlie
 
 These points do not agree with this version, or wait:
 
-- The playbook names `REVIEW.md` and a cap of five nits. This version holds them, because the local flow showed no value in a test. The managed review service reads `REVIEW.md`, so a team with that service can still use one.
+- The playbook names `REVIEW.md` and a cap of five nits. This version holds them, because no test showed their value. No test case had a `REVIEW.md` file, so the tests did not measure the value of that file. The managed review service reads `REVIEW.md`, so a team with that service can still use one.
 - The playbook writes `intent.md`, `spec.md`, and `plan.md`. The earlier decision stays: Markdown specifications drift, and the executable test is the specification.
 - The playbook asks for 20 to 50 real tasks in an eval suite. This test has 6 small cases.

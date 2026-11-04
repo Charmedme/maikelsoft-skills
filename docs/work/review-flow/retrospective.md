@@ -133,6 +133,17 @@ Mistakes of the session:
 4. **A test written by the author of the rules.** The fixtures gave the classes away, and the bugs were easy. So the test showed that rules fire, not that they help.
 5. **Late use of the premise.** The review work did not start from the earlier decision that executable specifications are the main control (`docs/work/flow-scale/executable-specs-concept.md`). A review catches what a locked test does not. The session treated the review as the main control.
 
+## The hard comparison
+
+The owner asked if `dev-team` can scale down, so that `dev-flow` is not necessary. The session ran 48 runs for $70.23. See "Hard comparison" in `comparison.md`.
+
+Mistakes of the session:
+
+1. **The first answer missed the question.** The owner asked about the relation between the two plugins. The session answered about a smaller point two times, and the owner had to say so.
+2. **Stories that did not separate the arms.** The session wrote the stories and the hidden tests, so each trap is in a written rule. The baseline passed 125 of 126 tests. The test shows the cost, but it does not show the value of a flow.
+3. **An unfair hidden test.** The first H4 test failed correct code. The session found this during the first score.
+4. **A second write to the real profile.** The guard from the first comparison stopped the batch this time, and the content is back. The cause was a sentence in a skill, not the test setup.
+
 ## Lessons for the skills
 
 These lessons can go into the plugins. The plugins do not have them yet.
