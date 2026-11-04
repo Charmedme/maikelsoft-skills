@@ -33,6 +33,32 @@ claude plugin install dev-stack@maikelsoft-skills
 3. Claude Code loads the skills that match the work. One request can load more than one skill, for example `aspnetcore` and `efcore`.
 4. The agent builds, runs the checks again after its last change, and writes a report. The report has a verdict, the checks with their results, the decisions, the assumptions, and the open points.
 
+## Commands
+
+Claude Code starts a skill by itself when your request matches its trigger. You can also start a skill with its command. Text after the command goes to the skill, for example `/dev-stack:efcore Review this migration`.
+
+| Command | What it does | Starts by itself when you ask for |
+|---------|--------------|-----------------------------------|
+| `/dev-stack:csharp` | C# 14 and .NET 10 code and project files. | C# code written, reviewed, or refactored, or a `.csproj` or props file |
+| `/dev-stack:aspnetcore` | The host, DI, middleware, endpoints, ProblemDetails, HTTP clients, and health checks. | `Program.cs`, endpoints, controllers, middleware, options, or a `BackgroundService` |
+| `/dev-stack:aspnetcore-openapi` | OpenAPI documents and API versions. | `AddOpenApi`, Scalar, Swashbuckle, `Produces`, or API versioning |
+| `/dev-stack:fluentvalidation` | Validators with FluentValidation 12. | `AbstractValidator`, `RuleFor`, or validator tests |
+| `/dev-stack:efcore` | EF Core 10 queries, saves, concurrency, and migrations. | `DbContext`, LINQ queries, `SaveChanges`, or migrations |
+| `/dev-stack:sqlserver` | T-SQL, indexes, isolation, and locks on SQL Server. | T-SQL, a stored procedure, lock hints, deadlocks, or an upsert |
+| `/dev-stack:postgresql` | SQL, indexes, and row locks on PostgreSQL. | SQL for PostgreSQL, `SKIP LOCKED`, Npgsql, or `COPY` |
+| `/dev-stack:dotnet-observability` | Logs, traces, and metrics. | `ILogger`, OpenTelemetry, Application Insights, or personal data in logs |
+| `/dev-stack:redis` | Caching with HybridCache and Redis or Valkey. | A cache, cache keys, invalidation, or a distributed lock |
+| `/dev-stack:elasticsearch` | Search with Elasticsearch 9. | Mappings, aliases, a reindex, bulk indexing, or search queries |
+| `/dev-stack:rabbitmq` | Messaging with RabbitMQ.Client 7. | Exchanges, queues, publishers, consumers, or dead letters |
+| `/dev-stack:wolverine` | Messaging with Wolverine 6. | Handlers, the durable outbox, error policies, or the RabbitMQ transport |
+| `/dev-stack:mailkit` | Outgoing mail with MailKit 4. | SMTP, `MimeMessage`, a mail outbox, or OAuth2 SMTP |
+| `/dev-stack:puppeteersharp` | HTML to PDF with headless Chrome. | An invoice or report as PDF, or Chrome in a container |
+| `/dev-stack:angular` | Angular 22 and 21 next to the official `angular-developer` skill. | Angular components, templates, services, forms, routes, specs, or Transloco texts |
+| `/dev-stack:dotnet-testing` | Tests with MSTest 4, fakes, and Testcontainers. | .NET tests written, reviewed, or fixed, or a test project set up |
+| `/dev-stack:dotnet-analyzers` | Analyzers, warnings as errors, and the code-quality gate. | Analyzer warnings, `.editorconfig`, `NoWarn`, or a cleanup before a commit |
+| `/dev-stack:secure-coding` | Security rules for code and its supply chain. | A new endpoint, sign-in, a secret, a package, or a security review |
+| `/dev-stack:migrate-fluentassertions` | Moves a test project from FluentAssertions to AwesomeAssertions 9, step by step. | Never: it changes packages, so only its command starts it |
+
 ## Skills
 
 | Skill | Use it for |

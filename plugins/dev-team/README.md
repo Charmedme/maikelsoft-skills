@@ -29,6 +29,29 @@ claude plugin install dev-team@maikelsoft-skills
 4. The team builds on the branch `dev-team/<slug>`, reviews each part one time, and runs a security review.
 5. Gate G2 shows the checks, the acceptance criteria with their tests, and the open findings. You review the branch, push it, and open the pull request.
 
+## Commands
+
+Claude Code starts a skill by itself when your request matches its trigger. You can also start a skill with its command. Text after the command goes to the skill, for example `/dev-team:deliver-story PROJ-123`.
+
+| Command | What it does | Starts by itself when you ask for |
+|---------|--------------|-----------------------------------|
+| `/dev-team:deliver-story` | Delivers one large or risky item with the team agents and two human gates. | The team to build an item, or "deliver this story" |
+| `/dev-team:process-review` | Handles the review comments on a pull request of the team. | Review comments processed, fixed, or answered |
+| `/dev-team:story-intake` | Reads one story from the tracker into `story.md`. | A story fetched into the dev-team format |
+| `/dev-team:team-decisions` | Records team decisions: the index, one ADR for each decision, and your profile. | A team decision recorded or checked |
+| `/dev-team:senior-practice` | The rules of the senior agent. | Preloaded by the senior agent. Start it only for a senior design or review in the team format |
+| `/dev-team:medior-practice` | The rules of the medior agents. | Preloaded by the medior agents. Start it only for a package plan or report in the team format |
+| `/dev-team:stack-index` | The route from a file or package to its dev-stack skill. | Preloaded by the team agents |
+
+The agents have no command. A skill starts them, except where the table says otherwise.
+
+| Agent | What it does | Started by |
+|-------|--------------|------------|
+| `dev-team:senior` | Designs the story, builds the core, and leads the mediors. | `deliver-story` and `process-review` |
+| `dev-team:medior` | Builds one work package of size standard. | The senior agent |
+| `dev-team:medior-large` | Builds one work package of size hard, with more reasoning effort. | The senior agent |
+| `dev-team:security-reviewer` | Reviews the full diff of a story one time for security. | `deliver-story` |
+
 ## What is in the plugin
 
 | Part | Name | What it does |

@@ -29,6 +29,14 @@ The skill starts `dev-team:deliver-story` only when you ask for the team. Instal
 
 Do you have an idea, and no item yet? Make the item first with `product-flow:idea-to-backlog`. That skill can write the items to files when you have no tracker.
 
+## Commands
+
+Claude Code starts a skill by itself when your request matches its trigger. You can also start a skill with its command. Text after the command goes to the skill, for example `/dev-flow:plan-and-build AB#1234`.
+
+| Command | What it does | Starts by itself when you ask for |
+|---------|--------------|-----------------------------------|
+| `/dev-flow:plan-and-build` | Builds one approved item from the tracker to tested commits in one session, with locked acceptance tests and TDD. | An item, a ticket, a bug fix, or a story built, "plan and build", or a run with a `docs/work/<slug>/plan.md` to continue |
+
 ## Usage
 
 ### Tiers

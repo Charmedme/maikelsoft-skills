@@ -31,6 +31,15 @@ claude plugin install dev-build@maikelsoft-skills
 3. The skill asks its questions in rounds. Each question has a recommended answer, so you can answer "ok". Round 1 asks if a skill or an agent is the right form. It also asks which steps you do today, and what goes wrong today.
 4. Answer until no question is open. Then approve the summary of the brief (gate G1). The skill builds the files and runs its checkers.
 
+## Commands
+
+Claude Code starts a skill by itself when your request matches its trigger. You can also start a skill with its command. Text after the command goes to the skill, for example `/dev-build:build-skill Improve the doc-readme skill`.
+
+| Command | What it does | Starts by itself when you ask for |
+|---------|--------------|-----------------------------------|
+| `/dev-build:build-skill` | Makes, improves, reviews, tests, or publishes a skill. It grills you first. | A new or better skill, or why a skill does not start or works badly |
+| `/dev-build:build-agent` | Makes, improves, or reviews an agent: a subagent, an Agent SDK agent, a Managed Agent, or an OpenClaw agent. | An agent with its own role, tools, or model |
+
 ## Skills
 
 | Skill | Use it for |

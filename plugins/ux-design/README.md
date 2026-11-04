@@ -41,6 +41,31 @@ After the install, run `/reload-plugins` in each open Claude Code session, or st
 4. Read `ux-design.md` and the mockups in `mockups/`. Each proposed decision and each opportunity waits for the product owner.
 5. For a test with users, ask for prototype mode. After the build, ask for review mode. Review mode needs the run command of the app and Python Playwright.
 
+## Commands
+
+Claude Code starts a skill by itself when your request matches its trigger. You can also start a skill with its command. Text after the command goes to the skill, for example `/ux-design:ux-review Check the order screen at 390 px`.
+
+| Command | What it does | Starts by itself when you ask for |
+|---------|--------------|-----------------------------------|
+| `/ux-design:ux-setup` | Sets up a project for UX work and writes the `## Design` section of `CLAUDE.md`. | "Set up this project for UX work", or a change of the design tools |
+| `/ux-design:ux-practice` | The method for the UX design of a story: phases, the design spec, and the decision log. | The UX design or a design spec before the build |
+| `/ux-design:ux-patterns` | Selects an interaction pattern from the facts of a task. | A pattern for a list, a form, a flow, or a destructive action |
+| `/ux-design:ux-states` | Lists the states of each screen and how the user recovers. | The states of a screen, or more than the happy path |
+| `/ux-design:ui-craft` | The visual design method, with a rubric and a list of AI tells. | A screen judged on visual quality, or output that looks generic |
+| `/ux-design:brand-rules` | Writes and checks `DESIGN.md`, `PRODUCT.md`, and DTCG design tokens. | Brand rules, a style guide, or design tokens |
+| `/ux-design:web-accessibility` | WCAG 2.2 AA checks for a design or a built feature. | Accessibility, focus, contrast, or screen reader use |
+| `/ux-design:ux-prototype` | Makes a clickable prototype with A/B variants and a test plan. | A flow tested with users, or variants compared |
+| `/ux-design:ux-review` | Reviews a built feature against its design in each state and at each size. | A built screen checked against its design, or a UX audit |
+| `/ux-design:figma` | Reads from and writes to Figma through the official MCP server. | A Figma link, or Figma as the design tool |
+| `/ux-design:claude-design` | Works with Claude Design and Design System artifacts. | A Claude Design link, or Claude Design as the design tool |
+| `/ux-design:openpencil` | Puts mockups into OpenPencil. | OpenPencil, or a project with `.op` files |
+
+The agents have no command. A skill starts them, except where the table says otherwise.
+
+| Agent | What it does | Started by |
+|-------|--------------|------------|
+| `ux-design:ux-designer` | Designs one story, makes mockups and a prototype, and reviews the build. | You. Ask for it by name, for example "Use the ux-designer agent in design mode for docs/work/fl-31-assign" |
+
 ## What is in the plugin
 
 | Part | Name | What it does |

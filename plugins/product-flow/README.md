@@ -38,6 +38,21 @@ claude plugin install product-flow@maikelsoft-skills
 3. Answer the questions. Each question has a recommended answer. Answer "ok" to accept all, or "Q3: no" to change one.
 4. Answer at each gate. Nothing goes into your ticket system before you approve the exact list.
 
+## Commands
+
+Claude Code starts a skill by itself when your request matches its trigger. You can also start a skill with its command. Text after the command goes to the skill, for example `/product-flow:idea-to-backlog Customers want to save a search`.
+
+| Command | What it does | Starts by itself when you ask for |
+|---------|--------------|-----------------------------------|
+| `/product-flow:idea-to-backlog` | Takes an idea through research, questions, a prototype, and a spec to approved backlog items. | An idea or feature request turned into backlog items, or such a run continued |
+| `/product-flow:product-prototype` | Makes a throwaway clickable prototype for one product question. | A feature, screen, or flow to see, or layout options to compare |
+| `/product-flow:backlog-goal` | Writes a product goal or a sprint goal. | A product goal or sprint goal |
+| `/product-flow:backlog-epic` | Writes an epic with its outcome, scope, and features. | An epic |
+| `/product-flow:backlog-feature` | Writes a feature with its stories. | A feature |
+| `/product-flow:backlog-story` | Writes, reviews, or splits user stories with acceptance criteria. | A user story, a PBI, or a requirement |
+| `/product-flow:example-mapping` | Turns one item into rules, examples, and open questions. | An item refined with examples, or "what is not clear in this item" |
+| `/product-flow:backlog-push` | Puts approved items into the ticket system after a duplicate check. | Backlog items created in Jira, Azure DevOps, GitHub, GitLab, or Linear |
+
 ## Usage
 
 ### Phases and gates
