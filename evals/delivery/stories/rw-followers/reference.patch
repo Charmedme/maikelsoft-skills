@@ -1,0 +1,933 @@
+diff --git a/src/Conduit/Domain/FollowedPeople.cs b/src/Conduit/Domain/FollowedPeople.cs
+index bab1d76..e4c0bc2 100644
+--- a/src/Conduit/Domain/FollowedPeople.cs
++++ b/src/Conduit/Domain/FollowedPeople.cs
+@@ -1,3 +1,5 @@
++using System;
++
+ namespace Conduit.Domain;
+ 
+ public class FollowedPeople
+@@ -7,4 +9,7 @@ public class FollowedPeople
+ 
+     public int TargetId { get; init; }
+     public Person? Target { get; init; }
++
++    // null for follows made before the moment was recorded
++    public DateTime? CreatedAt { get; init; }
+ }
+diff --git a/src/Conduit/Features/Followers/Add.cs b/src/Conduit/Features/Followers/Add.cs
+index 8d0b971..8b731af 100644
+--- a/src/Conduit/Features/Followers/Add.cs
++++ b/src/Conduit/Features/Followers/Add.cs
+@@ -1,3 +1,4 @@
++using System;
+ using System.Net;
+ using System.Threading;
+ using System.Threading.Tasks;
+@@ -64,6 +65,7 @@ public class Add
+                     ObserverId = observer.PersonId,
+                     Target = target,
+                     TargetId = target.PersonId,
++                    CreatedAt = DateTime.UtcNow,
+                 };
+                 await context.FollowedPeople.AddAsync(followedPeople, cancellationToken);
+                 await context.SaveChangesAsync(cancellationToken);
+diff --git a/src/Conduit/Features/Profiles/Followers.cs b/src/Conduit/Features/Profiles/Followers.cs
+new file mode 100644
+index 0000000..1d62296
+--- /dev/null
++++ b/src/Conduit/Features/Profiles/Followers.cs
+@@ -0,0 +1,79 @@
++using System.Linq;
++using System.Net;
++using System.Threading;
++using System.Threading.Tasks;
++using Conduit.Infrastructure;
++using Conduit.Infrastructure.Errors;
++using FluentValidation;
++using Mediator;
++using Microsoft.EntityFrameworkCore;
++
++namespace Conduit.Features.Profiles;
++
++public class Followers
++{
++    public record Query(string Username, int? Limit, int? Offset)
++        : IRequest<ProfilesEnvelope>,
++            IReadOnlyRequest;
++
++    public class QueryValidator : AbstractValidator<Query>
++    {
++        public QueryValidator()
++        {
++            RuleFor(x => x.Limit)
++                .InclusiveBetween(1, 100)
++                .When(x => x.Limit.HasValue)
++                .WithMessage("must be between 1 and 100");
++            RuleFor(x => x.Offset)
++                .GreaterThanOrEqualTo(0)
++                .When(x => x.Offset.HasValue)
++                .WithMessage("must be 0 or more");
++        }
++    }
++
++    public class QueryHandler(ConduitContext context, ICurrentUserAccessor currentUserAccessor)
++        : IRequestHandler<Query, ProfilesEnvelope>
++    {
++        public async ValueTask<ProfilesEnvelope> Handle(
++            Query message,
++            CancellationToken cancellationToken
++        )
++        {
++            var target = await context
++                .Persons.AsNoTracking()
++                .FirstOrDefaultAsync(x => x.Username == message.Username, cancellationToken);
++            if (target is null)
++            {
++                throw new RestException(HttpStatusCode.NotFound, "profile", Constants.NOT_FOUND);
++            }
++
++            var currentPersonId = currentUserAccessor.GetCurrentPersonId();
++            var follows = context
++                .FollowedPeople.AsNoTracking()
++                .Where(x => x.TargetId == target.PersonId && x.Observer != null);
++
++            var count = await follows.CountAsync(cancellationToken);
++            var profiles = await follows
++                // follows from before the moment was recorded come last
++                .OrderBy(x => x.CreatedAt == null)
++                .ThenByDescending(x => x.CreatedAt)
++                .ThenBy(x => x.ObserverId)
++                .Skip(message.Offset ?? 0)
++                .Take(message.Limit ?? 20)
++                .Select(x => new Profile
++                {
++                    Username = x.Observer!.Username,
++                    Bio = x.Observer.Bio,
++                    Image = x.Observer.Image,
++                    IsFollowed =
++                        currentPersonId != null
++                        && context.FollowedPeople.Any(y =>
++                            y.ObserverId == currentPersonId && y.TargetId == x.ObserverId
++                        ),
++                })
++                .ToListAsync(cancellationToken);
++
++            return new ProfilesEnvelope { Profiles = profiles, ProfilesCount = count };
++        }
++    }
++}
+diff --git a/src/Conduit/Features/Profiles/ProfilesController.cs b/src/Conduit/Features/Profiles/ProfilesController.cs
+index fff16b6..6121c68 100644
+--- a/src/Conduit/Features/Profiles/ProfilesController.cs
++++ b/src/Conduit/Features/Profiles/ProfilesController.cs
+@@ -11,4 +11,12 @@ public class ProfilesController(IMediator mediator) : Controller
+     [HttpGet("{username}")]
+     public ValueTask<ProfileEnvelope> Get(string username, CancellationToken cancellationToken) =>
+         mediator.Send(new Details.Query(username), cancellationToken);
++
++    [HttpGet("{username}/followers")]
++    public ValueTask<ProfilesEnvelope> GetFollowers(
++        string username,
++        [FromQuery] int? limit,
++        [FromQuery] int? offset,
++        CancellationToken cancellationToken
++    ) => mediator.Send(new Followers.Query(username, limit, offset), cancellationToken);
+ }
+diff --git a/src/Conduit/Features/Profiles/ProfilesEnvelope.cs b/src/Conduit/Features/Profiles/ProfilesEnvelope.cs
+new file mode 100644
+index 0000000..761d175
+--- /dev/null
++++ b/src/Conduit/Features/Profiles/ProfilesEnvelope.cs
+@@ -0,0 +1,10 @@
++using System.Collections.Generic;
++
++namespace Conduit.Features.Profiles;
++
++public class ProfilesEnvelope
++{
++    public List<Profile> Profiles { get; set; } = new();
++
++    public int ProfilesCount { get; set; }
++}
+diff --git a/src/Conduit/Infrastructure/ConduitContext.cs b/src/Conduit/Infrastructure/ConduitContext.cs
+index 33df7ff..832c593 100644
+--- a/src/Conduit/Infrastructure/ConduitContext.cs
++++ b/src/Conduit/Infrastructure/ConduitContext.cs
+@@ -82,6 +82,11 @@ public class ConduitContext(DbContextOptions options) : DbContext(options)
+         modelBuilder.Entity<FollowedPeople>(b =>
+         {
+             b.HasKey(t => new { t.ObserverId, t.TargetId });
++            b.Property(x => x.CreatedAt)
++                .HasConversion(
++                    v => v,
++                    v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : v
++                );
+ 
+             // we need to add OnDelete RESTRICT otherwise for the SqlServer database provider,
+             // app.ApplicationServices.GetRequiredService<ConduitContext>().Database.EnsureCreated(); throws the following error:
+diff --git a/src/Conduit/Infrastructure/Migrations/SqlServer/20261102172100_FollowCreatedAt.Designer.cs b/src/Conduit/Infrastructure/Migrations/SqlServer/20261102172100_FollowCreatedAt.Designer.cs
+new file mode 100644
+index 0000000..e3de863
+--- /dev/null
++++ b/src/Conduit/Infrastructure/Migrations/SqlServer/20261102172100_FollowCreatedAt.Designer.cs
+@@ -0,0 +1,313 @@
++﻿// <auto-generated />
++using System;
++using Conduit.Infrastructure;
++using Microsoft.EntityFrameworkCore;
++using Microsoft.EntityFrameworkCore.Infrastructure;
++using Microsoft.EntityFrameworkCore.Metadata;
++using Microsoft.EntityFrameworkCore.Migrations;
++using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
++
++#nullable disable
++
++namespace Conduit.Infrastructure.Migrations.SqlServer
++{
++    [DbContext(typeof(SqlServerConduitContext))]
++    [Migration("20261102172100_FollowCreatedAt")]
++    partial class FollowCreatedAt
++    {
++        /// <inheritdoc />
++        protected override void BuildTargetModel(ModelBuilder modelBuilder)
++        {
++#pragma warning disable 612, 618
++            modelBuilder
++                .HasAnnotation("ProductVersion", "10.0.14")
++                .HasAnnotation("Relational:MaxIdentifierLength", 128);
++
++            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
++
++            modelBuilder.Entity("Conduit.Domain.Article", b =>
++                {
++                    b.Property<int>("ArticleId")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("int");
++
++                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ArticleId"));
++
++                    b.Property<int?>("AuthorPersonId")
++                        .HasColumnType("int");
++
++                    b.Property<string>("Body")
++                        .HasColumnType("nvarchar(max)");
++
++                    b.Property<DateTime>("CreatedAt")
++                        .HasColumnType("datetime2");
++
++                    b.Property<string>("Description")
++                        .HasColumnType("nvarchar(max)");
++
++                    b.Property<string>("Slug")
++                        .HasMaxLength(450)
++                        .HasColumnType("nvarchar(450)");
++
++                    b.Property<string>("Title")
++                        .HasColumnType("nvarchar(max)");
++
++                    b.Property<DateTime>("UpdatedAt")
++                        .HasColumnType("datetime2");
++
++                    b.HasKey("ArticleId");
++
++                    b.HasIndex("AuthorPersonId");
++
++                    b.HasIndex("Slug")
++                        .IsUnique()
++                        .HasFilter("[Slug] IS NOT NULL");
++
++                    b.ToTable("Articles");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.ArticleFavorite", b =>
++                {
++                    b.Property<int>("ArticleId")
++                        .HasColumnType("int");
++
++                    b.Property<int>("PersonId")
++                        .HasColumnType("int");
++
++                    b.HasKey("ArticleId", "PersonId");
++
++                    b.HasIndex("PersonId");
++
++                    b.ToTable("ArticleFavorites");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.ArticleTag", b =>
++                {
++                    b.Property<int>("ArticleId")
++                        .HasColumnType("int");
++
++                    b.Property<string>("TagId")
++                        .HasColumnType("nvarchar(450)");
++
++                    b.HasKey("ArticleId", "TagId");
++
++                    b.HasIndex("TagId");
++
++                    b.ToTable("ArticleTags");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.Comment", b =>
++                {
++                    b.Property<int>("CommentId")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("int")
++                        .HasJsonPropertyName("id");
++
++                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CommentId"));
++
++                    b.Property<int>("ArticleId")
++                        .HasColumnType("int");
++
++                    b.Property<int>("AuthorId")
++                        .HasColumnType("int");
++
++                    b.Property<string>("Body")
++                        .HasColumnType("nvarchar(max)");
++
++                    b.Property<DateTime>("CreatedAt")
++                        .HasColumnType("datetime2");
++
++                    b.Property<DateTime>("UpdatedAt")
++                        .HasColumnType("datetime2");
++
++                    b.HasKey("CommentId");
++
++                    b.HasIndex("ArticleId");
++
++                    b.HasIndex("AuthorId");
++
++                    b.ToTable("Comments");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.FollowedPeople", b =>
++                {
++                    b.Property<int>("ObserverId")
++                        .HasColumnType("int");
++
++                    b.Property<int>("TargetId")
++                        .HasColumnType("int");
++
++                    b.Property<DateTime?>("CreatedAt")
++                        .HasColumnType("datetime2");
++
++                    b.HasKey("ObserverId", "TargetId");
++
++                    b.HasIndex("TargetId");
++
++                    b.ToTable("FollowedPeople");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.Person", b =>
++                {
++                    b.Property<int>("PersonId")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("int");
++
++                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PersonId"));
++
++                    b.Property<string>("Bio")
++                        .HasColumnType("nvarchar(max)");
++
++                    b.Property<string>("Email")
++                        .HasMaxLength(320)
++                        .HasColumnType("nvarchar(320)");
++
++                    b.Property<byte[]>("Hash")
++                        .IsRequired()
++                        .HasColumnType("varbinary(max)");
++
++                    b.Property<string>("Image")
++                        .HasColumnType("nvarchar(max)");
++
++                    b.Property<byte[]>("Salt")
++                        .IsRequired()
++                        .HasColumnType("varbinary(max)");
++
++                    b.Property<string>("Username")
++                        .HasMaxLength(256)
++                        .HasColumnType("nvarchar(256)");
++
++                    b.HasKey("PersonId");
++
++                    b.HasIndex("Email")
++                        .IsUnique()
++                        .HasFilter("[Email] IS NOT NULL");
++
++                    b.HasIndex("Username")
++                        .IsUnique()
++                        .HasFilter("[Username] IS NOT NULL");
++
++                    b.ToTable("Persons");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.Tag", b =>
++                {
++                    b.Property<string>("TagId")
++                        .HasColumnType("nvarchar(450)");
++
++                    b.HasKey("TagId");
++
++                    b.ToTable("Tags");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.Article", b =>
++                {
++                    b.HasOne("Conduit.Domain.Person", "Author")
++                        .WithMany()
++                        .HasForeignKey("AuthorPersonId");
++
++                    b.Navigation("Author");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.ArticleFavorite", b =>
++                {
++                    b.HasOne("Conduit.Domain.Article", "Article")
++                        .WithMany("ArticleFavorites")
++                        .HasForeignKey("ArticleId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.HasOne("Conduit.Domain.Person", "Person")
++                        .WithMany("ArticleFavorites")
++                        .HasForeignKey("PersonId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.Navigation("Article");
++
++                    b.Navigation("Person");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.ArticleTag", b =>
++                {
++                    b.HasOne("Conduit.Domain.Article", "Article")
++                        .WithMany("ArticleTags")
++                        .HasForeignKey("ArticleId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.HasOne("Conduit.Domain.Tag", "Tag")
++                        .WithMany("ArticleTags")
++                        .HasForeignKey("TagId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.Navigation("Article");
++
++                    b.Navigation("Tag");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.Comment", b =>
++                {
++                    b.HasOne("Conduit.Domain.Article", "Article")
++                        .WithMany("Comments")
++                        .HasForeignKey("ArticleId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.HasOne("Conduit.Domain.Person", "Author")
++                        .WithMany()
++                        .HasForeignKey("AuthorId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.Navigation("Article");
++
++                    b.Navigation("Author");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.FollowedPeople", b =>
++                {
++                    b.HasOne("Conduit.Domain.Person", "Observer")
++                        .WithMany("Followers")
++                        .HasForeignKey("ObserverId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.HasOne("Conduit.Domain.Person", "Target")
++                        .WithMany("Following")
++                        .HasForeignKey("TargetId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.Navigation("Observer");
++
++                    b.Navigation("Target");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.Article", b =>
++                {
++                    b.Navigation("ArticleFavorites");
++
++                    b.Navigation("ArticleTags");
++
++                    b.Navigation("Comments");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.Person", b =>
++                {
++                    b.Navigation("ArticleFavorites");
++
++                    b.Navigation("Followers");
++
++                    b.Navigation("Following");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.Tag", b =>
++                {
++                    b.Navigation("ArticleTags");
++                });
++#pragma warning restore 612, 618
++        }
++    }
++}
+diff --git a/src/Conduit/Infrastructure/Migrations/SqlServer/20261102172100_FollowCreatedAt.cs b/src/Conduit/Infrastructure/Migrations/SqlServer/20261102172100_FollowCreatedAt.cs
+new file mode 100644
+index 0000000..3dfa9c3
+--- /dev/null
++++ b/src/Conduit/Infrastructure/Migrations/SqlServer/20261102172100_FollowCreatedAt.cs
+@@ -0,0 +1,27 @@
++﻿using System;
++using Microsoft.EntityFrameworkCore.Migrations;
++
++#nullable disable
++
++namespace Conduit.Infrastructure.Migrations.SqlServer;
++
++/// <inheritdoc />
++public partial class FollowCreatedAt : Migration
++{
++    /// <inheritdoc />
++    protected override void Up(MigrationBuilder migrationBuilder)
++    {
++        migrationBuilder.AddColumn<DateTime>(
++            name: "CreatedAt",
++            table: "FollowedPeople",
++            type: "datetime2",
++            nullable: true
++        );
++    }
++
++    /// <inheritdoc />
++    protected override void Down(MigrationBuilder migrationBuilder)
++    {
++        migrationBuilder.DropColumn(name: "CreatedAt", table: "FollowedPeople");
++    }
++}
+diff --git a/src/Conduit/Infrastructure/Migrations/SqlServer/SqlServerConduitContextModelSnapshot.cs b/src/Conduit/Infrastructure/Migrations/SqlServer/SqlServerConduitContextModelSnapshot.cs
+index 1438e80..4e9ec2d 100644
+--- a/src/Conduit/Infrastructure/Migrations/SqlServer/SqlServerConduitContextModelSnapshot.cs
++++ b/src/Conduit/Infrastructure/Migrations/SqlServer/SqlServerConduitContextModelSnapshot.cs
+@@ -17,7 +17,7 @@ namespace Conduit.Infrastructure.Migrations.SqlServer
+         {
+ #pragma warning disable 612, 618
+             modelBuilder
+-                .HasAnnotation("ProductVersion", "10.0.12")
++                .HasAnnotation("ProductVersion", "10.0.14")
+                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
+ 
+             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+@@ -134,6 +134,9 @@ namespace Conduit.Infrastructure.Migrations.SqlServer
+                     b.Property<int>("TargetId")
+                         .HasColumnType("int");
+ 
++                    b.Property<DateTime?>("CreatedAt")
++                        .HasColumnType("datetime2");
++
+                     b.HasKey("ObserverId", "TargetId");
+ 
+                     b.HasIndex("TargetId");
+diff --git a/src/Conduit/Infrastructure/Migrations/Sqlite/20261102172056_FollowCreatedAt.Designer.cs b/src/Conduit/Infrastructure/Migrations/Sqlite/20261102172056_FollowCreatedAt.Designer.cs
+new file mode 100644
+index 0000000..9b32e15
+--- /dev/null
++++ b/src/Conduit/Infrastructure/Migrations/Sqlite/20261102172056_FollowCreatedAt.Designer.cs
+@@ -0,0 +1,299 @@
++﻿// <auto-generated />
++using System;
++using Conduit.Infrastructure;
++using Microsoft.EntityFrameworkCore;
++using Microsoft.EntityFrameworkCore.Infrastructure;
++using Microsoft.EntityFrameworkCore.Migrations;
++using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
++
++#nullable disable
++
++namespace Conduit.Infrastructure.Migrations.Sqlite
++{
++    [DbContext(typeof(SqliteConduitContext))]
++    [Migration("20261102172056_FollowCreatedAt")]
++    partial class FollowCreatedAt
++    {
++        /// <inheritdoc />
++        protected override void BuildTargetModel(ModelBuilder modelBuilder)
++        {
++#pragma warning disable 612, 618
++            modelBuilder.HasAnnotation("ProductVersion", "10.0.14");
++
++            modelBuilder.Entity("Conduit.Domain.Article", b =>
++                {
++                    b.Property<int>("ArticleId")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("INTEGER");
++
++                    b.Property<int?>("AuthorPersonId")
++                        .HasColumnType("INTEGER");
++
++                    b.Property<string>("Body")
++                        .HasColumnType("TEXT");
++
++                    b.Property<DateTime>("CreatedAt")
++                        .HasColumnType("TEXT");
++
++                    b.Property<string>("Description")
++                        .HasColumnType("TEXT");
++
++                    b.Property<string>("Slug")
++                        .HasMaxLength(450)
++                        .HasColumnType("TEXT");
++
++                    b.Property<string>("Title")
++                        .HasColumnType("TEXT");
++
++                    b.Property<DateTime>("UpdatedAt")
++                        .HasColumnType("TEXT");
++
++                    b.HasKey("ArticleId");
++
++                    b.HasIndex("AuthorPersonId");
++
++                    b.HasIndex("Slug")
++                        .IsUnique();
++
++                    b.ToTable("Articles");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.ArticleFavorite", b =>
++                {
++                    b.Property<int>("ArticleId")
++                        .HasColumnType("INTEGER");
++
++                    b.Property<int>("PersonId")
++                        .HasColumnType("INTEGER");
++
++                    b.HasKey("ArticleId", "PersonId");
++
++                    b.HasIndex("PersonId");
++
++                    b.ToTable("ArticleFavorites");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.ArticleTag", b =>
++                {
++                    b.Property<int>("ArticleId")
++                        .HasColumnType("INTEGER");
++
++                    b.Property<string>("TagId")
++                        .HasColumnType("TEXT");
++
++                    b.HasKey("ArticleId", "TagId");
++
++                    b.HasIndex("TagId");
++
++                    b.ToTable("ArticleTags");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.Comment", b =>
++                {
++                    b.Property<int>("CommentId")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("INTEGER")
++                        .HasJsonPropertyName("id");
++
++                    b.Property<int>("ArticleId")
++                        .HasColumnType("INTEGER");
++
++                    b.Property<int>("AuthorId")
++                        .HasColumnType("INTEGER");
++
++                    b.Property<string>("Body")
++                        .HasColumnType("TEXT");
++
++                    b.Property<DateTime>("CreatedAt")
++                        .HasColumnType("TEXT");
++
++                    b.Property<DateTime>("UpdatedAt")
++                        .HasColumnType("TEXT");
++
++                    b.HasKey("CommentId");
++
++                    b.HasIndex("ArticleId");
++
++                    b.HasIndex("AuthorId");
++
++                    b.ToTable("Comments");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.FollowedPeople", b =>
++                {
++                    b.Property<int>("ObserverId")
++                        .HasColumnType("INTEGER");
++
++                    b.Property<int>("TargetId")
++                        .HasColumnType("INTEGER");
++
++                    b.Property<DateTime?>("CreatedAt")
++                        .HasColumnType("TEXT");
++
++                    b.HasKey("ObserverId", "TargetId");
++
++                    b.HasIndex("TargetId");
++
++                    b.ToTable("FollowedPeople");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.Person", b =>
++                {
++                    b.Property<int>("PersonId")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("INTEGER");
++
++                    b.Property<string>("Bio")
++                        .HasColumnType("TEXT");
++
++                    b.Property<string>("Email")
++                        .HasMaxLength(320)
++                        .HasColumnType("TEXT");
++
++                    b.Property<byte[]>("Hash")
++                        .IsRequired()
++                        .HasColumnType("BLOB");
++
++                    b.Property<string>("Image")
++                        .HasColumnType("TEXT");
++
++                    b.Property<byte[]>("Salt")
++                        .IsRequired()
++                        .HasColumnType("BLOB");
++
++                    b.Property<string>("Username")
++                        .HasMaxLength(256)
++                        .HasColumnType("TEXT");
++
++                    b.HasKey("PersonId");
++
++                    b.HasIndex("Email")
++                        .IsUnique();
++
++                    b.HasIndex("Username")
++                        .IsUnique();
++
++                    b.ToTable("Persons");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.Tag", b =>
++                {
++                    b.Property<string>("TagId")
++                        .HasColumnType("TEXT");
++
++                    b.HasKey("TagId");
++
++                    b.ToTable("Tags");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.Article", b =>
++                {
++                    b.HasOne("Conduit.Domain.Person", "Author")
++                        .WithMany()
++                        .HasForeignKey("AuthorPersonId");
++
++                    b.Navigation("Author");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.ArticleFavorite", b =>
++                {
++                    b.HasOne("Conduit.Domain.Article", "Article")
++                        .WithMany("ArticleFavorites")
++                        .HasForeignKey("ArticleId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.HasOne("Conduit.Domain.Person", "Person")
++                        .WithMany("ArticleFavorites")
++                        .HasForeignKey("PersonId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.Navigation("Article");
++
++                    b.Navigation("Person");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.ArticleTag", b =>
++                {
++                    b.HasOne("Conduit.Domain.Article", "Article")
++                        .WithMany("ArticleTags")
++                        .HasForeignKey("ArticleId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.HasOne("Conduit.Domain.Tag", "Tag")
++                        .WithMany("ArticleTags")
++                        .HasForeignKey("TagId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.Navigation("Article");
++
++                    b.Navigation("Tag");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.Comment", b =>
++                {
++                    b.HasOne("Conduit.Domain.Article", "Article")
++                        .WithMany("Comments")
++                        .HasForeignKey("ArticleId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.HasOne("Conduit.Domain.Person", "Author")
++                        .WithMany()
++                        .HasForeignKey("AuthorId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.Navigation("Article");
++
++                    b.Navigation("Author");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.FollowedPeople", b =>
++                {
++                    b.HasOne("Conduit.Domain.Person", "Observer")
++                        .WithMany("Followers")
++                        .HasForeignKey("ObserverId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.HasOne("Conduit.Domain.Person", "Target")
++                        .WithMany("Following")
++                        .HasForeignKey("TargetId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.Navigation("Observer");
++
++                    b.Navigation("Target");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.Article", b =>
++                {
++                    b.Navigation("ArticleFavorites");
++
++                    b.Navigation("ArticleTags");
++
++                    b.Navigation("Comments");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.Person", b =>
++                {
++                    b.Navigation("ArticleFavorites");
++
++                    b.Navigation("Followers");
++
++                    b.Navigation("Following");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.Tag", b =>
++                {
++                    b.Navigation("ArticleTags");
++                });
++#pragma warning restore 612, 618
++        }
++    }
++}
+diff --git a/src/Conduit/Infrastructure/Migrations/Sqlite/20261102172056_FollowCreatedAt.cs b/src/Conduit/Infrastructure/Migrations/Sqlite/20261102172056_FollowCreatedAt.cs
+new file mode 100644
+index 0000000..de0ce39
+--- /dev/null
++++ b/src/Conduit/Infrastructure/Migrations/Sqlite/20261102172056_FollowCreatedAt.cs
+@@ -0,0 +1,27 @@
++﻿using System;
++using Microsoft.EntityFrameworkCore.Migrations;
++
++#nullable disable
++
++namespace Conduit.Infrastructure.Migrations.Sqlite;
++
++/// <inheritdoc />
++public partial class FollowCreatedAt : Migration
++{
++    /// <inheritdoc />
++    protected override void Up(MigrationBuilder migrationBuilder)
++    {
++        migrationBuilder.AddColumn<DateTime>(
++            name: "CreatedAt",
++            table: "FollowedPeople",
++            type: "TEXT",
++            nullable: true
++        );
++    }
++
++    /// <inheritdoc />
++    protected override void Down(MigrationBuilder migrationBuilder)
++    {
++        migrationBuilder.DropColumn(name: "CreatedAt", table: "FollowedPeople");
++    }
++}
+diff --git a/src/Conduit/Infrastructure/Migrations/Sqlite/SqliteConduitContextModelSnapshot.cs b/src/Conduit/Infrastructure/Migrations/Sqlite/SqliteConduitContextModelSnapshot.cs
+index 17070ef..7aaaa94 100644
+--- a/src/Conduit/Infrastructure/Migrations/Sqlite/SqliteConduitContextModelSnapshot.cs
++++ b/src/Conduit/Infrastructure/Migrations/Sqlite/SqliteConduitContextModelSnapshot.cs
+@@ -15,7 +15,7 @@ namespace Conduit.Infrastructure.Migrations.Sqlite
+         protected override void BuildModel(ModelBuilder modelBuilder)
+         {
+ #pragma warning disable 612, 618
+-            modelBuilder.HasAnnotation("ProductVersion", "10.0.12");
++            modelBuilder.HasAnnotation("ProductVersion", "10.0.14");
+ 
+             modelBuilder.Entity("Conduit.Domain.Article", b =>
+                 {
+@@ -124,6 +124,9 @@ namespace Conduit.Infrastructure.Migrations.Sqlite
+                     b.Property<int>("TargetId")
+                         .HasColumnType("INTEGER");
+ 
++                    b.Property<DateTime?>("CreatedAt")
++                        .HasColumnType("TEXT");
++
+                     b.HasKey("ObserverId", "TargetId");
+ 
+                     b.HasIndex("TargetId");
+diff --git a/tests/Conduit.IntegrationTests/MigrationTests.cs b/tests/Conduit.IntegrationTests/MigrationTests.cs
+index 620b876..da4539e 100644
+--- a/tests/Conduit.IntegrationTests/MigrationTests.cs
++++ b/tests/Conduit.IntegrationTests/MigrationTests.cs
+@@ -23,7 +23,10 @@ public class MigrationTests
+         );
+         await DatabaseInitializer.InitializeAsync(db);
+         await DatabaseInitializer.InitializeAsync(db);
+-        Assert.Equal(2, (await db.Database.GetAppliedMigrationsAsync()).Count());
++        Assert.Equal(
++            db.Database.GetMigrations().Count(),
++            (await db.Database.GetAppliedMigrationsAsync()).Count()
++        );
+         Assert.False(db.Database.HasPendingModelChanges());
+     }
+ 
+@@ -53,7 +56,10 @@ public class MigrationTests
+         );
+         await DatabaseInitializer.InitializeAsync(db);
+         Assert.Equal("existing", (await db.Persons.SingleAsync()).Username);
+-        Assert.Equal(2, (await db.Database.GetAppliedMigrationsAsync()).Count());
++        Assert.Equal(
++            db.Database.GetMigrations().Count(),
++            (await db.Database.GetAppliedMigrationsAsync()).Count()
++        );
+     }
+ 
+     [Fact]

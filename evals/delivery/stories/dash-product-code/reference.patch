@@ -1,0 +1,203 @@
+diff --git a/src/Monolith/ClassifiedAds.ArchTests/ApiEndpointTests.cs b/src/Monolith/ClassifiedAds.ArchTests/ApiEndpointTests.cs
+index 93f11f1..06e90c0 100644
+--- a/src/Monolith/ClassifiedAds.ArchTests/ApiEndpointTests.cs
++++ b/src/Monolith/ClassifiedAds.ArchTests/ApiEndpointTests.cs
+@@ -2,6 +2,7 @@ using ClassifiedAds.Infrastructure.Web.MinimalApis;
+ using ClassifiedAds.WebAPI.Authorization;
+ using ClassifiedAds.WebAPI;
+ using ClassifiedAds.WebAPI.Models.Files;
++using ProductModel = ClassifiedAds.WebAPI.Models.Products.ProductModel;
+ using ClassifiedAds.WebAPI.RateLimiterPolicies;
+ using Microsoft.AspNetCore.Antiforgery;
+ using Microsoft.AspNetCore.Authorization;
+@@ -72,6 +73,23 @@ public class ApiEndpointTests
+         Assert.Contains(nameof(UploadFileModel.Name), details.Errors.Keys);
+     }
+ 
++    [Theory]
++    [InlineData(null)]
++    [InlineData("")]
++    [InlineData("   ")]
++    public async Task ProductValidationRejectsEmptyCode(string code)
++    {
++        var filter = new ModelValidationFilter<ProductModel>();
++        var context = EndpointFilterInvocationContext.Create(new DefaultHttpContext(),
++            new ProductModel { Code = code, Name = "Name" });
++
++        var result = await filter.InvokeAsync(context, _ => throw new InvalidOperationException("Invalid input reached the handler."));
++
++        var problem = Assert.IsType<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>(result);
++        var details = Assert.IsType<HttpValidationProblemDetails>(problem.ProblemDetails);
++        Assert.Equal([nameof(ProductModel.Code)], details.Errors.Keys);
++    }
++
+     private static WebApplication CreateApp()
+     {
+         var builder = WebApplication.CreateBuilder();
+diff --git a/src/Monolith/ClassifiedAds.Persistence/DbConfigurations/ProductConfiguration.cs b/src/Monolith/ClassifiedAds.Persistence/DbConfigurations/ProductConfiguration.cs
+index 644fd02..36cf0f8 100644
+--- a/src/Monolith/ClassifiedAds.Persistence/DbConfigurations/ProductConfiguration.cs
++++ b/src/Monolith/ClassifiedAds.Persistence/DbConfigurations/ProductConfiguration.cs
+@@ -8,11 +8,26 @@ namespace ClassifiedAds.Persistence.DbConfigurations;
+ 
+ public class ProductConfiguration : IEntityTypeConfiguration<Product>
+ {
++    public const string NormalizedCodeColumn = "NormalizedCode";
++
++    public const string NormalizedCodeIndex = "UX_Products_NormalizedCode";
++
+     public void Configure(EntityTypeBuilder<Product> builder)
+     {
+         builder.ToTable("Products");
+         builder.Property(x => x.Id).HasDefaultValueSql("newsequentialid()");
+ 
++        // The code is unique after trim and without regard to case. The code is stored trimmed,
++        // so the database keeps an upper-case copy and puts a unique index on it. This index also
++        // stops two creates with the same code at the same moment.
++        // SQL Server cannot index nvarchar(max), so the copy is cast to nvarchar(450).
++        // DbProviderExtensions replaces the SQL for PostgreSQL.
++        builder.Property<string>(NormalizedCodeColumn)
++            .HasComputedColumnSql("CAST(UPPER([Code]) AS nvarchar(450))", stored: true);
++        builder.HasIndex(NormalizedCodeColumn)
++            .IsUnique()
++            .HasDatabaseName(NormalizedCodeIndex);
++
+         // Seed
+         builder.HasData(new List<Product>
+         {
+diff --git a/src/Monolith/ClassifiedAds.Persistence/DbProviderExtensions.cs b/src/Monolith/ClassifiedAds.Persistence/DbProviderExtensions.cs
+index 8365b5f..dc7c0f7 100644
+--- a/src/Monolith/ClassifiedAds.Persistence/DbProviderExtensions.cs
++++ b/src/Monolith/ClassifiedAds.Persistence/DbProviderExtensions.cs
+@@ -42,6 +42,10 @@ public static class DbProviderExtensions
+         modelBuilder.Entity<ProductEmbedding>().Property(x => x.Embedding).HasConversion(vectorConverter).HasColumnType("real[]");
+         modelBuilder.Entity<FileEntryEmbedding>().Property(x => x.Embedding).HasConversion(vectorConverter).HasColumnType("real[]");
+ 
++        // Unique product code without regard to case (see ProductConfiguration).
++        modelBuilder.Entity<Product>().Property<string>(DbConfigurations.ProductConfiguration.NormalizedCodeColumn)
++            .HasComputedColumnSql("upper(\"Code\")", stored: true);
++
+         foreach (var property in modelBuilder.Model.GetEntityTypes().SelectMany(x => x.GetProperties()))
+         {
+             if (string.Equals(property.GetDefaultValueSql(), "newsequentialid()", StringComparison.OrdinalIgnoreCase))
+diff --git a/src/Monolith/ClassifiedAds.WebAPI/Endpoints/ProductsEndpoints.cs b/src/Monolith/ClassifiedAds.WebAPI/Endpoints/ProductsEndpoints.cs
+index 8c379f2..4387633 100644
+--- a/src/Monolith/ClassifiedAds.WebAPI/Endpoints/ProductsEndpoints.cs
++++ b/src/Monolith/ClassifiedAds.WebAPI/Endpoints/ProductsEndpoints.cs
+@@ -202,30 +202,92 @@ public class ProductsEndpoints
+     }
+ 
+     private static async Task<IResult> Post([FromBody] ProductModel model,
+-        [FromServices] Dispatcher dispatcher)
++        [FromServices] Dispatcher dispatcher,
++        [FromServices] IRepository<Product, Guid> productRepository)
+     {
++        model.Code = model.Code.Trim();
++        if (await IsCodeUsedByOtherProductAsync(productRepository, model.Code, model.Id))
++        {
++            return CodeAlreadyUsed();
++        }
++
+         var product = model.ToEntity();
+-        await dispatcher.DispatchAsync(new AddUpdateProductCommand { Product = product });
++
++        if (!await TrySaveAsync(dispatcher, productRepository, product))
++        {
++            return CodeAlreadyUsed();
++        }
++
+         model = product.ToModel();
+         return Results.Created($"/api/products/{model.Id}", model);
+     }
+ 
+     private static async Task<IResult> Put(Guid id, [FromBody] ProductModel model,
+-        [FromServices] Dispatcher dispatcher)
++        [FromServices] Dispatcher dispatcher,
++        [FromServices] IRepository<Product, Guid> productRepository)
+     {
+         var product = await dispatcher.DispatchAsync(new GetProductQuery { Id = id, ThrowNotFoundIfNull = true });
+ 
++        model.Code = model.Code.Trim();
++        if (await IsCodeUsedByOtherProductAsync(productRepository, model.Code, product.Id))
++        {
++            return CodeAlreadyUsed();
++        }
++
+         product.Code = model.Code;
+         product.Name = model.Name;
+         product.Description = model.Description;
+ 
+-        await dispatcher.DispatchAsync(new AddUpdateProductCommand { Product = product });
++        if (!await TrySaveAsync(dispatcher, productRepository, product))
++        {
++            return CodeAlreadyUsed();
++        }
+ 
+         model = product.ToModel();
+ 
+         return Results.Ok(model);
+     }
+ 
++    /// <summary>
++    /// Two codes are the same when they are equal without regard to case. The code must be trimmed.
++    /// </summary>
++    private static Task<bool> IsCodeUsedByOtherProductAsync(IRepository<Product, Guid> productRepository, string code, Guid productId)
++    {
++        var normalizedCode = code.ToUpperInvariant();
++        return productRepository.GetQueryableSet()
++            .AnyAsync(x => x.Id != productId && x.Code.ToUpper() == normalizedCode);
++    }
++
++    /// <summary>
++    /// Saves the product. Returns false when the unique index on the code refused the save, because
++    /// another request stored the same code after the check.
++    /// </summary>
++    private static async Task<bool> TrySaveAsync(Dispatcher dispatcher, IRepository<Product, Guid> productRepository, Product product)
++    {
++        try
++        {
++            await dispatcher.DispatchAsync(new AddUpdateProductCommand { Product = product });
++            return true;
++        }
++        catch (DbUpdateException)
++        {
++            if (await IsCodeUsedByOtherProductAsync(productRepository, product.Code, product.Id))
++            {
++                return false;
++            }
++
++            throw;
++        }
++    }
++
++    private static IResult CodeAlreadyUsed()
++    {
++        return Results.ValidationProblem(new Dictionary<string, string[]>
++        {
++            [nameof(ProductModel.Code)] = ["The Code is already used by another product."],
++        });
++    }
++
+     private static async Task<IResult> Delete(Guid id,
+         [FromServices] Dispatcher dispatcher)
+     {
+diff --git a/src/Monolith/ClassifiedAds.WebAPI/Models/Products/ProductModel.cs b/src/Monolith/ClassifiedAds.WebAPI/Models/Products/ProductModel.cs
+index 5da69a7..9057b5a 100644
+--- a/src/Monolith/ClassifiedAds.WebAPI/Models/Products/ProductModel.cs
++++ b/src/Monolith/ClassifiedAds.WebAPI/Models/Products/ProductModel.cs
+@@ -1,5 +1,6 @@
+ ﻿using System;
+ using System.Collections.Generic;
++using System.ComponentModel.DataAnnotations;
+ 
+ namespace ClassifiedAds.WebAPI.Models.Products;
+ 
+@@ -7,6 +8,8 @@ public class ProductModel
+ {
+     public Guid Id { get; set; }
+ 
++    [Display(Name = "Code")]
++    [Required(ErrorMessage = "The Code is required.")]
+     public string Code { get; set; }
+ 
+     public string Name { get; set; }

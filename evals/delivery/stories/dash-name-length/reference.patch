@@ -1,0 +1,63 @@
+diff --git a/src/Monolith/ClassifiedAds.ArchTests/ApiEndpointTests.cs b/src/Monolith/ClassifiedAds.ArchTests/ApiEndpointTests.cs
+index 93f11f1..e885219 100644
+--- a/src/Monolith/ClassifiedAds.ArchTests/ApiEndpointTests.cs
++++ b/src/Monolith/ClassifiedAds.ArchTests/ApiEndpointTests.cs
+@@ -2,6 +2,7 @@ using ClassifiedAds.Infrastructure.Web.MinimalApis;
+ using ClassifiedAds.WebAPI.Authorization;
+ using ClassifiedAds.WebAPI;
+ using ClassifiedAds.WebAPI.Models.Files;
++using ProductModel = ClassifiedAds.WebAPI.Models.Products.ProductModel;
+ using ClassifiedAds.WebAPI.RateLimiterPolicies;
+ using Microsoft.AspNetCore.Antiforgery;
+ using Microsoft.AspNetCore.Authorization;
+@@ -72,6 +73,30 @@ public class ApiEndpointTests
+         Assert.Contains(nameof(UploadFileModel.Name), details.Errors.Keys);
+     }
+ 
++    [Theory]
++    [InlineData(101, false)]
++    [InlineData(100, true)]
++    [InlineData(1, true)]
++    public async Task ProductValidationLimitsNameTo100Characters(int length, bool valid)
++    {
++        var filter = new ModelValidationFilter<ProductModel>();
++        var context = EndpointFilterInvocationContext.Create(new DefaultHttpContext(),
++            new ProductModel { Code = "C1", Name = new string('a', length) });
++
++        var result = await filter.InvokeAsync(context, _ => ValueTask.FromResult<object>("handler"));
++
++        if (valid)
++        {
++            Assert.Equal("handler", result);
++            return;
++        }
++
++        var problem = Assert.IsType<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>(result);
++        Assert.Equal(StatusCodes.Status400BadRequest, problem.StatusCode);
++        var details = Assert.IsType<HttpValidationProblemDetails>(problem.ProblemDetails);
++        Assert.Equal([nameof(ProductModel.Name)], details.Errors.Keys);
++    }
++
+     private static WebApplication CreateApp()
+     {
+         var builder = WebApplication.CreateBuilder();
+diff --git a/src/Monolith/ClassifiedAds.WebAPI/Models/Products/ProductModel.cs b/src/Monolith/ClassifiedAds.WebAPI/Models/Products/ProductModel.cs
+index 5da69a7..2bb8882 100644
+--- a/src/Monolith/ClassifiedAds.WebAPI/Models/Products/ProductModel.cs
++++ b/src/Monolith/ClassifiedAds.WebAPI/Models/Products/ProductModel.cs
+@@ -1,5 +1,6 @@
+ ﻿using System;
+ using System.Collections.Generic;
++using System.ComponentModel.DataAnnotations;
+ 
+ namespace ClassifiedAds.WebAPI.Models.Products;
+ 
+@@ -9,6 +10,8 @@ public class ProductModel
+ 
+     public string Code { get; set; }
+ 
++    [Display(Name = "Name")]
++    [StringLength(100, ErrorMessage = "The Name must be at most 100 characters long.")]
+     public string Name { get; set; }
+ 
+     public string Description { get; set; }

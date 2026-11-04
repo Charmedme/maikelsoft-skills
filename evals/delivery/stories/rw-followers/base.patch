@@ -1,0 +1,20 @@
+diff --git a/REVIEW.md b/REVIEW.md
+new file mode 100644
+index 0000000..4934c61
+--- /dev/null
++++ b/REVIEW.md
+@@ -0,0 +1,14 @@
++# Review rules
++
++These rules apply to each change in this repository. A review checks each of them.
++
++## Must fix
++
++1. Every endpoint that returns a list takes `limit` and `offset`. `limit` is 20 by default and at most 100. A `limit` below 1 or above 100, or a negative `offset`, is refused with 422 and an error on that field. The response has a count of all matching items next to the list.
++2. A response never contains the email address of a member, except the own account in `GET /api/user`.
++3. Each change to the database schema has a migration for SQLite and for SQL Server.
++4. Each new endpoint has integration tests for the success case and for each refusal.
++
++## Nits
++
++At most five nits for each review. A nit never blocks a merge.

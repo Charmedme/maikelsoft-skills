@@ -1,0 +1,15 @@
+{
+  "fixture": "dashboard",
+  "size": "medium",
+  "risk": "normal",
+  "difficulty": "medium",
+  "kinds": [
+    "open behaviour",
+    "time and state"
+  ],
+  "defects": [
+    5,
+    9
+  ],
+  "role": "normalised uniqueness on create and update, reuse after delete, and a race that needs a database constraint"
+}

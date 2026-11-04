@@ -1,0 +1,179 @@
+diff --git a/src/Monolith/ClassifiedAds.ArchTests/ApiEndpointTests.cs b/src/Monolith/ClassifiedAds.ArchTests/ApiEndpointTests.cs
+index 93f11f1..1f3e498 100644
+--- a/src/Monolith/ClassifiedAds.ArchTests/ApiEndpointTests.cs
++++ b/src/Monolith/ClassifiedAds.ArchTests/ApiEndpointTests.cs
+@@ -56,6 +56,33 @@ public class ApiEndpointTests
+         Assert.Equal(StatusCodes.Status400BadRequest, context.Response.StatusCode);
+     }
+ 
++    [Theory]
++    [InlineData("{\"code\":\"C1\",\"name\":\"Name\"}")]
++    [InlineData("{\"code\":\"C1\",\"name\":\"Name\",\"rowVersion\":\"\"}")]
++    [InlineData("{\"code\":\"C1\",\"name\":\"Name\",\"rowVersion\":\"not base64!\"}")]
++    public async Task ProductUpdateWithoutRowVersionReturnsBadRequestBeforeLoadingProduct(string body)
++    {
++        await using var app = CreateApp();
++        var endpoint = ((IEndpointRouteBuilder)app).DataSources.SelectMany(source => source.Endpoints)
++            .Single(endpoint => endpoint.Metadata.GetMetadata<IEndpointNameMetadata>().EndpointName == "Products_Put");
++        var context = new DefaultHttpContext { RequestServices = app.Services };
++        context.Request.RouteValues["id"] = Guid.NewGuid().ToString();
++        context.Request.Method = HttpMethods.Put;
++        context.Request.ContentType = "application/json";
++        var bytes = System.Text.Encoding.UTF8.GetBytes(body);
++        context.Request.Body = new System.IO.MemoryStream(bytes);
++        context.Request.ContentLength = bytes.Length;
++        context.Features.Set<Microsoft.AspNetCore.Http.Features.IHttpRequestBodyDetectionFeature>(new RequestWithBody());
++        context.Response.Body = new System.IO.MemoryStream();
++
++        await endpoint.RequestDelegate(context);
++
++        Assert.Equal(StatusCodes.Status400BadRequest, context.Response.StatusCode);
++        context.Response.Body.Position = 0;
++        var response = await new System.IO.StreamReader(context.Response.Body).ReadToEndAsync();
++        Assert.Contains("\"RowVersion\"", response, StringComparison.Ordinal);
++    }
++
+     [Fact]
+     public async Task UploadValidationRejectsMissingFileAndOverlongName()
+     {
+@@ -72,6 +99,11 @@ public class ApiEndpointTests
+         Assert.Contains(nameof(UploadFileModel.Name), details.Errors.Keys);
+     }
+ 
++    private sealed class RequestWithBody : Microsoft.AspNetCore.Http.Features.IHttpRequestBodyDetectionFeature
++    {
++        public bool CanHaveBody => true;
++    }
++
+     private static WebApplication CreateApp()
+     {
+         var builder = WebApplication.CreateBuilder();
+diff --git a/src/Monolith/ClassifiedAds.WebAPI/Endpoints/ProductsEndpoints.cs b/src/Monolith/ClassifiedAds.WebAPI/Endpoints/ProductsEndpoints.cs
+index 8c379f2..27121f9 100644
+--- a/src/Monolith/ClassifiedAds.WebAPI/Endpoints/ProductsEndpoints.cs
++++ b/src/Monolith/ClassifiedAds.WebAPI/Endpoints/ProductsEndpoints.cs
+@@ -78,7 +78,8 @@ public class ProductsEndpoints
+             .AddEndpointFilter<ModelValidationFilter<ProductModel>>()
+             .ProducesValidationProblem()
+             .Produces(StatusCodes.Status200OK)
+-            .Produces(StatusCodes.Status404NotFound);
++            .Produces(StatusCodes.Status404NotFound)
++            .ProducesProblem(StatusCodes.Status409Conflict);
+ 
+         builder.MapDelete("api/products/{id}", Delete)
+             .WithTags("Products")
+@@ -213,19 +214,68 @@ public class ProductsEndpoints
+     private static async Task<IResult> Put(Guid id, [FromBody] ProductModel model,
+         [FromServices] Dispatcher dispatcher)
+     {
++        if (!TryParseRowVersion(model.RowVersion, out var rowVersion))
++        {
++            return Results.ValidationProblem(new Dictionary<string, string[]>
++            {
++                [nameof(ProductModel.RowVersion)] = ["The RowVersion is required. Send the RowVersion of the product that you edited."],
++            });
++        }
++
+         var product = await dispatcher.DispatchAsync(new GetProductQuery { Id = id, ThrowNotFoundIfNull = true });
+ 
++        // Optimistic concurrency: the editor must start from the current version. The concurrency
++        // token of the entity also refuses an update when another update was saved after this load.
++        if (product.RowVersion == null || !product.RowVersion.AsSpan().SequenceEqual(rowVersion))
++        {
++            return ProductChanged();
++        }
++
+         product.Code = model.Code;
+         product.Name = model.Name;
+         product.Description = model.Description;
+ 
+-        await dispatcher.DispatchAsync(new AddUpdateProductCommand { Product = product });
++        try
++        {
++            await dispatcher.DispatchAsync(new AddUpdateProductCommand { Product = product });
++        }
++        catch (DbUpdateConcurrencyException)
++        {
++            return ProductChanged();
++        }
+ 
+         model = product.ToModel();
+ 
+         return Results.Ok(model);
+     }
+ 
++    private static bool TryParseRowVersion(string value, out byte[] rowVersion)
++    {
++        rowVersion = null;
++        if (string.IsNullOrWhiteSpace(value))
++        {
++            return false;
++        }
++
++        try
++        {
++            rowVersion = Convert.FromBase64String(value);
++            return rowVersion.Length > 0;
++        }
++        catch (FormatException)
++        {
++            return false;
++        }
++    }
++
++    private static IResult ProductChanged()
++    {
++        return Results.Problem(
++            statusCode: StatusCodes.Status409Conflict,
++            title: "Conflict",
++            detail: "Somebody else changed the product after you opened it. Load the product again and repeat your change.");
++    }
++
+     private static async Task<IResult> Delete(Guid id,
+         [FromServices] Dispatcher dispatcher)
+     {
+diff --git a/src/Monolith/ClassifiedAds.WebAPI/Models/Products/ProductModel.cs b/src/Monolith/ClassifiedAds.WebAPI/Models/Products/ProductModel.cs
+index 5da69a7..4ea5b92 100644
+--- a/src/Monolith/ClassifiedAds.WebAPI/Models/Products/ProductModel.cs
++++ b/src/Monolith/ClassifiedAds.WebAPI/Models/Products/ProductModel.cs
+@@ -13,6 +13,12 @@ public class ProductModel
+ 
+     public string Description { get; set; }
+ 
++    /// <summary>
++    /// The version of the product, as an opaque string. An update must send back the version that the
++    /// editor started from.
++    /// </summary>
++    public string RowVersion { get; set; }
++
+     public double SimilarityScore { get; set; }
+ 
+     public ProductEmbeddingModel ProductEmbedding { get; set; }
+diff --git a/src/Monolith/ClassifiedAds.WebAPI/Models/Products/ProductModelMappingConfiguration.cs b/src/Monolith/ClassifiedAds.WebAPI/Models/Products/ProductModelMappingConfiguration.cs
+index e59de60..85ce4a9 100644
+--- a/src/Monolith/ClassifiedAds.WebAPI/Models/Products/ProductModelMappingConfiguration.cs
++++ b/src/Monolith/ClassifiedAds.WebAPI/Models/Products/ProductModelMappingConfiguration.cs
+@@ -1,4 +1,5 @@
+ ﻿using ClassifiedAds.Domain.Entities;
++using System;
+ using System.Collections.Generic;
+ using System.Linq;
+ 
+@@ -24,6 +25,7 @@ public static class ProductModelMappingConfiguration
+             Code = entity.Code,
+             Name = entity.Name,
+             Description = entity.Description,
++            RowVersion = entity.RowVersion == null ? null : Convert.ToBase64String(entity.RowVersion),
+         };
+     }
+ 
+diff --git a/src/UIs/angular/src/app/products/product.ts b/src/UIs/angular/src/app/products/product.ts
+index 850253f..898a420 100644
+--- a/src/UIs/angular/src/app/products/product.ts
++++ b/src/UIs/angular/src/app/products/product.ts
+@@ -7,4 +7,5 @@ export interface IProduct {
+   description: string;
+   starRating: number;
+   imageUrl: string;
++  rowVersion?: string;
+ }

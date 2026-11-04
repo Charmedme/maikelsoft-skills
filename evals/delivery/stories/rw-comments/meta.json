@@ -1,0 +1,31 @@
+{
+  "fixture": "conduit",
+  "size": "medium",
+  "risk": "normal",
+  "difficulty": "medium",
+  "kinds": [
+    "known solution",
+    "security the story does not name"
+  ],
+  "defects": [
+    18,
+    26,
+    28
+  ],
+  "role": "known solution with an ownership trap: a comment id that belongs to another article",
+  "hurl": [
+    "articles.hurl",
+    "auth.hurl",
+    "comments.hurl",
+    "errors_articles.hurl",
+    "errors_auth.hurl",
+    "errors_authorization.hurl",
+    "errors_comments.hurl",
+    "errors_profiles.hurl",
+    "favorites.hurl",
+    "feed.hurl",
+    "pagination.hurl",
+    "profiles.hurl",
+    "tags.hurl"
+  ]
+}

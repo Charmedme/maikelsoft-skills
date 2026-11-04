@@ -1,0 +1,384 @@
+diff --git a/src/Conduit/Features/Comments/CommentEnvelope.cs b/src/Conduit/Features/Comments/CommentEnvelope.cs
+deleted file mode 100644
+index 23662e4..0000000
+--- a/src/Conduit/Features/Comments/CommentEnvelope.cs
++++ /dev/null
+@@ -1,5 +0,0 @@
+-using Conduit.Domain;
+-
+-namespace Conduit.Features.Comments;
+-
+-public record CommentEnvelope(Comment Comment);
+diff --git a/src/Conduit/Features/Comments/CommentsController.cs b/src/Conduit/Features/Comments/CommentsController.cs
+deleted file mode 100644
+index 784bbfe..0000000
+--- a/src/Conduit/Features/Comments/CommentsController.cs
++++ /dev/null
+@@ -1,41 +0,0 @@
+-using System.Threading;
+-using System.Threading.Tasks;
+-using Conduit.Infrastructure.Security;
+-using Mediator;
+-using Microsoft.AspNetCore.Authorization;
+-using Microsoft.AspNetCore.Http;
+-using Microsoft.AspNetCore.Mvc;
+-
+-namespace Conduit.Features.Comments;
+-
+-[Route("articles")]
+-public class CommentsController(IMediator mediator) : Controller
+-{
+-    [HttpPost("{slug}/comments")]
+-    [Authorize(AuthenticationSchemes = JwtIssuerOptions.Schemes)]
+-    public async ValueTask<IActionResult> Create(
+-        string slug,
+-        [FromBody] Create.Model model,
+-        CancellationToken cancellationToken
+-    ) =>
+-        StatusCode(
+-            StatusCodes.Status201Created,
+-            await mediator.Send(new Create.Command(model, slug), cancellationToken)
+-        );
+-
+-    [HttpGet("{slug}/comments")]
+-    public ValueTask<CommentsEnvelope> Get(string slug, CancellationToken cancellationToken) =>
+-        mediator.Send(new List.Query(slug), cancellationToken);
+-
+-    [HttpDelete("{slug}/comments/{id}")]
+-    [Authorize(AuthenticationSchemes = JwtIssuerOptions.Schemes)]
+-    public async ValueTask<IActionResult> Delete(
+-        string slug,
+-        int id,
+-        CancellationToken cancellationToken
+-    )
+-    {
+-        await mediator.Send(new Delete.Command(slug, id), cancellationToken);
+-        return NoContent();
+-    }
+-}
+diff --git a/src/Conduit/Features/Comments/CommentsEnvelope.cs b/src/Conduit/Features/Comments/CommentsEnvelope.cs
+deleted file mode 100644
+index 5bb1d65..0000000
+--- a/src/Conduit/Features/Comments/CommentsEnvelope.cs
++++ /dev/null
+@@ -1,6 +0,0 @@
+-using System.Collections.Generic;
+-using Conduit.Domain;
+-
+-namespace Conduit.Features.Comments;
+-
+-public record CommentsEnvelope(List<Comment> Comments);
+diff --git a/src/Conduit/Features/Comments/Create.cs b/src/Conduit/Features/Comments/Create.cs
+deleted file mode 100644
+index 026d5f3..0000000
+--- a/src/Conduit/Features/Comments/Create.cs
++++ /dev/null
+@@ -1,66 +0,0 @@
+-using System;
+-using System.Net;
+-using System.Threading;
+-using System.Threading.Tasks;
+-using Conduit.Domain;
+-using Conduit.Infrastructure;
+-using Conduit.Infrastructure.Errors;
+-using FluentValidation;
+-using Mediator;
+-using Microsoft.EntityFrameworkCore;
+-
+-namespace Conduit.Features.Comments;
+-
+-public class Create
+-{
+-    public record CommentData(string? Body);
+-
+-    public record Command(Model Model, string Slug) : IRequest<CommentEnvelope>;
+-
+-    public record Model(CommentData Comment);
+-
+-    public class CommandValidator : AbstractValidator<Command>
+-    {
+-        public CommandValidator() =>
+-            RuleFor(x => x.Model.Comment.Body).NotEmpty().WithMessage(Constants.BLANK);
+-    }
+-
+-    public class Handler(ConduitContext context, ICurrentUserAccessor currentUserAccessor)
+-        : IRequestHandler<Command, CommentEnvelope>
+-    {
+-        public async ValueTask<CommentEnvelope> Handle(
+-            Command message,
+-            CancellationToken cancellationToken
+-        )
+-        {
+-            var article = await context
+-                .Articles.Include(x => x.Comments)
+-                .FirstOrDefaultAsync(x => x.Slug == message.Slug, cancellationToken);
+-
+-            if (article == null)
+-            {
+-                throw new RestException(HttpStatusCode.NotFound, "article", Constants.NOT_FOUND);
+-            }
+-
+-            var author = await context.Persons.FirstAsync(
+-                x => x.PersonId == currentUserAccessor.GetCurrentPersonId(),
+-                cancellationToken
+-            );
+-
+-            var comment = new Comment
+-            {
+-                Author = author,
+-                Body = message.Model.Comment.Body ?? string.Empty,
+-                CreatedAt = DateTime.UtcNow,
+-                UpdatedAt = DateTime.UtcNow,
+-            };
+-            await context.Comments.AddAsync(comment, cancellationToken);
+-
+-            article.Comments.Add(comment);
+-
+-            await context.SaveChangesAsync(cancellationToken);
+-
+-            return new CommentEnvelope(comment);
+-        }
+-    }
+-}
+diff --git a/src/Conduit/Features/Comments/Delete.cs b/src/Conduit/Features/Comments/Delete.cs
+deleted file mode 100644
+index 8d00090..0000000
+--- a/src/Conduit/Features/Comments/Delete.cs
++++ /dev/null
+@@ -1,48 +0,0 @@
+-using System.Linq;
+-using System.Net;
+-using System.Threading;
+-using System.Threading.Tasks;
+-using Conduit.Infrastructure;
+-using Conduit.Infrastructure.Errors;
+-using FluentValidation;
+-using Mediator;
+-using Microsoft.EntityFrameworkCore;
+-
+-namespace Conduit.Features.Comments;
+-
+-public class Delete
+-{
+-    public record Command(string Slug, int Id) : IRequest;
+-
+-    public class CommandValidator : AbstractValidator<Command>
+-    {
+-        public CommandValidator() => RuleFor(x => x.Slug).NotNull().NotEmpty();
+-    }
+-
+-    public class QueryHandler(ConduitContext context, ICurrentUserAccessor currentUserAccessor)
+-        : IRequestHandler<Command>
+-    {
+-        public async ValueTask<Unit> Handle(Command message, CancellationToken cancellationToken)
+-        {
+-            var article =
+-                await context
+-                    .Articles.Include(x => x.Comments)
+-                        .ThenInclude(x => x.Author)
+-                    .FirstOrDefaultAsync(x => x.Slug == message.Slug, cancellationToken)
+-                ?? throw new RestException(HttpStatusCode.NotFound, "article", Constants.NOT_FOUND);
+-
+-            var comment =
+-                article.Comments.FirstOrDefault(x => x.CommentId == message.Id)
+-                ?? throw new RestException(HttpStatusCode.NotFound, "comment", Constants.NOT_FOUND);
+-
+-            if (comment.Author?.PersonId != currentUserAccessor.GetCurrentPersonId())
+-            {
+-                throw new RestException(HttpStatusCode.Forbidden, "comment", Constants.FORBIDDEN);
+-            }
+-
+-            context.Comments.Remove(comment);
+-            await context.SaveChangesAsync(cancellationToken);
+-            return Unit.Value;
+-        }
+-    }
+-}
+diff --git a/src/Conduit/Features/Comments/List.cs b/src/Conduit/Features/Comments/List.cs
+deleted file mode 100644
+index 27a3feb..0000000
+--- a/src/Conduit/Features/Comments/List.cs
++++ /dev/null
+@@ -1,35 +0,0 @@
+-using System.Net;
+-using System.Threading;
+-using System.Threading.Tasks;
+-using Conduit.Infrastructure;
+-using Conduit.Infrastructure.Errors;
+-using Mediator;
+-using Microsoft.EntityFrameworkCore;
+-
+-namespace Conduit.Features.Comments;
+-
+-public class List
+-{
+-    public record Query(string Slug) : IRequest<CommentsEnvelope>, IReadOnlyRequest;
+-
+-    public class QueryHandler(ConduitContext context) : IRequestHandler<Query, CommentsEnvelope>
+-    {
+-        public async ValueTask<CommentsEnvelope> Handle(
+-            Query message,
+-            CancellationToken cancellationToken
+-        )
+-        {
+-            var article = await context
+-                .Articles.Include(x => x.Comments)
+-                    .ThenInclude(x => x.Author)
+-                .FirstOrDefaultAsync(x => x.Slug == message.Slug, cancellationToken);
+-
+-            if (article == null)
+-            {
+-                throw new RestException(HttpStatusCode.NotFound, "article", Constants.NOT_FOUND);
+-            }
+-
+-            return new CommentsEnvelope(article.Comments);
+-        }
+-    }
+-}
+diff --git a/tests/Conduit.IntegrationTests/Features/Articles/DeleteTests.cs b/tests/Conduit.IntegrationTests/Features/Articles/DeleteTests.cs
+index 4d5a884..c8603f8 100644
+--- a/tests/Conduit.IntegrationTests/Features/Articles/DeleteTests.cs
++++ b/tests/Conduit.IntegrationTests/Features/Articles/DeleteTests.cs
+@@ -2,7 +2,6 @@ using System;
+ using System.Linq;
+ using System.Threading.Tasks;
+ using Conduit.Features.Articles;
+-using Conduit.IntegrationTests.Features.Comments;
+ using Conduit.IntegrationTests.Features.Users;
+ using Microsoft.EntityFrameworkCore;
+ using Xunit;
+@@ -78,56 +77,4 @@ public class DeleteTests : SliceFixture
+         );
+         Assert.Null(dbArticle);
+     }
+-
+-    [Fact]
+-    public async Task Expect_Delete_Article_With_Comments()
+-    {
+-        var createArticleCmd = new Create.Command(
+-            new Create.ArticleData
+-            {
+-                Title = "Test article dsergiu77",
+-                Description = "Description of the test article",
+-                Body = "Body of the test article",
+-            }
+-        );
+-
+-        var article = await ArticleHelpers.CreateArticle(this, createArticleCmd);
+-        var dbArticle =
+-            await ExecuteDbContextAsync(db =>
+-                db.Articles.Include(a => a.ArticleTags)
+-                    .Where(d => d.Slug == article.Slug)
+-                    .SingleOrDefaultAsync()
+-            ) ?? throw new InvalidOperationException();
+-
+-        var articleId = dbArticle.ArticleId;
+-        var slug = dbArticle.Slug;
+-
+-        // create article comment
+-        var createCommentCmd = new Conduit.Features.Comments.Create.Command(
+-            new(new Conduit.Features.Comments.Create.CommentData("article comment")),
+-            slug ?? throw new InvalidOperationException()
+-        );
+-
+-        var comment = await CommentHelpers.CreateComment(
+-            this,
+-            createCommentCmd,
+-            UserHelpers.DefaultUserName
+-        );
+-
+-        // delete article with comment
+-        var deleteCmd = new Delete.Command(slug);
+-
+-        var dbContext = GetDbContext();
+-
+-        var articleDeleteHandler = new Delete.QueryHandler(
+-            dbContext,
+-            new StubCurrentUserAccessor(UserHelpers.DefaultUserName)
+-        );
+-        await articleDeleteHandler.Handle(deleteCmd, new System.Threading.CancellationToken());
+-
+-        var deleted = await ExecuteDbContextAsync(db =>
+-            db.Articles.Where(d => d.Slug == deleteCmd.Slug).SingleOrDefaultAsync()
+-        );
+-        Assert.Null(deleted);
+-    }
+ }
+diff --git a/tests/Conduit.IntegrationTests/Features/Comments/CommentHelpers.cs b/tests/Conduit.IntegrationTests/Features/Comments/CommentHelpers.cs
+deleted file mode 100644
+index 16d8b2e..0000000
+--- a/tests/Conduit.IntegrationTests/Features/Comments/CommentHelpers.cs
++++ /dev/null
+@@ -1,72 +0,0 @@
+-using System.Linq;
+-using System.Net;
+-using System.Threading.Tasks;
+-using Conduit.Features.Comments;
+-using Conduit.Infrastructure.Errors;
+-using Conduit.IntegrationTests.Features.Users;
+-using Microsoft.EntityFrameworkCore;
+-
+-namespace Conduit.IntegrationTests.Features.Comments;
+-
+-public static class CommentHelpers
+-{
+-    /// <summary>
+-    /// creates an article comment based on the given Create command.
+-    /// Creates a default user if parameter userName is empty.
+-    /// </summary>
+-    /// <param name="fixture"></param>
+-    /// <param name="command"></param>
+-    /// <param name="userName"></param>
+-    /// <returns></returns>
+-    public static async Task<Domain.Comment> CreateComment(
+-        SliceFixture fixture,
+-        Create.Command command,
+-        string userName
+-    )
+-    {
+-        if (string.IsNullOrWhiteSpace(userName))
+-        {
+-            var user = await UserHelpers.CreateDefaultUser(fixture);
+-
+-            if (user.Username is null)
+-            {
+-                throw new RestException(HttpStatusCode.BadRequest);
+-            }
+-
+-            userName = user.Username;
+-        }
+-
+-        var dbContext = fixture.GetDbContext();
+-        var currentAccessor = new StubCurrentUserAccessor(userName);
+-
+-        var commentCreateHandler = new Create.Handler(dbContext, currentAccessor);
+-        var created = await commentCreateHandler.Handle(
+-            command,
+-            new System.Threading.CancellationToken()
+-        );
+-
+-        var dbArticleWithComments = await fixture.ExecuteDbContextAsync(db =>
+-            db.Articles.Include(a => a.Comments)
+-                .Include(a => a.Author)
+-                .Where(a => a.Slug == command.Slug)
+-                .SingleOrDefaultAsync()
+-        );
+-
+-        if (dbArticleWithComments is null)
+-        {
+-            throw new RestException(HttpStatusCode.NotFound, new { Article = Constants.NOT_FOUND });
+-        }
+-
+-        var dbComment = dbArticleWithComments.Comments.FirstOrDefault(c =>
+-            c.ArticleId == dbArticleWithComments.ArticleId
+-            && c.Author == dbArticleWithComments.Author
+-        );
+-
+-        if (dbComment is null)
+-        {
+-            throw new RestException(HttpStatusCode.NotFound, new { Article = Constants.NOT_FOUND });
+-        }
+-
+-        return dbComment;
+-    }
+-}

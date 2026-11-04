@@ -1,0 +1,501 @@
+diff --git a/src/Monolith/ClassifiedAds.Application/AuditLogEntries/Queries/SearchAuditEntriesQuery.cs b/src/Monolith/ClassifiedAds.Application/AuditLogEntries/Queries/SearchAuditEntriesQuery.cs
+new file mode 100644
+index 0000000..43fd570
+--- /dev/null
++++ b/src/Monolith/ClassifiedAds.Application/AuditLogEntries/Queries/SearchAuditEntriesQuery.cs
+@@ -0,0 +1,107 @@
++using ClassifiedAds.Application.AuditLogEntries.DTOs;
++using ClassifiedAds.Application.Common.DTOs;
++using ClassifiedAds.Domain.Entities;
++using ClassifiedAds.Domain.Repositories;
++using System;
++using System.Linq;
++using System.Threading;
++using System.Threading.Tasks;
++
++namespace ClassifiedAds.Application.AuditLogEntries.Queries;
++
++/// <summary>
++/// Audit log entries in a UTC range, for one user name and one action, newest first, one page.
++/// </summary>
++public class SearchAuditEntriesQuery : IQuery<Paged<AuditLogEntryDTO>>
++{
++    /// <summary>Gets or sets the first instant that is included. Null: no lower limit.</summary>
++    public DateTimeOffset? FromUtc { get; set; }
++
++    /// <summary>Gets or sets the first instant that is not included. Null: no upper limit.</summary>
++    public DateTimeOffset? ToUtcExclusive { get; set; }
++
++    /// <summary>Gets or sets the user name. Exact match without regard to case. Null: all users.</summary>
++    public string UserName { get; set; }
++
++    /// <summary>Gets or sets the action. Exact match without regard to case. Null: all actions.</summary>
++    public string Action { get; set; }
++
++    /// <summary>Gets or sets the page number. The first page is 1.</summary>
++    public int Page { get; set; } = 1;
++
++    public int PageSize { get; set; } = 20;
++}
++
++internal class SearchAuditEntriesQueryHandler : IQueryHandler<SearchAuditEntriesQuery, Paged<AuditLogEntryDTO>>
++{
++    private readonly IAuditLogEntryReadOnlyRepository _auditLogEntryRepository;
++    private readonly IReadOnlyRepository<User, Guid> _userRepository;
++
++    public SearchAuditEntriesQueryHandler(IAuditLogEntryReadOnlyRepository auditLogEntryRepository, IReadOnlyRepository<User, Guid> userRepository)
++    {
++        _auditLogEntryRepository = auditLogEntryRepository;
++        _userRepository = userRepository;
++    }
++
++    public async Task<Paged<AuditLogEntryDTO>> HandleAsync(SearchAuditEntriesQuery query, CancellationToken cancellationToken = default)
++    {
++        var auditLogs = _auditLogEntryRepository.Get(new AuditLogEntryQueryOptions { AsNoTracking = true });
++        var users = _userRepository.GetQueryableSet();
++
++        var rs = auditLogs.Join(users, x => x.UserId, y => y.Id,
++            (x, y) => new AuditLogEntryDTO
++            {
++                Id = x.Id,
++                UserId = x.UserId,
++                Action = x.Action,
++                ObjectId = x.ObjectId,
++                Log = x.Log,
++                CreatedDateTime = x.CreatedDateTime,
++                UserName = y.UserName,
++            });
++
++        if (query.FromUtc.HasValue)
++        {
++            var fromUtc = query.FromUtc.Value.ToUniversalTime();
++            rs = rs.Where(x => x.CreatedDateTime >= fromUtc);
++        }
++
++        if (query.ToUtcExclusive.HasValue)
++        {
++            var toUtc = query.ToUtcExclusive.Value.ToUniversalTime();
++            rs = rs.Where(x => x.CreatedDateTime < toUtc);
++        }
++
++        if (!string.IsNullOrEmpty(query.UserName))
++        {
++            var userName = query.UserName.ToUpperInvariant();
++            rs = rs.Where(x => x.UserName.ToUpper() == userName);
++        }
++
++        if (!string.IsNullOrEmpty(query.Action))
++        {
++            var action = query.Action.ToUpperInvariant();
++            rs = rs.Where(x => x.Action.ToUpper() == action);
++        }
++
++        var result = new Paged<AuditLogEntryDTO>
++        {
++            TotalItems = rs.LongCount(),
++        };
++
++        var skip = ((long)query.Page - 1) * query.PageSize;
++        if (skip >= result.TotalItems)
++        {
++            result.Items = [];
++            return result;
++        }
++
++        result.Items = await _userRepository.ToListAsync(rs
++            .OrderByDescending(x => x.CreatedDateTime)
++            .ThenBy(x => x.Id)
++            .Skip((int)skip)
++            .Take(query.PageSize));
++
++        return result;
++    }
++}
+diff --git a/src/Monolith/ClassifiedAds.Application/AuditLogEntries/Services/DayRange.cs b/src/Monolith/ClassifiedAds.Application/AuditLogEntries/Services/DayRange.cs
+new file mode 100644
+index 0000000..fabfd77
+--- /dev/null
++++ b/src/Monolith/ClassifiedAds.Application/AuditLogEntries/Services/DayRange.cs
+@@ -0,0 +1,46 @@
++using System;
++
++namespace ClassifiedAds.Application.AuditLogEntries.Services;
++
++/// <summary>
++/// Converts whole days in a time zone to instants in UTC.
++/// </summary>
++public static class DayRange
++{
++    /// <summary>
++    /// Returns the first instant (UTC) of the day in the time zone. When the local midnight does not
++    /// exist (a clock change at midnight), the day starts at the end of the gap. When the local midnight
++    /// occurs two times, the day starts at the first one.
++    /// </summary>
++    public static DateTime StartOfDayUtc(DateOnly day, TimeZoneInfo timeZone)
++    {
++        ArgumentNullException.ThrowIfNull(timeZone);
++
++        var local = day.ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified);
++
++        while (timeZone.IsInvalidTime(local))
++        {
++            local = local.AddMinutes(1);
++        }
++
++        if (timeZone.IsAmbiguousTime(local))
++        {
++            var offsets = timeZone.GetAmbiguousTimeOffsets(local);
++            var largest = offsets[0] > offsets[1] ? offsets[0] : offsets[1];
++            return DateTime.SpecifyKind(local - largest, DateTimeKind.Utc);
++        }
++
++        return TimeZoneInfo.ConvertTimeToUtc(local, timeZone);
++    }
++
++    /// <summary>
++    /// Returns the UTC range [start, end) that covers the days from <paramref name="from"/> to
++    /// <paramref name="to"/> in the time zone. Both days are included. A null day gives an open end.
++    /// </summary>
++    public static (DateTimeOffset? StartUtc, DateTimeOffset? EndUtc) ToUtcRange(DateOnly? from, DateOnly? to, TimeZoneInfo timeZone)
++    {
++        DateTimeOffset? start = from.HasValue ? new DateTimeOffset(StartOfDayUtc(from.Value, timeZone), TimeSpan.Zero) : null;
++        DateTimeOffset? end = to.HasValue ? new DateTimeOffset(StartOfDayUtc(to.Value.AddDays(1), timeZone), TimeSpan.Zero) : null;
++        return (start, end);
++    }
++}
+diff --git a/src/Monolith/ClassifiedAds.ArchTests/ApiEndpointTests.cs b/src/Monolith/ClassifiedAds.ArchTests/ApiEndpointTests.cs
+index 93f11f1..85dbc2e 100644
+--- a/src/Monolith/ClassifiedAds.ArchTests/ApiEndpointTests.cs
++++ b/src/Monolith/ClassifiedAds.ArchTests/ApiEndpointTests.cs
+@@ -26,7 +26,7 @@ public class ApiEndpointTests
+         var endpoints = ((IEndpointRouteBuilder)app).DataSources
+             .SelectMany(source => source.Endpoints).OfType<RouteEndpoint>().ToArray();
+ 
+-        Assert.Equal(42, endpoints.Length);
++        Assert.Equal(43, endpoints.Length);
+         Assert.Equal(endpoints.Length, endpoints.Select(endpoint =>
+             endpoint.Metadata.GetMetadata<IEndpointNameMetadata>().EndpointName).Distinct().Count());
+         Assert.All(endpoints, endpoint => Assert.NotEmpty(endpoint.Metadata.GetOrderedMetadata<IAuthorizeData>()));
+@@ -38,6 +38,9 @@ public class ApiEndpointTests
+         var auditLogs = endpoints.Single(endpoint => endpoint.Metadata.GetMetadata<IEndpointNameMetadata>().EndpointName == "AuditLogEntries_Get");
+         Assert.Equal(RateLimiterPolicyNames.GetAuditLogsPolicy, auditLogs.Metadata.GetMetadata<EnableRateLimitingAttribute>().PolicyName);
+ 
++        var auditLogSearch = endpoints.Single(endpoint => endpoint.Metadata.GetMetadata<IEndpointNameMetadata>().EndpointName == "AuditLogEntries_Search");
++        Assert.Contains(auditLogSearch.Metadata.GetOrderedMetadata<IAuthorizeData>(), data => data.Policy == Permissions.GetAuditLogs);
++
+         var upload = endpoints.Single(endpoint => endpoint.Metadata.GetMetadata<IEndpointNameMetadata>().EndpointName == "Files_Upload");
+         Assert.False(upload.Metadata.GetMetadata<IAntiforgeryMetadata>().RequiresValidation);
+     }
+diff --git a/src/Monolith/ClassifiedAds.UnitTests/Application/AuditLogEntries/DayRangeTests.cs b/src/Monolith/ClassifiedAds.UnitTests/Application/AuditLogEntries/DayRangeTests.cs
+new file mode 100644
+index 0000000..5d4c2ea
+--- /dev/null
++++ b/src/Monolith/ClassifiedAds.UnitTests/Application/AuditLogEntries/DayRangeTests.cs
+@@ -0,0 +1,45 @@
++using ClassifiedAds.Application.AuditLogEntries.Services;
++using System;
++using Xunit;
++
++namespace ClassifiedAds.UnitTests.Application.AuditLogEntries;
++
++public class DayRangeTests
++{
++    [Theory]
++    [InlineData("UTC", "2024-06-15", "2024-06-15T00:00:00Z")]
++    [InlineData("Pacific/Kiritimati", "2024-06-15", "2024-06-14T10:00:00Z")]
++    [InlineData("Etc/GMT+12", "2024-06-15", "2024-06-15T12:00:00Z")]
++    [InlineData("Europe/Amsterdam", "2024-01-15", "2024-01-14T23:00:00Z")]
++    [InlineData("Europe/Amsterdam", "2024-07-15", "2024-07-14T22:00:00Z")]
++    [InlineData("America/Santiago", "2024-09-08", "2024-09-08T04:00:00Z")]
++    public void StartOfDayUtc_ReturnsFirstInstantOfLocalDay(string timeZoneId, string day, string expected)
++    {
++        var timeZone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
++
++        var start = DayRange.StartOfDayUtc(DateOnly.Parse(day, System.Globalization.CultureInfo.InvariantCulture), timeZone);
++
++        Assert.Equal(DateTimeKind.Utc, start.Kind);
++        Assert.Equal(DateTime.Parse(expected, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AdjustToUniversal), start);
++    }
++
++    [Fact]
++    public void ToUtcRange_IncludesBothDays()
++    {
++        var timeZone = TimeZoneInfo.FindSystemTimeZoneById("Pacific/Kiritimati");
++
++        var (start, end) = DayRange.ToUtcRange(new DateOnly(2024, 6, 15), new DateOnly(2024, 6, 15), timeZone);
++
++        Assert.Equal(new DateTimeOffset(2024, 6, 14, 10, 0, 0, TimeSpan.Zero), start);
++        Assert.Equal(new DateTimeOffset(2024, 6, 15, 10, 0, 0, TimeSpan.Zero), end);
++    }
++
++    [Fact]
++    public void ToUtcRange_WithoutDays_HasOpenEnds()
++    {
++        var (start, end) = DayRange.ToUtcRange(null, null, TimeZoneInfo.Utc);
++
++        Assert.Null(start);
++        Assert.Null(end);
++    }
++}
+diff --git a/src/Monolith/ClassifiedAds.WebAPI/Endpoints/AuditLogEntriesEndpoints.cs b/src/Monolith/ClassifiedAds.WebAPI/Endpoints/AuditLogEntriesEndpoints.cs
+index 6d01152..83d1455 100644
+--- a/src/Monolith/ClassifiedAds.WebAPI/Endpoints/AuditLogEntriesEndpoints.cs
++++ b/src/Monolith/ClassifiedAds.WebAPI/Endpoints/AuditLogEntriesEndpoints.cs
+@@ -3,12 +3,14 @@ using ClassifiedAds.Application.AuditLogEntries.DTOs;
+ using ClassifiedAds.Application.AuditLogEntries.Queries;
+ using ClassifiedAds.Application.Common.DTOs;
+ using ClassifiedAds.WebAPI.Authorization;
++using ClassifiedAds.WebAPI.Models.AuditLogEntries;
+ using ClassifiedAds.WebAPI.RateLimiterPolicies;
+ using Microsoft.AspNetCore.Builder;
+ using Microsoft.AspNetCore.Http;
+ using Microsoft.AspNetCore.Mvc;
+ using Microsoft.AspNetCore.Routing;
+ using System.Collections.Generic;
++using System.Linq;
+ using System.Threading.Tasks;
+ 
+ namespace ClassifiedAds.WebAPI.Endpoints;
+@@ -31,6 +33,15 @@ public class AuditLogEntriesEndpoints
+             .RequireAuthorization()
+             .RequireAuthorization(Permissions.GetAuditLogs)
+             .Produces<Paged<AuditLogEntryDTO>>(StatusCodes.Status200OK);
++
++        builder.MapGet("api/auditlogentries/search", Search)
++            .WithTags("AuditLogEntries")
++            .WithName("AuditLogEntries_Search")
++            .RequireAuthorization()
++            .RequireAuthorization(Permissions.GetAuditLogs)
++            .RequireRateLimiting(RateLimiterPolicyNames.GetAuditLogsPolicy)
++            .ProducesValidationProblem()
++            .Produces<AuditLogSearchResultModel>(StatusCodes.Status200OK);
+     }
+ 
+     private static async Task<IResult> Get([FromServices] Dispatcher dispatcher)
+@@ -45,4 +56,31 @@ public class AuditLogEntriesEndpoints
+         var logs = await dispatcher.DispatchAsync(new GetPagedAuditEntriesQuery { Page = page, PageSize = pageSize });
+         return Results.Ok(logs);
+     }
++
++    private static async Task<IResult> Search([FromServices] Dispatcher dispatcher,
++        [AsParameters] AuditLogSearchModel model)
++    {
++        if (!model.TryCreateQuery(out var query, out var errors))
++        {
++            return Results.ValidationProblem(errors);
++        }
++
++        var logs = await dispatcher.DispatchAsync(query);
++
++        return Results.Ok(new AuditLogSearchResultModel
++        {
++            Items = logs.Items.Select(x => new AuditLogSearchItemModel
++            {
++                Id = x.Id,
++                UserName = x.UserName,
++                Action = x.Action,
++                ObjectId = x.ObjectId,
++                CreatedDateTime = x.CreatedDateTime.UtcDateTime,
++                Log = x.Log,
++            }).ToList(),
++            TotalItems = logs.TotalItems,
++            Page = query.Page,
++            PageSize = query.PageSize,
++        });
++    }
+ }
+diff --git a/src/Monolith/ClassifiedAds.WebAPI/Models/AuditLogEntries/AuditLogSearchModel.cs b/src/Monolith/ClassifiedAds.WebAPI/Models/AuditLogEntries/AuditLogSearchModel.cs
+new file mode 100644
+index 0000000..965227b
+--- /dev/null
++++ b/src/Monolith/ClassifiedAds.WebAPI/Models/AuditLogEntries/AuditLogSearchModel.cs
+@@ -0,0 +1,152 @@
++using ClassifiedAds.Application.AuditLogEntries.Queries;
++using ClassifiedAds.Application.AuditLogEntries.Services;
++using Microsoft.AspNetCore.Mvc;
++using System;
++using System.Collections.Generic;
++using System.Globalization;
++
++namespace ClassifiedAds.WebAPI.Models.AuditLogEntries;
++
++/// <summary>
++/// The query string of GET api/auditlogentries/search. All values are text, so that a wrong value
++/// gives a validation error on its field and not a binding error.
++/// </summary>
++public class AuditLogSearchModel
++{
++    public const int DefaultPageSize = 20;
++
++    public const int MaxPageSize = 100;
++
++    public const int MaxDays = 366;
++
++    [FromQuery(Name = "from")]
++    public string From { get; set; }
++
++    [FromQuery(Name = "to")]
++    public string To { get; set; }
++
++    [FromQuery(Name = "timeZone")]
++    public string TimeZone { get; set; }
++
++    [FromQuery(Name = "userName")]
++    public string UserName { get; set; }
++
++    [FromQuery(Name = "action")]
++    public string Action { get; set; }
++
++    [FromQuery(Name = "page")]
++    public string Page { get; set; }
++
++    [FromQuery(Name = "pageSize")]
++    public string PageSize { get; set; }
++
++    /// <summary>
++    /// Validates the values and makes the query. The days are whole days in the time zone (UTC when
++    /// no time zone is given), and both days are included.
++    /// </summary>
++    public bool TryCreateQuery(out SearchAuditEntriesQuery query, out Dictionary<string, string[]> errors)
++    {
++        query = null;
++        var problems = new Dictionary<string, List<string>>();
++
++        void Add(string field, string message)
++        {
++            if (!problems.TryGetValue(field, out var list))
++            {
++                problems[field] = list = new List<string>();
++            }
++
++            list.Add(message);
++        }
++
++        DateOnly? from = null;
++        if (!string.IsNullOrEmpty(From))
++        {
++            if (DateOnly.TryParseExact(From, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var value))
++            {
++                from = value;
++            }
++            else
++            {
++                Add("from", "The from date must be a date in the format yyyy-MM-dd.");
++            }
++        }
++
++        DateOnly? to = null;
++        if (!string.IsNullOrEmpty(To))
++        {
++            if (DateOnly.TryParseExact(To, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var value))
++            {
++                to = value;
++            }
++            else
++            {
++                Add("to", "The to date must be a date in the format yyyy-MM-dd.");
++            }
++        }
++
++        if (from.HasValue && to.HasValue)
++        {
++            if (from.Value > to.Value)
++            {
++                Add("from", "The from date must be on or before the to date.");
++                Add("to", "The to date must be on or after the from date.");
++            }
++            else if (to.Value.DayNumber - from.Value.DayNumber + 1 > MaxDays)
++            {
++                Add("to", $"The range can have at most {MaxDays} days.");
++            }
++        }
++
++        var timeZone = TimeZoneInfo.Utc;
++        if (!string.IsNullOrEmpty(TimeZone))
++        {
++            try
++            {
++                timeZone = TimeZoneInfo.FindSystemTimeZoneById(TimeZone);
++            }
++            catch (Exception ex) when (ex is TimeZoneNotFoundException or InvalidTimeZoneException)
++            {
++                Add("timeZone", "The time zone is not known. Use an IANA name such as Europe/Amsterdam.");
++            }
++        }
++
++        var page = 1;
++        if (!string.IsNullOrEmpty(Page)
++            && (!int.TryParse(Page, NumberStyles.Integer, CultureInfo.InvariantCulture, out page) || page < 1))
++        {
++            Add("page", "The page must be a whole number of 1 or more.");
++        }
++
++        var pageSize = DefaultPageSize;
++        if (!string.IsNullOrEmpty(PageSize)
++            && (!int.TryParse(PageSize, NumberStyles.Integer, CultureInfo.InvariantCulture, out pageSize) || pageSize < 1 || pageSize > MaxPageSize))
++        {
++            Add("pageSize", $"The page size must be a whole number from 1 to {MaxPageSize}.");
++        }
++
++        if (problems.Count > 0)
++        {
++            errors = new Dictionary<string, string[]>();
++            foreach (var problem in problems)
++            {
++                errors[problem.Key] = problem.Value.ToArray();
++            }
++
++            return false;
++        }
++
++        var (fromUtc, toUtcExclusive) = DayRange.ToUtcRange(from, to, timeZone);
++        query = new SearchAuditEntriesQuery
++        {
++            FromUtc = fromUtc,
++            ToUtcExclusive = toUtcExclusive,
++            UserName = string.IsNullOrEmpty(UserName) ? null : UserName,
++            Action = string.IsNullOrEmpty(Action) ? null : Action,
++            Page = page,
++            PageSize = pageSize,
++        };
++        errors = null;
++        return true;
++    }
++}
+diff --git a/src/Monolith/ClassifiedAds.WebAPI/Models/AuditLogEntries/AuditLogSearchResultModel.cs b/src/Monolith/ClassifiedAds.WebAPI/Models/AuditLogEntries/AuditLogSearchResultModel.cs
+new file mode 100644
+index 0000000..5bc48ef
+--- /dev/null
++++ b/src/Monolith/ClassifiedAds.WebAPI/Models/AuditLogEntries/AuditLogSearchResultModel.cs
+@@ -0,0 +1,31 @@
++using System;
++using System.Collections.Generic;
++
++namespace ClassifiedAds.WebAPI.Models.AuditLogEntries;
++
++public class AuditLogSearchResultModel
++{
++    public List<AuditLogSearchItemModel> Items { get; set; }
++
++    public long TotalItems { get; set; }
++
++    public int Page { get; set; }
++
++    public int PageSize { get; set; }
++}
++
++public class AuditLogSearchItemModel
++{
++    public Guid Id { get; set; }
++
++    public string UserName { get; set; }
++
++    public string Action { get; set; }
++
++    public string ObjectId { get; set; }
++
++    /// <summary>Gets or sets the time of the change in UTC.</summary>
++    public DateTime CreatedDateTime { get; set; }
++
++    public string Log { get; set; }
++}

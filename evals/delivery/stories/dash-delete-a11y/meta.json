@@ -1,0 +1,16 @@
+{
+  "fixture": "dashboard",
+  "size": "medium",
+  "risk": "low",
+  "difficulty": "medium",
+  "kinds": [
+    "browser"
+  ],
+  "defects": [
+    11,
+    15,
+    30
+  ],
+  "role": "focus management, accessible names, a status message, and the longest real content at phone width",
+  "ui": true
+}

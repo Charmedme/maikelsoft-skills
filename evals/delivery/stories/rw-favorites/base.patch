@@ -1,0 +1,375 @@
+diff --git a/src/Conduit/Features/Articles/ArticlesController.cs b/src/Conduit/Features/Articles/ArticlesController.cs
+index c044ecc..51a3332 100644
+--- a/src/Conduit/Features/Articles/ArticlesController.cs
++++ b/src/Conduit/Features/Articles/ArticlesController.cs
+@@ -15,24 +15,22 @@ public class ArticlesController(IMediator mediator) : Controller
+     public ValueTask<ArticlesEnvelope> Get(
+         [FromQuery] string? tag,
+         [FromQuery] string? author,
+-        [FromQuery] string? favorited,
+         [FromQuery] int? limit,
+         [FromQuery] int? offset,
+         CancellationToken cancellationToken
+-    ) => mediator.Send(new List.Query(tag, author, favorited, limit, offset), cancellationToken);
++    ) => mediator.Send(new List.Query(tag, author, limit, offset), cancellationToken);
+ 
+     [HttpGet("feed")]
+     [Authorize(AuthenticationSchemes = JwtIssuerOptions.Schemes)]
+     public ValueTask<ArticlesEnvelope> GetFeed(
+         [FromQuery] string? tag,
+         [FromQuery] string? author,
+-        [FromQuery] string? favorited,
+         [FromQuery] int? limit,
+         [FromQuery] int? offset,
+         CancellationToken cancellationToken
+     ) =>
+         mediator.Send(
+-            new List.Query(tag, author, favorited, limit, offset) { IsFeed = true },
++            new List.Query(tag, author, limit, offset) { IsFeed = true },
+             cancellationToken
+         );
+ 
+diff --git a/src/Conduit/Features/Articles/List.cs b/src/Conduit/Features/Articles/List.cs
+index aa1b208..4dd4e88 100644
+--- a/src/Conduit/Features/Articles/List.cs
++++ b/src/Conduit/Features/Articles/List.cs
+@@ -15,7 +15,6 @@ public class List
+     public record Query(
+         string? Tag,
+         string? Author,
+-        string? FavoritedUsername,
+         int? Limit,
+         int? Offset,
+         bool IsFeed = false
+@@ -58,14 +57,6 @@ public class List
+                 );
+             }
+ 
+-            if (!string.IsNullOrWhiteSpace(message.FavoritedUsername))
+-            {
+-                queryable = queryable.Where(x =>
+-                    x.ArticleFavorites.Any(y =>
+-                        y.Person != null && y.Person.Username == message.FavoritedUsername
+-                    )
+-                );
+-            }
+ 
+             var count = await queryable.CountAsync(cancellationToken);
+             var articles = await queryable
+@@ -82,9 +73,7 @@ public class List
+                     UpdatedAt = x.UpdatedAt,
+                     TagList = x.ArticleTags.Select(y => y.TagId!).ToList(),
+                     FavoritesCount = x.ArticleFavorites.Count,
+-                    Favorited =
+-                        currentPersonId != null
+-                        && x.ArticleFavorites.Any(y => y.PersonId == currentPersonId),
++                    Favorited = false,
+                     Author =
+                         x.Author == null
+                             ? null
+diff --git a/src/Conduit/Features/Favorites/Add.cs b/src/Conduit/Features/Favorites/Add.cs
+deleted file mode 100644
+index da93462..0000000
+--- a/src/Conduit/Features/Favorites/Add.cs
++++ /dev/null
+@@ -1,81 +0,0 @@
+-using System.Net;
+-using System.Threading;
+-using System.Threading.Tasks;
+-using Conduit.Domain;
+-using Conduit.Features.Articles;
+-using Conduit.Infrastructure;
+-using Conduit.Infrastructure.Errors;
+-using FluentValidation;
+-using Mediator;
+-using Microsoft.EntityFrameworkCore;
+-
+-namespace Conduit.Features.Favorites;
+-
+-public class Add
+-{
+-    public record Command(string Slug) : IRequest<ArticleEnvelope>;
+-
+-    public class CommandValidator : AbstractValidator<Command>
+-    {
+-        public CommandValidator() => RuleFor(x => x.Slug).NotNull().NotEmpty();
+-    }
+-
+-    public class QueryHandler(ConduitContext context, ICurrentUserAccessor currentUserAccessor)
+-        : IRequestHandler<Command, ArticleEnvelope>
+-    {
+-        public async ValueTask<ArticleEnvelope> Handle(
+-            Command message,
+-            CancellationToken cancellationToken
+-        )
+-        {
+-            var article = await context.Articles.FirstOrDefaultAsync(
+-                x => x.Slug == message.Slug,
+-                cancellationToken
+-            );
+-
+-            if (article == null)
+-            {
+-                throw new RestException(HttpStatusCode.NotFound, "article", Constants.NOT_FOUND);
+-            }
+-
+-            var person = await context.Persons.FirstOrDefaultAsync(
+-                x => x.PersonId == currentUserAccessor.GetCurrentPersonId(),
+-                cancellationToken
+-            );
+-
+-            if (person is null)
+-            {
+-                throw new RestException(HttpStatusCode.NotFound, "article", Constants.NOT_FOUND);
+-            }
+-
+-            var favorite = await context.ArticleFavorites.FirstOrDefaultAsync(
+-                x => x.ArticleId == article.ArticleId && x.PersonId == person.PersonId,
+-                cancellationToken
+-            );
+-
+-            if (favorite == null)
+-            {
+-                favorite = new ArticleFavorite
+-                {
+-                    Article = article,
+-                    ArticleId = article.ArticleId,
+-                    Person = person,
+-                    PersonId = person.PersonId,
+-                };
+-                await context.ArticleFavorites.AddAsync(favorite, cancellationToken);
+-                await context.SaveChangesAsync(cancellationToken);
+-            }
+-
+-            article = await context
+-                .Articles.GetAllData()
+-                .FirstOrDefaultAsync(x => x.ArticleId == article.ArticleId, cancellationToken);
+-            if (article is null)
+-            {
+-                throw new RestException(HttpStatusCode.NotFound, "article", Constants.NOT_FOUND);
+-            }
+-
+-            new[] { article }.PopulateFavorited(currentUserAccessor.GetCurrentPersonId());
+-            return new ArticleEnvelope(article);
+-        }
+-    }
+-}
+diff --git a/src/Conduit/Features/Favorites/Delete.cs b/src/Conduit/Features/Favorites/Delete.cs
+deleted file mode 100644
+index 9ad60d5..0000000
+--- a/src/Conduit/Features/Favorites/Delete.cs
++++ /dev/null
+@@ -1,69 +0,0 @@
+-using System.Net;
+-using System.Threading;
+-using System.Threading.Tasks;
+-using Conduit.Features.Articles;
+-using Conduit.Infrastructure;
+-using Conduit.Infrastructure.Errors;
+-using FluentValidation;
+-using Mediator;
+-using Microsoft.EntityFrameworkCore;
+-
+-namespace Conduit.Features.Favorites;
+-
+-public class Delete
+-{
+-    public record Command(string Slug) : IRequest<ArticleEnvelope>;
+-
+-    public class CommandValidator : AbstractValidator<Command>
+-    {
+-        public CommandValidator() => RuleFor(x => x.Slug).NotNull().NotEmpty();
+-    }
+-
+-    public class QueryHandler(ConduitContext context, ICurrentUserAccessor currentUserAccessor)
+-        : IRequestHandler<Command, ArticleEnvelope>
+-    {
+-        public async ValueTask<ArticleEnvelope> Handle(
+-            Command message,
+-            CancellationToken cancellationToken
+-        )
+-        {
+-            var article =
+-                await context.Articles.FirstOrDefaultAsync(
+-                    x => x.Slug == message.Slug,
+-                    cancellationToken
+-                )
+-                ?? throw new RestException(HttpStatusCode.NotFound, "article", Constants.NOT_FOUND);
+-
+-            var person = await context.Persons.FirstOrDefaultAsync(
+-                x => x.PersonId == currentUserAccessor.GetCurrentPersonId(),
+-                cancellationToken
+-            );
+-            if (person is null)
+-            {
+-                throw new RestException(HttpStatusCode.NotFound, "article", Constants.NOT_FOUND);
+-            }
+-
+-            var favorite = await context.ArticleFavorites.FirstOrDefaultAsync(
+-                x => x.ArticleId == article.ArticleId && x.PersonId == person.PersonId,
+-                cancellationToken
+-            );
+-
+-            if (favorite != null)
+-            {
+-                context.ArticleFavorites.Remove(favorite);
+-                await context.SaveChangesAsync(cancellationToken);
+-            }
+-
+-            article = await context
+-                .Articles.GetAllData()
+-                .FirstOrDefaultAsync(x => x.ArticleId == article.ArticleId, cancellationToken);
+-            if (article is null)
+-            {
+-                throw new RestException(HttpStatusCode.NotFound, "article", Constants.NOT_FOUND);
+-            }
+-
+-            new[] { article }.PopulateFavorited(currentUserAccessor.GetCurrentPersonId());
+-            return new ArticleEnvelope(article);
+-        }
+-    }
+-}
+diff --git a/src/Conduit/Features/Favorites/FavoritesController.cs b/src/Conduit/Features/Favorites/FavoritesController.cs
+deleted file mode 100644
+index 0e153b8..0000000
+--- a/src/Conduit/Features/Favorites/FavoritesController.cs
++++ /dev/null
+@@ -1,27 +0,0 @@
+-using System.Threading;
+-using System.Threading.Tasks;
+-using Conduit.Features.Articles;
+-using Conduit.Infrastructure.Security;
+-using Mediator;
+-using Microsoft.AspNetCore.Authorization;
+-using Microsoft.AspNetCore.Mvc;
+-
+-namespace Conduit.Features.Favorites;
+-
+-[Route("articles")]
+-public class FavoritesController(IMediator mediator) : Controller
+-{
+-    [HttpPost("{slug}/favorite")]
+-    [Authorize(AuthenticationSchemes = JwtIssuerOptions.Schemes)]
+-    public ValueTask<ArticleEnvelope> FavoriteAdd(
+-        string slug,
+-        CancellationToken cancellationToken
+-    ) => mediator.Send(new Add.Command(slug), cancellationToken);
+-
+-    [HttpDelete("{slug}/favorite")]
+-    [Authorize(AuthenticationSchemes = JwtIssuerOptions.Schemes)]
+-    public ValueTask<ArticleEnvelope> FavoriteDelete(
+-        string slug,
+-        CancellationToken cancellationToken
+-    ) => mediator.Send(new Delete.Command(slug), cancellationToken);
+-}
+diff --git a/tests/Conduit.IntegrationTests/Features/Articles/FavoritedTests.cs b/tests/Conduit.IntegrationTests/Features/Articles/FavoritedTests.cs
+deleted file mode 100644
+index cc82ff4..0000000
+--- a/tests/Conduit.IntegrationTests/Features/Articles/FavoritedTests.cs
++++ /dev/null
+@@ -1,43 +0,0 @@
+-using System.Threading.Tasks;
+-using Conduit.Domain;
+-using Conduit.Features.Articles;
+-using Xunit;
+-
+-namespace Conduit.IntegrationTests.Features.Articles;
+-
+-public class FavoritedTests : SliceFixture
+-{
+-    [Theory]
+-    [InlineData("fan", true)]
+-    [InlineData("author", false)]
+-    [InlineData("bystander", false)]
+-    [InlineData(null, false)]
+-    public async Task Favorited_Is_Viewer_Specific(string? username, bool expected)
+-    {
+-        var db = GetDbContext();
+-        var author = new Person { Username = "author" };
+-        var fan = new Person { Username = "fan" };
+-        var article = new Article { Slug = "article", Author = author };
+-        db.AddRange(article, fan, new Person { Username = "bystander" });
+-        db.Add(new ArticleFavorite { Article = article, Person = fan });
+-        await db.SaveChangesAsync();
+-        var accessor = new StubCurrentUserAccessor(
+-            username,
+-            username == "fan" ? fan.PersonId
+-                : username == "author" ? author.PersonId
+-                : 3
+-        );
+-        var details = await new Details.QueryHandler(db, accessor).Handle(
+-            new Details.Query("article"),
+-            default
+-        );
+-        Assert.Equal(expected, details.Article.Favorited);
+-        Assert.Equal(1, details.Article.FavoritesCount);
+-        var list = await new List.QueryHandler(db, accessor).Handle(
+-            new List.Query(null, null, null, null, null),
+-            default
+-        );
+-        Assert.Equal(expected, Assert.Single(list.Articles).Favorited);
+-        Assert.Equal(1, Assert.Single(list.Articles).FavoritesCount);
+-    }
+-}
+diff --git a/tests/Conduit.IntegrationTests/Features/Articles/ListTests.cs b/tests/Conduit.IntegrationTests/Features/Articles/ListTests.cs
+index 44ea946..98f1298 100644
+--- a/tests/Conduit.IntegrationTests/Features/Articles/ListTests.cs
++++ b/tests/Conduit.IntegrationTests/Features/Articles/ListTests.cs
+@@ -21,7 +21,7 @@ public class ListTests : SliceFixture
+         );
+         await ArticleHelpers.CreateArticle(this, command);
+ 
+-        var result = await SendAsync(new List.Query(null, null, null, null, null));
++        var result = await SendAsync(new List.Query(null, null, null, null));
+ 
+         Assert.NotNull(result);
+         Assert.True(result.ArticlesCount > 0);
+@@ -41,7 +41,7 @@ public class ListTests : SliceFixture
+         );
+         await ArticleHelpers.CreateArticle(this, command);
+ 
+-        var result = await SendAsync(new List.Query("uniquetag123", null, null, null, null));
++        var result = await SendAsync(new List.Query("uniquetag123", null, null, null));
+ 
+         Assert.NotNull(result);
+         Assert.True(result.ArticlesCount > 0);
+@@ -50,7 +50,7 @@ public class ListTests : SliceFixture
+     [Fact]
+     public async Task Expect_List_Articles_With_Nonexistent_Tag_Returns_Empty()
+     {
+-        var result = await SendAsync(new List.Query("nonexistenttag99999", null, null, null, null));
++        var result = await SendAsync(new List.Query("nonexistenttag99999", null, null, null));
+ 
+         Assert.NotNull(result);
+         Assert.Equal(0, result.ArticlesCount);
+@@ -78,7 +78,7 @@ public class ListTests : SliceFixture
+             );
+         }
+ 
+-        var result = await SendAsync(new List.Query(null, null, null, 2, 0));
++        var result = await SendAsync(new List.Query(null, null, 2, 0));
+ 
+         Assert.NotNull(result);
+         Assert.Equal(2, result.Articles.Count);
+@@ -93,7 +93,7 @@ public class ListTests : SliceFixture
+         var handler = new List.QueryHandler(dbContext, currentAccessor);
+ 
+         var result = await handler.Handle(
+-            new List.Query(null, null, null, null, null) { IsFeed = true },
++            new List.Query(null, null, null, null) { IsFeed = true },
+             CancellationToken.None
+         );
+ 
+diff --git a/tests/Conduit.IntegrationTests/TransactionTests.cs b/tests/Conduit.IntegrationTests/TransactionTests.cs
+index 12717b3..61beb5f 100644
+--- a/tests/Conduit.IntegrationTests/TransactionTests.cs
++++ b/tests/Conduit.IntegrationTests/TransactionTests.cs
+@@ -19,7 +19,7 @@ public class TransactionTests : SliceFixture
+         var db = GetDbContext();
+         var pipeline = new DBContextTransactionPipelineBehavior<List.Query, ArticlesEnvelope>(db);
+         await pipeline.Handle(
+-            new List.Query(null, null, null, null, null),
++            new List.Query(null, null, null, null),
+             (_, _) =>
+             {
+                 Assert.Null(db.Database.CurrentTransaction);

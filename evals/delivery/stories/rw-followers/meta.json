@@ -1,0 +1,29 @@
+{
+  "fixture": "conduit",
+  "size": "medium",
+  "risk": "normal",
+  "difficulty": "medium",
+  "kinds": [
+    "review rule",
+    "seams"
+  ],
+  "defects": [
+    16
+  ],
+  "role": "a rule that is only in REVIEW.md (paging), and a schema change that needs migrations for both databases",
+  "hurl": [
+    "articles.hurl",
+    "auth.hurl",
+    "comments.hurl",
+    "errors_articles.hurl",
+    "errors_auth.hurl",
+    "errors_authorization.hurl",
+    "errors_comments.hurl",
+    "errors_profiles.hurl",
+    "favorites.hurl",
+    "feed.hurl",
+    "pagination.hurl",
+    "profiles.hurl",
+    "tags.hurl"
+  ]
+}

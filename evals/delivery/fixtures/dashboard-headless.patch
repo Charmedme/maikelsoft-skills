@@ -1,0 +1,947 @@
+diff --git a/eval/.gitignore b/eval/.gitignore
+new file mode 100644
+index 0000000..708fac8
+--- /dev/null
++++ b/eval/.gitignore
+@@ -0,0 +1 @@
++.build.lock
+diff --git a/eval/smoke.sh b/eval/smoke.sh
+new file mode 100755
+index 0000000..f80394f
+--- /dev/null
++++ b/eval/smoke.sh
+@@ -0,0 +1,43 @@
++#!/usr/bin/env bash
++# Smoke check against a running instance: PCA_API_PORT must be set. Exit 1 on the first failed check.
++set -uo pipefail
++: "${PCA_API_PORT:?set PCA_API_PORT}"
++B="http://127.0.0.1:$PCA_API_PORT"
++fail=0
++check() { # name expected actual
++  if [[ "$2" == "$3" ]]; then echo "PASS $1 -> $3"; else echo "FAIL $1 -> expected $2, got $3"; fail=1; fi
++}
++req() { # user method path [json] -> prints "status body"
++  local user="$1" method="$2" path="$3" data="${4:-}" hdr=()
++  [[ -n "$user" ]] && hdr=(-H "X-Test-User: $user")
++  if [[ -n "$data" ]]; then
++    curl -s -w '\n%{http_code}' -X "$method" "${hdr[@]}" -H 'Content-Type: application/json' -d "$data" "$B$path"
++  else
++    curl -s -w '\n%{http_code}' -X "$method" "${hdr[@]}" "$B$path"
++  fi
++}
++status() { tail -n1 <<<"$1"; }
++body() { sed '$d' <<<"$1"; }
++
++r=$(req admin GET /api/products);           check "admin GET /api/products" 200 "$(status "$r")"
++echo "     $(body "$r" | python3 -c 'import sys,json; d=json.load(sys.stdin); print(len(d), "products:", [p["code"] for p in d])')"
++r=$(req admin POST /api/products '{"code":"SMOKE1","name":"Smoke product","description":"created by smoke.sh"}')
++check "admin POST /api/products" 201 "$(status "$r")"
++id=$(body "$r" | python3 -c 'import sys,json; print(json.load(sys.stdin)["id"])'); echo "     id=$id"
++r=$(req admin GET "/api/products/$id");     check "admin GET /api/products/{id}" 200 "$(status "$r")"
++r=$(req admin PUT "/api/products/$id" '{"code":"SMOKE1","name":"Smoke product v2","description":"updated"}')
++check "admin PUT /api/products/{id}" 200 "$(status "$r")"; echo "     $(body "$r")"
++r=$(req admin GET "/api/products/$id/auditlogs"); check "admin GET /api/products/{id}/auditlogs" 200 "$(status "$r")"
++echo "     $(body "$r" | python3 -c 'import sys,json; d=json.load(sys.stdin); print(len(d), "entries:", [(e["userName"], e["action"]) for e in d])')"
++r=$(req admin DELETE "/api/products/$id");  check "admin DELETE /api/products/{id}" 200 "$(status "$r")"
++r=$(req admin GET "/api/products/$id");     check "admin GET deleted product" 404 "$(status "$r")"
++r=$(req admin GET /api/auditlogentries);    check "admin GET /api/auditlogentries" 200 "$(status "$r")"
++echo "     $(body "$r" | python3 -c 'import sys,json; d=json.load(sys.stdin); print(len(d), "entries, actions:", sorted({e["action"] for e in d}))')"
++r=$(req admin GET /api/users);              check "admin GET /api/users" 200 "$(status "$r")"
++echo "     $(body "$r" | python3 -c 'import sys,json; d=json.load(sys.stdin); print([u["userName"] for u in d])')"
++r=$(req user GET /api/products);            check "user GET /api/products" 200 "$(status "$r")"
++r=$(req user POST /api/products '{"code":"NOPE","name":"x","description":"x"}'); check "user POST /api/products" 403 "$(status "$r")"
++r=$(req user GET /api/users);               check "user GET /api/users" 403 "$(status "$r")"
++r=$(req "" GET /api/products);              check "anonymous GET /api/products" 401 "$(status "$r")"
++r=$(req nobody GET /api/products);          check "unknown user GET /api/products" 401 "$(status "$r")"
++exit $fail
+diff --git a/eval/start.sh b/eval/start.sh
+new file mode 100755
+index 0000000..124f9d7
+--- /dev/null
++++ b/eval/start.sh
+@@ -0,0 +1,118 @@
++#!/usr/bin/env bash
++# Start one headless instance of the Monolith WebAPI with its own PostgreSQL container.
++#
++# Required env:  PCA_DB_PORT   host port for PostgreSQL (bound to 127.0.0.1)
++#                PCA_API_PORT  port for the WebAPI on http://127.0.0.1:$PCA_API_PORT
++# Optional env:  PCA_INSTANCE  instance name (default: $PCA_API_PORT); container = pca-db-$PCA_INSTANCE
++#                PCA_DATA_DIR  state dir: pid, logs, file storage (default: ${TMPDIR:-/tmp}/pca-$PCA_INSTANCE)
++#                PCA_DB_IMAGE  default postgres:17-alpine
++#                PCA_BUILD     1 = always run dotnet build (default: build only when the dll is missing)
++#                PCA_START_TIMEOUT  seconds to wait for /healthz (default 180)
++#                DOTNET        dotnet executable (default: dotnet on PATH, else ~/.dotnet/dotnet)
++#                PCA_UI_PORT   when set: also serve the Angular UI (headless config, test user) on
++#                              http://127.0.0.1:$PCA_UI_PORT; needs src/UIs/angular/node_modules
++set -euo pipefail
++
++: "${PCA_DB_PORT:?set PCA_DB_PORT}"
++: "${PCA_API_PORT:?set PCA_API_PORT}"
++PCA_INSTANCE="${PCA_INSTANCE:-$PCA_API_PORT}"
++PCA_DATA_DIR="${PCA_DATA_DIR:-${TMPDIR:-/tmp}/pca-$PCA_INSTANCE}"
++PCA_DB_IMAGE="${PCA_DB_IMAGE:-postgres:17-alpine}"
++PCA_START_TIMEOUT="${PCA_START_TIMEOUT:-180}"
++DB_CONTAINER="pca-db-$PCA_INSTANCE"
++
++ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
++PROJECT_DIR="$ROOT/src/Monolith/ClassifiedAds.WebAPI"
++OUT_DIR="$PROJECT_DIR/bin/Debug/net10.0"
++DLL="$OUT_DIR/ClassifiedAds.WebAPI.dll"
++
++if [[ -z "${DOTNET:-}" ]]; then
++  if command -v dotnet >/dev/null 2>&1; then DOTNET=dotnet; else DOTNET="$HOME/.dotnet/dotnet"; fi
++fi
++
++mkdir -p "$PCA_DATA_DIR/files" "$PCA_DATA_DIR/temp"
++
++if [[ -f "$PCA_DATA_DIR/api.pid" ]] && kill -0 "$(cat "$PCA_DATA_DIR/api.pid")" 2>/dev/null; then
++  echo "instance $PCA_INSTANCE already runs (pid $(cat "$PCA_DATA_DIR/api.pid"))" >&2
++  exit 1
++fi
++
++# 1. Database container (data on tmpfs: each start gets an empty database).
++if docker container inspect "$DB_CONTAINER" >/dev/null 2>&1; then
++  echo "container $DB_CONTAINER exists already; run stop.sh first" >&2
++  exit 1
++fi
++docker run -d --rm --name "$DB_CONTAINER" \
++  --label pca.instance="$PCA_INSTANCE" \
++  -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=classifiedads \
++  -p "127.0.0.1:$PCA_DB_PORT:5432" \
++  --tmpfs /var/lib/postgresql:rw \
++  "$PCA_DB_IMAGE" -c fsync=off -c synchronous_commit=off -c full_page_writes=off >/dev/null
++
++# 2. Build (one build at a time when several instances start together).
++(
++  flock 9
++  if [[ "${PCA_BUILD:-0}" == "1" || ! -f "$DLL" ]]; then
++    "$DOTNET" build "$PROJECT_DIR/ClassifiedAds.WebAPI.csproj" -nologo -v q -clp:NoSummary >"$PCA_DATA_DIR/build.log" 2>&1 \
++      || { tail -n 30 "$PCA_DATA_DIR/build.log" >&2; exit 1; }
++  fi
++) 9>"$ROOT/eval/.build.lock"
++
++# 3. Wait for PostgreSQL over TCP (the init server only listens on the socket).
++for _ in $(seq 1 60); do
++  if docker exec "$DB_CONTAINER" pg_isready -h 127.0.0.1 -U postgres -d classifiedads >/dev/null 2>&1; then break; fi
++  sleep 1
++done
++docker exec "$DB_CONTAINER" pg_isready -h 127.0.0.1 -U postgres -d classifiedads >/dev/null
++
++# 4. WebAPI. Content root = output dir (appsettings*.json, Templates, Certs are copied there).
++cd "$OUT_DIR"
++TZ=UTC \
++ASPNETCORE_ENVIRONMENT=Testing \
++ASPNETCORE_URLS="http://127.0.0.1:$PCA_API_PORT" \
++DOTNET_NOLOGO=1 \
++ConnectionStrings__ClassifiedAds="Host=127.0.0.1;Port=$PCA_DB_PORT;Database=classifiedads;Username=postgres;Password=postgres" \
++Storage__Local__Path="$PCA_DATA_DIR/files" \
++Storage__TempFolderPath="$PCA_DATA_DIR/temp" \
++nohup "$DOTNET" "$DLL" >"$PCA_DATA_DIR/api.log" 2>&1 </dev/null &
++echo $! >"$PCA_DATA_DIR/api.pid"
++API_PID=$!
++
++# 5. Wait until healthy.
++deadline=$((SECONDS + PCA_START_TIMEOUT))
++until [[ "$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PCA_API_PORT/healthz" || true)" == "200" ]]; do
++  if ! kill -0 "$API_PID" 2>/dev/null; then
++    echo "WebAPI exited during start; last log lines:" >&2
++    tail -n 40 "$PCA_DATA_DIR/api.log" >&2
++    exit 1
++  fi
++  if (( SECONDS > deadline )); then
++    echo "WebAPI not healthy after ${PCA_START_TIMEOUT}s; see $PCA_DATA_DIR/api.log" >&2
++    exit 1
++  fi
++  sleep 1
++done
++
++# 6. Optional Angular UI: ng serve with the headless configuration, proxying /api and /hubs.
++if [[ -n "${PCA_UI_PORT:-}" ]]; then
++  UI_DIR="$ROOT/src/UIs/angular"
++  cd "$UI_DIR"
++  PCA_API_PORT="$PCA_API_PORT" NG_CLI_ANALYTICS=false \
++  setsid nohup node node_modules/@angular/cli/bin/ng.js serve --configuration headless \
++    --host 127.0.0.1 --port "$PCA_UI_PORT" --no-open --no-hmr --no-live-reload \
++    >"$PCA_DATA_DIR/ui.log" 2>&1 </dev/null &
++  UI_PID=$!
++  echo "$UI_PID" >"$PCA_DATA_DIR/ui.pid"
++  until [[ "$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PCA_UI_PORT/" || true)" == "200" ]]; do
++    if ! kill -0 "$UI_PID" 2>/dev/null; then
++      echo "ng serve exited during start; last log lines:" >&2; tail -n 40 "$PCA_DATA_DIR/ui.log" >&2; exit 1
++    fi
++    if (( SECONDS > deadline + 240 )); then
++      echo "UI not ready; see $PCA_DATA_DIR/ui.log" >&2; exit 1
++    fi
++    sleep 1
++  done
++  echo "PCA UI ready: http://127.0.0.1:$PCA_UI_PORT (test user admin; add ?test_user=user to switch)"
++fi
++
++echo "PCA instance $PCA_INSTANCE ready: api=http://127.0.0.1:$PCA_API_PORT pid=$API_PID db=$DB_CONTAINER(127.0.0.1:$PCA_DB_PORT) data=$PCA_DATA_DIR"
+diff --git a/eval/stop.sh b/eval/stop.sh
+new file mode 100755
+index 0000000..25e4c61
+--- /dev/null
++++ b/eval/stop.sh
+@@ -0,0 +1,35 @@
++#!/usr/bin/env bash
++# Stop one instance started by start.sh: the WebAPI by its PID file, the database by container name.
++# Env: PCA_API_PORT or PCA_INSTANCE, and PCA_DATA_DIR when start.sh got one.
++set -uo pipefail
++
++PCA_INSTANCE="${PCA_INSTANCE:-${PCA_API_PORT:?set PCA_INSTANCE or PCA_API_PORT}}"
++PCA_DATA_DIR="${PCA_DATA_DIR:-${TMPDIR:-/tmp}/pca-$PCA_INSTANCE}"
++DB_CONTAINER="pca-db-$PCA_INSTANCE"
++PID_FILE="$PCA_DATA_DIR/api.pid"
++
++UI_PID_FILE="$PCA_DATA_DIR/ui.pid"
++if [[ -f "$UI_PID_FILE" ]]; then
++  pid="$(cat "$UI_PID_FILE")"
++  # ng serve runs in its own session (setsid): stop its whole process group by PGID.
++  kill -TERM -- "-$pid" 2>/dev/null
++  for _ in $(seq 1 20); do kill -0 "$pid" 2>/dev/null || break; sleep 0.5; done
++  kill -KILL -- "-$pid" 2>/dev/null
++  rm -f "$UI_PID_FILE"
++  echo "stopped UI process group $pid"
++fi
++
++if [[ -f "$PID_FILE" ]]; then
++  pid="$(cat "$PID_FILE")"
++  if kill -0 "$pid" 2>/dev/null; then
++    kill -TERM "$pid" 2>/dev/null
++    for _ in $(seq 1 20); do kill -0 "$pid" 2>/dev/null || break; sleep 0.5; done
++    kill -0 "$pid" 2>/dev/null && kill -KILL "$pid" 2>/dev/null
++  fi
++  rm -f "$PID_FILE"
++  echo "stopped WebAPI pid $pid"
++fi
++
++if docker container inspect "$DB_CONTAINER" >/dev/null 2>&1; then
++  docker rm -f "$DB_CONTAINER" >/dev/null && echo "removed container $DB_CONTAINER"
++fi
+diff --git a/src/Monolith/ClassifiedAds.Infrastructure/Web/Authorization/Requirements/PermissionRequirement.cs b/src/Monolith/ClassifiedAds.Infrastructure/Web/Authorization/Requirements/PermissionRequirement.cs
+index d7ac6da..c1e1b12 100644
+--- a/src/Monolith/ClassifiedAds.Infrastructure/Web/Authorization/Requirements/PermissionRequirement.cs
++++ b/src/Monolith/ClassifiedAds.Infrastructure/Web/Authorization/Requirements/PermissionRequirement.cs
+@@ -1,4 +1,5 @@
+ ﻿using Microsoft.AspNetCore.Authorization;
++using Microsoft.Extensions.Configuration;
+ using System.Threading.Tasks;
+ 
+ namespace ClassifiedAds.Infrastructure.Web.Authorization.Requirements;
+@@ -10,6 +11,14 @@ public class PermissionRequirement : IAuthorizationRequirement
+ 
+ public class PermissionRequirementHandler : AuthorizationHandler<PermissionRequirement>
+ {
++    private readonly bool _enforcePermissionClaims;
++
++    public PermissionRequirementHandler(IConfiguration configuration)
++    {
++        // Off by default: the existing identity providers do not issue "Permission" claims yet.
++        _enforcePermissionClaims = configuration.GetValue<bool>("Authorization:EnforcePermissionClaims");
++    }
++
+     protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, PermissionRequirement requirement)
+     {
+         var user = context.User;
+@@ -20,7 +29,12 @@ public class PermissionRequirementHandler : AuthorizationHandler<PermissionRequi
+             return Task.CompletedTask;
+         }
+ 
+-        // TODO: check claims
++        if (_enforcePermissionClaims && !user.HasClaim("Permission", requirement.PermissionName))
++        {
++            context.Fail();
++            return Task.CompletedTask;
++        }
++
+         context.Succeed(requirement);
+         return Task.CompletedTask;
+     }
+diff --git a/src/Monolith/ClassifiedAds.Persistence/AdsDbContext.cs b/src/Monolith/ClassifiedAds.Persistence/AdsDbContext.cs
+index 425e222..451dd12 100644
+--- a/src/Monolith/ClassifiedAds.Persistence/AdsDbContext.cs
++++ b/src/Monolith/ClassifiedAds.Persistence/AdsDbContext.cs
+@@ -60,6 +60,7 @@ public class AdsDbContext : DbContext, IUnitOfWork, IDataProtectionKeyContext
+     {
+         base.OnModelCreating(modelBuilder);
+         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
++        modelBuilder.ApplyProviderConventions(Database);
+     }
+ 
+     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+diff --git a/src/Monolith/ClassifiedAds.Persistence/AdsDbContextMultiTenant.cs b/src/Monolith/ClassifiedAds.Persistence/AdsDbContextMultiTenant.cs
+index 46527ad..2b38ab1 100644
+--- a/src/Monolith/ClassifiedAds.Persistence/AdsDbContextMultiTenant.cs
++++ b/src/Monolith/ClassifiedAds.Persistence/AdsDbContextMultiTenant.cs
+@@ -21,6 +21,6 @@ public class AdsDbContextMultiTenant : AdsDbContext
+     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+     {
+         base.OnConfiguring(optionsBuilder);
+-        optionsBuilder.UseSqlServer(_connectionStringResolver.ConnectionString);
++        optionsBuilder.UseConfiguredProvider(_connectionStringResolver.ConnectionString);
+     }
+ }
+diff --git a/src/Monolith/ClassifiedAds.Persistence/AdsReadOnlyDbContext.cs b/src/Monolith/ClassifiedAds.Persistence/AdsReadOnlyDbContext.cs
+index 56972f7..e653e48 100644
+--- a/src/Monolith/ClassifiedAds.Persistence/AdsReadOnlyDbContext.cs
++++ b/src/Monolith/ClassifiedAds.Persistence/AdsReadOnlyDbContext.cs
+@@ -20,6 +20,7 @@ public class AdsReadOnlyDbContext : DbContext
+     {
+         base.OnModelCreating(modelBuilder);
+         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
++        modelBuilder.ApplyProviderConventions(Database);
+     }
+ 
+     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+diff --git a/src/Monolith/ClassifiedAds.Persistence/AdsReadOnlyDbContextMultiTenant.cs b/src/Monolith/ClassifiedAds.Persistence/AdsReadOnlyDbContextMultiTenant.cs
+index 9393741..47e02c0 100644
+--- a/src/Monolith/ClassifiedAds.Persistence/AdsReadOnlyDbContextMultiTenant.cs
++++ b/src/Monolith/ClassifiedAds.Persistence/AdsReadOnlyDbContextMultiTenant.cs
+@@ -21,7 +21,7 @@ public class AdsReadOnlyDbContextMultiTenant : AdsReadOnlyDbContext
+     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+     {
+         base.OnConfiguring(optionsBuilder);
+-        optionsBuilder.UseSqlServer(_connectionStringResolver.ConnectionString);
++        optionsBuilder.UseConfiguredProvider(_connectionStringResolver.ConnectionString);
+         optionsBuilder.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+     }
+ }
+diff --git a/src/Monolith/ClassifiedAds.Persistence/ClassifiedAds.Persistence.csproj b/src/Monolith/ClassifiedAds.Persistence/ClassifiedAds.Persistence.csproj
+index b5084e6..7bcc43e 100644
+--- a/src/Monolith/ClassifiedAds.Persistence/ClassifiedAds.Persistence.csproj
++++ b/src/Monolith/ClassifiedAds.Persistence/ClassifiedAds.Persistence.csproj
+@@ -11,6 +11,7 @@
+     <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="10.0.10" />
+     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.10" />
+     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.10" />
++    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
+     <PackageReference Include="StyleCop.Analyzers" Version="1.1.118">
+       <PrivateAssets>all</PrivateAssets>
+       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+diff --git a/src/Monolith/ClassifiedAds.Persistence/DbConfigurations/EmailMessageConfiguration.cs b/src/Monolith/ClassifiedAds.Persistence/DbConfigurations/EmailMessageConfiguration.cs
+index f17ec7c..2d77f3c 100644
+--- a/src/Monolith/ClassifiedAds.Persistence/DbConfigurations/EmailMessageConfiguration.cs
++++ b/src/Monolith/ClassifiedAds.Persistence/DbConfigurations/EmailMessageConfiguration.cs
+@@ -10,7 +10,7 @@ public class EmailMessageConfiguration : IEntityTypeConfiguration<EmailMessage>
+     {
+         builder.ToTable("EmailMessages");
+         builder.Property(x => x.Id).HasDefaultValueSql("newsequentialid()");
+-        builder.HasIndex(x => x.SentDateTime).IncludeProperties(x => new { x.ExpiredDateTime, x.AttemptCount, x.MaxAttemptCount, x.NextAttemptDateTime });
++        SqlServerIndexBuilderExtensions.IncludeProperties(builder.HasIndex(x => x.SentDateTime), x => new { x.ExpiredDateTime, x.AttemptCount, x.MaxAttemptCount, x.NextAttemptDateTime });
+         builder.HasIndex(x => x.CreatedDateTime);
+     }
+ }
+diff --git a/src/Monolith/ClassifiedAds.Persistence/DbConfigurations/SmsMessageConfiguration.cs b/src/Monolith/ClassifiedAds.Persistence/DbConfigurations/SmsMessageConfiguration.cs
+index f40e845..4ba8d7f 100644
+--- a/src/Monolith/ClassifiedAds.Persistence/DbConfigurations/SmsMessageConfiguration.cs
++++ b/src/Monolith/ClassifiedAds.Persistence/DbConfigurations/SmsMessageConfiguration.cs
+@@ -10,7 +10,7 @@ public class SmsMessageConfiguration : IEntityTypeConfiguration<SmsMessage>
+     {
+         builder.ToTable("SmsMessages");
+         builder.Property(x => x.Id).HasDefaultValueSql("newsequentialid()");
+-        builder.HasIndex(x => x.SentDateTime).IncludeProperties(x => new { x.ExpiredDateTime, x.AttemptCount, x.MaxAttemptCount, x.NextAttemptDateTime });
++        SqlServerIndexBuilderExtensions.IncludeProperties(builder.HasIndex(x => x.SentDateTime), x => new { x.ExpiredDateTime, x.AttemptCount, x.MaxAttemptCount, x.NextAttemptDateTime });
+         builder.HasIndex(x => x.CreatedDateTime);
+     }
+ }
+diff --git a/src/Monolith/ClassifiedAds.Persistence/DbProviderExtensions.cs b/src/Monolith/ClassifiedAds.Persistence/DbProviderExtensions.cs
+new file mode 100644
+index 0000000..8365b5f
+--- /dev/null
++++ b/src/Monolith/ClassifiedAds.Persistence/DbProviderExtensions.cs
+@@ -0,0 +1,64 @@
++using ClassifiedAds.Domain.Entities;
++using Microsoft.Data.SqlTypes;
++using Microsoft.EntityFrameworkCore;
++using Microsoft.EntityFrameworkCore.Infrastructure;
++using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
++using System;
++using System.Linq;
++
++namespace ClassifiedAds.Persistence;
++
++/// <summary>
++/// Selects the EF Core provider from the connection string and adapts the model to it.
++/// A PostgreSQL connection string starts with "Host=". All other strings use SQL Server.
++/// </summary>
++public static class DbProviderExtensions
++{
++    public static bool IsPostgreSqlConnectionString(string connectionString)
++    {
++        return connectionString != null
++            && connectionString.TrimStart().StartsWith("Host=", StringComparison.OrdinalIgnoreCase);
++    }
++
++    public static DbContextOptionsBuilder UseConfiguredProvider(this DbContextOptionsBuilder optionsBuilder, string connectionString)
++    {
++        return IsPostgreSqlConnectionString(connectionString)
++            ? optionsBuilder.UseNpgsql(connectionString)
++            : optionsBuilder.UseSqlServer(connectionString);
++    }
++
++    public static void ApplyProviderConventions(this ModelBuilder modelBuilder, DatabaseFacade database)
++    {
++        if (!database.IsNpgsql())
++        {
++            return;
++        }
++
++        // SqlVector<float> (SQL Server vector type): store it as real[] so the tables and the
++        // plain queries still work. VectorDistance (vector search) has no translation here.
++        var vectorConverter = new ValueConverter<SqlVector<float>, float[]>(
++            v => v.Memory.ToArray(),
++            v => new SqlVector<float>(v));
++        modelBuilder.Entity<ProductEmbedding>().Property(x => x.Embedding).HasConversion(vectorConverter).HasColumnType("real[]");
++        modelBuilder.Entity<FileEntryEmbedding>().Property(x => x.Embedding).HasConversion(vectorConverter).HasColumnType("real[]");
++
++        foreach (var property in modelBuilder.Model.GetEntityTypes().SelectMany(x => x.GetProperties()))
++        {
++            if (string.Equals(property.GetDefaultValueSql(), "newsequentialid()", StringComparison.OrdinalIgnoreCase))
++            {
++                property.SetDefaultValueSql("gen_random_uuid()");
++            }
++
++            // [Timestamp] byte[] RowVersion: PostgreSQL has no rowversion type.
++            // Map it to the xmin system column, which PostgreSQL changes on each update.
++            if (property.Name == nameof(Entity<Guid>.RowVersion) && property.ClrType == typeof(byte[]) && property.IsConcurrencyToken)
++            {
++                property.SetColumnName("xmin");
++                property.SetColumnType("xid");
++                property.SetValueConverter(new ValueConverter<byte[], uint>(
++                    v => v == null ? 0u : BitConverter.ToUInt32(v, 0),
++                    v => BitConverter.GetBytes(v)));
++            }
++        }
++    }
++}
+diff --git a/src/Monolith/ClassifiedAds.WebAPI/Program.cs b/src/Monolith/ClassifiedAds.WebAPI/Program.cs
+index a128d83..e3a0b76 100644
+--- a/src/Monolith/ClassifiedAds.WebAPI/Program.cs
++++ b/src/Monolith/ClassifiedAds.WebAPI/Program.cs
+@@ -23,6 +23,8 @@ using ClassifiedAds.WebAPI.ConfigurationOptions;
+ using ClassifiedAds.WebAPI.Configurations;
+ using ClassifiedAds.WebAPI.RateLimiterPolicies;
+ using ClassifiedAds.WebAPI.Tenants;
++using ClassifiedAds.WebAPI.Testing;
++using Microsoft.AspNetCore.Authentication;
+ using Microsoft.AspNetCore.Authentication.JwtBearer;
+ using Microsoft.AspNetCore.Builder;
+ using Microsoft.AspNetCore.DataProtection;
+@@ -112,14 +114,24 @@ services.AddDataProtection()
+     .PersistKeysToDbContext<AdsDbContext>()
+     .SetApplicationName("ClassifiedAds");
+ 
+-services.AddAuthentication(options =>
++var useTestAuthentication = appSettings.Authentication.Provider == TestAuthenticationHandler.SchemeName;
++
++var authenticationBuilder = services.AddAuthentication(options =>
+ {
+     options.DefaultScheme = appSettings.Authentication.Provider switch
+     {
+         "Jwt" => "Jwt",
++        TestAuthenticationHandler.SchemeName => TestAuthenticationHandler.SchemeName,
+         _ => JwtBearerDefaults.AuthenticationScheme
+     };
+-})
++});
++
++if (useTestAuthentication)
++{
++    authenticationBuilder.AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(TestAuthenticationHandler.SchemeName, null);
++}
++
++authenticationBuilder
+ .AddJwtBearer(options =>
+ {
+     options.Authority = appSettings.Authentication.IdentityServer.Authority;
+@@ -215,15 +227,24 @@ services.AddSwaggerGen(setupAction =>
+ 
+ services.AddCaches(appSettings.Caching);
+ 
+-services.AddHealthChecks()
+-    .AddSqlServer(connectionString: appSettings.ConnectionStrings.ClassifiedAds,
++var healthChecks = services.AddHealthChecks();
++
++if (!DbProviderExtensions.IsPostgreSqlConnectionString(appSettings.ConnectionStrings.ClassifiedAds))
++{
++    healthChecks.AddSqlServer(connectionString: appSettings.ConnectionStrings.ClassifiedAds,
+         healthQuery: "SELECT 1;",
+         name: "Sql Server",
+-        failureStatus: HealthStatus.Degraded)
+-    .AddHttp(appSettings.Authentication.IdentityServer.Authority,
++        failureStatus: HealthStatus.Degraded);
++}
++
++if (!useTestAuthentication)
++{
++    healthChecks.AddHttp(appSettings.Authentication.IdentityServer.Authority,
+         name: "Identity Server",
+-        failureStatus: HealthStatus.Degraded)
+-    .AddStorageManagerHealthCheck(appSettings.Storage);
++        failureStatus: HealthStatus.Degraded);
++}
++
++healthChecks.AddStorageManagerHealthCheck(appSettings.Storage);
+ 
+ services.Configure<HealthChecksBackgroundServiceOptions>(x => x.Interval = TimeSpan.FromMinutes(10));
+ services.AddHostedService<HealthChecksBackgroundService>();
+@@ -245,6 +266,11 @@ services.AddScoped<IExcelWriter<ExportConfigurationEntriesToExcel>, ExportConfig
+ // Configure the HTTP request pipeline.
+ var app = builder.Build();
+ 
++if (configuration.GetValue<bool>("Database:EnsureCreatedAndSeed"))
++{
++    TestDataSeeder.EnsureCreatedAndSeed(app.Services);
++}
++
+ app.UseDebuggingMiddleware();
+ 
+ app.UseAccessTokenFromFormMiddleware();
+diff --git a/src/Monolith/ClassifiedAds.WebAPI/Testing/TestAuthenticationHandler.cs b/src/Monolith/ClassifiedAds.WebAPI/Testing/TestAuthenticationHandler.cs
+new file mode 100644
+index 0000000..d5246c2
+--- /dev/null
++++ b/src/Monolith/ClassifiedAds.WebAPI/Testing/TestAuthenticationHandler.cs
+@@ -0,0 +1,91 @@
++using ClassifiedAds.Persistence;
++using Microsoft.AspNetCore.Authentication;
++using Microsoft.EntityFrameworkCore;
++using Microsoft.Extensions.Logging;
++using Microsoft.Extensions.Options;
++using System;
++using System.Collections.Generic;
++using System.Linq;
++using System.Security.Claims;
++using System.Text.Encodings.Web;
++using System.Threading.Tasks;
++
++namespace ClassifiedAds.WebAPI.Testing;
++
++/// <summary>
++/// Test-only scheme (Authentication:Provider = "Test"). The header X-Test-User holds the
++/// user name of a user in the database. The principal gets the roles of that user and the
++/// "Permission" claims of the user and of its roles. Never enable this scheme in production.
++/// </summary>
++public class TestAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
++{
++    public const string SchemeName = "Test";
++    public const string HeaderName = "X-Test-User";
++
++    private static readonly string IssuedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(System.Globalization.CultureInfo.InvariantCulture);
++
++    private readonly AdsDbContext _dbContext;
++
++    public TestAuthenticationHandler(IOptionsMonitor<AuthenticationSchemeOptions> options,
++        ILoggerFactory logger,
++        UrlEncoder encoder,
++        AdsDbContext dbContext)
++        : base(options, logger, encoder)
++    {
++        _dbContext = dbContext;
++    }
++
++    protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
++    {
++        string userName = Request.Headers[HeaderName].ToString();
++
++        // SignalR and file downloads cannot set headers: accept ?test_user=... as well.
++        if (string.IsNullOrWhiteSpace(userName))
++        {
++            userName = Request.Query["test_user"].ToString();
++        }
++
++        if (string.IsNullOrWhiteSpace(userName))
++        {
++            return AuthenticateResult.NoResult();
++        }
++
++        var normalized = userName.Trim().ToUpperInvariant();
++        var user = await _dbContext.Set<Domain.Entities.User>()
++            .AsNoTracking()
++            .Include(x => x.Claims)
++            .Include(x => x.UserRoles).ThenInclude(x => x.Role).ThenInclude(x => x.Claims)
++            .FirstOrDefaultAsync(x => x.NormalizedUserName == normalized, Context.RequestAborted);
++
++        if (user == null)
++        {
++            return AuthenticateResult.Fail($"Unknown test user '{userName}'.");
++        }
++
++        var claims = new List<Claim>
++        {
++            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
++            new Claim("sub", user.Id.ToString()),
++            new Claim(ClaimTypes.Name, user.UserName),
++            new Claim("iat", IssuedAt),
++        };
++
++        if (!string.IsNullOrEmpty(user.Email))
++        {
++            claims.Add(new Claim(ClaimTypes.Email, user.Email));
++        }
++
++        var roles = user.UserRoles?.Select(x => x.Role).Where(x => x != null).ToList() ?? [];
++        claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r.Name)));
++
++        var permissionClaims = (user.Claims ?? [])
++            .Select(c => (c.Type, c.Value))
++            .Concat(roles.SelectMany(r => r.Claims ?? []).Select(c => (c.Type, c.Value)))
++            .Distinct()
++            .Select(c => new Claim(c.Type, c.Value));
++        claims.AddRange(permissionClaims);
++
++        var identity = new ClaimsIdentity(claims, SchemeName, ClaimTypes.Name, ClaimTypes.Role);
++        return AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(identity), SchemeName));
++    }
++}
+diff --git a/src/Monolith/ClassifiedAds.WebAPI/Testing/TestDataSeeder.cs b/src/Monolith/ClassifiedAds.WebAPI/Testing/TestDataSeeder.cs
+new file mode 100644
+index 0000000..4c4c1e2
+--- /dev/null
++++ b/src/Monolith/ClassifiedAds.WebAPI/Testing/TestDataSeeder.cs
+@@ -0,0 +1,88 @@
++using ClassifiedAds.Domain.Entities;
++using ClassifiedAds.Persistence;
++using ClassifiedAds.WebAPI.Authorization;
++using Microsoft.EntityFrameworkCore;
++using Microsoft.Extensions.DependencyInjection;
++using System;
++using System.Collections.Generic;
++using System.Linq;
++using System.Reflection;
++
++namespace ClassifiedAds.WebAPI.Testing;
++
++/// <summary>
++/// Creates the schema (EnsureCreated, no migrations) and seeds one fixed tenant with
++/// an "admin" user (all permissions) and a "user" user (read products only).
++/// Runs only when Database:EnsureCreatedAndSeed is true.
++/// </summary>
++public static class TestDataSeeder
++{
++    public static readonly string[] UserPermissions =
++    [
++        Permissions.GetProducts,
++        Permissions.GetProduct,
++    ];
++
++    public static void EnsureCreatedAndSeed(IServiceProvider services)
++    {
++        using var scope = services.CreateScope();
++        var db = scope.ServiceProvider.GetRequiredService<AdsDbContext>();
++        db.Database.EnsureCreated();
++
++        if (db.Set<User>().Any(x => x.NormalizedUserName == "ADMIN"))
++        {
++            return;
++        }
++
++        var now = DateTimeOffset.UtcNow;
++        var allPermissions = typeof(Permissions)
++            .GetFields(BindingFlags.Public | BindingFlags.Static)
++            .Select(f => (string)f.GetValue(null))
++            .ToList();
++
++        var adminRole = CreateRole("Admin", allPermissions, now);
++        var userRole = CreateRole("User", UserPermissions, now);
++
++        db.Set<Role>().AddRange(adminRole, userRole);
++        db.Set<User>().AddRange(
++            CreateUser("admin", "admin@example.test", adminRole, now),
++            CreateUser("user", "user@example.test", userRole, now));
++
++        db.Set<Product>().AddRange(
++            new Product { Code = "PD002", Name = "Galaxy S24", Description = "Samsung phone", CreatedDateTime = now },
++            new Product { Code = "PD003", Name = "Pixel 9", Description = "Google phone", CreatedDateTime = now },
++            new Product { Code = "PD004", Name = "ThinkPad X1", Description = "Lenovo laptop", CreatedDateTime = now });
++
++        db.SaveChanges();
++    }
++
++    private static Role CreateRole(string name, IEnumerable<string> permissions, DateTimeOffset now)
++    {
++        return new Role
++        {
++            Name = name,
++            NormalizedName = name.ToUpperInvariant(),
++            ConcurrencyStamp = Guid.NewGuid().ToString(),
++            CreatedDateTime = now,
++            Claims = permissions.Select(p => new RoleClaim { Type = "Permission", Value = p, CreatedDateTime = now }).ToList(),
++        };
++    }
++
++    private static User CreateUser(string userName, string email, Role role, DateTimeOffset now)
++    {
++        var user = new User
++        {
++            UserName = userName,
++            NormalizedUserName = userName.ToUpperInvariant(),
++            Email = email,
++            NormalizedEmail = email.ToUpperInvariant(),
++            EmailConfirmed = true,
++            SecurityStamp = Guid.NewGuid().ToString("N").ToUpperInvariant(),
++            ConcurrencyStamp = Guid.NewGuid().ToString(),
++            LockoutEnabled = true,
++            CreatedDateTime = now,
++        };
++        user.UserRoles = [new UserRole { User = user, Role = role, CreatedDateTime = now }];
++        return user;
++    }
++}
+diff --git a/src/Monolith/ClassifiedAds.WebAPI/appsettings.Testing.json b/src/Monolith/ClassifiedAds.WebAPI/appsettings.Testing.json
+new file mode 100644
+index 0000000..3691dab
+--- /dev/null
++++ b/src/Monolith/ClassifiedAds.WebAPI/appsettings.Testing.json
+@@ -0,0 +1,61 @@
++{
++  "HtmlToPdf": {
++    "BaseUrl": "http://127.0.0.1:1/disabled/",
++    "TimeoutSeconds": 5
++  },
++  "ConnectionStrings": {
++    "ClassifiedAds": "Host=127.0.0.1;Port=5432;Database=classifiedads;Username=postgres;Password=postgres"
++  },
++  "Database": {
++    "EnsureCreatedAndSeed": true
++  },
++  "Authentication": {
++    "Provider": "Test",
++    "IdentityServer": {
++      "Authority": "http://127.0.0.1:1",
++      "RequireHttpsMetadata": "false"
++    }
++  },
++  "Authorization": {
++    "EnforcePermissionClaims": true
++  },
++  "Logging": {
++    "LogLevel": {
++      "Default": "Information",
++      "System": "Warning",
++      "Microsoft": "Warning"
++    },
++    "OpenTelemetry": {
++      "IsEnabled": false
++    }
++  },
++  "Monitoring": {
++    "AzureApplicationInsights": {
++      "IsEnabled": false
++    },
++    "OpenTelemetry": {
++      "IsEnabled": false
++    }
++  },
++  "CORS": {
++    "AllowAnyOrigin": true
++  },
++  "Storage": {
++    "Provider": "Local",
++    "TempFolderPath": "/tmp/pca/temp",
++    "Local": {
++      "Path": "/tmp/pca/files"
++    }
++  },
++  "Embedding": {
++    "OpenAI": {
++      "Endpoint": "http://127.0.0.1:1/disabled",
++      "ApiKey": "disabled"
++    }
++  },
++  "SignalR": {
++    "Backplane": {
++      "Provider": ""
++    }
++  }
++}
+diff --git a/src/UIs/angular/angular.json b/src/UIs/angular/angular.json
+index 709d263..80fda6b 100644
+--- a/src/UIs/angular/angular.json
++++ b/src/UIs/angular/angular.json
+@@ -61,6 +61,17 @@
+                   "maximumError": "10kb"
+                 }
+               ]
++            },
++            "headless": {
++              "fileReplacements": [
++                {
++                  "replace": "src/environments/environment.ts",
++                  "with": "src/environments/environment.headless.ts"
++                }
++              ],
++              "optimization": false,
++              "sourceMap": true,
++              "extractLicenses": false
+             }
+           },
+           "defaultConfiguration": ""
+@@ -73,6 +84,10 @@
+           "configurations": {
+             "production": {
+               "buildTarget": "angular:build:production"
++            },
++            "headless": {
++              "buildTarget": "angular:build:headless",
++              "proxyConfig": "proxy.headless.conf.js"
+             }
+           }
+         },
+diff --git a/src/UIs/angular/proxy.headless.conf.js b/src/UIs/angular/proxy.headless.conf.js
+new file mode 100644
+index 0000000..859963c
+--- /dev/null
++++ b/src/UIs/angular/proxy.headless.conf.js
+@@ -0,0 +1,6 @@
++// Dev-server proxy for the headless configuration. The target port comes from PCA_API_PORT.
++const target = `http://127.0.0.1:${process.env.PCA_API_PORT || "5000"}`;
++module.exports = {
++  "/api": { target, secure: false, changeOrigin: true },
++  "/hubs": { target, secure: false, changeOrigin: true, ws: true },
++};
+diff --git a/src/UIs/angular/src/app/auth/auth.interceptor.ts b/src/UIs/angular/src/app/auth/auth.interceptor.ts
+index 7a218ed..c367d22 100644
+--- a/src/UIs/angular/src/app/auth/auth.interceptor.ts
++++ b/src/UIs/angular/src/app/auth/auth.interceptor.ts
+@@ -22,6 +22,11 @@ export class AuthInterceptor implements HttpInterceptor {
+   ) {}
+ 
+   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
++    const testUser = this._authService.getTestUser();
++    if (testUser && req.url.startsWith(environment.ResourceServer.Endpoint)) {
++      return next.handle(req.clone({ headers: req.headers.set("X-Test-User", testUser) }));
++    }
++
+     if (req.url.startsWith(environment.ResourceServer.Endpoint)) {
+       var accessToken = this._authService.getAccessToken();
+       const headers = req.headers.set("Authorization", `Bearer ${accessToken}`);
+diff --git a/src/UIs/angular/src/app/auth/auth.service.ts b/src/UIs/angular/src/app/auth/auth.service.ts
+index f90fc86..bb9ae2f 100644
+--- a/src/UIs/angular/src/app/auth/auth.service.ts
++++ b/src/UIs/angular/src/app/auth/auth.service.ts
+@@ -23,6 +23,19 @@ export class AuthService {
+       userStore: new WebStorageStateStore({ store: window.localStorage }),
+     };
+     this._userManager = new UserManager(config);
++
++    const queryUser = new URLSearchParams(window.location.search).get("test_user");
++    if (environment.TestUser && queryUser) {
++      localStorage.setItem("testUser", queryUser);
++    }
++  }
++
++  // Headless test mode only: the user name for the X-Test-User header, or "" when off.
++  getTestUser(): string {
++    if (!environment.TestUser) {
++      return "";
++    }
++    return localStorage.getItem("testUser") || environment.TestUser;
+   }
+ 
+   loadUser() {
+@@ -36,16 +49,25 @@ export class AuthService {
+   }
+ 
+   login(returnUrl: string): Promise<any> {
++    if (this.getTestUser()) {
++      return Promise.resolve();
++    }
+     console.log("Return Url:", returnUrl);
+     localStorage.setItem("returnUrl", returnUrl);
+     return this._userManager.signinRedirect();
+   }
+ 
+   logout(): Promise<any> {
++    if (this.getTestUser()) {
++      return Promise.resolve();
++    }
+     return this._userManager.signoutRedirect();
+   }
+ 
+   isLoggedIn(): boolean {
++    if (this.getTestUser()) {
++      return true;
++    }
+     return !!(this._user && this._user.access_token && !this._user.expired);
+   }
+ 
+@@ -58,6 +80,10 @@ export class AuthService {
+   }
+ 
+   getCurrentUser(): IUser {
++    const testUser = this.getTestUser();
++    if (testUser) {
++      return { id: testUser, userName: testUser, firstName: testUser, lastName: "" };
++    }
+     return {
+       id: this._user.profile.sub,
+       userName: "phongnguyend",
+diff --git a/src/UIs/angular/src/app/core/notification.component.ts b/src/UIs/angular/src/app/core/notification.component.ts
+index 3fabc21..bcdc0a0 100644
+--- a/src/UIs/angular/src/app/core/notification.component.ts
++++ b/src/UIs/angular/src/app/core/notification.component.ts
+@@ -24,9 +24,13 @@ export class NotificationComponent implements OnInit, OnDestroy {
+ 
+   ngOnInit(): void {
+     const connection = new HubConnectionBuilder()
+-      .withUrl(environment.ResourceServer.NotificationEndpoint, {
+-        accessTokenFactory: () => this.auth.getAccessToken(),
+-      })
++      .withUrl(
++        environment.ResourceServer.NotificationEndpoint +
++          (this.auth.getTestUser() ? "?test_user=" + encodeURIComponent(this.auth.getTestUser()) : ""),
++        {
++          accessTokenFactory: () => this.auth.getAccessToken(),
++        }
++      )
+       .withAutomaticReconnect()
+       .build();
+ 
+diff --git a/src/UIs/angular/src/environments/environment.headless.ts b/src/UIs/angular/src/environments/environment.headless.ts
+new file mode 100644
+index 0000000..30fd0a3
+--- /dev/null
++++ b/src/UIs/angular/src/environments/environment.headless.ts
+@@ -0,0 +1,17 @@
++// Headless test mode (ng serve --configuration headless): no OIDC login.
++// The WebAPI runs with Authentication:Provider = "Test"; each API call sends X-Test-User.
++// The dev server proxies /api and /hubs to http://127.0.0.1:$PCA_API_PORT (proxy.headless.conf.js).
++// Switch user at runtime with ?test_user=user (kept in localStorage).
++export const environment = {
++  production: false,
++  OpenIdConnect: {
++    Authority: "http://127.0.0.1:1",
++    ClientId: "ClassifiedAds.Angular",
++  },
++  ResourceServer: {
++    Endpoint: "/api/",
++    NotificationEndpoint: "/hubs/notification",
++  },
++  CurrentUrl: "/",
++  TestUser: "admin",
++};
+diff --git a/src/UIs/angular/src/environments/environment.prod.ts b/src/UIs/angular/src/environments/environment.prod.ts
+index ee8a7ca..4dac64f 100644
+--- a/src/UIs/angular/src/environments/environment.prod.ts
++++ b/src/UIs/angular/src/environments/environment.prod.ts
+@@ -9,4 +9,5 @@ export const environment = {
+     NotificationEndpoint: "http://host.docker.internal:9002/hubs/notification",
+   },
+   CurrentUrl: "http://localhost:4200/",
++  TestUser: "",
+ };
+diff --git a/src/UIs/angular/src/environments/environment.ts b/src/UIs/angular/src/environments/environment.ts
+index 95abb0d..d5cddc6 100644
+--- a/src/UIs/angular/src/environments/environment.ts
++++ b/src/UIs/angular/src/environments/environment.ts
+@@ -17,6 +17,8 @@ export const environment = {
+     NotificationEndpoint: "https://localhost:44312/hubs/notification",
+   },
+   CurrentUrl: "http://localhost:4200/",
++  // Headless test mode: user name sent as X-Test-User; empty = normal OIDC login.
++  TestUser: "",
+ };
+ 
+ /*

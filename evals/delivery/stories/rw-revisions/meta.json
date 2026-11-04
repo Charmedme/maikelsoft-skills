@@ -1,0 +1,29 @@
+{
+  "fixture": "conduit",
+  "size": "team",
+  "risk": "high",
+  "difficulty": "very hard",
+  "kinds": [
+    "time and state",
+    "seams",
+    "open behaviour"
+  ],
+  "defects": [
+    16,
+    18,
+    19
+  ],
+  "role": "optimistic concurrency with a real race, revision history, and slug history that must not collide",
+  "hurl": [
+    "auth.hurl",
+    "comments.hurl",
+    "errors_auth.hurl",
+    "errors_comments.hurl",
+    "errors_profiles.hurl",
+    "favorites.hurl",
+    "feed.hurl",
+    "pagination.hurl",
+    "profiles.hurl",
+    "tags.hurl"
+  ]
+}

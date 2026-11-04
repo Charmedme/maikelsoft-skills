@@ -1,0 +1,1741 @@
+diff --git a/src/Conduit/Domain/Article.cs b/src/Conduit/Domain/Article.cs
+index 10cf0bf..25f1f7f 100644
+--- a/src/Conduit/Domain/Article.cs
++++ b/src/Conduit/Domain/Article.cs
+@@ -41,6 +41,9 @@ public class Article
+     [JsonIgnore]
+     public List<ArticleFavorite> ArticleFavorites { get; init; } = new();
+ 
++    // starts at 1 and goes up by 1 with each update that changes the article
++    public int Version { get; set; } = 1;
++
+     public DateTime CreatedAt { get; init; }
+ 
+     public DateTime UpdatedAt { get; set; }
+diff --git a/src/Conduit/Domain/ArticleRevision.cs b/src/Conduit/Domain/ArticleRevision.cs
+new file mode 100644
+index 0000000..b35d57f
+--- /dev/null
++++ b/src/Conduit/Domain/ArticleRevision.cs
+@@ -0,0 +1,19 @@
++using System;
++
++namespace Conduit.Domain;
++
++// an earlier version of an article, kept when an update changes it
++public class ArticleRevision
++{
++    public int ArticleRevisionId { get; init; }
++    public int ArticleId { get; init; }
++    public Article? Article { get; init; }
++    public int Version { get; init; }
++    public string? Title { get; init; }
++    public string? Description { get; init; }
++    public string? Body { get; init; }
++
++    // the tags as a JSON array
++    public string TagList { get; init; } = "[]";
++    public DateTime UpdatedAt { get; init; }
++}
+diff --git a/src/Conduit/Domain/ArticleSlug.cs b/src/Conduit/Domain/ArticleSlug.cs
+new file mode 100644
+index 0000000..ab6842d
+--- /dev/null
++++ b/src/Conduit/Domain/ArticleSlug.cs
+@@ -0,0 +1,9 @@
++namespace Conduit.Domain;
++
++// an earlier slug of an article: it keeps working for reading and stays reserved
++public class ArticleSlug
++{
++    public string Slug { get; init; } = string.Empty;
++    public int ArticleId { get; init; }
++    public Article? Article { get; init; }
++}
+diff --git a/src/Conduit/Features/Articles/ArticleSummary.cs b/src/Conduit/Features/Articles/ArticleSummary.cs
+index 0226c91..57a9f71 100644
+--- a/src/Conduit/Features/Articles/ArticleSummary.cs
++++ b/src/Conduit/Features/Articles/ArticleSummary.cs
+@@ -12,6 +12,7 @@ public class ArticleSummary
+     public List<string> TagList { get; init; } = [];
+     public DateTime CreatedAt { get; init; }
+     public DateTime UpdatedAt { get; init; }
++    public int Version { get; init; }
+     public bool Favorited { get; init; }
+     public int FavoritesCount { get; init; }
+     public Profile? Author { get; init; }
+diff --git a/src/Conduit/Features/Articles/ArticlesController.cs b/src/Conduit/Features/Articles/ArticlesController.cs
+index c044ecc..974d1c8 100644
+--- a/src/Conduit/Features/Articles/ArticlesController.cs
++++ b/src/Conduit/Features/Articles/ArticlesController.cs
+@@ -36,6 +36,13 @@ public class ArticlesController(IMediator mediator) : Controller
+             cancellationToken
+         );
+ 
++    [HttpGet("{slug}/revisions")]
++    [Authorize(AuthenticationSchemes = JwtIssuerOptions.Schemes)]
++    public ValueTask<Revisions.RevisionsEnvelope> GetRevisions(
++        string slug,
++        CancellationToken cancellationToken
++    ) => mediator.Send(new Revisions.Query(slug), cancellationToken);
++
+     [HttpGet("{slug}")]
+     public ValueTask<ArticleEnvelope> Get(string slug, CancellationToken cancellationToken) =>
+         mediator.Send(new Details.Query(slug), cancellationToken);
+diff --git a/src/Conduit/Features/Articles/Create.cs b/src/Conduit/Features/Articles/Create.cs
+index 60c6f17..9d56218 100644
+--- a/src/Conduit/Features/Articles/Create.cs
++++ b/src/Conduit/Features/Articles/Create.cs
+@@ -71,15 +71,11 @@ public class Create
+ 
+             var slug = message.Article.Title.GenerateSlug();
+             // duplicate titles are allowed: each article gets a unique slug
+-            var uniqueSlug = slug;
+-            for (
+-                var i = 1;
+-                await context.Articles.AnyAsync(x => x.Slug == uniqueSlug, cancellationToken);
+-                i++
+-            )
+-            {
+-                uniqueSlug = $"{slug}-{i}";
+-            }
++            var uniqueSlug = await context.UniqueSlug(
++                slug ?? string.Empty,
++                null,
++                cancellationToken
++            );
+ 
+             var article = new Article
+             {
+diff --git a/src/Conduit/Features/Articles/Details.cs b/src/Conduit/Features/Articles/Details.cs
+index 2ce6662..f259f76 100644
+--- a/src/Conduit/Features/Articles/Details.cs
++++ b/src/Conduit/Features/Articles/Details.cs
+@@ -28,7 +28,8 @@ public class Details
+         {
+             var article = await context
+                 .Articles.GetAllData()
+-                .FirstOrDefaultAsync(x => x.Slug == message.Slug, cancellationToken);
++                .BySlugOrEarlierSlug(context, message.Slug)
++                .FirstOrDefaultAsync(cancellationToken);
+ 
+             if (article == null)
+             {
+diff --git a/src/Conduit/Features/Articles/Edit.cs b/src/Conduit/Features/Articles/Edit.cs
+index 8532f69..a39374c 100644
+--- a/src/Conduit/Features/Articles/Edit.cs
++++ b/src/Conduit/Features/Articles/Edit.cs
+@@ -2,6 +2,7 @@ using System;
+ using System.Collections.Generic;
+ using System.Linq;
+ using System.Net;
++using System.Text.Json;
+ using System.Text.Json.Serialization;
+ using System.Threading;
+ using System.Threading.Tasks;
+@@ -28,6 +29,9 @@ public class Edit
+ 
+         public string? Body { get; set; }
+ 
++        // the version that the author started from
++        public int? Version { get; set; }
++
+         public string[]? TagList
+         {
+             get => _tagList;
+@@ -51,6 +55,10 @@ public class Edit
+         public CommandValidator()
+         {
+             RuleFor(x => x.Model.Article).NotNull();
++            RuleFor(x => x.Model.Article.Version)
++                .NotNull()
++                .When(x => x.Model.Article is not null)
++                .WithMessage(Constants.BLANK);
+             RuleFor(x => x.Model.Article.TagList)
+                 .NotNull()
+                 .When(x => x.Model.Article is { TagListSet: true });
+@@ -81,6 +89,28 @@ public class Edit
+                 throw new RestException(HttpStatusCode.Forbidden, "article", Constants.FORBIDDEN);
+             }
+ 
++            if (message.Model.Article.Version != article.Version)
++            {
++                throw new RestException(HttpStatusCode.Conflict, "version", "is stale");
++            }
++
++            var before = new ArticleRevision
++            {
++                ArticleId = article.ArticleId,
++                Version = article.Version,
++                Title = article.Title,
++                Description = article.Description,
++                Body = article.Body,
++                TagList = JsonSerializer.Serialize(
++                    article
++                        .ArticleTags.Where(x => x.TagId is not null)
++                        .Select(x => x.TagId!)
++                        .ToList()
++                ),
++                UpdatedAt = article.UpdatedAt,
++            };
++            var slugBefore = article.Slug;
++
+             article.Description = message.Model.Article.Description ?? article.Description;
+             article.Body = message.Model.Article.Body ?? article.Body;
+             if (
+@@ -89,21 +119,12 @@ public class Edit
+             )
+             {
+                 article.Title = message.Model.Article.Title;
+-                var slug = article.Title.GenerateSlug();
+-                // keep slugs unique when the new title collides with an existing article
+-                var uniqueSlug = slug;
+-                for (
+-                    var i = 1;
+-                    await context.Articles.AnyAsync(
+-                        x => x.Slug == uniqueSlug && x.ArticleId != article.ArticleId,
+-                        cancellationToken
+-                    );
+-                    i++
+-                )
+-                {
+-                    uniqueSlug = $"{slug}-{i}";
+-                }
+-                article.Slug = uniqueSlug;
++                // keep slugs unique, also against the earlier slugs of other articles
++                article.Slug = await context.UniqueSlug(
++                    article.Title.GenerateSlug() ?? string.Empty,
++                    article.ArticleId,
++                    cancellationToken
++                );
+             }
+ 
+             // when tagList is absent from the request the current tags are preserved
+@@ -126,6 +147,21 @@ public class Edit
+             )
+             {
+                 article.UpdatedAt = DateTime.UtcNow;
++                article.Version++;
++                await context.ArticleRevisions.AddAsync(before, cancellationToken);
++                if (article.Slug != slugBefore && slugBefore is not null)
++                {
++                    await context.ArticleSlugs.AddAsync(
++                        new ArticleSlug { Slug = slugBefore, ArticleId = article.ArticleId },
++                        cancellationToken
++                    );
++                    // back to an earlier slug of this article: it is current again
++                    await context
++                        .ArticleSlugs.Where(x =>
++                            x.Slug == article.Slug && x.ArticleId == article.ArticleId
++                        )
++                        .ExecuteDeleteAsync(cancellationToken);
++                }
+             }
+ 
+             var tagIds = articleTagsToCreate
+@@ -148,7 +184,14 @@ public class Edit
+             // delete the tags that do not exist anymore
+             context.ArticleTags.RemoveRange(articleTagsToDelete);
+ 
+-            await context.SaveChangesAsync(cancellationToken);
++            try
++            {
++                await context.SaveChangesAsync(cancellationToken);
++            }
++            catch (DbUpdateConcurrencyException)
++            {
++                throw new RestException(HttpStatusCode.Conflict, "version", "is stale");
++            }
+ 
+             article = await context
+                 .Articles.GetAllData()
+diff --git a/src/Conduit/Features/Articles/List.cs b/src/Conduit/Features/Articles/List.cs
+index aa1b208..f3ff16e 100644
+--- a/src/Conduit/Features/Articles/List.cs
++++ b/src/Conduit/Features/Articles/List.cs
+@@ -80,6 +80,7 @@ public class List
+                     Description = x.Description,
+                     CreatedAt = x.CreatedAt,
+                     UpdatedAt = x.UpdatedAt,
++                    Version = x.Version,
+                     TagList = x.ArticleTags.Select(y => y.TagId!).ToList(),
+                     FavoritesCount = x.ArticleFavorites.Count,
+                     Favorited =
+diff --git a/src/Conduit/Features/Articles/Revisions.cs b/src/Conduit/Features/Articles/Revisions.cs
+new file mode 100644
+index 0000000..c4fc3ff
+--- /dev/null
++++ b/src/Conduit/Features/Articles/Revisions.cs
+@@ -0,0 +1,80 @@
++using System;
++using System.Collections.Generic;
++using System.Linq;
++using System.Net;
++using System.Text.Json;
++using System.Threading;
++using System.Threading.Tasks;
++using Conduit.Infrastructure;
++using Conduit.Infrastructure.Errors;
++using Mediator;
++using Microsoft.EntityFrameworkCore;
++
++namespace Conduit.Features.Articles;
++
++public class Revisions
++{
++    public record Query(string Slug) : IRequest<RevisionsEnvelope>, IReadOnlyRequest;
++
++    public class RevisionView
++    {
++        public int Version { get; init; }
++        public string? Title { get; init; }
++        public string? Description { get; init; }
++        public string? Body { get; init; }
++        public List<string> TagList { get; init; } = [];
++        public DateTime UpdatedAt { get; init; }
++    }
++
++    public class RevisionsEnvelope
++    {
++        public List<RevisionView> Revisions { get; init; } = [];
++        public int RevisionsCount { get; init; }
++    }
++
++    public class QueryHandler(ConduitContext context, ICurrentUserAccessor currentUserAccessor)
++        : IRequestHandler<Query, RevisionsEnvelope>
++    {
++        public async ValueTask<RevisionsEnvelope> Handle(
++            Query message,
++            CancellationToken cancellationToken
++        )
++        {
++            var article =
++                await context
++                    .Articles.AsNoTracking()
++                    .Include(x => x.Author)
++                    .BySlugOrEarlierSlug(context, message.Slug)
++                    .FirstOrDefaultAsync(cancellationToken)
++                ?? throw new RestException(HttpStatusCode.NotFound, "article", Constants.NOT_FOUND);
++
++            if (article.Author?.PersonId != currentUserAccessor.GetCurrentPersonId())
++            {
++                throw new RestException(HttpStatusCode.Forbidden, "article", Constants.FORBIDDEN);
++            }
++
++            var revisions = await context
++                .ArticleRevisions.AsNoTracking()
++                .Where(x => x.ArticleId == article.ArticleId)
++                .OrderByDescending(x => x.Version)
++                .ToListAsync(cancellationToken);
++
++            return new RevisionsEnvelope
++            {
++                Revisions =
++                [
++                    .. revisions.Select(x => new RevisionView
++                    {
++                        Version = x.Version,
++                        Title = x.Title,
++                        Description = x.Description,
++                        Body = x.Body,
++                        TagList = JsonSerializer.Deserialize<List<string>>(x.TagList) ?? [],
++                        UpdatedAt = x.UpdatedAt,
++                    }),
++                ],
++                RevisionsCount = revisions.Count,
++            };
++        }
++    }
++}
+diff --git a/src/Conduit/Features/Articles/Slugs.cs b/src/Conduit/Features/Articles/Slugs.cs
+new file mode 100644
+index 0000000..a400f4c
+--- /dev/null
++++ b/src/Conduit/Features/Articles/Slugs.cs
+@@ -0,0 +1,53 @@
++using System.Linq;
++using System.Threading;
++using System.Threading.Tasks;
++using Conduit.Domain;
++using Conduit.Infrastructure;
++using Microsoft.EntityFrameworkCore;
++
++namespace Conduit.Features.Articles;
++
++public static class Slugs
++{
++    // a slug is taken when another article has it now or had it before
++    public static async Task<string> UniqueSlug(
++        this ConduitContext context,
++        string slug,
++        int? articleId,
++        CancellationToken cancellationToken
++    )
++    {
++        var candidate = slug;
++        for (var i = 1; await context.IsTaken(candidate, articleId, cancellationToken); i++)
++        {
++            candidate = $"{slug}-{i}";
++        }
++        return candidate;
++    }
++
++    private static async Task<bool> IsTaken(
++        this ConduitContext context,
++        string slug,
++        int? articleId,
++        CancellationToken cancellationToken
++    ) =>
++        await context.Articles.AnyAsync(
++            x => x.Slug == slug && x.ArticleId != articleId,
++            cancellationToken
++        )
++        || await context.ArticleSlugs.AnyAsync(
++            x => x.Slug == slug && x.ArticleId != articleId,
++            cancellationToken
++        );
++
++    // the current slug, or an earlier slug of the same article (for reading only)
++    public static IQueryable<Article> BySlugOrEarlierSlug(
++        this IQueryable<Article> articles,
++        ConduitContext context,
++        string slug
++    ) =>
++        articles.Where(x =>
++            x.Slug == slug
++            || context.ArticleSlugs.Any(y => y.Slug == slug && y.ArticleId == x.ArticleId)
++        );
++}
+diff --git a/src/Conduit/Features/Comments/List.cs b/src/Conduit/Features/Comments/List.cs
+index 27a3feb..f1a63b8 100644
+--- a/src/Conduit/Features/Comments/List.cs
++++ b/src/Conduit/Features/Comments/List.cs
+@@ -1,6 +1,7 @@
+ using System.Net;
+ using System.Threading;
+ using System.Threading.Tasks;
++using Conduit.Features.Articles;
+ using Conduit.Infrastructure;
+ using Conduit.Infrastructure.Errors;
+ using Mediator;
+@@ -22,7 +23,8 @@ public class List
+             var article = await context
+                 .Articles.Include(x => x.Comments)
+                     .ThenInclude(x => x.Author)
+-                .FirstOrDefaultAsync(x => x.Slug == message.Slug, cancellationToken);
++                .BySlugOrEarlierSlug(context, message.Slug)
++                .FirstOrDefaultAsync(cancellationToken);
+ 
+             if (article == null)
+             {
+diff --git a/src/Conduit/Infrastructure/ConduitContext.cs b/src/Conduit/Infrastructure/ConduitContext.cs
+index 33df7ff..1c47e0c 100644
+--- a/src/Conduit/Infrastructure/ConduitContext.cs
++++ b/src/Conduit/Infrastructure/ConduitContext.cs
+@@ -25,6 +25,8 @@ public class ConduitContext(DbContextOptions options) : DbContext(options)
+     public DbSet<ArticleTag> ArticleTags { get; init; } = null!;
+     public DbSet<ArticleFavorite> ArticleFavorites { get; init; } = null!;
+     public DbSet<FollowedPeople> FollowedPeople { get; init; } = null!;
++    public DbSet<ArticleRevision> ArticleRevisions { get; init; } = null!;
++    public DbSet<ArticleSlug> ArticleSlugs { get; init; } = null!;
+ 
+     protected override void OnModelCreating(ModelBuilder modelBuilder)
+     {
+@@ -41,12 +43,34 @@ public class ConduitContext(DbContextOptions options) : DbContext(options)
+         {
+             b.Property(x => x.Slug).HasMaxLength(450);
+             b.HasIndex(x => x.Slug).IsUnique();
++            b.Property(x => x.Version).IsConcurrencyToken();
+             b.Property(x => x.CreatedAt)
+                 .HasConversion(v => v, v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+             b.Property(x => x.UpdatedAt)
+                 .HasConversion(v => v, v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+         });
+ 
++        modelBuilder.Entity<ArticleRevision>(b =>
++        {
++            b.HasOne(x => x.Article)
++                .WithMany()
++                .HasForeignKey(x => x.ArticleId)
++                .OnDelete(DeleteBehavior.Cascade);
++            b.HasIndex(x => new { x.ArticleId, x.Version }).IsUnique();
++            b.Property(x => x.UpdatedAt)
++                .HasConversion(v => v, v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
++        });
++
++        modelBuilder.Entity<ArticleSlug>(b =>
++        {
++            b.HasKey(x => x.Slug);
++            b.Property(x => x.Slug).HasMaxLength(450);
++            b.HasOne(x => x.Article)
++                .WithMany()
++                .HasForeignKey(x => x.ArticleId)
++                .OnDelete(DeleteBehavior.Cascade);
++        });
++
+         modelBuilder.Entity<Comment>(b =>
+         {
+             b.Property(x => x.CreatedAt)
+diff --git a/src/Conduit/Infrastructure/Migrations/SqlServer/20261102172719_ArticleRevisions.Designer.cs b/src/Conduit/Infrastructure/Migrations/SqlServer/20261102172719_ArticleRevisions.Designer.cs
+new file mode 100644
+index 0000000..8000aa9
+--- /dev/null
++++ b/src/Conduit/Infrastructure/Migrations/SqlServer/20261102172719_ArticleRevisions.Designer.cs
+@@ -0,0 +1,390 @@
++﻿// <auto-generated />
++using System;
++using Conduit.Infrastructure;
++using Microsoft.EntityFrameworkCore;
++using Microsoft.EntityFrameworkCore.Infrastructure;
++using Microsoft.EntityFrameworkCore.Metadata;
++using Microsoft.EntityFrameworkCore.Migrations;
++using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
++
++#nullable disable
++
++namespace Conduit.Infrastructure.Migrations.SqlServer
++{
++    [DbContext(typeof(SqlServerConduitContext))]
++    [Migration("20261102172719_ArticleRevisions")]
++    partial class ArticleRevisions
++    {
++        /// <inheritdoc />
++        protected override void BuildTargetModel(ModelBuilder modelBuilder)
++        {
++#pragma warning disable 612, 618
++            modelBuilder
++                .HasAnnotation("ProductVersion", "10.0.14")
++                .HasAnnotation("Relational:MaxIdentifierLength", 128);
++
++            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
++
++            modelBuilder.Entity("Conduit.Domain.Article", b =>
++                {
++                    b.Property<int>("ArticleId")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("int");
++
++                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ArticleId"));
++
++                    b.Property<int?>("AuthorPersonId")
++                        .HasColumnType("int");
++
++                    b.Property<string>("Body")
++                        .HasColumnType("nvarchar(max)");
++
++                    b.Property<DateTime>("CreatedAt")
++                        .HasColumnType("datetime2");
++
++                    b.Property<string>("Description")
++                        .HasColumnType("nvarchar(max)");
++
++                    b.Property<string>("Slug")
++                        .HasMaxLength(450)
++                        .HasColumnType("nvarchar(450)");
++
++                    b.Property<string>("Title")
++                        .HasColumnType("nvarchar(max)");
++
++                    b.Property<DateTime>("UpdatedAt")
++                        .HasColumnType("datetime2");
++
++                    b.Property<int>("Version")
++                        .IsConcurrencyToken()
++                        .HasColumnType("int");
++
++                    b.HasKey("ArticleId");
++
++                    b.HasIndex("AuthorPersonId");
++
++                    b.HasIndex("Slug")
++                        .IsUnique()
++                        .HasFilter("[Slug] IS NOT NULL");
++
++                    b.ToTable("Articles");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.ArticleFavorite", b =>
++                {
++                    b.Property<int>("ArticleId")
++                        .HasColumnType("int");
++
++                    b.Property<int>("PersonId")
++                        .HasColumnType("int");
++
++                    b.HasKey("ArticleId", "PersonId");
++
++                    b.HasIndex("PersonId");
++
++                    b.ToTable("ArticleFavorites");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.ArticleRevision", b =>
++                {
++                    b.Property<int>("ArticleRevisionId")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("int");
++
++                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ArticleRevisionId"));
++
++                    b.Property<int>("ArticleId")
++                        .HasColumnType("int");
++
++                    b.Property<string>("Body")
++                        .HasColumnType("nvarchar(max)");
++
++                    b.Property<string>("Description")
++                        .HasColumnType("nvarchar(max)");
++
++                    b.Property<string>("TagList")
++                        .IsRequired()
++                        .HasColumnType("nvarchar(max)");
++
++                    b.Property<string>("Title")
++                        .HasColumnType("nvarchar(max)");
++
++                    b.Property<DateTime>("UpdatedAt")
++                        .HasColumnType("datetime2");
++
++                    b.Property<int>("Version")
++                        .HasColumnType("int");
++
++                    b.HasKey("ArticleRevisionId");
++
++                    b.HasIndex("ArticleId", "Version")
++                        .IsUnique();
++
++                    b.ToTable("ArticleRevisions");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.ArticleSlug", b =>
++                {
++                    b.Property<string>("Slug")
++                        .HasMaxLength(450)
++                        .HasColumnType("nvarchar(450)");
++
++                    b.Property<int>("ArticleId")
++                        .HasColumnType("int");
++
++                    b.HasKey("Slug");
++
++                    b.HasIndex("ArticleId");
++
++                    b.ToTable("ArticleSlugs");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.ArticleTag", b =>
++                {
++                    b.Property<int>("ArticleId")
++                        .HasColumnType("int");
++
++                    b.Property<string>("TagId")
++                        .HasColumnType("nvarchar(450)");
++
++                    b.HasKey("ArticleId", "TagId");
++
++                    b.HasIndex("TagId");
++
++                    b.ToTable("ArticleTags");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.Comment", b =>
++                {
++                    b.Property<int>("CommentId")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("int")
++                        .HasJsonPropertyName("id");
++
++                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CommentId"));
++
++                    b.Property<int>("ArticleId")
++                        .HasColumnType("int");
++
++                    b.Property<int>("AuthorId")
++                        .HasColumnType("int");
++
++                    b.Property<string>("Body")
++                        .HasColumnType("nvarchar(max)");
++
++                    b.Property<DateTime>("CreatedAt")
++                        .HasColumnType("datetime2");
++
++                    b.Property<DateTime>("UpdatedAt")
++                        .HasColumnType("datetime2");
++
++                    b.HasKey("CommentId");
++
++                    b.HasIndex("ArticleId");
++
++                    b.HasIndex("AuthorId");
++
++                    b.ToTable("Comments");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.FollowedPeople", b =>
++                {
++                    b.Property<int>("ObserverId")
++                        .HasColumnType("int");
++
++                    b.Property<int>("TargetId")
++                        .HasColumnType("int");
++
++                    b.HasKey("ObserverId", "TargetId");
++
++                    b.HasIndex("TargetId");
++
++                    b.ToTable("FollowedPeople");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.Person", b =>
++                {
++                    b.Property<int>("PersonId")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("int");
++
++                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PersonId"));
++
++                    b.Property<string>("Bio")
++                        .HasColumnType("nvarchar(max)");
++
++                    b.Property<string>("Email")
++                        .HasMaxLength(320)
++                        .HasColumnType("nvarchar(320)");
++
++                    b.Property<byte[]>("Hash")
++                        .IsRequired()
++                        .HasColumnType("varbinary(max)");
++
++                    b.Property<string>("Image")
++                        .HasColumnType("nvarchar(max)");
++
++                    b.Property<byte[]>("Salt")
++                        .IsRequired()
++                        .HasColumnType("varbinary(max)");
++
++                    b.Property<string>("Username")
++                        .HasMaxLength(256)
++                        .HasColumnType("nvarchar(256)");
++
++                    b.HasKey("PersonId");
++
++                    b.HasIndex("Email")
++                        .IsUnique()
++                        .HasFilter("[Email] IS NOT NULL");
++
++                    b.HasIndex("Username")
++                        .IsUnique()
++                        .HasFilter("[Username] IS NOT NULL");
++
++                    b.ToTable("Persons");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.Tag", b =>
++                {
++                    b.Property<string>("TagId")
++                        .HasColumnType("nvarchar(450)");
++
++                    b.HasKey("TagId");
++
++                    b.ToTable("Tags");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.Article", b =>
++                {
++                    b.HasOne("Conduit.Domain.Person", "Author")
++                        .WithMany()
++                        .HasForeignKey("AuthorPersonId");
++
++                    b.Navigation("Author");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.ArticleFavorite", b =>
++                {
++                    b.HasOne("Conduit.Domain.Article", "Article")
++                        .WithMany("ArticleFavorites")
++                        .HasForeignKey("ArticleId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.HasOne("Conduit.Domain.Person", "Person")
++                        .WithMany("ArticleFavorites")
++                        .HasForeignKey("PersonId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.Navigation("Article");
++
++                    b.Navigation("Person");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.ArticleRevision", b =>
++                {
++                    b.HasOne("Conduit.Domain.Article", "Article")
++                        .WithMany()
++                        .HasForeignKey("ArticleId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.Navigation("Article");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.ArticleSlug", b =>
++                {
++                    b.HasOne("Conduit.Domain.Article", "Article")
++                        .WithMany()
++                        .HasForeignKey("ArticleId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.Navigation("Article");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.ArticleTag", b =>
++                {
++                    b.HasOne("Conduit.Domain.Article", "Article")
++                        .WithMany("ArticleTags")
++                        .HasForeignKey("ArticleId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.HasOne("Conduit.Domain.Tag", "Tag")
++                        .WithMany("ArticleTags")
++                        .HasForeignKey("TagId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.Navigation("Article");
++
++                    b.Navigation("Tag");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.Comment", b =>
++                {
++                    b.HasOne("Conduit.Domain.Article", "Article")
++                        .WithMany("Comments")
++                        .HasForeignKey("ArticleId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.HasOne("Conduit.Domain.Person", "Author")
++                        .WithMany()
++                        .HasForeignKey("AuthorId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.Navigation("Article");
++
++                    b.Navigation("Author");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.FollowedPeople", b =>
++                {
++                    b.HasOne("Conduit.Domain.Person", "Observer")
++                        .WithMany("Followers")
++                        .HasForeignKey("ObserverId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.HasOne("Conduit.Domain.Person", "Target")
++                        .WithMany("Following")
++                        .HasForeignKey("TargetId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.Navigation("Observer");
++
++                    b.Navigation("Target");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.Article", b =>
++                {
++                    b.Navigation("ArticleFavorites");
++
++                    b.Navigation("ArticleTags");
++
++                    b.Navigation("Comments");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.Person", b =>
++                {
++                    b.Navigation("ArticleFavorites");
++
++                    b.Navigation("Followers");
++
++                    b.Navigation("Following");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.Tag", b =>
++                {
++                    b.Navigation("ArticleTags");
++                });
++#pragma warning restore 612, 618
++        }
++    }
++}
+diff --git a/src/Conduit/Infrastructure/Migrations/SqlServer/20261102172719_ArticleRevisions.cs b/src/Conduit/Infrastructure/Migrations/SqlServer/20261102172719_ArticleRevisions.cs
+new file mode 100644
+index 0000000..f0d3932
+--- /dev/null
++++ b/src/Conduit/Infrastructure/Migrations/SqlServer/20261102172719_ArticleRevisions.cs
+@@ -0,0 +1,95 @@
++﻿using System;
++using Microsoft.EntityFrameworkCore.Migrations;
++
++#nullable disable
++
++namespace Conduit.Infrastructure.Migrations.SqlServer;
++
++/// <inheritdoc />
++public partial class ArticleRevisions : Migration
++{
++    private static readonly string[] RevisionIndexColumns = ["ArticleId", "Version"];
++
++    /// <inheritdoc />
++    protected override void Up(MigrationBuilder migrationBuilder)
++    {
++        migrationBuilder.AddColumn<int>(
++            name: "Version",
++            table: "Articles",
++            type: "int",
++            nullable: false,
++            defaultValue: 0
++        );
++
++        migrationBuilder.CreateTable(
++            name: "ArticleRevisions",
++            columns: table => new
++            {
++                ArticleRevisionId = table
++                    .Column<int>(type: "int", nullable: false)
++                    .Annotation("SqlServer:Identity", "1, 1"),
++                ArticleId = table.Column<int>(type: "int", nullable: false),
++                Version = table.Column<int>(type: "int", nullable: false),
++                Title = table.Column<string>(type: "nvarchar(max)", nullable: true),
++                Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
++                Body = table.Column<string>(type: "nvarchar(max)", nullable: true),
++                TagList = table.Column<string>(type: "nvarchar(max)", nullable: false),
++                UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
++            },
++            constraints: table =>
++            {
++                table.PrimaryKey("PK_ArticleRevisions", x => x.ArticleRevisionId);
++                table.ForeignKey(
++                    name: "FK_ArticleRevisions_Articles_ArticleId",
++                    column: x => x.ArticleId,
++                    principalTable: "Articles",
++                    principalColumn: "ArticleId",
++                    onDelete: ReferentialAction.Cascade
++                );
++            }
++        );
++
++        migrationBuilder.CreateTable(
++            name: "ArticleSlugs",
++            columns: table => new
++            {
++                Slug = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
++                ArticleId = table.Column<int>(type: "int", nullable: false),
++            },
++            constraints: table =>
++            {
++                table.PrimaryKey("PK_ArticleSlugs", x => x.Slug);
++                table.ForeignKey(
++                    name: "FK_ArticleSlugs_Articles_ArticleId",
++                    column: x => x.ArticleId,
++                    principalTable: "Articles",
++                    principalColumn: "ArticleId",
++                    onDelete: ReferentialAction.Cascade
++                );
++            }
++        );
++
++        migrationBuilder.CreateIndex(
++            name: "IX_ArticleRevisions_ArticleId_Version",
++            table: "ArticleRevisions",
++            columns: RevisionIndexColumns,
++            unique: true
++        );
++
++        migrationBuilder.CreateIndex(
++            name: "IX_ArticleSlugs_ArticleId",
++            table: "ArticleSlugs",
++            column: "ArticleId"
++        );
++    }
++
++    /// <inheritdoc />
++    protected override void Down(MigrationBuilder migrationBuilder)
++    {
++        migrationBuilder.DropTable(name: "ArticleRevisions");
++
++        migrationBuilder.DropTable(name: "ArticleSlugs");
++
++        migrationBuilder.DropColumn(name: "Version", table: "Articles");
++    }
++}
+diff --git a/src/Conduit/Infrastructure/Migrations/SqlServer/SqlServerConduitContextModelSnapshot.cs b/src/Conduit/Infrastructure/Migrations/SqlServer/SqlServerConduitContextModelSnapshot.cs
+index 1438e80..9768c7f 100644
+--- a/src/Conduit/Infrastructure/Migrations/SqlServer/SqlServerConduitContextModelSnapshot.cs
++++ b/src/Conduit/Infrastructure/Migrations/SqlServer/SqlServerConduitContextModelSnapshot.cs
+@@ -17,7 +17,7 @@ namespace Conduit.Infrastructure.Migrations.SqlServer
+         {
+ #pragma warning disable 612, 618
+             modelBuilder
+-                .HasAnnotation("ProductVersion", "10.0.12")
++                .HasAnnotation("ProductVersion", "10.0.14")
+                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
+ 
+             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+@@ -52,6 +52,10 @@ namespace Conduit.Infrastructure.Migrations.SqlServer
+                     b.Property<DateTime>("UpdatedAt")
+                         .HasColumnType("datetime2");
+ 
++                    b.Property<int>("Version")
++                        .IsConcurrencyToken()
++                        .HasColumnType("int");
++
+                     b.HasKey("ArticleId");
+ 
+                     b.HasIndex("AuthorPersonId");
+@@ -78,6 +82,60 @@ namespace Conduit.Infrastructure.Migrations.SqlServer
+                     b.ToTable("ArticleFavorites");
+                 });
+ 
++            modelBuilder.Entity("Conduit.Domain.ArticleRevision", b =>
++                {
++                    b.Property<int>("ArticleRevisionId")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("int");
++
++                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ArticleRevisionId"));
++
++                    b.Property<int>("ArticleId")
++                        .HasColumnType("int");
++
++                    b.Property<string>("Body")
++                        .HasColumnType("nvarchar(max)");
++
++                    b.Property<string>("Description")
++                        .HasColumnType("nvarchar(max)");
++
++                    b.Property<string>("TagList")
++                        .IsRequired()
++                        .HasColumnType("nvarchar(max)");
++
++                    b.Property<string>("Title")
++                        .HasColumnType("nvarchar(max)");
++
++                    b.Property<DateTime>("UpdatedAt")
++                        .HasColumnType("datetime2");
++
++                    b.Property<int>("Version")
++                        .HasColumnType("int");
++
++                    b.HasKey("ArticleRevisionId");
++
++                    b.HasIndex("ArticleId", "Version")
++                        .IsUnique();
++
++                    b.ToTable("ArticleRevisions");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.ArticleSlug", b =>
++                {
++                    b.Property<string>("Slug")
++                        .HasMaxLength(450)
++                        .HasColumnType("nvarchar(450)");
++
++                    b.Property<int>("ArticleId")
++                        .HasColumnType("int");
++
++                    b.HasKey("Slug");
++
++                    b.HasIndex("ArticleId");
++
++                    b.ToTable("ArticleSlugs");
++                });
++
+             modelBuilder.Entity("Conduit.Domain.ArticleTag", b =>
+                 {
+                     b.Property<int>("ArticleId")
+@@ -222,6 +280,28 @@ namespace Conduit.Infrastructure.Migrations.SqlServer
+                     b.Navigation("Person");
+                 });
+ 
++            modelBuilder.Entity("Conduit.Domain.ArticleRevision", b =>
++                {
++                    b.HasOne("Conduit.Domain.Article", "Article")
++                        .WithMany()
++                        .HasForeignKey("ArticleId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.Navigation("Article");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.ArticleSlug", b =>
++                {
++                    b.HasOne("Conduit.Domain.Article", "Article")
++                        .WithMany()
++                        .HasForeignKey("ArticleId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.Navigation("Article");
++                });
++
+             modelBuilder.Entity("Conduit.Domain.ArticleTag", b =>
+                 {
+                     b.HasOne("Conduit.Domain.Article", "Article")
+diff --git a/src/Conduit/Infrastructure/Migrations/Sqlite/20261102172715_ArticleRevisions.Designer.cs b/src/Conduit/Infrastructure/Migrations/Sqlite/20261102172715_ArticleRevisions.Designer.cs
+new file mode 100644
+index 0000000..5d77e5d
+--- /dev/null
++++ b/src/Conduit/Infrastructure/Migrations/Sqlite/20261102172715_ArticleRevisions.Designer.cs
+@@ -0,0 +1,374 @@
++﻿// <auto-generated />
++using System;
++using Conduit.Infrastructure;
++using Microsoft.EntityFrameworkCore;
++using Microsoft.EntityFrameworkCore.Infrastructure;
++using Microsoft.EntityFrameworkCore.Migrations;
++using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
++
++#nullable disable
++
++namespace Conduit.Infrastructure.Migrations.Sqlite
++{
++    [DbContext(typeof(SqliteConduitContext))]
++    [Migration("20261102172715_ArticleRevisions")]
++    partial class ArticleRevisions
++    {
++        /// <inheritdoc />
++        protected override void BuildTargetModel(ModelBuilder modelBuilder)
++        {
++#pragma warning disable 612, 618
++            modelBuilder.HasAnnotation("ProductVersion", "10.0.14");
++
++            modelBuilder.Entity("Conduit.Domain.Article", b =>
++                {
++                    b.Property<int>("ArticleId")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("INTEGER");
++
++                    b.Property<int?>("AuthorPersonId")
++                        .HasColumnType("INTEGER");
++
++                    b.Property<string>("Body")
++                        .HasColumnType("TEXT");
++
++                    b.Property<DateTime>("CreatedAt")
++                        .HasColumnType("TEXT");
++
++                    b.Property<string>("Description")
++                        .HasColumnType("TEXT");
++
++                    b.Property<string>("Slug")
++                        .HasMaxLength(450)
++                        .HasColumnType("TEXT");
++
++                    b.Property<string>("Title")
++                        .HasColumnType("TEXT");
++
++                    b.Property<DateTime>("UpdatedAt")
++                        .HasColumnType("TEXT");
++
++                    b.Property<int>("Version")
++                        .IsConcurrencyToken()
++                        .HasColumnType("INTEGER");
++
++                    b.HasKey("ArticleId");
++
++                    b.HasIndex("AuthorPersonId");
++
++                    b.HasIndex("Slug")
++                        .IsUnique();
++
++                    b.ToTable("Articles");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.ArticleFavorite", b =>
++                {
++                    b.Property<int>("ArticleId")
++                        .HasColumnType("INTEGER");
++
++                    b.Property<int>("PersonId")
++                        .HasColumnType("INTEGER");
++
++                    b.HasKey("ArticleId", "PersonId");
++
++                    b.HasIndex("PersonId");
++
++                    b.ToTable("ArticleFavorites");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.ArticleRevision", b =>
++                {
++                    b.Property<int>("ArticleRevisionId")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("INTEGER");
++
++                    b.Property<int>("ArticleId")
++                        .HasColumnType("INTEGER");
++
++                    b.Property<string>("Body")
++                        .HasColumnType("TEXT");
++
++                    b.Property<string>("Description")
++                        .HasColumnType("TEXT");
++
++                    b.Property<string>("TagList")
++                        .IsRequired()
++                        .HasColumnType("TEXT");
++
++                    b.Property<string>("Title")
++                        .HasColumnType("TEXT");
++
++                    b.Property<DateTime>("UpdatedAt")
++                        .HasColumnType("TEXT");
++
++                    b.Property<int>("Version")
++                        .HasColumnType("INTEGER");
++
++                    b.HasKey("ArticleRevisionId");
++
++                    b.HasIndex("ArticleId", "Version")
++                        .IsUnique();
++
++                    b.ToTable("ArticleRevisions");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.ArticleSlug", b =>
++                {
++                    b.Property<string>("Slug")
++                        .HasMaxLength(450)
++                        .HasColumnType("TEXT");
++
++                    b.Property<int>("ArticleId")
++                        .HasColumnType("INTEGER");
++
++                    b.HasKey("Slug");
++
++                    b.HasIndex("ArticleId");
++
++                    b.ToTable("ArticleSlugs");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.ArticleTag", b =>
++                {
++                    b.Property<int>("ArticleId")
++                        .HasColumnType("INTEGER");
++
++                    b.Property<string>("TagId")
++                        .HasColumnType("TEXT");
++
++                    b.HasKey("ArticleId", "TagId");
++
++                    b.HasIndex("TagId");
++
++                    b.ToTable("ArticleTags");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.Comment", b =>
++                {
++                    b.Property<int>("CommentId")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("INTEGER")
++                        .HasJsonPropertyName("id");
++
++                    b.Property<int>("ArticleId")
++                        .HasColumnType("INTEGER");
++
++                    b.Property<int>("AuthorId")
++                        .HasColumnType("INTEGER");
++
++                    b.Property<string>("Body")
++                        .HasColumnType("TEXT");
++
++                    b.Property<DateTime>("CreatedAt")
++                        .HasColumnType("TEXT");
++
++                    b.Property<DateTime>("UpdatedAt")
++                        .HasColumnType("TEXT");
++
++                    b.HasKey("CommentId");
++
++                    b.HasIndex("ArticleId");
++
++                    b.HasIndex("AuthorId");
++
++                    b.ToTable("Comments");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.FollowedPeople", b =>
++                {
++                    b.Property<int>("ObserverId")
++                        .HasColumnType("INTEGER");
++
++                    b.Property<int>("TargetId")
++                        .HasColumnType("INTEGER");
++
++                    b.HasKey("ObserverId", "TargetId");
++
++                    b.HasIndex("TargetId");
++
++                    b.ToTable("FollowedPeople");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.Person", b =>
++                {
++                    b.Property<int>("PersonId")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("INTEGER");
++
++                    b.Property<string>("Bio")
++                        .HasColumnType("TEXT");
++
++                    b.Property<string>("Email")
++                        .HasMaxLength(320)
++                        .HasColumnType("TEXT");
++
++                    b.Property<byte[]>("Hash")
++                        .IsRequired()
++                        .HasColumnType("BLOB");
++
++                    b.Property<string>("Image")
++                        .HasColumnType("TEXT");
++
++                    b.Property<byte[]>("Salt")
++                        .IsRequired()
++                        .HasColumnType("BLOB");
++
++                    b.Property<string>("Username")
++                        .HasMaxLength(256)
++                        .HasColumnType("TEXT");
++
++                    b.HasKey("PersonId");
++
++                    b.HasIndex("Email")
++                        .IsUnique();
++
++                    b.HasIndex("Username")
++                        .IsUnique();
++
++                    b.ToTable("Persons");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.Tag", b =>
++                {
++                    b.Property<string>("TagId")
++                        .HasColumnType("TEXT");
++
++                    b.HasKey("TagId");
++
++                    b.ToTable("Tags");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.Article", b =>
++                {
++                    b.HasOne("Conduit.Domain.Person", "Author")
++                        .WithMany()
++                        .HasForeignKey("AuthorPersonId");
++
++                    b.Navigation("Author");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.ArticleFavorite", b =>
++                {
++                    b.HasOne("Conduit.Domain.Article", "Article")
++                        .WithMany("ArticleFavorites")
++                        .HasForeignKey("ArticleId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.HasOne("Conduit.Domain.Person", "Person")
++                        .WithMany("ArticleFavorites")
++                        .HasForeignKey("PersonId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.Navigation("Article");
++
++                    b.Navigation("Person");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.ArticleRevision", b =>
++                {
++                    b.HasOne("Conduit.Domain.Article", "Article")
++                        .WithMany()
++                        .HasForeignKey("ArticleId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.Navigation("Article");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.ArticleSlug", b =>
++                {
++                    b.HasOne("Conduit.Domain.Article", "Article")
++                        .WithMany()
++                        .HasForeignKey("ArticleId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.Navigation("Article");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.ArticleTag", b =>
++                {
++                    b.HasOne("Conduit.Domain.Article", "Article")
++                        .WithMany("ArticleTags")
++                        .HasForeignKey("ArticleId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.HasOne("Conduit.Domain.Tag", "Tag")
++                        .WithMany("ArticleTags")
++                        .HasForeignKey("TagId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.Navigation("Article");
++
++                    b.Navigation("Tag");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.Comment", b =>
++                {
++                    b.HasOne("Conduit.Domain.Article", "Article")
++                        .WithMany("Comments")
++                        .HasForeignKey("ArticleId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.HasOne("Conduit.Domain.Person", "Author")
++                        .WithMany()
++                        .HasForeignKey("AuthorId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.Navigation("Article");
++
++                    b.Navigation("Author");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.FollowedPeople", b =>
++                {
++                    b.HasOne("Conduit.Domain.Person", "Observer")
++                        .WithMany("Followers")
++                        .HasForeignKey("ObserverId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.HasOne("Conduit.Domain.Person", "Target")
++                        .WithMany("Following")
++                        .HasForeignKey("TargetId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.Navigation("Observer");
++
++                    b.Navigation("Target");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.Article", b =>
++                {
++                    b.Navigation("ArticleFavorites");
++
++                    b.Navigation("ArticleTags");
++
++                    b.Navigation("Comments");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.Person", b =>
++                {
++                    b.Navigation("ArticleFavorites");
++
++                    b.Navigation("Followers");
++
++                    b.Navigation("Following");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.Tag", b =>
++                {
++                    b.Navigation("ArticleTags");
++                });
++#pragma warning restore 612, 618
++        }
++    }
++}
+diff --git a/src/Conduit/Infrastructure/Migrations/Sqlite/20261102172715_ArticleRevisions.cs b/src/Conduit/Infrastructure/Migrations/Sqlite/20261102172715_ArticleRevisions.cs
+new file mode 100644
+index 0000000..51d1454
+--- /dev/null
++++ b/src/Conduit/Infrastructure/Migrations/Sqlite/20261102172715_ArticleRevisions.cs
+@@ -0,0 +1,95 @@
++﻿using System;
++using Microsoft.EntityFrameworkCore.Migrations;
++
++#nullable disable
++
++namespace Conduit.Infrastructure.Migrations.Sqlite;
++
++/// <inheritdoc />
++public partial class ArticleRevisions : Migration
++{
++    private static readonly string[] RevisionIndexColumns = ["ArticleId", "Version"];
++
++    /// <inheritdoc />
++    protected override void Up(MigrationBuilder migrationBuilder)
++    {
++        migrationBuilder.AddColumn<int>(
++            name: "Version",
++            table: "Articles",
++            type: "INTEGER",
++            nullable: false,
++            defaultValue: 0
++        );
++
++        migrationBuilder.CreateTable(
++            name: "ArticleRevisions",
++            columns: table => new
++            {
++                ArticleRevisionId = table
++                    .Column<int>(type: "INTEGER", nullable: false)
++                    .Annotation("Sqlite:Autoincrement", true),
++                ArticleId = table.Column<int>(type: "INTEGER", nullable: false),
++                Version = table.Column<int>(type: "INTEGER", nullable: false),
++                Title = table.Column<string>(type: "TEXT", nullable: true),
++                Description = table.Column<string>(type: "TEXT", nullable: true),
++                Body = table.Column<string>(type: "TEXT", nullable: true),
++                TagList = table.Column<string>(type: "TEXT", nullable: false),
++                UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
++            },
++            constraints: table =>
++            {
++                table.PrimaryKey("PK_ArticleRevisions", x => x.ArticleRevisionId);
++                table.ForeignKey(
++                    name: "FK_ArticleRevisions_Articles_ArticleId",
++                    column: x => x.ArticleId,
++                    principalTable: "Articles",
++                    principalColumn: "ArticleId",
++                    onDelete: ReferentialAction.Cascade
++                );
++            }
++        );
++
++        migrationBuilder.CreateTable(
++            name: "ArticleSlugs",
++            columns: table => new
++            {
++                Slug = table.Column<string>(type: "TEXT", maxLength: 450, nullable: false),
++                ArticleId = table.Column<int>(type: "INTEGER", nullable: false),
++            },
++            constraints: table =>
++            {
++                table.PrimaryKey("PK_ArticleSlugs", x => x.Slug);
++                table.ForeignKey(
++                    name: "FK_ArticleSlugs_Articles_ArticleId",
++                    column: x => x.ArticleId,
++                    principalTable: "Articles",
++                    principalColumn: "ArticleId",
++                    onDelete: ReferentialAction.Cascade
++                );
++            }
++        );
++
++        migrationBuilder.CreateIndex(
++            name: "IX_ArticleRevisions_ArticleId_Version",
++            table: "ArticleRevisions",
++            columns: RevisionIndexColumns,
++            unique: true
++        );
++
++        migrationBuilder.CreateIndex(
++            name: "IX_ArticleSlugs_ArticleId",
++            table: "ArticleSlugs",
++            column: "ArticleId"
++        );
++    }
++
++    /// <inheritdoc />
++    protected override void Down(MigrationBuilder migrationBuilder)
++    {
++        migrationBuilder.DropTable(name: "ArticleRevisions");
++
++        migrationBuilder.DropTable(name: "ArticleSlugs");
++
++        migrationBuilder.DropColumn(name: "Version", table: "Articles");
++    }
++}
+diff --git a/src/Conduit/Infrastructure/Migrations/Sqlite/SqliteConduitContextModelSnapshot.cs b/src/Conduit/Infrastructure/Migrations/Sqlite/SqliteConduitContextModelSnapshot.cs
+index 17070ef..1ade5c7 100644
+--- a/src/Conduit/Infrastructure/Migrations/Sqlite/SqliteConduitContextModelSnapshot.cs
++++ b/src/Conduit/Infrastructure/Migrations/Sqlite/SqliteConduitContextModelSnapshot.cs
+@@ -15,7 +15,7 @@ namespace Conduit.Infrastructure.Migrations.Sqlite
+         protected override void BuildModel(ModelBuilder modelBuilder)
+         {
+ #pragma warning disable 612, 618
+-            modelBuilder.HasAnnotation("ProductVersion", "10.0.12");
++            modelBuilder.HasAnnotation("ProductVersion", "10.0.14");
+ 
+             modelBuilder.Entity("Conduit.Domain.Article", b =>
+                 {
+@@ -45,6 +45,10 @@ namespace Conduit.Infrastructure.Migrations.Sqlite
+                     b.Property<DateTime>("UpdatedAt")
+                         .HasColumnType("TEXT");
+ 
++                    b.Property<int>("Version")
++                        .IsConcurrencyToken()
++                        .HasColumnType("INTEGER");
++
+                     b.HasKey("ArticleId");
+ 
+                     b.HasIndex("AuthorPersonId");
+@@ -70,6 +74,58 @@ namespace Conduit.Infrastructure.Migrations.Sqlite
+                     b.ToTable("ArticleFavorites");
+                 });
+ 
++            modelBuilder.Entity("Conduit.Domain.ArticleRevision", b =>
++                {
++                    b.Property<int>("ArticleRevisionId")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("INTEGER");
++
++                    b.Property<int>("ArticleId")
++                        .HasColumnType("INTEGER");
++
++                    b.Property<string>("Body")
++                        .HasColumnType("TEXT");
++
++                    b.Property<string>("Description")
++                        .HasColumnType("TEXT");
++
++                    b.Property<string>("TagList")
++                        .IsRequired()
++                        .HasColumnType("TEXT");
++
++                    b.Property<string>("Title")
++                        .HasColumnType("TEXT");
++
++                    b.Property<DateTime>("UpdatedAt")
++                        .HasColumnType("TEXT");
++
++                    b.Property<int>("Version")
++                        .HasColumnType("INTEGER");
++
++                    b.HasKey("ArticleRevisionId");
++
++                    b.HasIndex("ArticleId", "Version")
++                        .IsUnique();
++
++                    b.ToTable("ArticleRevisions");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.ArticleSlug", b =>
++                {
++                    b.Property<string>("Slug")
++                        .HasMaxLength(450)
++                        .HasColumnType("TEXT");
++
++                    b.Property<int>("ArticleId")
++                        .HasColumnType("INTEGER");
++
++                    b.HasKey("Slug");
++
++                    b.HasIndex("ArticleId");
++
++                    b.ToTable("ArticleSlugs");
++                });
++
+             modelBuilder.Entity("Conduit.Domain.ArticleTag", b =>
+                 {
+                     b.Property<int>("ArticleId")
+@@ -208,6 +264,28 @@ namespace Conduit.Infrastructure.Migrations.Sqlite
+                     b.Navigation("Person");
+                 });
+ 
++            modelBuilder.Entity("Conduit.Domain.ArticleRevision", b =>
++                {
++                    b.HasOne("Conduit.Domain.Article", "Article")
++                        .WithMany()
++                        .HasForeignKey("ArticleId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.Navigation("Article");
++                });
++
++            modelBuilder.Entity("Conduit.Domain.ArticleSlug", b =>
++                {
++                    b.HasOne("Conduit.Domain.Article", "Article")
++                        .WithMany()
++                        .HasForeignKey("ArticleId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.Navigation("Article");
++                });
++
+             modelBuilder.Entity("Conduit.Domain.ArticleTag", b =>
+                 {
+                     b.HasOne("Conduit.Domain.Article", "Article")
+diff --git a/tests/Conduit.IntegrationTests/Features/Articles/EditTests.cs b/tests/Conduit.IntegrationTests/Features/Articles/EditTests.cs
+index 1585090..18c10e9 100644
+--- a/tests/Conduit.IntegrationTests/Features/Articles/EditTests.cs
++++ b/tests/Conduit.IntegrationTests/Features/Articles/EditTests.cs
+@@ -32,6 +32,7 @@ public class EditTests : SliceFixture
+                     Description = "Updated " + createdArticle.Description,
+                     Body = "Updated " + createdArticle.Body,
+                     TagList = [createdArticle.TagList[1], "tag3"],
++                    Version = 1,
+                 }
+             ),
+             createdArticle.Slug ?? throw new InvalidOperationException()
+diff --git a/tests/Conduit.IntegrationTests/Features/Articles/TagPersistenceTests.cs b/tests/Conduit.IntegrationTests/Features/Articles/TagPersistenceTests.cs
+index b4a4dab..185d774 100644
+--- a/tests/Conduit.IntegrationTests/Features/Articles/TagPersistenceTests.cs
++++ b/tests/Conduit.IntegrationTests/Features/Articles/TagPersistenceTests.cs
+@@ -37,7 +37,13 @@ public class TagPersistenceTests
+         var handler = new Edit.Handler(context, new StubCurrentUserAccessor("author"));
+         var result = await handler.Handle(
+             new Edit.Command(
+-                new(new Edit.ArticleData { TagList = ["existing", "existing", "new", "new"] }),
++                new(
++                    new Edit.ArticleData
++                    {
++                        TagList = ["existing", "existing", "new", "new"],
++                        Version = 1,
++                    }
++                ),
+                 "article"
+             ),
+             default
+diff --git a/tests/Conduit.IntegrationTests/MigrationTests.cs b/tests/Conduit.IntegrationTests/MigrationTests.cs
+index 620b876..da4539e 100644
+--- a/tests/Conduit.IntegrationTests/MigrationTests.cs
++++ b/tests/Conduit.IntegrationTests/MigrationTests.cs
+@@ -23,7 +23,10 @@ public class MigrationTests
+         );
+         await DatabaseInitializer.InitializeAsync(db);
+         await DatabaseInitializer.InitializeAsync(db);
+-        Assert.Equal(2, (await db.Database.GetAppliedMigrationsAsync()).Count());
++        Assert.Equal(
++            db.Database.GetMigrations().Count(),
++            (await db.Database.GetAppliedMigrationsAsync()).Count()
++        );
+         Assert.False(db.Database.HasPendingModelChanges());
+     }
+ 
+@@ -53,7 +56,10 @@ public class MigrationTests
+         );
+         await DatabaseInitializer.InitializeAsync(db);
+         Assert.Equal("existing", (await db.Persons.SingleAsync()).Username);
+-        Assert.Equal(2, (await db.Database.GetAppliedMigrationsAsync()).Count());
++        Assert.Equal(
++            db.Database.GetMigrations().Count(),
++            (await db.Database.GetAppliedMigrationsAsync()).Count()
++        );
+     }
+ 
+     [Fact]

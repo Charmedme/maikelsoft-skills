@@ -1,0 +1,28 @@
+{
+  "fixture": "conduit",
+  "size": "patch",
+  "risk": "low",
+  "difficulty": "easy",
+  "kinds": [
+    "open behaviour"
+  ],
+  "defects": [
+    5
+  ],
+  "role": "overhead control: a plain session is expected to pass; it shows what each flow costs on a trivial change",
+  "hurl": [
+    "articles.hurl",
+    "auth.hurl",
+    "comments.hurl",
+    "errors_articles.hurl",
+    "errors_auth.hurl",
+    "errors_authorization.hurl",
+    "errors_comments.hurl",
+    "errors_profiles.hurl",
+    "favorites.hurl",
+    "feed.hurl",
+    "pagination.hurl",
+    "profiles.hurl",
+    "tags.hurl"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "fixture": "dashboard",
+  "size": "patch",
+  "risk": "low",
+  "difficulty": "easy",
+  "kinds": [
+    "open behaviour"
+  ],
+  "defects": [
+    5
+  ],
+  "role": "overhead control on the main set: a plain session is expected to pass"
+}

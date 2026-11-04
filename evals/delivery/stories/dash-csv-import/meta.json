@@ -1,0 +1,18 @@
+{
+  "fixture": "dashboard",
+  "size": "team",
+  "risk": "high",
+  "difficulty": "very hard",
+  "kinds": [
+    "seams",
+    "security the story does not name",
+    "open behaviour"
+  ],
+  "defects": [
+    16,
+    18,
+    21,
+    28
+  ],
+  "role": "all-or-nothing import with CSV quoting, upsert by normalised code, audit trail through the existing event handlers, idempotency, and two permissions"
+}
