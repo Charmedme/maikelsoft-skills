@@ -24,6 +24,7 @@ The changes come from `docs/work/review-flow/`. Origin, `REVIEW.md`, the nit cap
 
 ### Changed
 
+- `stack-index` routes `@angular/*`, Angular specs, Transloco, and NgRx to the official skill `angular-developer` first, then to `dev-stack:angular` (dev-stack 1.3.0). Angular is no longer a planned skill.
 - A fix pass changes only the comments that its prompt names. The lead names the blocking comments, and each nitpick on a new line of a method that a blocking fix changes. Before this change, the lead also asked for "cheap" items.
 - A fix pass keeps the scope that G1 approved. When a named comment needs a change of that scope, the senior stops with `NEEDS_HUMAN`.
 - A fix for a bug commits the failing test first, and the fix commit does not edit that test.

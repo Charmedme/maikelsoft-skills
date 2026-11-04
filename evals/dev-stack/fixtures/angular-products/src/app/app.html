@@ -1,0 +1,24 @@
+<ng-container *transloco="let t">
+  <a class="skip-link" href="#main">{{ t('app.skipToContent') }}</a>
+  <header class="app-header">
+    <span class="app-title">{{ t('app.title') }}</span>
+    <nav [attr.aria-label]="t('app.mainNavigation')">
+      <a routerLink="/products" routerLinkActive="active" ariaCurrentWhenActive="page">{{ t('app.nav.products') }}</a>
+    </nav>
+    <div class="language-switch" role="group" [attr.aria-label]="t('app.language.label')">
+      @for (lang of languages; track lang) {
+        <button
+          type="button"
+          [attr.aria-pressed]="activeLanguage() === lang"
+          [attr.lang]="lang"
+          (click)="selectLanguage(lang)"
+        >
+          {{ t('app.language.' + lang) }}
+        </button>
+      }
+    </div>
+  </header>
+  <main id="main" tabindex="-1">
+    <router-outlet />
+  </main>
+</ng-container>

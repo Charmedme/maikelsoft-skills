@@ -50,12 +50,39 @@ def common_part():
     return m.group(1).strip()
 
 
+def stack_paragraph(stack):
+    """The first paragraph of the common part for another stack (section '## Stack: <stack>' of runner.md)."""
+    text = (HERE / "runner.md").read_text(encoding="utf-8")
+    m = re.search(rf"## Stack: {re.escape(stack)}\n\n.*?\n\n(.*?)\n(?:\n|$)", text, re.S)
+    return m.group(1).strip() if m else None
+
+
+def base_skill(ev):
+    """Clone the pinned outside skill that both variants get (field 'base_skill' of the case) into .cache."""
+    spec = ev["base_skill"]
+    folder = HERE / ".cache" / f"{spec['repo'].rstrip('/').split('/')[-1]}-{spec['commit'][:7]}"
+    if not folder.is_dir():
+        subprocess.run(["git", "clone", "-q", spec["repo"], str(folder)], check=True)
+        subprocess.run(["git", "-C", str(folder), "checkout", "-q", spec["commit"]], check=True)
+    return folder / spec["path"]
+
+
 def prompt_for(ev, variant, repo):
-    text = common_part().replace("<repo>", str(repo)).replace("<request>", ev["request"].replace("\n", "\n> "))
+    text = common_part()
+    other = stack_paragraph(ev["stack"]) if ev.get("stack") else None
+    if other:
+        text = other + text[text.index("\n\n"):]
+    text = text.replace("<repo>", str(repo)).replace("<request>", ev["request"].replace("\n", "\n> "))
+    lines = []
+    if ev.get("base_skill"):
+        official = base_skill(ev)
+        lines.append(f"The official skill for this stack is in `{official}`. Read `{official}/SKILL.md` "
+                     "and the references that it names when you need them.")
     if variant == "skill":
         skill = ROOT / "plugins" / "dev-stack" / "skills" / ev["skill"]
-        line = f"The skill is in `{skill}`. Read `{skill}/SKILL.md` and follow it."
-        text = text.replace("\nNobody can answer", f"\n{line}\n\nNobody can answer", 1)
+        lines.append(f"The skill is in `{skill}`. Read `{skill}/SKILL.md` and follow it.")
+    if lines:
+        text = text.replace("\nNobody can answer", "\n" + "\n".join(lines) + "\n\nNobody can answer", 1)
     return text + SUFFIX
 
 
@@ -74,7 +101,7 @@ def clean(repo):
     """Free disk space after a run: the scorer builds again, and Docker keeps volumes of stopped containers."""
     for name in ("bin", "obj", "TestResults"):
         for folder in list(repo.rglob(name)):
-            if folder.is_dir():
+            if folder.is_dir() and "node_modules" not in folder.parts:
                 subprocess.run(["rm", "-rf", str(folder)])
     subprocess.run(["docker", "volume", "prune", "-f"], capture_output=True)
     # A run can build its own images (for example from a Dockerfile). Keep only the images of the cases.
@@ -89,12 +116,13 @@ def start(run, ev, variant, args):
     repo = run / "repo"
     if not repo.exists():
         prepare.make_repo(ev, repo)
-    cmd = ["claude", "-p", prompt_for(ev, variant, repo), "--model", args.model,
+    cmd = ["claude", "-p", "--model", args.model,
            "--permission-mode", "bypassPermissions", "--disallowedTools", "Agent", "Skill",
            "--output-format", "stream-json", "--verbose", "--max-budget-usd", str(args.budget)]
     env = {k: v for k, v in os.environ.items() if k not in PARENT_VARS}
     env["PATH"] = env.get("PATH", "") + os.pathsep + str(pathlib.Path.home() / ".dotnet")
-    code = runwatch.run_watched(cmd, repo, env, run, {"max_minutes": args.max_minutes, "stall_minutes": args.stall_minutes})
+    code = runwatch.run_watched(cmd, repo, env, run, {"max_minutes": args.max_minutes, "stall_minutes": args.stall_minutes},
+                                stdin_text=prompt_for(ev, variant, repo))
     (run / "final.md").write_text(final_message(run / "stream.jsonl"), encoding="utf-8")
     clean(repo)
     return f"{run.relative_to(args.runs)} exit {code}"

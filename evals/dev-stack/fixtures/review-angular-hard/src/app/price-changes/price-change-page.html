@@ -1,0 +1,68 @@
+<h1>Change prices</h1>
+
+@if (message()) {
+  <div role="status" class="message">{{ message() }}</div>
+}
+
+<section aria-labelledby="selection-title">
+  <h2 id="selection-title">Products</h2>
+  <div class="add-product">
+    <label for="add-product">Add a product</label>
+    <select id="add-product" #picker>
+      @for (product of products(); track product.id) {
+        <option [value]="product.id">{{ product.name }} ({{ product.code }})</option>
+      }
+    </select>
+    <button type="button" class="button secondary" (click)="addProduct(picker.value)">Add</button>
+  </div>
+
+  @if (rows().length) {
+    <table class="selection" aria-labelledby="selection-title">
+      <thead>
+        <tr>
+          <th scope="col"><span class="visually-hidden">Select</span></th>
+          <th scope="col">Product</th>
+          <th scope="col" class="numeric">Current price</th>
+          <th scope="col" class="numeric">New price</th>
+          <th scope="col"><span class="visually-hidden">Actions</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track $index) {
+          <tr>
+            <td><input #rowCheckbox type="checkbox" [attr.aria-label]="'Select ' + row.name" /></td>
+            <td>{{ row.name }} <span class="code">{{ row.code }}</span></td>
+            <td class="numeric">{{ row.price | currency: 'EUR' }}</td>
+            <td class="numeric">{{ newPrice(row.id) | currency: 'EUR' }}</td>
+            <td>
+              <button type="button" class="button secondary" (click)="removeRow(row.id)">Remove</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+    <button type="button" class="button secondary" (click)="removeSelected()">Remove selected</button>
+  } @else {
+    <p>No products selected yet.</p>
+  }
+</section>
+
+<form [formGroup]="form" (ngSubmit)="applyClicks.next()">
+  <div class="field">
+    <label for="percentage">Percentage</label>
+    <input id="percentage" type="number" step="0.1" formControlName="percentage" />
+    @if (form.controls.percentage.touched && form.controls.percentage.invalid) {
+      <span class="field-error">Enter a percentage between -90 and 100.</span>
+    }
+  </div>
+
+  <div class="field">
+    <label for="effectiveDate">Effective date</label>
+    <input id="effectiveDate" type="date" formControlName="effectiveDate" />
+    @if (form.controls.effectiveDate.touched && form.controls.effectiveDate.invalid) {
+      <span class="field-error">Enter today or a later date.</span>
+    }
+  </div>
+
+  <button class="button" type="submit" [disabled]="form.invalid">Apply price change</button>
+</form>

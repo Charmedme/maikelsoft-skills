@@ -91,7 +91,7 @@
     {
       "name": "dev-stack",
       "source": "./plugins/dev-stack",
-      "description": "Stack skills for a .NET 10 team: C#, ASP.NET Core, OpenAPI, validation, EF Core, SQL Server, PostgreSQL, MSTest 4, analyzers, observability, Redis, Elasticsearch, RabbitMQ, Wolverine, MailKit, PuppeteerSharp, secure coding, and the move to AwesomeAssertions. Version-specific rules, a check step with a tool, and one report format.",
+      "description": "Stack skills for a .NET 10 team with an Angular front end: C#, ASP.NET Core, OpenAPI, validation, EF Core, SQL Server, PostgreSQL, MSTest 4, analyzers, observability, Redis, Elasticsearch, RabbitMQ, Wolverine, MailKit, PuppeteerSharp, Angular, secure coding, and the move to AwesomeAssertions. Version-specific rules, a check step with a tool, and one report format.",
       "category": "development",
       "tags": [
         "dotnet",
@@ -111,6 +111,7 @@
         "wolverine",
         "mailkit",
         "puppeteersharp",
+        "angular",
         "security",
         "awesomeassertions",
         "asd-ste100",

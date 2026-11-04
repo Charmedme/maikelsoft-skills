@@ -36,13 +36,16 @@ import xml.etree.ElementTree as ET
 from collections import defaultdict
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import cases  # noqa: E402
+import angular_checks  # noqa: E402
 
 HERE = pathlib.Path(__file__).resolve().parent
 FIXTURES = HERE / "fixtures"
 PROBES = HERE / "probes"
 PG_IMAGE = "postgres:18.6-alpine"
 NO_WARN_AS_ERROR = ["-p:TreatWarningsAsErrors=false", "-p:WarningsAsErrors=", "-p:MSBuildTreatWarningsAsErrors=false"]
-SKIP_DIRS = {".git", "bin", "obj", "TestResults", "node_modules", ".vs", ".idea"}
+# .claude-flow and .remember: state files that the hooks of the operator's own plugins write in each repo.
+SKIP_DIRS = {".git", "bin", "obj", "TestResults", "node_modules", ".vs", ".idea", "dist", ".angular", "coverage",
+             "__pycache__", ".claude-flow", ".remember"}
 DENIED = [
     (re.compile(r"^MediatR", re.I), None, "MediatR is not allowed"),
     (re.compile(r"^AutoMapper", re.I), None, "AutoMapper is not allowed"),
@@ -154,7 +157,7 @@ def check_package_policy(repo, ev, approved):
 
 HASH_COMMENT = (".editorconfig", ".sh", ".yml", ".yaml", ".ps1", ".gitignore", ".txt")
 SLASH_COMMENT = (".cs", ".csx", ".js", ".ts", ".fs")
-XML_COMMENT = (".csproj", ".props", ".targets", ".xml", ".config", ".slnx", ".resx", ".ruleset")
+XML_COMMENT = (".csproj", ".props", ".targets", ".xml", ".config", ".slnx", ".resx", ".ruleset", ".html")
 
 
 def code_part(rel, lines):
@@ -555,7 +558,9 @@ def score_run(ev, repo, variant=None, only=None):
         if only and a["check"] not in only and a.get("id") not in only:
             continue
         kind = a["check"]
-        if kind == "build_warnaserror":
+        if angular_checks.handles(kind, ev):
+            ok, got = angular_checks.check(kind, repo, ev, a, fixture_of(ev))
+        elif kind == "build_warnaserror":
             code, out = run(["dotnet", "build", "-warnaserror", "--no-incremental"], repo, TIMEOUT_BUILD)
             ok, got = code == 0, tail(out, r"Warning\(s\)|Error\(s\)|error", 3)
         elif kind == "tests_pass":

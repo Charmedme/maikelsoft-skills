@@ -1,0 +1,65 @@
+.skip-link {
+  position: absolute;
+  left: -10000px;
+}
+
+.skip-link:focus {
+  left: 1rem;
+  top: 0.5rem;
+  background: var(--surface);
+  padding: 0.5rem;
+  z-index: 10;
+}
+
+.app-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--brand);
+  color: var(--on-brand);
+}
+
+.app-title {
+  font-weight: 600;
+  font-size: 1.125rem;
+}
+
+nav a {
+  color: var(--on-brand);
+}
+
+nav a.active {
+  text-decoration-thickness: 2px;
+}
+
+.language-switch {
+  margin-left: auto;
+  display: flex;
+  gap: 0.25rem;
+}
+
+.language-switch button {
+  background: transparent;
+  color: var(--on-brand);
+  border: 1px solid var(--on-brand);
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+}
+
+.language-switch button[aria-pressed='true'] {
+  background: var(--on-brand);
+  color: var(--brand);
+}
+
+main {
+  padding: 1rem;
+  max-width: 72rem;
+  margin: 0 auto;
+}
+
+main:focus {
+  outline: none;
+}

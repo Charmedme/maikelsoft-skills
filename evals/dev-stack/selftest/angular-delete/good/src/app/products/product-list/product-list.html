@@ -1,0 +1,54 @@
+<ng-container *transloco="let t; prefix: 'products.list'">
+  <div class="page-header">
+    <h1 id="products-heading" #heading tabindex="-1">{{ t('title') }}</h1>
+    <a class="button" routerLink="new">{{ t('add') }}</a>
+  </div>
+
+  <p class="status" [class.error]="failed()" role="status">{{ status() }}</p>
+
+  @if (products$ | async; as products) {
+    @if (products.length === 0) {
+      <p>{{ t('empty') }}</p>
+    } @else {
+      <table class="products" aria-labelledby="products-heading">
+        <thead>
+          <tr>
+            <th scope="col">{{ t('columns.name') }}</th>
+            <th scope="col">{{ t('columns.code') }}</th>
+            <th scope="col" class="numeric">{{ t('columns.price') }}</th>
+            <th scope="col">{{ t('columns.availableFrom') }}</th>
+            <th scope="col"><span class="visually-hidden">{{ t('actions') }}</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (product of products; track product.id) {
+            <tr>
+              <td [attr.data-label]="t('columns.name')">{{ product.name }}</td>
+              <td [attr.data-label]="t('columns.code')">{{ product.code }}</td>
+              <td [attr.data-label]="t('columns.price')" class="numeric">
+                {{ product.price | currency: 'EUR' }}
+              </td>
+              <td [attr.data-label]="t('columns.availableFrom')">{{ product.availableFrom }}</td>
+              <td class="row-actions">
+                <button #deleteButton type="button" class="button secondary" (click)="askDelete(product, deleteButton)">
+                  {{ t('delete') }}<span class="visually-hidden"> {{ product.name }}</span>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  }
+
+  <dialog #deleteDialog class="confirm" aria-labelledby="delete-title" aria-describedby="delete-text" (close)="onDialogClose()">
+    <h2 id="delete-title">{{ t('deleteDialog.title') }}</h2>
+    <p id="delete-text">{{ t('deleteDialog.text', { name: pending()?.name }) }}</p>
+    <div class="actions">
+      <button type="button" class="button secondary" autofocus (click)="cancelDelete()">{{ t('deleteDialog.cancel') }}</button>
+      <button type="button" class="button danger" [attr.aria-disabled]="deleting()" (click)="confirmDelete()">
+        {{ t('deleteDialog.confirm') }}
+      </button>
+    </div>
+  </dialog>
+</ng-container>

@@ -1,12 +1,16 @@
 # dev-stack
 
-dev-stack is a Claude Code plugin for a .NET 10 team. It has 18 stack skills. Each skill tells the agent what is true for this version of the stack and what the agent usually gets wrong. Each skill also has a check step with a tool and one report format.
+dev-stack is a Claude Code plugin for a .NET 10 team with an Angular front end. It has 19 stack skills. Each skill tells the agent what is true for this version of the stack and what the agent usually gets wrong. Each skill also has a check step with a tool and one report format.
 
 English output follows ASD-STE100 Simplified Technical English. Dutch output follows Begrijpelijk Nederlands (taalniveau B1).
 
 ## Install
 
-You need Claude Code, the .NET 10 SDK, and Python 3.9 or later.
+You need Claude Code, the .NET 10 SDK, and Python 3.9 or later. For the `angular` skill, you also need Node.js and the official Angular skill in the project:
+
+```sh
+npx skills add https://github.com/angular/skills
+```
 
 ```sh
 claude plugin marketplace add Charmedme/maikelsoft-skills
@@ -46,6 +50,7 @@ claude plugin install dev-stack@maikelsoft-skills
 | `rabbitmq` | RabbitMQ 4.3 with RabbitMQ.Client 7: exchanges, quorum queues, publisher confirms, consumers, dead letters, and the shared messaging principles. |
 | `wolverine` | Wolverine 6: handlers, the durable outbox and inbox on EF Core, error policies, local queues, and the RabbitMQ transport. |
 | `mailkit` | Outgoing mail with MailKit 4 and MimeKit 4: TLS, the SMTP password, a mail outbox with retries, templates, and OAuth2 SMTP. |
+| `angular` | Angular 22 and 21 in an existing app, next to the official `angular-developer` skill. Server errors on form fields, ETag and 412 conflicts, and stale lists. Focus, live regions, Transloco, dates, tests, and the browser check. |
 | `puppeteersharp` | HTML to PDF and screenshots with PuppeteerSharp and headless Chrome: the Chrome sandbox, Chrome in a container, SSRF, and user text in the HTML. |
 | `dotnet-testing` | MSTest 4 on Microsoft.Testing.Platform, FluentAssertions 7.2.2 or AwesomeAssertions 9, fakes, `FakeTimeProvider`, `WebApplicationFactory`, and Testcontainers. |
 | `dotnet-analyzers` | SDK analyzers, warnings as errors, Roslynator, Meziantou, `BannedSymbols.txt`, and the CI gate. |
@@ -70,6 +75,19 @@ claude plugin install dev-stack@maikelsoft-skills
 ## Test results
 
 Method, cases, and results are in `evals/dev-stack/`.
+
+### Version 1.3.0: the angular skill
+
+Both variants had the official `angular-developer` skill. The skill variant also had `dev-stack:angular`. Three cases (a delete, a hard edit form, and a hard review) ran 3 times for each variant on Sonnet. Scripts ran the build, the tests, and hidden browser probes with axe-core. Blind graders scored the reports.
+
+| Measure | Official skill only | Official skill and `angular` |
+|---------|---------------------|------------------------------|
+| Script checks passed, delete and edit | 53 of 75 | 74 of 75 |
+| Grader items passed, delete and edit | 9 of 24 | 23 of 24 |
+| Planted mistakes found per review (12 planted) | 7.7 | 11 |
+| Grader items passed, review | 15 of 21 | 21 of 21 |
+
+Without the skill, the agent lost the focus after a cancel or a delete. It made a live region together with its text. It did not set `aria-invalid` after a server error, and it disabled Save while the form was invalid. The details are in `docs/work/dev-stack/angular/results.md`.
 
 ### Version 1.2.0: hard cases on Sonnet
 
@@ -117,4 +135,5 @@ The last two fixes had a test of their own: `efcore` rule 32a and `csharp` rule 
 - `sqlserver-hard` is not stable on a machine with 2 CPUs and 7 GB: SQL Server sometimes does not start in the test container.
 - `migrate-fluentassertions` has no eval case yet.
 - The report limit of 700 words is not met. The mean is about 935 words.
+- We tested the `angular` skill on one fixture app (Angular 22.2 with zone.js, Transloco, and a `BehaviorSubject` service), on Sonnet only. It has no test on Angular 21, NgRx, or Angular Material.
 - The skills do not replace the build and the tests. The agent must run them, and the report shows only the results of the last run.

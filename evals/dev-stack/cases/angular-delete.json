@@ -1,0 +1,37 @@
+{
+  "id": 260,
+  "name": "angular-delete",
+  "skill": "angular",
+  "stack": "angular",
+  "base_skill": {"repo": "https://github.com/angular/skills", "commit": "39cea5112a3ca4c8474a5fb892e35508d4d557f0", "path": "angular-developer"},
+  "kind": "write",
+  "fixture": "angular-products",
+  "human": "absent",
+  "request": "Add a delete action to the products list. The user must confirm before the product is removed. Add tests.",
+  "traps": [
+    "Existing code, quiet: every UI text of the app is a Transloco key with an English and a Dutch translation. New texts that are hard-coded in English show in English when the user picks Dutch.",
+    "Existing code, quiet: ProductsService keeps the list in a BehaviorSubject that loads once. A delete that does not update or reload that state leaves the deleted row on the page.",
+    "Accessibility: the confirm dialog must take the focus, have a name, close on Escape, and give the focus back to the Delete button on cancel. After a confirmed delete the focused button is gone, so the focus must move to a sensible element, not to the body.",
+    "Accessibility: the result of the delete is a status message. A live region that is created together with its text (for example in an @if) is not announced.",
+    "Small screens: the dialog and the list must not scroll sideways at 390 px.",
+    "Failure: when the DELETE fails (500), the row stays and the user sees an error."
+  ],
+  "assertions": [
+    {"id": "C1", "check": "ng_build"},
+    {"id": "C2", "check": "ng_test"},
+    {"id": "C3", "check": "tests_added_min", "value": 2},
+    {"id": "C4", "check": "ui_probe", "probe": "angular-delete", "tests": ["confirm_removes_row_and_sends_one_delete"]},
+    {"id": "C5", "check": "ui_probe", "probe": "angular-delete", "tests": ["cancel_keeps_row_and_returns_focus"], "trap": "Focus does not return to the Delete button after cancel."},
+    {"id": "C6", "check": "ui_probe", "probe": "angular-delete", "tests": ["dialog_is_named_takes_focus_and_closes_on_escape"], "trap": "The dialog has no name, does not take the focus, or ignores Escape."},
+    {"id": "C7", "check": "ui_probe", "probe": "angular-delete", "tests": ["focus_is_not_lost_after_delete"], "trap": "After the delete the focus is on the body."},
+    {"id": "C8", "check": "ui_probe", "probe": "angular-delete", "tests": ["result_is_announced_in_existing_live_region"], "trap": "No live region, or a live region created together with its text."},
+    {"id": "C9", "check": "ui_probe", "probe": "angular-delete", "tests": ["no_sideways_scroll_at_390_with_dialog_open", "axe_no_serious_violations_with_dialog_open"], "trap": "Sideways scroll at 390 px or a serious axe violation."},
+    {"id": "C10", "check": "ui_probe", "probe": "angular-delete", "tests": ["failed_delete_keeps_row_and_shows_error"], "trap": "A failed DELETE removes the row or shows nothing."},
+    {"id": "C11", "check": "ui_probe", "probe": "angular-delete", "tests": ["dialog_texts_are_dutch_in_dutch"], "trap": "New texts are hard-coded in English."},
+    {"id": "C12", "check": "grep_absent", "value": ["\\*ngIf", "\\*ngFor", "constructor\\s*\\(\\s*(private|public|protected|readonly)", "ChangeDetectionStrategy\\.(Default|Eager)", "withFetch\\s*\\(", "track\\s+\\$index"], "files": ["src/**/*.ts", "src/**/*.html"], "trap": "Old Angular APIs in new code."},
+    {"id": "J1", "judge": "Each new subscribe() in a component or service ends with the component (takeUntilDestroyed, the async pipe, toSignal, or a one-shot HTTP call that completes), or the code has no new subscribe()."},
+    {"id": "J2", "judge": "The new tests check what the user sees or does (texts, roles, labels, clicks, the request sent), not private fields or internal method calls."},
+    {"id": "J3", "judge": "The final message names the Angular version and says whether the app uses zone.js, and the new code does not depend on zone.js (no NgZone, no setTimeout to trigger change detection)."},
+    {"id": "J4", "judge": "The final message lists the assumptions, at least the form of the confirmation (dialog type and texts) and where the focus goes after a delete."}
+  ]
+}
