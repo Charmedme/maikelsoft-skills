@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
-"""speclock: lock the approved acceptance tests of the plan-and-build skill.
+"""speclock: lock the approved acceptance tests of an item.
 
 Usage:
-    python3 speclock.py approve --item KEY --by NAME FILE [FILE ...] [--watch FILE ...]
+    python3 speclock.py approve --item KEY --by NAME [--rule R<n>] FILE [FILE ...] [--watch FILE ...]
     python3 speclock.py check [--format text|json]
     python3 speclock.py unlock --by NAME FILE [FILE ...]
+    python3 speclock.py unlock --by NAME --rule R<n> [--item KEY]
     python3 speclock.py list
+
+Each rule of the behaviour spec has one test file. Give the rule with --rule when you lock
+that file. When the product owner changes one rule, "unlock --rule" unlocks only the files
+of that rule. A person approves them again with "approve".
 
 The lock file is .dev-flow/spec-lock.json at the root of the git repository. It holds
 the SHA-256 of each approved file, the item, who approved it, and when. Commit it.
@@ -77,13 +82,16 @@ def main(argv=None) -> int:
     a = sub.add_parser("approve")
     a.add_argument("--item", required=True)
     a.add_argument("--by", required=True)
+    a.add_argument("--rule", help="the rule of the behaviour spec that these files test, for example R3")
     a.add_argument("files", nargs="+")
     a.add_argument("--watch", nargs="*", default=[])
     c = sub.add_parser("check")
     c.add_argument("--format", choices=("text", "json"), default="text")
     u = sub.add_parser("unlock")
     u.add_argument("--by", required=True)
-    u.add_argument("files", nargs="+")
+    u.add_argument("--rule", help="unlock each file of this rule")
+    u.add_argument("--item", help="with --rule: only the files of this item")
+    u.add_argument("files", nargs="*")
     sub.add_parser("list")
     args = ap.parse_args(argv)
 
@@ -97,8 +105,12 @@ def main(argv=None) -> int:
             if not path.is_file():
                 print(f"speclock: {r} does not exist", file=sys.stderr)
                 return 2
-            data["files"][r] = {"sha256": sha(path), "item": args.item, "by": args.by, "date": now()}
-            data["log"].append({"action": "approve", "file": r, "item": args.item, "by": args.by, "date": now()})
+            entry = {"sha256": sha(path), "item": args.item, "by": args.by, "date": now()}
+            if args.rule:
+                entry["rule"] = args.rule
+            data["files"][r] = entry
+            data["log"].append(dict(entry, action="approve", file=r))
+            data["log"][-1].pop("sha256")
         for name in args.watch:
             r = rel(root, name)
             if (root / r).is_file():
@@ -108,6 +120,16 @@ def main(argv=None) -> int:
         return 0
 
     if args.cmd == "unlock":
+        if args.rule:
+            names = [n for n, e in data["files"].items()
+                     if e.get("rule") == args.rule and (not args.item or e["item"] == args.item)]
+            if not names:
+                print(f"speclock: no locked file for rule {args.rule}", file=sys.stderr)
+                return 2
+            args.files = [str(root / n) for n in sorted(names)]
+        elif not args.files:
+            print("speclock: give one or more files, or --rule", file=sys.stderr)
+            return 2
         for name in args.files:
             r = rel(root, name)
             if data["files"].pop(r, None) is None:
@@ -120,7 +142,7 @@ def main(argv=None) -> int:
 
     if args.cmd == "list":
         for name, e in sorted(data["files"].items()):
-            print(f"{name}  {e['item']}  {e['by']}  {e['date']}")
+            print(f"{name}  {e['item']}  {e.get('rule', '-')}  {e['by']}  {e['date']}")
         return 0
 
     found = changes(root, data)

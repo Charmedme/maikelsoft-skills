@@ -1,4 +1,4 @@
-"""Tests for mutate.py of dev-flow. Run: python3 -m unittest discover -s tests"""
+"""Tests for mutate.py in shared/. Run: python3 -m unittest discover -s tests"""
 import json
 import pathlib
 import subprocess
@@ -6,7 +6,7 @@ import sys
 import tempfile
 import unittest
 
-MUTATE = pathlib.Path(__file__).resolve().parents[1] / "plugins" / "dev-flow" / "skills" / "plan-and-build" / "scripts" / "mutate.py"
+MUTATE = pathlib.Path(__file__).resolve().parents[1] / "shared" / "mutate.py"
 GIT = ["git", "-c", "user.name=T", "-c", "user.email=t@example.com", "-c", "commit.gpgsign=false"]
 
 RULE = "def late(elapsed, limit):\n    return elapsed {op} limit\n"

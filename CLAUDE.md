@@ -41,7 +41,7 @@ Each skill folder holds copies of the shared files, because a skill must work al
 
 - Each skill gets `shared/language.md` as `references/language.md`, and `shared/doccheck.py` and `shared/convert.py` in `scripts/`.
 - The dev-build skills also get `shared/grill.md`.
-- `shared/po-questions.md`, `shared/example-mapping.md`, and `shared/examplecheck.py` go only into a skill whose `SKILL.md` names the file.
+- Each file of the list `NAMED_COPIES` in `sync_shared.py` goes only into a skill whose `SKILL.md` names the file. Examples are `po-questions.md`, `cycle.md`, `review-rules.md`, `specsync.py`, and `speclock.py`.
 - `plugins/<plugin>/shared/*` goes only into a skill of that plugin whose `SKILL.md` names the file. A `.py` file goes into `scripts/`, other files into `references/`.
 - `shared/workflow.md` replaces the text between the `<!-- BEGIN shared/workflow.md -->` and `<!-- END shared/workflow.md -->` lines of a `SKILL.md`.
 

@@ -8,7 +8,7 @@ import tempfile
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-SPECLOCK = ROOT / "plugins" / "dev-flow" / "skills" / "plan-and-build" / "scripts" / "speclock.py"
+SPECLOCK = ROOT / "shared" / "speclock.py"
 GUARD = ROOT / "plugins" / "dev-flow" / "hooks" / "guard.py"
 
 
@@ -71,6 +71,26 @@ class SpecLock(unittest.TestCase):
         run([sys.executable, str(SPECLOCK), "unlock", "--by", "human", str(self.spec)], self.repo)
         self.spec.write_text("// changed with approval\n", encoding="utf-8")
         self.assertEqual(run([sys.executable, str(SPECLOCK), "check"], self.repo).returncode, 0)
+
+    def test_unlock_by_rule_unlocks_only_that_rule(self):
+        r1 = self.spec
+        r2 = self.spec.parent / "LateReturnSpecs.cs"
+        r2.write_text("// rule 2\n", encoding="utf-8")
+        for rule, f in (("R1", r1), ("R2", r2)):
+            run([sys.executable, str(SPECLOCK), "approve", "--item", "ORD-1", "--by", "human", "--rule", rule, str(f)], self.repo)
+        r = run([sys.executable, str(SPECLOCK), "unlock", "--by", "human", "--rule", "R2", "--item", "ORD-1"], self.repo)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        r2.write_text("// changed with approval\n", encoding="utf-8")
+        r1.write_text("// weakened\n", encoding="utf-8")
+        r = run([sys.executable, str(SPECLOCK), "check"], self.repo)
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("CancelSpecs.cs", r.stdout)
+        self.assertNotIn("LateReturnSpecs.cs", r.stdout)
+
+    def test_unlock_unknown_rule_fails(self):
+        self.lock()
+        r = run([sys.executable, str(SPECLOCK), "unlock", "--by", "human", "--rule", "R9"], self.repo)
+        self.assertEqual(r.returncode, 2)
 
     def test_hook_blocks_edit_of_locked_file(self):
         self.lock()
