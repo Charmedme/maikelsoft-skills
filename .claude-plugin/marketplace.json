@@ -160,6 +160,21 @@
         "dutch",
         "b1"
       ]
+    },
+    {
+      "name": "dev-setup",
+      "source": "./plugins/dev-setup",
+      "description": "One setup for the delivery flow: your role for all projects or one repository, the facts of the project, REVIEW.md, a pull request template, a CI check, and the Claude Code basics of a project.",
+      "category": "productivity",
+      "tags": [
+        "setup",
+        "role",
+        "onboarding",
+        "claude-code",
+        "review",
+        "ci",
+        "asd-ste100"
+      ]
     }
   ]
 }

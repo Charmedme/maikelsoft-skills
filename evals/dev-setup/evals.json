@@ -1,0 +1,69 @@
+{
+  "skill_name": "setup",
+  "plugin": "dev-setup",
+  "method": [
+    "run.py makes one git repository for each run from the fixture, and starts a headless claude run with the prompt of runner.md.",
+    "The human plays from humans/<eval>.md: one reply for each turn, in order, separated by '---'. The agent never sees the file.",
+    "3 runs for each variant. 'baseline' gets the request only. 'skill' also gets the skill folder.",
+    "'check' assertions: score.py. 'judge' assertions: one grader agent for each run reads transcript.md and the repository, and answers yes or no with one line of evidence. A 'variant' field limits an assertion to that variant."
+  ],
+  "evals": [
+    {
+      "id": 1,
+      "name": "solo-setup",
+      "fixture": "shop-api",
+      "remote": "https://dev.azure.com/example/Shop/_git/shop-api",
+      "human": "humans/solo-setup.md",
+      "request": "Set up this repository for our delivery flow: my role, the facts of the project, and the review and CI files.",
+      "assertions": [
+        {"check": "role", "scope": "project", "key": "dev.azure.com/example/shop/_git/shop-api", "role": "all", "variant": "skill"},
+        {"check": "no_role", "scope": "global", "variant": "skill"},
+        {"check": "file_contains", "path": ".claude/rules/delivery.md", "text": "## Tracker"},
+        {"check": "file_exists", "path": "REVIEW.md"},
+        {"check": "any_file_contains", "paths": [".azuredevops/pull_request_template.md", ".github/pull_request_template.md", "docs/pull_request_template.md"], "text": "How to undo"},
+        {"check": "any_file_contains", "paths": ["azure-pipelines.yml", ".azuredevops/speclock.yml", "azure-pipelines-speclock.yml", ".github/workflows/speclock.yml"], "text": "speclock.py check"},
+        {"check": "file_exists", "path": ".dev-flow/speclock.py"},
+        {"check": "unchanged"},
+        {"judge": "The agent asked its questions in one message, and each question had a recommended answer."},
+        {"judge": "The agent did not ask for a fact that the repository shows, such as the tracker (the git remote is Azure DevOps), the stack, or the build and test commands."},
+        {"judge": "The agent showed the list of files that it would make, and wrote them only after the human said yes."},
+        {"judge": "The final message names the role and where it is stored, and ends with a 'Next:' line that names the next command for a person who does all roles."}
+      ]
+    },
+    {
+      "id": 2,
+      "name": "po-global",
+      "fixture": "shop-api",
+      "remote": "https://github.com/example/shop-api.git",
+      "human": "humans/po-global.md",
+      "request": "Set my role to product owner, for all my projects.",
+      "assertions": [
+        {"check": "role", "scope": "global", "role": "product owner", "variant": "skill"},
+        {"check": "no_role", "scope": "project", "key": "github.com/example/shop-api", "variant": "skill"},
+        {"check": "unchanged"},
+        {"check": "no_new_files"},
+        {"judge": "The agent did not ask about route steps, the tracker, or other project facts."},
+        {"judge": "The final message says that the role applies to all projects, and gives a 'Next:' line with the first command of a product owner."}
+      ]
+    },
+    {
+      "id": 3,
+      "name": "starter",
+      "fixture": "shop-api-claude",
+      "remote": "https://github.com/example/shop-api.git",
+      "human": "humans/starter.md",
+      "request": "Set up the Claude Code basics of this repository: the CLAUDE.md, the .claude folder with a short instruction for each folder, and the gitignore lines.",
+      "assertions": [
+        {"check": "unchanged", "except": [".gitignore"]},
+        {"check": "gitignore_has", "lines": ["bin/", "obj/", "*.user", "CLAUDE.local.md", ".claude/settings.local.json"]},
+        {"check": "json_valid", "path": ".claude/settings.json"},
+        {"check": "dirs_exist", "paths": [".claude/skills", ".claude/agents", ".claude/hooks", ".claude/rules"]},
+        {"check": "no_path", "path": ".claude/commands"},
+        {"check": "file_mentions", "path": ".claude/README.md", "words": ["skills", "agents", "hooks", "rules", "settings.json", "settings.local.json", "CLAUDE.local.md", ".mcp.json"]},
+        {"judge": "The agent did not change the existing CLAUDE.md. It proposed each addition to it in the conversation."},
+        {"judge": "Each section of .claude/README.md says in a few lines what the folder or file is for and how to configure it, with no section longer than about 8 lines."},
+        {"judge": "The agent showed the list of files that it would make, and wrote them only after the human said yes."}
+      ]
+    }
+  ]
+}

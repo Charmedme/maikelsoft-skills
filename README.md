@@ -27,6 +27,7 @@ claude plugin install <plugin>@maikelsoft-skills
 | [dev-stack](plugins/dev-stack/README.md) | 1.3.0 | Stack skills for a .NET 10 team with an Angular front end. They cover C#, ASP.NET Core, OpenAPI, validation, EF Core, SQL Server, PostgreSQL, MSTest 4, and analyzers. Also observability, Redis, Elasticsearch, RabbitMQ, Wolverine, MailKit, PuppeteerSharp, Angular 22 and 21, secure coding, and the move to AwesomeAssertions. Each skill has version-specific rules, a check step with a tool, and one report format. |
 | [dev-team](plugins/dev-team/README.md) | 0.6.0 | Preview. Delivers one work item with a team of agents, when you ask for the team. A senior designs and builds the core, mediors build work packages, and a security reviewer checks the diff. Two human gates. Needs dev-stack. |
 | [ux-design](plugins/ux-design/README.md) | 0.4.0 | Preview. A UX designer agent that frames the problem and designs the flow, the patterns, the screens, and the states, with a source for each decision. It audits the design system or makes a foundation, and makes mockups and prototypes from it, also in Claude Design, Figma, or OpenPencil. It reviews the built feature against the design and WCAG 2.2 with Playwright. |
+| [dev-setup](plugins/dev-setup/README.md) | 1.0.0 | Sets up the delivery flow one time. `/setup` keeps your role for all projects or for one repository. It asks only the facts that the repository does not show, and writes the review and CI files. `/setup starter` makes the Claude Code basics of a project. |
 
 ### Which plugin to use
 
@@ -39,6 +40,7 @@ claude plugin install <plugin>@maikelsoft-skills
 | Docs to write or review | `dev-docs` | |
 | A skill or an agent to build | `dev-build` | |
 | Screens or a flow to design | `ux-design` | The story has no user interface, or you only want one quick visual idea |
+| A new person or a new project for the delivery flow | `dev-setup` | You use one plugin alone and its own questions are enough |
 
 Each plugin README has a section "When it helps".
 

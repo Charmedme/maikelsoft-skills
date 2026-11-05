@@ -1,0 +1,16 @@
+{
+  "description": "dev-setup: give each session the delivery role of the person for this repository. Each command tries python3, then python, then py -3, because python3 on Windows can be a Store alias that is not Python.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/skills/setup/scripts/rolestore.py\" hook || python \"${CLAUDE_PLUGIN_ROOT}/skills/setup/scripts/rolestore.py\" hook || py -3 \"${CLAUDE_PLUGIN_ROOT}/skills/setup/scripts/rolestore.py\" hook",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
