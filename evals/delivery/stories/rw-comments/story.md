@@ -8,7 +8,7 @@ The comment feature was removed during a rewrite. The database table `Comments` 
 
 ## Acceptance criteria
 
-1. `POST /api/articles/{slug}/comments` with `{"comment": {"body": "..."}}` adds a comment by the signed-in reader and returns `{"comment": {...}}` with `id`, `createdAt`, `updatedAt`, `body`, and `author` (a profile).
+1. `POST /api/articles/{slug}/comments` with `{"comment": {"body": "..."}}` adds a comment by the signed-in reader and returns 201 with `{"comment": {...}}` with `id`, `createdAt`, `updatedAt`, `body`, and `author` (a profile).
 2. `GET /api/articles/{slug}/comments` returns `{"comments": [...]}` for each visitor, also without a token.
 3. `DELETE /api/articles/{slug}/comments/{id}` removes the comment.
 4. Only the author of a comment can remove it.

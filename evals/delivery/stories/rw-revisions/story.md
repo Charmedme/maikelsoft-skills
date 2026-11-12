@@ -8,7 +8,7 @@ Authors lose text: they open an article on a laptop and on a phone, save on the 
 
 ## Acceptance criteria
 
-1. Each article response has a `version`: 1 after create, and 1 higher after each update that changes the article.
+1. Each article response has a `version`: 1 after create, and 1 higher after each update that changes the article. Each article in a list or the feed has its `version` too.
 2. `PUT /api/articles/{slug}` needs `version` in the article body: the version that the author started from. When it is not the current version, the update is refused with 409, with an error on `version`, and nothing changes.
 3. An update without `version` is refused with 422, with an error on `version`.
 4. When two updates from the same version arrive at the same time, exactly one succeeds. The other gets 409.
