@@ -1,0 +1,54 @@
+diff --git a/src/Conduit/Features/Articles/Create.cs b/src/Conduit/Features/Articles/Create.cs
+index 60c6f17..525d278 100644
+--- a/src/Conduit/Features/Articles/Create.cs
++++ b/src/Conduit/Features/Articles/Create.cs
+@@ -69,7 +69,8 @@ public class Create
+                 tags.Add(t);
+             }
+ 
+-            var slug = message.Article.Title.GenerateSlug();
++            var title = message.Article.Title!.Trim();
++            var slug = title.GenerateSlug();
+             // duplicate titles are allowed: each article gets a unique slug
+             var uniqueSlug = slug;
+             for (
+@@ -88,7 +89,7 @@ public class Create
+                 CreatedAt = DateTime.UtcNow,
+                 UpdatedAt = DateTime.UtcNow,
+                 Description = message.Article.Description,
+-                Title = message.Article.Title,
++                Title = title,
+                 Slug = uniqueSlug,
+             };
+             await context.Articles.AddAsync(article, cancellationToken);
+diff --git a/src/Conduit/Features/Articles/Edit.cs b/src/Conduit/Features/Articles/Edit.cs
+index 8532f69..86a83c1 100644
+--- a/src/Conduit/Features/Articles/Edit.cs
++++ b/src/Conduit/Features/Articles/Edit.cs
+@@ -51,6 +51,10 @@ public class Edit
+         public CommandValidator()
+         {
+             RuleFor(x => x.Model.Article).NotNull();
++            RuleFor(x => x.Model.Article.Title)
++                .Must(title => !string.IsNullOrWhiteSpace(title))
++                .When(x => x.Model.Article is { Title: not null })
++                .WithMessage(Constants.BLANK);
+             RuleFor(x => x.Model.Article.TagList)
+                 .NotNull()
+                 .When(x => x.Model.Article is { TagListSet: true });
+@@ -83,12 +87,10 @@ public class Edit
+ 
+             article.Description = message.Model.Article.Description ?? article.Description;
+             article.Body = message.Model.Article.Body ?? article.Body;
+-            if (
+-                !string.IsNullOrEmpty(message.Model.Article.Title)
+-                && message.Model.Article.Title != article.Title
+-            )
++            var title = message.Model.Article.Title?.Trim();
++            if (!string.IsNullOrEmpty(title) && title != article.Title)
+             {
+-                article.Title = message.Model.Article.Title;
++                article.Title = title;
+                 var slug = article.Title.GenerateSlug();
+                 // keep slugs unique when the new title collides with an existing article
+                 var uniqueSlug = slug;

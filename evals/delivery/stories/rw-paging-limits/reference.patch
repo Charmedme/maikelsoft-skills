@@ -1,0 +1,36 @@
+diff --git a/src/Conduit/Features/Articles/List.cs b/src/Conduit/Features/Articles/List.cs
+index aa1b208..e065329 100644
+--- a/src/Conduit/Features/Articles/List.cs
++++ b/src/Conduit/Features/Articles/List.cs
+@@ -5,6 +5,7 @@ using System.Threading.Tasks;
+ using Conduit.Features.Profiles;
+ using Conduit.Infrastructure;
+ using Conduit.Infrastructure.Errors;
++using FluentValidation;
+ using Mediator;
+ using Microsoft.EntityFrameworkCore;
+ 
+@@ -21,6 +22,23 @@ public class List
+         bool IsFeed = false
+     ) : IRequest<ArticlesEnvelope>, IReadOnlyRequest;
+ 
++    public class QueryValidator : AbstractValidator<Query>
++    {
++        public const int MaxLimit = 100;
++
++        public QueryValidator()
++        {
++            RuleFor(x => x.Limit)
++                .InclusiveBetween(1, MaxLimit)
++                .When(x => x.Limit.HasValue)
++                .WithMessage($"must be between 1 and {MaxLimit}");
++            RuleFor(x => x.Offset)
++                .GreaterThanOrEqualTo(0)
++                .When(x => x.Offset.HasValue)
++                .WithMessage("must be 0 or more");
++        }
++    }
++
+     public class QueryHandler(ConduitContext context, ICurrentUserAccessor currentUserAccessor)
+         : IRequestHandler<Query, ArticlesEnvelope>
+     {

@@ -1,0 +1,40 @@
+{
+  "id": 261,
+  "name": "angular-edit-hard",
+  "skill": "angular",
+  "stack": "angular",
+  "base_skill": {"repo": "https://github.com/angular/skills", "commit": "39cea5112a3ca4c8474a5fb892e35508d4d557f0", "path": "angular-developer"},
+  "kind": "write",
+  "fixture": "angular-products",
+  "human": "absent",
+  "request": "Add an edit page for products at /products/:id/edit, reachable from an Edit link in each row of the products list. Fields: name, code, price, and available from (a date). Load the product with GET /api/products/{id}; the response has an ETag header. Save with PUT /api/products/{id} and send the ETag in If-Match. The API answers 400 with a ValidationProblemDetails body when a field is wrong (for example a code that another product already uses), and 412 when someone else changed the product in the meantime. After a save, go back to the list. Add tests.",
+  "traps": [
+    "API detail: the keys of the ValidationProblemDetails errors are PascalCase (Name, Code, Price, AvailableFrom), the form controls are camelCase. A direct lookup finds no field, so the server message is lost.",
+    "Accessibility: a server or client error must be next to its field, linked with aria-describedby, and the field gets aria-invalid. The submit button stays enabled, and on submit the focus goes to the first field with an error.",
+    "Race: a double click on Save sends two PUTs. The second gets 412 and shows a false conflict.",
+    "Concurrency: on 412 the typed values stay in the form and the user sees that someone else changed the product.",
+    "Dates: availableFrom is a date without a time. toISOString() of a local midnight sends the day before in a time zone east of UTC (the probe runs in Pacific/Auckland).",
+    "Existing code, quiet: ProductsService keeps the list in a BehaviorSubject that loads once. After the save the list shows the old values unless the state is updated or reloaded.",
+    "Loading: an unknown id (404) must show a not-found message, not an empty form.",
+    "Existing code, quiet: every UI text is a Transloco key with English and Dutch."
+  ],
+  "assertions": [
+    {"id": "C1", "check": "ng_build"},
+    {"id": "C2", "check": "ng_test"},
+    {"id": "C3", "check": "tests_added_min", "value": 3},
+    {"id": "C4", "check": "ui_probe", "probe": "angular-edit", "tests": ["edit_link_opens_form_with_values_and_save_returns_to_list"]},
+    {"id": "C5", "check": "ui_probe", "probe": "angular-edit", "tests": ["server_field_error_is_shown_and_linked_to_the_field"], "trap": "PascalCase keys are not mapped, or the error is not linked to the field."},
+    {"id": "C6", "check": "ui_probe", "probe": "angular-edit", "tests": ["submit_stays_enabled_and_focus_moves_to_first_error"], "trap": "Disabled submit, or the focus stays on the button."},
+    {"id": "C7", "check": "ui_probe", "probe": "angular-edit", "tests": ["double_click_sends_one_put"], "trap": "Two PUTs for one double click."},
+    {"id": "C8", "check": "ui_probe", "probe": "angular-edit", "tests": ["if_match_is_sent", "conflict_keeps_typed_values_and_says_so"], "trap": "No If-Match, or the 412 loses the typed values."},
+    {"id": "C9", "check": "ui_probe", "probe": "angular-edit", "tests": ["date_is_sent_without_shift"], "trap": "availableFrom is one day early east of UTC."},
+    {"id": "C10", "check": "ui_probe", "probe": "angular-edit", "tests": ["list_shows_new_values_after_save"], "trap": "The cached list shows the old values."},
+    {"id": "C11", "check": "ui_probe", "probe": "angular-edit", "tests": ["unknown_id_shows_not_found"], "trap": "A 404 gives an empty form or a blank page."},
+    {"id": "C12", "check": "ui_probe", "probe": "angular-edit", "tests": ["no_sideways_scroll_at_390", "axe_no_serious_violations", "labels_are_dutch_in_dutch"], "trap": "Sideways scroll, an axe violation, or hard-coded English."},
+    {"id": "C13", "check": "grep_absent", "value": ["\\*ngIf", "\\*ngFor", "constructor\\s*\\(\\s*(private|public|protected|readonly)", "ChangeDetectionStrategy\\.(Default|Eager)", "withFetch\\s*\\(", "\\[disabled\\]\\s*=\\s*\"[^\"]*invalid"], "files": ["src/**/*.ts", "src/**/*.html"], "trap": "Old Angular APIs or a submit that is disabled while the form is invalid."},
+    {"id": "J1", "judge": "The product is read with httpResource (or resource), or the final message gives a reason to use HttpClient for the read. The PUT uses HttpClient."},
+    {"id": "J2", "judge": "A new service is provided in the route or the component that uses it, not with providedIn 'root' or @Service() at root, or the final message gives a reason why the whole app needs one instance."},
+    {"id": "J3", "judge": "The final message says that the existing ProductsService loads the list once and keeps it in a BehaviorSubject, and says how the list now shows the saved values."},
+    {"id": "J4", "judge": "The final message lists the assumptions, at least the texts of the conflict message, what happens to the typed values on 412, and how the date is sent."}
+  ]
+}

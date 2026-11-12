@@ -53,13 +53,24 @@ Follow the Google code review guide: approve when the change makes the code heal
 - Run the checks yourself first (`checks.py`), then judge.
 - Label each comment with Conventional Comments: `issue (blocking)`, `issue`, `suggestion`, `nitpick`, `praise`.
 - Blocking only for correctness, security, an unmet criterion, a broken check, or a break of an accepted decision.
+- A nitpick is only on a line that the change adds or changes. It never changes the status or starts a fix pass by itself. Do not report a nitpick for a tool that ran in this review, or for a generated file.
+- A comment that asks to remove or add scope that G1 approved (the story, `design.md`, the decision sheet) is never blocking. Write it as a question for the human, also when you doubt the approval.
+- When `risk-1.txt` names a `migration`, check it. The project tool made the migration. The Up and Down steps both ran: cite the command, or write "Down did not run". "How to undo" says what happens to the data.
+- Each comment has a `path:line`. A claim about behavior cites the code, not a guess from a name. Before a finding goes in the review, try to refute it: look for a control earlier in the path.
+- In a follow-up, you get the earlier review files. Do not repeat a finding from them. A finding blocks only on a line in the fix diff, or on a line that the fix exposes. Put each other finding under "Open findings" for the human.
 - Report a finding only at confidence 80 or more. Each comment says what, why, and a concrete suggestion.
 - Status: `APPROVED`, `APPROVED_WITH_COMMENTS`, or `CHANGES_REQUIRED` (one or more blocking comments).
-- In a light run, the core review also does the security review: check the diff against the review checklist of `dev-stack:secure-coding`. Write the result in a section "Security" of `core-review.md`.
+- In a light or raised run, the core review also does the security review: check the diff against the review checklist of `dev-stack:secure-coding`. Write the result in a section "Security" of `core-review.md`.
 
 ## Build (modes `build-core` and `fix`)
 
-Write the test of the core behavior first, then the code. Follow the stack skills and the decisions. Run `checks.py` after your last change and keep its output. Commit each finished part. In `fix`, change only what the blocking findings need.
+Write the test of the core behavior first, then the code. Follow the stack skills and the decisions. Run `checks.py` after your last change and keep its output. Commit each finished part.
+
+In `fix`, the prompt names the comments to fix. Change only what these comments need, and keep each other line as it is. Other findings go to the human at G2.
+
+A fix keeps the scope that G1 approved. When a named comment needs you to remove or add such scope, stop with `NEEDS_HUMAN` and name the comment. Without a human, keep the code and write the comment under "Open points" in your report.
+
+A fix does not weaken a check. For a bug, write the test that fails, run it, and commit it. Then commit the fix, and do not edit that test in the fix commit. Do not remove an assertion or skip a test. When a test is wrong, stop with `NEEDS_HUMAN` and say why.
 
 Prove a cause before you fix it. A cause is a hypothesis until a test fails for it. This holds for a claim of a reviewer and for your own idea. A sync by key gets a test with two items of the same kind.
 
@@ -67,7 +78,7 @@ Prove a cause before you fix it. A cause is a hypothesis until a test fails for 
 
 Before a design, a feedback, or a review goes out, check each item. Fix a failed item first.
 
-1. Each acceptance criterion (verbatim) maps to a design part, a package, and a test.
+1. Each acceptance criterion (verbatim) maps to a design part, a package, and a test. Scope that the human adds outside the story gets its own row in that table, with a test. Then a later change that removes it makes a test fail.
 2. Each version and API comes from the repository or a look-up with a source and a date.
 3. No decision is made that `decisions.md` does not hold. Open ones are in the decision sheet.
 4. No new package without the name, version, license, reason, and "exists: yes" in the sheet.

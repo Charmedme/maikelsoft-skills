@@ -1,0 +1,29 @@
+{
+  "fixture": "conduit",
+  "size": "small",
+  "risk": "low",
+  "difficulty": "easy",
+  "kinds": [
+    "known solution",
+    "seams"
+  ],
+  "defects": [
+    16
+  ],
+  "role": "known solution: the upstream code and the upstream API tests are the check",
+  "hurl": [
+    "articles.hurl",
+    "auth.hurl",
+    "comments.hurl",
+    "errors_articles.hurl",
+    "errors_auth.hurl",
+    "errors_authorization.hurl",
+    "errors_comments.hurl",
+    "errors_profiles.hurl",
+    "favorites.hurl",
+    "feed.hurl",
+    "pagination.hurl",
+    "profiles.hurl",
+    "tags.hurl"
+  ]
+}

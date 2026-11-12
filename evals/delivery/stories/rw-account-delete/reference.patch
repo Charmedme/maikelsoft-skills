@@ -1,0 +1,178 @@
+diff --git a/src/Conduit/Features/Tags/List.cs b/src/Conduit/Features/Tags/List.cs
+index 57d304c..a71cc73 100644
+--- a/src/Conduit/Features/Tags/List.cs
++++ b/src/Conduit/Features/Tags/List.cs
+@@ -20,7 +20,8 @@ public class List
+         )
+         {
+             var tags = await context
+-                .Tags.OrderBy(x => x.TagId)
++                .Tags.Where(x => x.ArticleTags.Any())
++                .OrderBy(x => x.TagId)
+                 .AsNoTracking()
+                 .ToListAsync(cancellationToken);
+             return new TagsEnvelope
+diff --git a/src/Conduit/Features/Users/Delete.cs b/src/Conduit/Features/Users/Delete.cs
+new file mode 100644
+index 0000000..f941cbc
+--- /dev/null
++++ b/src/Conduit/Features/Users/Delete.cs
+@@ -0,0 +1,100 @@
++using System.Linq;
++using System.Net;
++using System.Threading;
++using System.Threading.Tasks;
++using Conduit.Infrastructure;
++using Conduit.Infrastructure.Errors;
++using Conduit.Infrastructure.Security;
++using FluentValidation;
++using Mediator;
++using Microsoft.AspNetCore.Identity;
++using Microsoft.EntityFrameworkCore;
++
++namespace Conduit.Features.Users;
++
++public class Delete
++{
++    public class UserData
++    {
++        public string? Password { get; init; }
++    }
++
++    public record Command(UserData User) : IRequest;
++
++    public class CommandValidator : AbstractValidator<Command>
++    {
++        public CommandValidator()
++        {
++            RuleFor(x => x.User).NotNull();
++            RuleFor(x => x.User.Password)
++                .NotEmpty()
++                .When(x => x.User != null)
++                .WithMessage(Constants.BLANK);
++        }
++    }
++
++    public class Handler(
++        ConduitContext context,
++        ICurrentUserAccessor currentUserAccessor,
++        IPasswordHasher passwordHasher
++    ) : IRequestHandler<Command>
++    {
++        public async ValueTask<Unit> Handle(Command message, CancellationToken cancellationToken)
++        {
++            var personId = currentUserAccessor.GetCurrentPersonId();
++            var person = await context.Persons.FirstOrDefaultAsync(
++                x => x.PersonId == personId,
++                cancellationToken
++            );
++            if (person is null)
++            {
++                throw new RestException(HttpStatusCode.Unauthorized, "token", "is invalid");
++            }
++
++            var verification = passwordHasher.Verify(
++                message.User.Password!,
++                person.Hash,
++                person.Salt
++            );
++            if (verification == PasswordVerificationResult.Failed)
++            {
++                throw new RestException(
++                    HttpStatusCode.UnprocessableEntity,
++                    "password",
++                    "is invalid"
++                );
++            }
++
++            var ownArticleIds = context
++                .Articles.Where(x => x.Author != null && x.Author.PersonId == person.PersonId)
++                .Select(x => x.ArticleId);
++
++            await context
++                .Comments.Where(x =>
++                    ownArticleIds.Contains(x.ArticleId) || x.AuthorId == person.PersonId
++                )
++                .ExecuteDeleteAsync(cancellationToken);
++            await context
++                .ArticleFavorites.Where(x =>
++                    ownArticleIds.Contains(x.ArticleId) || x.PersonId == person.PersonId
++                )
++                .ExecuteDeleteAsync(cancellationToken);
++            await context
++                .ArticleTags.Where(x => ownArticleIds.Contains(x.ArticleId))
++                .ExecuteDeleteAsync(cancellationToken);
++            await context
++                .Articles.Where(x => x.Author != null && x.Author.PersonId == person.PersonId)
++                .ExecuteDeleteAsync(cancellationToken);
++            await context
++                .FollowedPeople.Where(x =>
++                    x.ObserverId == person.PersonId || x.TargetId == person.PersonId
++                )
++                .ExecuteDeleteAsync(cancellationToken);
++            await context
++                .Persons.Where(x => x.PersonId == person.PersonId)
++                .ExecuteDeleteAsync(cancellationToken);
++
++            return Unit.Value;
++        }
++    }
++}
+diff --git a/src/Conduit/Features/Users/UserController.cs b/src/Conduit/Features/Users/UserController.cs
+index 5521205..87c7262 100644
+--- a/src/Conduit/Features/Users/UserController.cs
++++ b/src/Conduit/Features/Users/UserController.cs
+@@ -24,4 +24,14 @@ public class UserController(IMediator mediator, ICurrentUserAccessor currentUser
+         [FromBody] Edit.Command command,
+         CancellationToken cancellationToken
+     ) => mediator.Send(command, cancellationToken);
++
++    [HttpDelete]
++    public async Task<IActionResult> DeleteUser(
++        [FromBody] Delete.Command command,
++        CancellationToken cancellationToken
++    )
++    {
++        await mediator.Send(command, cancellationToken);
++        return new NoContentResult();
++    }
+ }
+diff --git a/src/Conduit/Program.cs b/src/Conduit/Program.cs
+index 9bb9553..9b2109e 100644
+--- a/src/Conduit/Program.cs
++++ b/src/Conduit/Program.cs
+@@ -4,6 +4,7 @@ using Conduit;
+ using Conduit.Infrastructure;
+ using Conduit.Infrastructure.Errors;
+ using Microsoft.AspNetCore.Builder;
++using Microsoft.AspNetCore.Http;
+ using Microsoft.Extensions.Configuration;
+ using Microsoft.Extensions.DependencyInjection;
+ using Microsoft.Extensions.Logging;
+@@ -79,6 +80,26 @@ app.UseRouting();
+ app.UseCors(x => x.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+ 
+ app.UseAuthentication();
++
++// a token that no longer works (for example of a deleted account) is refused on every page,
++// also on pages that need no sign-in, so the client learns at once that the session ended
++app.Use(
++    async (context, next) =>
++    {
++        if (
++            !string.IsNullOrWhiteSpace(context.Request.Headers.Authorization)
++            && context.User.Identity?.IsAuthenticated != true
++        )
++        {
++            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
++            context.Response.ContentType = "application/json";
++            await context.Response.WriteAsync("""{"errors":{"token":["is invalid"]}}""");
++            return;
++        }
++
++        await next(context);
++    }
++);
+ app.UseAuthorization();
+ app.MapControllers();
+ 

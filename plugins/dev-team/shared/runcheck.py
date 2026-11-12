@@ -3,6 +3,7 @@
 
     python3 runcheck.py docs/work/<slug>            # check the run folder
     python3 runcheck.py docs/work/<slug> --stage g1 # check only what must exist at G1
+    python3 runcheck.py docs/work/<slug> --stage report # check only g2.md and risk-2.txt, after you write g2.md
     python3 runcheck.py docs/work/<slug> --format json
 
 What it checks:
@@ -11,13 +12,20 @@ What it checks:
                   on the first line under a "## Verdict" heading.
     RUN-COUNTER   each counter in run.md is at or below its limit. At G2, security-review is 1.
                   A light run (run.md field Mode: light) has no reflection and no security review.
+                  A raised run (Mode: raised) has a security review and no reflection.
                   When the run folder has ux-design.md, or story.md lists a mock-up (a line "Mock-up: ..."), ux-review is 1 at G2 and ux-review.md exists.
     RUN-ROUNDS    each package has at most one plan feedback, one review, and one fix.
     RUN-STEPS     the files of each step exist (plan, feedback, report, review per package).
     RUN-FIX       a review with CHANGES_REQUIRED has a fix row in log.md.
     RUN-LOG       log.md has the columns of the template, and each row has a valid status.
-    RUN-EVIDENCE  a log row that says a check passed has a matching command in commands.jsonl.
-    RUN-HOOK      commands.jsonl exists and has commands when a log row says a check passed.
+    RUN-G2        stage report: risk-2.txt exists, and g2.md has the line Result, the table of the acceptance criteria
+                  with one or more rows, and the text for the pull request.
+    RUN-EVIDENCE  before G2, a log row that says a check passed has a matching command in commands.jsonl.
+                  After G2, each follow-up window has a checks.py command. A window starts at a FOLLOWUP_STARTED
+                  row whose Reason holds the full UTC time, and it ends at the next such row. A follow-up that
+                  waits for the human (the last log row is NEEDS_HUMAN) has no finding yet.
+    RUN-HOOK      commands.jsonl exists and has commands when a log row says a check passed, and a follow-up
+                  window has commands.
                   One finding for the cause, not one for each row.
 
 Output: one line per finding, `<file>: <RULE> <message>`, then a summary line.
@@ -47,7 +55,7 @@ PACKAGE_STATUS = {
 }
 ALL_STATUS = set().union(*STATUS.values(), *PACKAGE_STATUS.values(), {
     "STARTED", "PACKAGES_DONE", "PACKAGES_DONE_WITH_CONCERNS", "FIXED", "FIX_DONE", "NEEDS_CONTEXT",
-    "G1_APPROVED", "G1_CHANGED", "G2_SHOWN", "FOLLOWUP_STARTED", "FOLLOWUP_DONE", "DONE", "DONE_WITH_CONCERNS", "NEEDS_HUMAN", "BLOCKED"})
+    "G1_APPROVED", "G1_CHANGED", "RISK_CHECKED", "G2_SHOWN", "FOLLOWUP_STARTED", "FOLLOWUP_DONE", "DONE", "DONE_WITH_CONCERNS", "NEEDS_HUMAN", "BLOCKED"})
 LOG_COLUMNS = ["time", "agent", "step", "status", "files", "commit", "checks", "decisions", "assumptions", "reason"]
 MOCKUP_LINE = re.compile(r"^[ \t]*(?:[-*][ \t]+)?Mock-up[ \t]*:", re.MULTILINE | re.IGNORECASE)
 STATUS_LINE = re.compile(r"^\s*(?:\*\*)?(?:Status|Verdict)(?:\*\*)?\s*:\s*(?:\*\*)?`?([A-Z_]+)`?", re.MULTILINE)
@@ -56,6 +64,7 @@ CHECK_WORDS = re.compile(r"\b(build|test|tests|format|checks?)\b[^|,;]*\bpass", 
 CHECK_COMMAND = re.compile(r"checks\.py|dotnet\s+(build|test|format)|npm\s+(run|test)|npx\s+tsc")
 # A log name that is a mode of another agent: the hook logs the agent type, not the mode.
 AGENT_TYPES = {"reflector": "senior"}
+FULL_TIME = re.compile(r"\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\b")
 
 
 def table_rows(text, first_header):
@@ -82,13 +91,14 @@ VERDICT_HEADING = re.compile(r"^#+\s*Verdict\s*\n+\s*(?:\*\*)?`?([A-Z_]+)\b", re
 
 
 def run_mode(run):
-    """The Mode field of run.md: 'light' or 'full' (the default)."""
+    """The Mode field of run.md: 'light', 'raised', or 'full' (the default)."""
     path = run / "run.md"
     if not path.is_file():
         return "full"
     for cells in table_rows(path.read_text(encoding="utf-8"), "field")[1:]:
         if len(cells) >= 2 and cells[0].lower() == "mode":
-            return "light" if cells[1].strip("` ").lower().startswith("light") else "full"
+            word = cells[1].strip("` ").lower()
+            return "light" if word.startswith("light") else "raised" if word.startswith("raised") else "full"
     return "full"
 
 
@@ -98,7 +108,27 @@ def status_of(path):
     return match.group(1) if match else None
 
 
+def check_report(run):
+    """The rule RUN-G2: the report that the human reads is complete."""
+    findings = []
+    if not (run / "risk-2.txt").is_file():
+        findings.append((str(run / "risk-2.txt"), "RUN-G2", "file is missing, so G2 has no second risk check"))
+    path = run / "g2.md"
+    if not path.is_file():
+        return findings + [(str(path), "RUN-G2", "file is missing")]
+    text = path.read_text(encoding="utf-8")
+    if not re.search(r"^Result:", text, re.MULTILINE):
+        findings.append((str(path), "RUN-G2", "the line 'Result:' is missing"))
+    if len(table_rows(text, "criterion (verbatim)")) < 2:
+        findings.append((str(path), "RUN-G2", "the table of the acceptance criteria has no rows"))
+    if not re.search(r"^#+\s*Text for the pull request", text, re.MULTILINE):
+        findings.append((str(path), "RUN-G2", "the section 'Text for the pull request' is missing"))
+    return findings
+
+
 def check(run, stage):
+    if stage == "report":
+        return check_report(run)
     findings = []
 
     def add(file, rule, message):
@@ -108,11 +138,12 @@ def check(run, stage):
     for name in must:
         if not (run / name).is_file():
             add(run / name, "RUN-FILE", "file is missing")
-    light = run_mode(run) == "light"
+    mode = run_mode(run)
+    light = mode == "light"
     if stage == "g1" or light:
         must_after = []
     else:
-        must_after = ["reflection.md", "security-review.md"]
+        must_after = ["security-review.md"] if mode == "raised" else ["reflection.md", "security-review.md"]
         for name in must_after:
             if not (run / name).is_file():
                 add(run / name, "RUN-FILE", "file is missing (required before G2)")
@@ -181,7 +212,7 @@ def check(run, stage):
                         add(f, "RUN-STATUS", f"status {word!r} is not one of {sorted(allowed)}")
             review = packages / f"{nn}-review.md"
             if review.is_file() and status_of(review) == "CHANGES_REQUIRED":
-                fixed = any(nn in r.get("step", "") and "fix" in r.get("step", "").lower() for r in log_rows)
+                fixed = any(re.match(rf"{nn}\s+fix\b", r.get("step", "").strip(), re.IGNORECASE) for r in log_rows)
                 if not fixed:
                     add(review, "RUN-FIX", f"package {nn} needs one fix pass after CHANGES_REQUIRED (no fix row in log.md)")
             for counter in (f"{nn} plan-feedback", f"{nn} review", f"{nn} fix"):
@@ -196,13 +227,28 @@ def check(run, stage):
                 commands.append(json.loads(line))
             except ValueError:
                 continue
-    claims = [r for r in log_rows if CHECK_WORDS.search(r.get("checks", ""))]
+    # A row counts for the claims only before G2. After G2, the text of a row says nothing, because the
+    # cells are free text in the language of the run. So each follow-up needs one checks.py command.
+    before_g2, windows = [], []
+    after_g2 = False
+    for row in log_rows:
+        word = row.get("status", "").strip("` ")
+        if word == "FOLLOWUP_STARTED":
+            after_g2 = True
+            windows.append(FULL_TIME.search(row.get("reason", "")))
+        elif not after_g2:
+            before_g2.append(row)
+        if word == "G2_SHOWN":
+            after_g2 = True
+    claims = [r for r in before_g2 if CHECK_WORDS.search(r.get("checks", ""))]
+    hook_found = False
     if claims and not commands:
         add(commands_file if commands_file.is_file() else run / "log.md", "RUN-HOOK",
             f"commands.jsonl is {'empty' if commands_file.is_file() else 'missing'}, so the logging hook did not run. "
             f"{len(claims)} log rows say a check passed, and nothing proves it. Find out why the hook did not run "
             f"(for example no working python command) before you show G2.")
         claims = []
+        hook_found = True
     for row in claims:
         agent = row.get("agent", "").strip("` ").lower()
         agent_type = AGENT_TYPES.get(agent, agent)
@@ -211,13 +257,24 @@ def check(run, stage):
         if not ran:
             add(run / "log.md", "RUN-EVIDENCE",
                 f"row {row.get('step', '?')!r} says a check passed, but commands.jsonl has no check command by {agent or 'any agent'}")
+    starts = [m.group(0) for m in windows if m]  # A window with no time comes from an old run folder.
+    if log_rows and log_rows[-1].get("status", "").strip("` ") == "NEEDS_HUMAN":
+        starts = starts[:-1]
+    for start, end in zip(starts, starts[1:] + [None]):
+        inside = [c for c in commands if c.get("time", "") >= start and (end is None or c.get("time", "") < end)]
+        if not inside:
+            if not hook_found:
+                add(run / "log.md", "RUN-HOOK", f"the follow-up from {start} has no commands, so the marker .dev-team/active-run or the logging hook did not work")
+                hook_found = True
+        elif not any("checks.py" in c.get("command", "") for c in inside):
+            add(run / "log.md", "RUN-EVIDENCE", f"the follow-up from {start} has no checks.py command in commands.jsonl")
     return findings
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("run", type=pathlib.Path)
-    parser.add_argument("--stage", choices=("g1", "g2"), default="g2")
+    parser.add_argument("--stage", choices=("g1", "g2", "report"), default="g2")
     parser.add_argument("--format", choices=("text", "json"), default="text")
     args = parser.parse_args(argv)
     if not args.run.is_dir():

@@ -1,0 +1,60 @@
+{
+  "app": {
+    "title": "Productbeheer",
+    "skipToContent": "Naar de inhoud",
+    "mainNavigation": "Hoofdmenu",
+    "nav": {
+      "products": "Producten",
+      "priceChanges": "Prijswijzigingen"
+    },
+    "language": {
+      "label": "Taal",
+      "en": "English",
+      "nl": "Nederlands"
+    }
+  },
+  "products": {
+    "list": {
+      "title": "Producten",
+      "add": "Product toevoegen",
+      "empty": "Er zijn nog geen producten.",
+      "columns": {
+        "name": "Naam",
+        "code": "Code",
+        "price": "Prijs",
+        "availableFrom": "Beschikbaar vanaf",
+        "actions": "Acties"
+      },
+      "changePrice": "Prijs wijzigen",
+      "search": {
+        "label": "Producten zoeken",
+        "suggestions": "Suggesties",
+        "count": "{{count}} producten gevonden"
+      }
+    },
+    "form": {
+      "createTitle": "Product toevoegen",
+      "name": "Naam",
+      "code": "Code",
+      "price": "Prijs",
+      "availableFrom": "Beschikbaar vanaf",
+      "save": "Opslaan",
+      "cancel": "Annuleren",
+      "saveFailed": "Het product is niet opgeslagen. Probeer het opnieuw.",
+      "errors": {
+        "nameRequired": "Vul een naam in van maximaal 100 tekens.",
+        "codeFormat": "Vul een code in van 3 tot 20 hoofdletters, cijfers of streepjes.",
+        "priceInvalid": "Vul een prijs in van 0 of meer.",
+        "availableFromRequired": "Vul de datum in vanaf wanneer het product beschikbaar is."
+      }
+    }
+  },
+  "priceChanges": {
+    "done": {
+      "title": "Prijswijziging opgeslagen",
+      "summary": "{{count}} prijzen veranderen op {{date}}.",
+      "loadFailed": "De prijswijziging kon niet worden geladen.",
+      "back": "Terug naar de producten"
+    }
+  }
+}

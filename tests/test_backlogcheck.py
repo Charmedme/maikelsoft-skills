@@ -151,6 +151,37 @@ class BacklogCheckTest(unittest.TestCase):
         _, findings = bc.check_file(pathlib.Path(f.name), {"examples": "no"})
         self.assertNotIn("A10", {x.rule for x in findings})
 
+    def spec_story(self, rules):
+        return ("## Return an order within 30 days\n\n**Type:** User Story\n**Parent:** None\n\n"
+                "As a customer, I want to return an order, so that I buy with less risk.\n\n"
+                "### Acceptance criteria\n\n- [ ] A return within 30 days is free.\n"
+                "- [ ] When the order is older than 30 days, the shop charges 4.95 euro.\n\n"
+                "### Behaviour spec\n\n" + rules)
+
+    def test_spec_rules_cover_each_criterion(self):
+        _, found = run(self.spec_story("Rule: R1 Free return (AC1)\nRule: R2 Late fee (AC2)\n"))
+        self.assertNotIn("A11", {r for _, r in found})
+        self.assertNotIn("A10", {r for _, r in found})
+
+    def test_spec_criterion_without_rule(self):
+        _, found = run(self.spec_story("Rule: R1 Free return (AC1)\n"))
+        self.assertIn(("error", "A11"), found)
+
+    def test_spec_rule_names_a_missing_criterion(self):
+        _, found = run(self.spec_story("Rule: R1 Free return (AC1)\nRule: R2 Late fee (AC2)\nRule: R3 Other (AC5)\n"))
+        self.assertIn(("error", "A11"), found)
+
+    def test_spec_rule_without_criterion(self):
+        _, found = run(self.spec_story("Rule: R1 Free return (AC1)\nRule: R2 Late fee (AC2)\nRule: R3 Other\n"))
+        self.assertIn(("warning", "A11"), found)
+
+    def test_bug_needs_a_spec(self):
+        bug = "## Return on day 30 is charged\n\n**Type:** Bug\n**Parent:** None\n\nSome text.\n"
+        _, found = run(bug)
+        self.assertIn(("error", "B1"), found)
+        _, found = run(bug + "\n### Behaviour spec\n\nRule: R1 Free within 30 days (AC1)\n  Now: day 30 costs 4.95 euro.\n")
+        self.assertNotIn(("error", "B1"), found)
+
     def test_bad_story(self):
         _, found = run(BAD)
         for expected in [("error", "S1"), ("error", "A5"), ("warning", "T2"), ("warning", "S2"),
@@ -183,7 +214,7 @@ class BacklogCheckTest(unittest.TestCase):
         self.assertIn(("warning", "A3"), found)
 
     def test_good_feature(self):
-        text = open(ROOT / "plugins/product-flow/skills/backlog-feature/references/feature-rules.md").read()
+        text = open(ROOT / "plugins/product-flow/skills/feature/references/feature-rules.md").read()
         _, found = run(text.split("```markdown")[1].split("```")[0])
         self.assertEqual(found, set())
 

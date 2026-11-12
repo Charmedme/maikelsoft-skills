@@ -6,6 +6,8 @@ a git repository with the fixture. A write case has its fixture (the 'fixture' f
 orders-api or aspnetcore-trap) as one commit on main. A review case has its base fixture (the
 'base' field, default orders-api) on main and the review fixture as one commit on the branch 'feature', so that the
 reviewer can see the change with 'git diff main...feature'.
+For a case with "stack": "angular", the script runs 'npm ci' in the repository after the commits
+(the .gitignore of the fixture keeps node_modules out of git).
 
 Usage:
     python3 evals/dev-stack/prepare.py <runs> [--eval <name> ...] [--runs-per-variant 3]
@@ -21,7 +23,7 @@ import cases
 
 HERE = pathlib.Path(__file__).resolve().parent
 FIXTURES = HERE / "fixtures"
-IGNORE = shutil.ignore_patterns("bin", "obj", "TestResults")
+IGNORE = shutil.ignore_patterns("bin", "obj", "TestResults", "node_modules", "dist", ".angular")
 GIT_ENV = ["-c", "user.name=Fixture", "-c", "user.email=fixture@example.com", "-c", "commit.gpgsign=false"]
 
 
@@ -41,12 +43,15 @@ def make_repo(ev, repo):
     git(repo, "init", "-q", "-b", "main")
     copy_tree(FIXTURES / (ev.get("base", "orders-api") if ev["kind"] == "review" else ev["fixture"]), repo)
     git(repo, "add", "-A")
-    git(repo, "commit", "-q", "-m", "Orders API")
+    git(repo, "commit", "-q", "-m", "Products admin" if ev.get("stack") == "angular" else "Orders API")
     if ev["kind"] == "review":
         git(repo, "checkout", "-q", "-b", "feature")
         copy_tree(FIXTURES / ev["fixture"], repo)
         git(repo, "add", "-A")
         git(repo, "commit", "-q", "-m", "Changes for review")
+    if ev.get("stack") == "angular":
+        subprocess.run(["npm", "ci", "--prefer-offline", "--no-audit", "--no-fund"], cwd=repo, check=True,
+                       capture_output=True, text=True)
 
 
 def main():

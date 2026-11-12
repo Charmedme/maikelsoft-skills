@@ -1,0 +1,30 @@
+<h1>Edit product</h1>
+@if (error) {
+  <p class="form-error">{{ error }}</p>
+}
+<form [formGroup]="form" (ngSubmit)="save()">
+  <div class="field">
+    <label for="name">Name</label>
+    <input id="name" formControlName="name" />
+    @if (serverErrors['name']) {
+      <span class="field-error">{{ serverErrors['name'] }}</span>
+    }
+  </div>
+  <div class="field">
+    <label for="code">Code</label>
+    <input id="code" formControlName="code" />
+    @if (serverErrors['code']) {
+      <span class="field-error">{{ serverErrors['code'] }}</span>
+    }
+  </div>
+  <div class="field">
+    <label for="price">Price</label>
+    <input id="price" type="number" formControlName="price" />
+  </div>
+  <div class="field">
+    <label for="availableFrom">Available from</label>
+    <input id="availableFrom" type="date" formControlName="availableFrom" />
+  </div>
+  <button class="button" type="submit" [disabled]="form.invalid">Save</button>
+  <a routerLink="/products">Cancel</a>
+</form>

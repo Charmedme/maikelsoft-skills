@@ -1,0 +1,20 @@
+{
+  "plugin": "dev-setup",
+  "skill": "setup",
+  "method": [
+    "Give a Haiku agent the name and description of each skill of the marketplace, plus the built-in /init, and one query. Ask which skill it starts, or none.",
+    "3 tries for each query. A 'must' query passes when 'setup' is picked in at least 2 of 3 tries. A 'not' query passes when 'setup' is picked in at most 1 of 3 tries."
+  ],
+  "queries": [
+    {"q": "/setup", "expect": "setup"},
+    {"q": "Set up this project for the delivery flow, I'm the developer here.", "expect": "setup"},
+    {"q": "Set my role to product owner for all my projects.", "expect": "setup"},
+    {"q": "Change my route so the team always takes the large risky work.", "expect": "setup"},
+    {"q": "Set up the Claude Code basics of this repo: the .claude folder and a CLAUDE.md.", "expect": "setup"},
+    {"q": "Write a CLAUDE.md for this codebase.", "expect": "init", "not": "setup"},
+    {"q": "Set up the design tools and the run command for the UX work of this project.", "expect": "ux-design:ux-setup", "not": "setup"},
+    {"q": "Connect Claude to our Jira so it can read tickets.", "expect": "none", "not": "setup"},
+    {"q": "Add a GitHub Actions workflow that builds and tests the solution.", "expect": "none", "not": "setup"},
+    {"q": "Set up ESLint and Prettier for the Angular app.", "expect": "none", "not": "setup"}
+  ]
+}

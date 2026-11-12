@@ -32,6 +32,23 @@ Do you also use the skills `engineering:documentation`, `engineering:architectur
 
    The report also lists the open questions, the `TODO:` items, and the errors that it found in the source.
 
+## Commands
+
+Claude Code starts a skill by itself when your request matches its trigger. You can also start a skill with its command. Text after the command goes to the skill, for example `/dev-docs:doc-readme Rewrite the README`.
+
+| Command | What it does | Starts by itself when you ask for |
+|---------|--------------|-----------------------------------|
+| `/dev-docs:doc-plan` | Plans or audits the docs of a whole project, and sends each document to the correct skill. | A project documented, or which docs are missing |
+| `/dev-docs:doc-readme` | Writes, rewrites, or reviews a README. | A README, or what a project needs on its front page |
+| `/dev-docs:doc-tutorial` | Writes a lesson for a new user. | A tutorial, a getting-started page, or an onboarding lesson |
+| `/dev-docs:doc-howto` | Writes the steps of one task, or a runbook. | Steps to install, configure, deploy, migrate, or recover |
+| `/dev-docs:doc-reference` | Writes reference docs for an API, a CLI, or configuration. | Endpoint docs, CLI options, configuration keys, or error codes |
+| `/dev-docs:doc-explanation` | Writes the why and the how-it-works of a system. | An architecture overview, design background, or trade-offs |
+| `/dev-docs:doc-adr` | Writes an architecture decision record in MADR 4.0.0. | A technical decision recorded or compared |
+| `/dev-docs:doc-changelog` | Writes CHANGELOG entries and release notes. | A changelog update, release notes, or the changes of a version |
+| `/dev-docs:doc-code-comments` | Writes code comments and API doc comments. | Comments or doc comments in source code |
+| `/dev-docs:doc-ui-text` | Writes UI text in English or Dutch. | Buttons, labels, error messages, dialogs, empty states, or tooltips |
+
 ## Usage
 
 ### Skills

@@ -1,0 +1,232 @@
+diff --git a/src/UIs/angular/src/app/core/nav.component.css b/src/UIs/angular/src/app/core/nav.component.css
+index 75160e6..f40bf30 100644
+--- a/src/UIs/angular/src/app/core/nav.component.css
++++ b/src/UIs/angular/src/app/core/nav.component.css
+@@ -26,3 +26,23 @@
+   box-shadow: inset 0 -3px 0 #0d6efd;
+   font-weight: 700;
+ }
++
++/* Phone width: the page links go to their own row, so the bar does not make the page scroll sideways. */
++@media (max-width: 575.98px) {
++  .navbar {
++    flex-wrap: wrap;
++    row-gap: 0.25rem;
++  }
++
++  .navbar-brand {
++    flex: 1 1 0;
++    min-width: 0;
++    white-space: normal;
++    overflow-wrap: anywhere;
++  }
++
++  .nav-pages {
++    order: 3;
++    flex-basis: 100%;
++  }
++}
+diff --git a/src/UIs/angular/src/app/products/delete-product/delete-product.component.css b/src/UIs/angular/src/app/products/delete-product/delete-product.component.css
+index e69de29..2265010 100644
+--- a/src/UIs/angular/src/app/products/delete-product/delete-product.component.css
++++ b/src/UIs/angular/src/app/products/delete-product/delete-product.component.css
+@@ -0,0 +1,3 @@
++.delete-product-question {
++  overflow-wrap: anywhere;
++}
+diff --git a/src/UIs/angular/src/app/products/delete-product/delete-product.component.html b/src/UIs/angular/src/app/products/delete-product/delete-product.component.html
+index b859fb9..b83368c 100644
+--- a/src/UIs/angular/src/app/products/delete-product/delete-product.component.html
++++ b/src/UIs/angular/src/app/products/delete-product/delete-product.component.html
+@@ -1,16 +1,22 @@
+-<button type="button" class="btn btn-primary btn-danger" (click)="openModal(template)">
++<button
++  #deleteButton
++  type="button"
++  class="btn btn-primary btn-danger"
++  [attr.aria-label]="'Delete ' + product.name"
++  (click)="openModal(template)"
++>
+   <app-action-icon action="delete" />Delete
+ </button>
+ 
+ <ng-template #template>
+-  <app-modal-header><app-action-icon action="delete" />Delete Product</app-modal-header>
++  <app-modal-header><app-action-icon action="delete" />Delete product</app-modal-header>
+   <app-modal-body class="text-center">
+-    <p>
++    <p class="delete-product-question">
+       Are you sure you want to delete <strong> {{ product.name }}</strong>
+     </p>
+   </app-modal-body>
+   <app-modal-footer align="center">
+-    <button type="button" class="btn btn-primary" (click)="confirm()"><app-action-icon action="confirm" />Yes</button>
+-    <button type="button" class="btn btn-default" (click)="decline()"><app-action-icon action="cancel" />No</button>
++    <button type="button" class="btn btn-primary" (click)="confirm()"><app-action-icon action="confirm" />Delete</button>
++    <button type="button" class="btn btn-default" data-modal-autofocus (click)="decline()"><app-action-icon action="cancel" />Cancel</button>
+   </app-modal-footer>
+ </ng-template>
+diff --git a/src/UIs/angular/src/app/products/delete-product/delete-product.component.ts b/src/UIs/angular/src/app/products/delete-product/delete-product.component.ts
+index d8313dc..132cd0c 100644
+--- a/src/UIs/angular/src/app/products/delete-product/delete-product.component.ts
++++ b/src/UIs/angular/src/app/products/delete-product/delete-product.component.ts
+@@ -1,6 +1,8 @@
+ import { ModalRef, ModalModule, ModalService } from "../../shared/modal/modal";
+ import {
+   Component,
++  ElementRef,
++  ViewChild,
+   OnInit,
+   TemplateRef,
+   Input,
+@@ -24,6 +26,8 @@ export class DeleteProductComponent implements OnInit {
+   @Input() product: IProduct;
+   @Output() confirmed: EventEmitter<IProduct> = new EventEmitter<IProduct>();
+ 
++  @ViewChild("deleteButton", { static: true }) deleteButton: ElementRef<HTMLButtonElement>;
++
+   modalRef: ModalRef<any>;
+   message: string;
+   constructor(private dialog: ModalService) {}
+@@ -42,4 +46,9 @@ export class DeleteProductComponent implements OnInit {
+   decline(): void {
+     this.modalRef.close();
+   }
++
++  /** Moves the keyboard focus to the delete button of this product. */
++  focus(): void {
++    this.deleteButton.nativeElement.focus();
++  }
+ }
+diff --git a/src/UIs/angular/src/app/products/list-products/list-products.component.css b/src/UIs/angular/src/app/products/list-products/list-products.component.css
+index 862d768..933fa99 100644
+--- a/src/UIs/angular/src/app/products/list-products/list-products.component.css
++++ b/src/UIs/angular/src/app/products/list-products/list-products.component.css
+@@ -1,3 +1,7 @@
+ thead {
+   color: #337AB7;
+-}
+\ No newline at end of file
++}
++.product-name,
++.product-status {
++  overflow-wrap: anywhere;
++}
+diff --git a/src/UIs/angular/src/app/products/list-products/list-products.component.html b/src/UIs/angular/src/app/products/list-products/list-products.component.html
+index 8ad52d4..043b4f6 100644
+--- a/src/UIs/angular/src/app/products/list-products/list-products.component.html
++++ b/src/UIs/angular/src/app/products/list-products/list-products.component.html
+@@ -6,7 +6,7 @@
+       &nbsp;
+       <button type="button" class="btn btn-secondary" (click)="exportAsCsv()"><app-action-icon action="export" />Export as Csv</button>
+       &nbsp;
+-      <a class="btn btn-primary" routerLinkActive="active" [routerLink]="['/products/add']">
++      <a #addButton class="btn btn-primary" routerLinkActive="active" [routerLink]="['/products/add']">
+         <app-action-icon action="add" />Add Product
+       </a>
+       &nbsp;
+@@ -16,6 +16,7 @@
+     </div>
+   </div>
+   <div class="card-body">
++    <div role="status" class="product-status" [class.alert]="statusMessage" [class.alert-success]="statusMessage">{{ statusMessage }}</div>
+     <div class="row">
+       <div class="col-md-2">Filter by:</div>
+       <div class="col-md-4">
+@@ -48,7 +49,7 @@
+             </tr>
+           </thead>
+           <tbody>
+-            @for (product of filteredProducts; track product) {
++            @for (product of filteredProducts; track product.id) {
+               <tr>
+                 <td>
+                   @if (showImage) {
+@@ -60,7 +61,7 @@
+                       />
+                   }
+                 </td>
+-                <td>
++                <td class="product-name">
+                   <a [routerLink]="['/products', product.id]">
+                     <app-action-icon action="view" />{{ product.name }}
+                   </a>
+diff --git a/src/UIs/angular/src/app/products/list-products/list-products.component.ts b/src/UIs/angular/src/app/products/list-products/list-products.component.ts
+index 1723955..15d4e4d 100644
+--- a/src/UIs/angular/src/app/products/list-products/list-products.component.ts
++++ b/src/UIs/angular/src/app/products/list-products/list-products.component.ts
+@@ -1,5 +1,17 @@
+ import { ModalRef, ModalModule, ModalService } from "../../shared/modal/modal";
+-import { Component, OnInit, TemplateRef, ChangeDetectionStrategy } from "@angular/core";
++import {
++  afterNextRender,
++  ChangeDetectionStrategy,
++  Component,
++  ElementRef,
++  inject,
++  Injector,
++  OnInit,
++  QueryList,
++  TemplateRef,
++  ViewChild,
++  ViewChildren,
++} from "@angular/core";
+ import { CommonModule } from "@angular/common";
+ import { FormsModule } from "@angular/forms";
+ import { RouterModule } from "@angular/router";
+@@ -52,6 +64,14 @@ export class ListProductsComponent implements OnInit {
+   importCsvModalRef: ModalRef<any>;
+   importingFile;
+ 
++  /** Text of the status message (role status) after a delete. */
++  statusMessage = "";
++
++  @ViewChildren(DeleteProductComponent) deleteButtons: QueryList<DeleteProductComponent>;
++  @ViewChild("addButton") addButton: ElementRef<HTMLElement>;
++
++  private injector = inject(Injector);
++
+   constructor(
+     private productService: ProductService,
+     private titleService: Title,
+@@ -66,14 +86,37 @@ export class ListProductsComponent implements OnInit {
+ 
+   onDeleteConfirmed(product: IProduct): void {
+     this.productService.deleteProduct(product).subscribe({
+-      next: (rs) => {
+-        console.log(rs);
+-        this.ngOnInit();
++      next: () => {
++        const index = this.filteredProducts.indexOf(product);
++        this.products = this.products.filter((item) => item !== product);
++        this.filteredProducts = this.filteredProducts.filter((item) => item !== product);
++        this.statusMessage = `${product.name} deleted.`;
++        this.focusAfterDelete(index);
+       },
+       error: (err) => (this.errorMessage = err),
+     });
+   }
+ 
++  /**
++   * After a delete, the focus goes to the delete button of the next row, or of the new last row
++   * when the deleted row was the last row. When the list is empty, it goes to the Add button.
++   */
++  private focusAfterDelete(index: number): void {
++    afterNextRender(
++      {
++        write: () => {
++          const buttons = this.deleteButtons?.toArray() ?? [];
++          if (buttons.length) {
++            buttons[Math.min(Math.max(index, 0), buttons.length - 1)].focus();
++          } else {
++            this.addButton?.nativeElement.focus();
++          }
++        },
++      },
++      { injector: this.injector }
++    );
++  }
++
+   performFilter(filterBy: string): IProduct[] {
+     filterBy = filterBy.toLocaleLowerCase();
+     return this.products.filter(

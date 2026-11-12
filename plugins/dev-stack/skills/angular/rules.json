@@ -1,0 +1,178 @@
+{
+  "skill": "angular",
+  "rules": [
+    {
+      "id": "ANG-OLD-CONTROL-FLOW",
+      "kind": "regex",
+      "severity": "warning",
+      "files": ["**/*.html", "**/*.ts"],
+      "pattern": "\\*ng(?:If|For|SwitchCase|SwitchDefault)\\b|\\[ngSwitch\\]",
+      "message": "Structural directives are the old control flow. The built-in blocks need no import, type-narrow, and require a track expression.",
+      "fix": "Use @if, @for (x of xs; track x.id), and @switch. Run the control flow migration only when the task asks for it.",
+      "match": [
+        "<li *ngFor=\"let p of products; trackBy: byId\">{{ p.name }}</li>",
+        "<p *ngIf=\"error\">{{ error }}</p>",
+        "<div [ngSwitch]=\"status\">"
+      ],
+      "nomatch": [
+        "@for (p of products(); track p.id) {",
+        "@if (error(); as message) {",
+        "import { NgIf } from '@angular/common';"
+      ]
+    },
+    {
+      "id": "ANG-TRACK-INDEX",
+      "kind": "regex",
+      "severity": "warning",
+      "files": ["**/*.html", "**/*.ts"],
+      "pattern": "\\btrack\\s+\\$index\\b",
+      "message": "track $index ties the DOM and its state to the position. After a delete or a sort, focus, input values, and selection move to the wrong row.",
+      "fix": "Track a stable id: @for (row of rows(); track row.id). $index is fine only for a list that never changes.",
+      "match": [
+        "@for (row of rows(); track $index) {",
+        "@for (p of products; track  $index; let i = $index) {"
+      ],
+      "nomatch": [
+        "@for (row of rows(); track row.id) {",
+        "@for (p of products; track p.id; let i = $index) {"
+      ]
+    },
+    {
+      "id": "ANG-CONSTRUCTOR-DI",
+      "kind": "regex",
+      "severity": "warning",
+      "files": ["**/*.ts"],
+      "exclude": ["**/*.spec.ts"],
+      "pattern": "constructor\\s*\\(\\s*(?:@\\w+\\([^)]*\\)\\s*)?(?:private|public|protected|readonly)\\s",
+      "message": "Constructor parameter injection is the old form. @Service() in Angular 22 requires inject(), and lint rule prefer-inject reports it.",
+      "fix": "Use a field: private readonly http = inject(HttpClient);",
+      "match": [
+        "constructor(private http: HttpClient) {}",
+        "  constructor(private readonly store: Store, private route: ActivatedRoute) {",
+        "constructor(@Inject(API_URL) private apiUrl: string) {}"
+      ],
+      "nomatch": [
+        "private readonly http = inject(HttpClient);",
+        "constructor() {",
+        "constructor(name: string) { this.name = name; }"
+      ]
+    },
+    {
+      "id": "ANG-EAGER-CD",
+      "kind": "regex",
+      "severity": "warning",
+      "files": ["**/*.ts"],
+      "exclude": ["**/*.spec.ts"],
+      "pattern": "ChangeDetectionStrategy\\.(?:Default|Eager)\\b",
+      "message": "The eager strategy checks the component on each change in the app and depends on zone.js. OnPush is the default in Angular 22.",
+      "fix": "Remove the line (Angular 22) or use ChangeDetectionStrategy.OnPush (Angular 21), and update the state with signals.",
+      "match": [
+        "changeDetection: ChangeDetectionStrategy.Default,",
+        "changeDetection: ChangeDetectionStrategy.Eager,"
+      ],
+      "nomatch": [
+        "changeDetection: ChangeDetectionStrategy.OnPush,",
+        "import { ChangeDetectionStrategy, Component } from '@angular/core';"
+      ]
+    },
+    {
+      "id": "ANG-WITH-FETCH",
+      "kind": "regex",
+      "severity": "warning",
+      "files": ["**/*.ts"],
+      "pattern": "\\bwithFetch\\s*\\(",
+      "message": "In Angular 22, HttpClient uses Fetch by default and withFetch() is deprecated. In Angular 21, withFetch() is correct: suppress the finding with that reason.",
+      "fix": "Angular 22: provideHttpClient(). Use withXhr() only for upload progress.",
+      "match": [
+        "provideHttpClient(withFetch()),",
+        "provideHttpClient(withInterceptors([auth]), withFetch())"
+      ],
+      "nomatch": [
+        "provideHttpClient(withInterceptors([auth])),",
+        "provideHttpClient(withXhr())"
+      ]
+    },
+    {
+      "id": "ANG-HTTP-MODULE",
+      "kind": "regex",
+      "severity": "warning",
+      "files": ["**/*.ts"],
+      "pattern": "\\bHttpClient(?:Testing)?Module\\b",
+      "message": "HttpClientModule and HttpClientTestingModule are deprecated.",
+      "fix": "Use provideHttpClient() and, in tests, provideHttpClientTesting() after it.",
+      "match": [
+        "imports: [BrowserModule, HttpClientModule],",
+        "imports: [HttpClientTestingModule],",
+        "import { HttpClientModule } from '@angular/common/http';"
+      ],
+      "nomatch": [
+        "providers: [provideHttpClient(), provideHttpClientTesting()],",
+        "import { HttpClient } from '@angular/common/http';"
+      ]
+    },
+    {
+      "id": "ANG-DISABLED-SUBMIT",
+      "kind": "regex",
+      "severity": "warning",
+      "files": ["**/*.html", "**/*.ts"],
+      "pattern": "\\[disabled\\]\\s*=\\s*\"[^\"]*(?:\\binvalid\\b|!\\s*[\\w.()]*\\bvalid\\b)",
+      "message": "A button that is disabled while the form is invalid gives no reason, and a keyboard user cannot reach it (WCAG 3.3.1).",
+      "fix": "Keep the button enabled. On submit, show all errors and move the focus to the first field with an error. Disable it only while the request runs: [disabled]=\"submitting()\".",
+      "match": [
+        "<button type=\"submit\" [disabled]=\"form.invalid\">Save</button>",
+        "<button [disabled]=\"!productForm.valid || saving\">",
+        "<button type=\"submit\" [disabled]=\"productForm().invalid()\">"
+      ],
+      "nomatch": [
+        "<button type=\"submit\" [disabled]=\"submitting()\">Save</button>",
+        "<input [disabled]=\"readOnly()\" />"
+      ]
+    },
+    {
+      "id": "ANG-ISO-DATE",
+      "kind": "regex",
+      "severity": "warning",
+      "files": ["**/*.ts"],
+      "exclude": ["**/*.spec.ts"],
+      "pattern": "\\.toISOString\\(\\)\\s*\\.\\s*(?:split|slice|substring|substr)\\s*\\(",
+      "message": "The date part of toISOString() is the UTC date. For a local midnight in a time zone east of UTC it is the day before.",
+      "fix": "Build yyyy-MM-dd from getFullYear(), getMonth() + 1, and getDate(), or send the value of <input type=\"date\"> as it is.",
+      "match": [
+        "availableFrom: this.date.toISOString().split('T')[0],",
+        "const day = value.toISOString().slice(0, 10);",
+        "params.set('from', from.toISOString().substring(0, 10))"
+      ],
+      "nomatch": [
+        "createdAt: new Date().toISOString(),",
+        "const day = toDateOnly(value);"
+      ]
+    },
+    {
+      "id": "ANG-LIVE-REGION-IF",
+      "kind": "regex",
+      "severity": "warning",
+      "files": ["**/*.html", "**/*.ts"],
+      "pattern": "@if\\s*\\(.*?\\)\\s*\\{\\s*<[^>]*(?:role=\"(?:status|alert)\"|aria-live=)",
+      "message": "A live region that the @if creates together with its text is not read by most screen readers (WCAG 4.1.3).",
+      "fix": "Render the region always and change only its text: <p role=\"status\">{{ status() }}</p>.",
+      "match": [
+        "@if (message()) { <div role=\"status\">{{ message() }}</div> }",
+        "@if (saved) {<p aria-live=\"polite\">{{ t('saved') }}</p>"
+      ],
+      "nomatch": [
+        "<p role=\"status\">{{ status() }}</p>",
+        "@if (error()) { <p class=\"error\">{{ error() }}</p> }"
+      ]
+    },
+    {
+      "id": "ANG-PKG-NGNEAT-TRANSLOCO",
+      "kind": "package",
+      "ecosystem": "npm",
+      "package": "@ngneat/transloco",
+      "versions": "*",
+      "severity": "warning",
+      "message": "Transloco moved to the @jsverse scope. The @ngneat packages get no updates.",
+      "fix": "Replace @ngneat/transloco with @jsverse/transloco and change the imports."
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+<div>As a customer, I want to return an order without cost, so that I can buy with less risk.</div>
+<h2>Behaviour&nbsp;spec</h2>
+<div>Feature: Free returns and guest checkout</div>
+<div><br></div>
+<div><b>Rule:</b> R1 Free return within 30&nbsp;days (limit: 30 days)</div>
+<div>&nbsp;&nbsp;Scenario: Return below the limit</div>
+<ul>
+<li>Given an order that was delivered 29 days ago</li>
+<li>When the customer returns the order</li>
+<li>Then the shop charges &ldquo;0.00&rdquo; for the return</li>
+</ul>
+<p>Scenario: Return at the limit<br>Given an order that was delivered 30 days ago<br>When the customer returns the order<br>Then the shop charges &#8220;0.00&#8221; for the return</p>
+<div>Scenario: Return above the limit</div>
+<div>Given an order that was delivered 31 days ago</div>
+<div>When the customer returns the order</div>
+<div>Then the shop charges a return fee of <span style="color:red">4.95</span></div>
+<div><b>Rule:</b> R2 Guest checkout</div>
+<div>Scenario: Guest pays without an account</div>
+<div>Given a guest with 1 product in the cart</div>
+<div>When the guest pays with a valid card</div>
+<div>Then the shop creates the order</div>
+<div>And the shop sends the confirmation to the email address of the guest</div>
+<div>Scenario Outline: Guest must give a valid email address</div>
+<div>Given a guest with 1 product in the cart</div>
+<div>When the guest pays with the email address "&lt;email&gt;"</div>
+<div>Then the shop shows "&lt;message&gt;"</div>
+<div>Examples:</div>
+<table><tbody>
+<tr><th>email</th><th>message</th></tr>
+<tr><td>(empty)</td><td><div>Enter your email address</div></td></tr>
+<tr><td>anne@example</td><td>Enter a valid email address &amp; retry</td></tr>
+</tbody></table>
+<h2>Links</h2>
+<div>Spec copied to docs/work/SHOP-12/spec.md by the agent.</div>

@@ -1,0 +1,54 @@
+{
+  "app": {
+    "title": "Productbeheer",
+    "skipToContent": "Naar de inhoud",
+    "mainNavigation": "Hoofdmenu",
+    "nav": {
+      "products": "Producten"
+    },
+    "language": {
+      "label": "Taal",
+      "en": "English",
+      "nl": "Nederlands"
+    }
+  },
+  "products": {
+    "list": {
+      "title": "Producten",
+      "add": "Product toevoegen",
+      "empty": "Er zijn nog geen producten.",
+      "columns": {
+        "name": "Naam",
+        "code": "Code",
+        "price": "Prijs",
+        "availableFrom": "Beschikbaar vanaf"
+      },
+      "actions": "Acties",
+      "edit": "Bewerken"
+    },
+    "form": {
+      "createTitle": "Product toevoegen",
+      "name": "Naam",
+      "code": "Code",
+      "price": "Prijs",
+      "availableFrom": "Beschikbaar vanaf",
+      "save": "Opslaan",
+      "cancel": "Annuleren",
+      "saveFailed": "Het product is niet opgeslagen. Probeer het opnieuw.",
+      "errors": {
+        "nameRequired": "Vul een naam in van maximaal 100 tekens.",
+        "codeFormat": "Vul een code in van 3 tot 20 hoofdletters, cijfers of streepjes.",
+        "priceInvalid": "Vul een prijs in van 0 of meer.",
+        "availableFromRequired": "Vul de datum in vanaf wanneer het product beschikbaar is."
+      },
+      "editTitle": "Product bewerken",
+      "loading": "Het product wordt geladen…",
+      "notFound": "Dit product bestaat niet. Misschien is het verwijderd.",
+      "loadFailed": "Het product kon niet worden geladen.",
+      "backToList": "Terug naar de producten",
+      "conflict": "Iemand anders heeft dit product gewijzigd nadat je het opende. Je wijzigingen zijn niet opgeslagen. Kopieer wat je nodig hebt en laad het product opnieuw.",
+      "reload": "Product opnieuw laden",
+      "fixErrors": "Verbeter de velden met een fout."
+    }
+  }
+}

@@ -1,0 +1,16 @@
+<ng-container *transloco="let t; prefix: 'priceChanges.done'">
+  <h1>{{ t('title') }}</h1>
+
+  @if (change.hasValue()) {
+    <p>{{ t('summary', { count: change.value().lines.length, date: change.value().effectiveDate }) }}</p>
+    <ul>
+      @for (line of change.value().lines; track line.productId) {
+        <li>{{ line.name }}: {{ line.oldPrice | currency: 'EUR' }} → {{ line.newPrice | currency: 'EUR' }}</li>
+      }
+    </ul>
+  } @else if (change.error()) {
+    <p role="alert">{{ t('loadFailed') }}</p>
+  }
+
+  <a routerLink="/products">{{ t('back') }}</a>
+</ng-container>

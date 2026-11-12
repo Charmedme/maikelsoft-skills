@@ -4,7 +4,7 @@ dev-team is a Claude Code plugin that delivers one user story with a small team 
 
 English output follows ASD-STE100 Simplified Technical English. Dutch output follows Begrijpelijk Nederlands (taalniveau B1).
 
-Status: version 0.3.0, preview. Since 0.3.0, `dev-flow:plan-and-build` builds each item in one session and starts dev-team only when you ask for the team. Product questions of the senior go to the product owner as a comment on the item. Read the test results below before you use it on real work.
+Status: version 0.6.0, preview. Since 0.3.0, `dev-flow:plan-and-build` builds each item in one session and starts dev-team only when you ask for the team. Product questions of the senior go to the product owner as a comment on the item. Read the test results below before you use it on real work.
 
 ## Install
 
@@ -29,6 +29,29 @@ claude plugin install dev-team@maikelsoft-skills
 4. The team builds on the branch `dev-team/<slug>`, reviews each part one time, and runs a security review.
 5. Gate G2 shows the checks, the acceptance criteria with their tests, and the open findings. You review the branch, push it, and open the pull request.
 
+## Commands
+
+Claude Code starts a skill by itself when your request matches its trigger. You can also start a skill with its command. Text after the command goes to the skill, for example `/dev-team:deliver-story PROJ-123`.
+
+| Command | What it does | Starts by itself when you ask for |
+|---------|--------------|-----------------------------------|
+| `/dev-team:deliver-story` | Delivers one large or risky item with the team agents and two human gates. | The team to build an item, or "deliver this story" |
+| `/dev-team:process-review` | Handles the review comments on a pull request of the team. | Review comments processed, fixed, or answered |
+| `/dev-team:story-intake` | Reads one story from the tracker into `story.md`. | A story fetched into the dev-team format |
+| `/dev-team:team-decisions` | Records team decisions: the index, one ADR for each decision, and your profile. | A team decision recorded or checked |
+| `/dev-team:senior-practice` | The rules of the senior agent. | Preloaded by the senior agent. Start it only for a senior design or review in the team format |
+| `/dev-team:medior-practice` | The rules of the medior agents. | Preloaded by the medior agents. Start it only for a package plan or report in the team format |
+| `/dev-team:stack-index` | The route from a file or package to its dev-stack skill. | Preloaded by the team agents |
+
+The agents have no command. A skill starts them, except where the table says otherwise.
+
+| Agent | What it does | Started by |
+|-------|--------------|------------|
+| `dev-team:senior` | Designs the story, builds the core, and leads the mediors. | `deliver-story` and `process-review` |
+| `dev-team:medior` | Builds one work package of size standard. | The senior agent |
+| `dev-team:medior-large` | Builds one work package of size hard, with more reasoning effort. | The senior agent |
+| `dev-team:security-reviewer` | Reviews the full diff of a story one time for security. | `deliver-story` |
+
 ## What is in the plugin
 
 | Part | Name | What it does |
@@ -52,6 +75,9 @@ claude plugin install dev-team@maikelsoft-skills
 - The agents create a branch and commit on it. They do not push and do not open a pull request.
 - Each step writes a file in the run folder `docs/work/<slug>/` and a row in `log.md`. The main session can start again from the last good step.
 - One reflection, one plan feedback, one review, and one fix per part. No loops.
+- A fix changes only the comments that its prompt names, and it keeps the scope that you approved at G1. For a bug, it commits the failing test first.
+- `riskcheck.py` runs after the core build and again at G2. It adds a security review for a sign-in or authorization reason. It gives a warning for a migration or a package, for a reason that went away, and for a fix that changed a test. It is a path and pattern check. It cannot say that a change is safe.
+- `process-review` shows the number of rounds. It stops only when a cause comes back or when an earlier fix broke the behavior.
 - A team decision or a new package needs the approval of the human.
 - `runcheck.py` compares the log with the command log. A claimed check without a command is a finding.
 

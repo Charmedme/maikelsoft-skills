@@ -17,13 +17,20 @@ the files of that folder that its SKILL.md names: a .py file in scripts/, any
 other file in references/.
 
 Each skill whose SKILL.md names one of these files also gets it (a .py file in scripts/, else in references/):
-    shared/po-questions.md
-    shared/example-mapping.md
-    shared/examplecheck.py
+    shared/po-questions.md       shared/context.md         shared/runheader.py
+    shared/example-mapping.md    shared/cycle.md           shared/specsync.py
+    shared/examplecheck.py       shared/review-rules.md    shared/docscheck.py
+    shared/riskcheck.py          shared/review-template.md shared/speclock.py
+    shared/refine.md             shared/behaviour-spec.md  shared/mutate.py
+A SKILL.md names a file when the file name is in the text, with no letter, digit, "_", or "-"
+just before it. So "backlog-context.md" does not name "context.md".
 
 Each skill whose SKILL.md names "proto-shell" also gets the files of shared/proto-shell/:
     scripts/<name>.py             <- shared/proto-shell/<name>.py
     references/proto-shell/<name> <- shared/proto-shell/<name> (each other file)
+
+A forwarder (an old skill name with "user-invocable: false" and the line "This skill has a new
+name:") gets no copies.
 
 A SKILL.md that has these two marker lines also gets shared/workflow.md between them:
     <!-- BEGIN shared/workflow.md -->
@@ -46,7 +53,11 @@ PLUGIN_COPIES = {
     "dev-build": {SHARED / "grill.md": pathlib.Path("references") / "grill.md"},
 }
 # Shared files for each skill that names the file in its SKILL.md.
-NAMED_COPIES = [SHARED / "po-questions.md", SHARED / "example-mapping.md", SHARED / "examplecheck.py"]
+NAMED_COPIES = [SHARED / name for name in (
+    "po-questions.md", "example-mapping.md", "examplecheck.py", "riskcheck.py",
+    "context.md", "cycle.md", "review-rules.md", "review-template.md",
+    "runheader.py", "specsync.py", "docscheck.py", "speclock.py", "mutate.py",
+    "refine.md", "behaviour-spec.md")]
 # Shared folders for each skill that names the folder in its SKILL.md.
 NAMED_FOLDERS = [SHARED / "proto-shell"]
 BLOCK = re.compile(r"(<!-- BEGIN shared/workflow\.md -->\n).*?(<!-- END shared/workflow\.md -->)", re.DOTALL)
@@ -60,13 +71,25 @@ BEGIN = "<!-- BEGIN shared/workflow.md -->"
 END = "<!-- END shared/workflow.md -->"
 
 
+def names(text: str, name: str) -> bool:
+    """Return True when the text names the file: no letter, digit, "_", or "-" just before the name."""
+    return re.search(r"(?<![\w-])" + re.escape(name), text) is not None
+
+
+def is_forwarder(text: str) -> bool:
+    """A forwarder only sends its request to the skill with the new name. It gets no copies."""
+    return "user-invocable: false" in text.split("\n---", 1)[0] and "This skill has a new name:" in text
+
+
 def expected_files(skill: pathlib.Path) -> dict:
+    if is_forwarder((skill / "SKILL.md").read_text(encoding="utf-8")):
+        return {}
     copies = dict(COPIES)
     copies.update(PLUGIN_COPIES.get(skill.parents[1].name, {}))
     files = {skill / rel: src.read_text(encoding="utf-8") for src, rel in copies.items()}
     text = (skill / "SKILL.md").read_text(encoding="utf-8")
     for src in NAMED_COPIES:
-        if src.name in text:
+        if names(text, src.name):
             folder = "scripts" if src.suffix == ".py" else "references"
             files[skill / folder / src.name] = src.read_text(encoding="utf-8")
     for folder_src in NAMED_FOLDERS:

@@ -1,0 +1,49 @@
+<ng-container *transloco="let t; prefix: 'products.list'">
+  <div class="page-header">
+    <h1 id="products-heading">{{ t('title') }}</h1>
+    <a class="button" routerLink="new">{{ t('add') }}</a>
+  </div>
+
+  @if (message) {
+    <div role="status" class="message">{{ message }}</div>
+  }
+
+  @if (products$ | async; as products) {
+    @if (products.length === 0) {
+      <p>{{ t('empty') }}</p>
+    } @else {
+      <table class="products" aria-labelledby="products-heading">
+        <thead>
+          <tr>
+            <th scope="col">{{ t('columns.name') }}</th>
+            <th scope="col">{{ t('columns.code') }}</th>
+            <th scope="col" class="numeric">{{ t('columns.price') }}</th>
+            <th scope="col">{{ t('columns.availableFrom') }}</th>
+            <th scope="col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (product of products; track product.id) {
+            <tr>
+              <td [attr.data-label]="t('columns.name')">{{ product.name }}</td>
+              <td [attr.data-label]="t('columns.code')">{{ product.code }}</td>
+              <td [attr.data-label]="t('columns.price')" class="numeric">
+                {{ product.price | currency: 'EUR' }}
+              </td>
+              <td [attr.data-label]="t('columns.availableFrom')">{{ product.availableFrom }}</td>
+              <td><button type="button" (click)="askDelete(product)">Delete</button></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  }
+
+  <div class="backdrop" *ngIf="toDelete">
+    <div class="confirm" role="dialog">
+      <p>Are you sure you want to delete {{ toDelete.name }}?</p>
+      <button type="button" (click)="cancel()">Cancel</button>
+      <button type="button" (click)="confirm()">Delete</button>
+    </div>
+  </div>
+</ng-container>

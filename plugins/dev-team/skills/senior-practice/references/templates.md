@@ -48,6 +48,9 @@ Status: DESIGN_READY
 - Packages: <NN title, size, one line each, or "None.">
 - Mode: light | full. <reason>
 
+## How to undo
+<how to revert this change. A schema or data change needs more than git revert.>
+
 ## Decisions
 <ID, decision, status (accepted / open). The open rows are in decision-sheet.md.>
 
@@ -165,11 +168,14 @@ Status: APPROVED | APPROVED_WITH_COMMENTS | CHANGES_REQUIRED
 <the result of checks.py that you ran>
 
 ## Security
-<light run only: the result of the secure-coding review checklist on the diff. Full run: "Security review by the security reviewer.">
+<light or raised run: the result of the secure-coding review checklist on the diff. Full run: "Security review by the security reviewer.">
 
 ## Comments
 | # | Label | Location | What | Why | Suggestion |
 |---|-------|----------|------|-----|------------|
+
+## Open findings
+<follow-up only: a finding outside the fix diff, for the human. Or "None.">
 ```
 
 ## Log row

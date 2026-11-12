@@ -1,0 +1,146 @@
+{
+  "skill": "angular",
+  "base": "angular-products",
+  "planted": [
+    {
+      "id": "P1",
+      "file": "src/app/price-changes/price-change-page.ts",
+      "line": 59,
+      "description": "The apply stream maps each submit of the form (applyClicks) with mergeMap. A double click (or Enter twice) starts two POST /api/price-changes requests in parallel, so the price change is applied twice (prices go up 10% and again 10%). The [disabled] binding does not help: it only looks at form.invalid. Use exhaustMap (ignore clicks while a request runs), and show a busy state on the button.",
+      "severity": "high",
+      "subtle": false
+    },
+    {
+      "id": "P2",
+      "file": "src/app/products/product-list/product-list.ts",
+      "line": 30,
+      "description": "The search suggestions use mergeMap. Every term starts a request and all responses are used in the order they arrive, so an older, slower response (for 'de') can overwrite the suggestions of the newer term ('desk'). Use switchMap, which cancels the previous request (or a resource with the term as params).",
+      "severity": "high",
+      "subtle": false
+    },
+    {
+      "id": "P3",
+      "file": "src/app/price-changes/price-change-page.ts",
+      "line": 74,
+      "description": "ngOnInit subscribes to route.paramMap with no cleanup (no takeUntilDestroyed, no unsubscribe, no toSignal). The code relies on the router to end this subscription; that is not visible here and breaks when the same code is moved to a service or a non-routed component. The other new code in this change (price-change-done.ts, D2) does it the safe way. Use takeUntilDestroyed(), or better toSignal(route.paramMap) or an input bound with withComponentInputBinding (already on) for productId. Count it as found when the review asks for cleanup or one of these replacements at this line.",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P4",
+      "file": "src/app/price-changes/price-change-page.html",
+      "line": 67,
+      "description": "Accessibility of the form: the Apply button is [disabled]=\"form.invalid\", so a keyboard or screen reader user gets no reason why nothing happens and cannot submit to see the errors. The error texts (lines 55 and 63) are not linked to their inputs: no id with aria-describedby, and no aria-invalid on the input. Keep the button enabled, validate on submit, move the focus to the first invalid field, and link each error with aria-describedby plus aria-invalid=\"true\".",
+      "severity": "medium",
+      "subtle": false
+    },
+    {
+      "id": "P5",
+      "file": "src/app/price-changes/price-change-page.html",
+      "line": 3,
+      "description": "The status message is rendered as @if (message()) { <div role=\"status\"> }: the live region is created together with its text, so screen readers do not announce it (and the error 'could not be applied' is not announced either). Keep the role=status (or aria-live) element always in the DOM and change only its text.",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P6",
+      "file": "src/app/price-changes/price-change-page.html",
+      "line": 31,
+      "description": "The selected products are tracked with track $index, but rows can be removed (Remove, Remove selected) and each row has an unbound checkbox. After a removal Angular reuses the DOM rows by index, so the checked state (and focus) moves to the next product, and 'Remove selected' (which reads the checkboxes by index) removes the wrong products. Use track row.id, and keep the selection in a signal instead of reading DOM checkboxes.",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P7",
+      "file": "src/app/price-changes/price-change.service.ts",
+      "line": 8,
+      "description": "PriceChangeService holds the page state (the selection) but is @Service() (auto-provided in root), so it is a singleton for the whole app: the selection survives when the user leaves the page and comes back, and a half-finished selection is applied later. Provide it in the providers of the PriceChangePage component (@Service({ autoProvided: false }) or @Injectable() plus providers: [PriceChangeService] on the component), so it is destroyed with the component. Route providers do not fix it: a route-level injector is not destroyed on navigation unless the app opts in with withAutoCleanupInjectors().",
+      "severity": "medium",
+      "subtle": false
+    },
+    {
+      "id": "P8",
+      "file": "src/app/price-changes/price-change.service.ts",
+      "line": 29,
+      "description": "The effective date is sent as toLocalDate(effectiveDate).toISOString().slice(0, 10). toLocalDate gives local midnight, and toISOString converts to UTC, so east of UTC (the Netherlands, UTC+1/+2) the API gets the day before: a change for 1 March starts on 28 February. Send the yyyy-MM-dd value of the date input as it is (or build it from getFullYear/getMonth/getDate).",
+      "severity": "high",
+      "subtle": true
+    },
+    {
+      "id": "P9",
+      "file": "src/app/price-changes/price-change-page.ts",
+      "line": 45,
+      "description": "An effect() starts an HTTP request each time the selection or the percentage changes and subscribes inside the effect. Old requests are not cancelled (a slow old preview can overwrite a newer one), and there is no loading or error state. Effects are for side effects outside Angular, not for derived async data. Use httpResource (or resource/rxResource) with the ids and the percentage as params.",
+      "severity": "medium",
+      "subtle": false
+    },
+    {
+      "id": "P10",
+      "file": "src/app/price-changes/price-change.service.spec.ts",
+      "line": 16,
+      "description": "provideHttpClientTesting() comes before provideHttpClient(), so the later provideHttpClient() replaces the testing backend with the real one (Fetch): HttpTestingController sees no requests, and expectNone passes for any code. There is also no afterEach(() => http.verify()). Put provideHttpClient() first, then provideHttpClientTesting(), and verify after each test (and add a test for apply that checks the request body).",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P11",
+      "file": "src/app/price-changes/price-change-page.html",
+      "line": 1,
+      "description": "The price change page has hard-coded English texts (heading, labels, buttons, errors, and the messages in price-change-page.ts), while the rest of the app uses Transloco keys with en and nl. Dutch users see English. Use the transloco directive and add the keys to en.json and nl.json.",
+      "severity": "low",
+      "subtle": false
+    },
+    {
+      "id": "P12",
+      "file": "src/app/app.config.ts",
+      "line": 15,
+      "description": "withFetch() is added to provideHttpClient. In Angular 22 the Fetch backend is the default and withFetch() is deprecated, so the call has no effect and adds a deprecation. Remove it: provideHttpClient().",
+      "severity": "low",
+      "subtle": true
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "src/app/products/product-list/product-list.html",
+      "line": 20,
+      "description": "@for (product of suggestions(); track product.id) is correct: it tracks a stable unique id."
+    },
+    {
+      "id": "D2",
+      "file": "src/app/price-changes/price-change-done.ts",
+      "line": 16,
+      "description": "toSignal(inject(ActivatedRoute).paramMap) needs no manual cleanup: toSignal unsubscribes when the injection context (the component) is destroyed."
+    },
+    {
+      "id": "D3",
+      "file": "src/app/products/product-create/product-create.ts",
+      "line": 37,
+      "description": "exhaustMap on the create submits is correct: a second submit while the POST runs is ignored, so a double click creates one product. The catchError inside keeps the stream alive."
+    },
+    {
+      "id": "D4",
+      "file": "src/app/price-changes/price-change-page.ts",
+      "line": 83,
+      "description": "A one-shot this.http.get(...).subscribe() in the click handler (addProduct) is fine: the HttpClient observable completes after one response, so there is no leak and no need for takeUntilDestroyed."
+    },
+    {
+      "id": "D5",
+      "file": "src/app/products/product-list/product-list.html",
+      "line": 17,
+      "description": "The role=status element of the search is always in the DOM and only its text changes, which is the correct way to announce the suggestion count."
+    },
+    {
+      "id": "D6",
+      "file": "src/app/auth/auth.service.ts",
+      "line": 9,
+      "description": "AuthService with @Service() (auto-provided in root) is correct: the current user is app-wide state that the header, the list, and the price change page share."
+    },
+    {
+      "id": "D7",
+      "file": "src/app/price-changes/price-change-page.ts",
+      "line": 26,
+      "description": "inject(HttpClient) in a field initializer is correct: field initializers run in the injection context of the constructor."
+    }
+  ]
+}

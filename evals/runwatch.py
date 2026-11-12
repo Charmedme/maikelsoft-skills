@@ -73,14 +73,23 @@ class _Reader:
         return max(self.repeats.values(), default=0)
 
 
-def run_watched(cmd, cwd, env, run_dir, limits=None, log=print):
-    """Start cmd with stdout to run_dir/stream.jsonl. Return the exit code, or the stop reason."""
+def run_watched(cmd, cwd, env, run_dir, limits=None, log=print, stdin_text=None):
+    """Start cmd with stdout to run_dir/stream.jsonl. Return the exit code, or the stop reason.
+
+    stdin_text goes to the standard input of cmd. Give the prompt this way, not as an argument: a prompt in
+    the argument list shows in the process list, and a run that calls `pkill -f <text of the prompt>` then
+    stops the other runs.
+    """
     lim = dict(DEFAULTS, **(limits or {}))
     run_dir = pathlib.Path(run_dir)
     stream = run_dir / "stream.jsonl"
     start = last_output = time.time()
     with open(stream, "w") as out, open(run_dir / "stderr.log", "w") as err:
-        proc = subprocess.Popen(cmd, cwd=cwd, env=env, stdout=out, stderr=err)
+        proc = subprocess.Popen(cmd, cwd=cwd, env=env, stdout=out, stderr=err,
+                                stdin=subprocess.PIPE if stdin_text is not None else None)
+        if stdin_text is not None:
+            proc.stdin.write(stdin_text.encode("utf-8"))
+            proc.stdin.close()
         reader = _Reader(stream)
         reason = None
         while proc.poll() is None:

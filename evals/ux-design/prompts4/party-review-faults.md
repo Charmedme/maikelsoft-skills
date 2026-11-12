@@ -1,4 +1,4 @@
-You work in the folder `<repo>`. It is the repository of the product Naar de Kloten. Read `CLAUDE.md` first.
+You work in the folder `<repo>`. It is the repository of the product Party Cards. Read `CLAUDE.md` first.
 
 The UX design of story NDK-14 is approved by the owner: `<work>/ux-design.md`. The story is in `<work>/story.md`. The owner already gave the OK on the key screens. Now make the mockups:
 

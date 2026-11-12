@@ -1,0 +1,673 @@
+diff --git a/src/Monolith/ClassifiedAds.Application/Products/Commands/ImportProductsCommand.cs b/src/Monolith/ClassifiedAds.Application/Products/Commands/ImportProductsCommand.cs
+new file mode 100644
+index 0000000..464c727
+--- /dev/null
++++ b/src/Monolith/ClassifiedAds.Application/Products/Commands/ImportProductsCommand.cs
+@@ -0,0 +1,185 @@
++using ClassifiedAds.Application.Products.DTOs;
++using ClassifiedAds.Domain.Entities;
++using ClassifiedAds.Domain.Repositories;
++using System;
++using System.Collections.Generic;
++using System.Linq;
++using System.Threading;
++using System.Threading.Tasks;
++
++namespace ClassifiedAds.Application.Products.Commands;
++
++/// <summary>
++/// Imports the products of a CSV file, all or nothing. A line whose code (trimmed, without regard to
++/// case) matches an existing product updates that product. Other lines create a product.
++/// After the command, <see cref="Errors"/> has the errors (nothing was stored), or the counts are set.
++/// </summary>
++public class ImportProductsCommand : ICommand
++{
++    public ImportProductsFromCsv File { get; set; }
++
++    public List<ImportProductsError> Errors { get; set; } = [];
++
++    public int Created { get; set; }
++
++    public int Updated { get; set; }
++
++    public int Unchanged { get; set; }
++}
++
++/// <summary>
++/// The rules for a product CSV file.
++/// </summary>
++public static class ImportProductsRules
++{
++    public const int MaxProducts = 1000;
++
++    public const int MaxNameLength = 100;
++
++    public static readonly string[] Header = ["Code", "Name", "Description"];
++
++    public static string NormalizeCode(string code) => code.Trim().ToUpperInvariant();
++
++    /// <summary>
++    /// Returns the product lines of the file, or the errors. The errors are sorted by line.
++    /// </summary>
++    public static List<ImportProductsError> Validate(ImportProductsFromCsv file, out List<ImportProductsFromCsvRecord> productLines)
++    {
++        productLines = [];
++
++        if (file.Errors.Count > 0)
++        {
++            return file.Errors.ToList();
++        }
++
++        var header = file.Records.FirstOrDefault();
++        if (header == null
++            || header.Line != 1
++            || header.Fields.Count != Header.Length
++            || !header.Fields.Select(x => x.Trim()).SequenceEqual(Header, StringComparer.OrdinalIgnoreCase))
++        {
++            return [new ImportProductsError(1, "The first line must be the header Code,Name,Description.")];
++        }
++
++        var lines = file.Records.Skip(1).Where(x => !x.IsBlank).ToList();
++
++        if (lines.Count > MaxProducts)
++        {
++            return [new ImportProductsError(lines[MaxProducts].Line, $"The file has more than {MaxProducts} products. Import at most {MaxProducts} products at a time.")];
++        }
++
++        var errors = new List<ImportProductsError>();
++
++        foreach (var line in lines)
++        {
++            var code = line.Fields[0];
++            var name = line.Fields.Count > 1 ? line.Fields[1] : string.Empty;
++
++            if (line.Fields.Count > Header.Length)
++            {
++                errors.Add(new ImportProductsError(line.Line, $"The line has {line.Fields.Count} fields. A line has at most 3 fields: Code,Name,Description."));
++            }
++
++            if (string.IsNullOrWhiteSpace(code))
++            {
++                errors.Add(new ImportProductsError(line.Line, "The code is empty."));
++            }
++
++            if (string.IsNullOrWhiteSpace(name))
++            {
++                errors.Add(new ImportProductsError(line.Line, "The name is empty."));
++            }
++            else if (name.Length > MaxNameLength)
++            {
++                errors.Add(new ImportProductsError(line.Line, $"The name has {name.Length} characters. The maximum is {MaxNameLength}."));
++            }
++        }
++
++        var duplicates = lines
++            .Where(x => !string.IsNullOrWhiteSpace(x.Fields[0]))
++            .GroupBy(x => NormalizeCode(x.Fields[0]))
++            .Where(x => x.Count() > 1);
++
++        foreach (var group in duplicates)
++        {
++            foreach (var line in group)
++            {
++                var others = string.Join(", ", group.Where(x => x != line).Select(x => x.Line));
++                errors.Add(new ImportProductsError(line.Line, $"The code {line.Fields[0].Trim()} is also on line {others}."));
++            }
++        }
++
++        if (errors.Count == 0)
++        {
++            productLines = lines;
++        }
++
++        return errors.OrderBy(x => x.Line).ToList();
++    }
++}
++
++internal class ImportProductsCommandHandler : ICommandHandler<ImportProductsCommand>
++{
++    private readonly ICrudService<Product> _productService;
++    private readonly IRepository<Product, Guid> _productRepository;
++    private readonly IUnitOfWork _unitOfWork;
++
++    public ImportProductsCommandHandler(ICrudService<Product> productService, IRepository<Product, Guid> productRepository, IUnitOfWork unitOfWork)
++    {
++        _productService = productService;
++        _productRepository = productRepository;
++        _unitOfWork = unitOfWork;
++    }
++
++    public async Task HandleAsync(ImportProductsCommand command, CancellationToken cancellationToken = default)
++    {
++        command.Errors = ImportProductsRules.Validate(command.File, out var lines);
++        if (command.Errors.Count > 0)
++        {
++            return;
++        }
++
++        var codes = lines.Select(x => ImportProductsRules.NormalizeCode(x.Fields[0])).ToList();
++        var existingProducts = await _productRepository.ToListAsync(_productRepository.GetQueryableSet()
++            .Where(x => codes.Contains(x.Code.Trim().ToUpper())));
++
++        // When older data has more than one product with the same code, the oldest one is updated.
++        var productsByCode = existingProducts
++            .OrderBy(x => x.CreatedDateTime)
++            .GroupBy(x => ImportProductsRules.NormalizeCode(x.Code))
++            .ToDictionary(x => x.Key, x => x.First());
++
++        // One transaction: each create and update writes its audit log entry and outbox message
++        // through the normal event handlers, and nothing is stored when one save fails.
++        using (await _unitOfWork.BeginTransactionAsync(System.Data.IsolationLevel.ReadCommitted, cancellationToken))
++        {
++            foreach (var line in lines)
++            {
++                var code = line.Fields[0].Trim();
++                var name = line.Fields[1];
++                var description = line.Fields.Count > 2 ? line.Fields[2] : string.Empty;
++
++                if (!productsByCode.TryGetValue(ImportProductsRules.NormalizeCode(code), out var product))
++                {
++                    await _productService.AddAsync(new Product { Code = code, Name = name, Description = description }, cancellationToken);
++                    command.Created++;
++                    continue;
++                }
++
++                if (product.Code == code && product.Name == name && (product.Description ?? string.Empty) == description)
++                {
++                    command.Unchanged++;
++                    continue;
++                }
++
++                product.Code = code;
++                product.Name = name;
++                product.Description = description;
++                await _productService.UpdateAsync(product, cancellationToken);
++                command.Updated++;
++            }
++
++            await _unitOfWork.CommitTransactionAsync(cancellationToken);
++        }
++    }
++}
+diff --git a/src/Monolith/ClassifiedAds.Application/Products/DTOs/ImportProductsFromCsv.cs b/src/Monolith/ClassifiedAds.Application/Products/DTOs/ImportProductsFromCsv.cs
+index aaca4ee..75a46fa 100644
+--- a/src/Monolith/ClassifiedAds.Application/Products/DTOs/ImportProductsFromCsv.cs
++++ b/src/Monolith/ClassifiedAds.Application/Products/DTOs/ImportProductsFromCsv.cs
+@@ -1,10 +1,33 @@
+ ﻿using ClassifiedAds.CrossCuttingConcerns.Csv;
+-using ClassifiedAds.Domain.Entities;
+ using System.Collections.Generic;
+ 
+ namespace ClassifiedAds.Application.Products.DTOs;
+ 
++/// <summary>
++/// The records of a product CSV file, as read. The first record is the header.
++/// </summary>
+ public record ImportProductsFromCsv : ICsvResponse
+ {
+-    public List<Product> Products { get; set; }
++    public List<ImportProductsFromCsvRecord> Records { get; set; } = [];
++
++    /// <summary>
++    /// Gets or sets the errors that make the file unreadable, for example a quoted field without a closing quote.
++    /// </summary>
++    public List<ImportProductsError> Errors { get; set; } = [];
+ }
++
++/// <summary>
++/// One record of the file.
++/// </summary>
++public record ImportProductsFromCsvRecord
++{
++    /// <summary>Gets or sets the line in the file where the record starts. The first line is 1.</summary>
++    public int Line { get; set; }
++
++    public List<string> Fields { get; set; } = [];
++
++    /// <summary>Gets or sets a value indicating whether the line is empty or has only white space.</summary>
++    public bool IsBlank { get; set; }
++}
++
++public record ImportProductsError(int Line, string Message);
+diff --git a/src/Monolith/ClassifiedAds.Infrastructure/Csv/ImportProductsFromCsvHandler.cs b/src/Monolith/ClassifiedAds.Infrastructure/Csv/ImportProductsFromCsvHandler.cs
+index 93cc2ea..b5dc855 100644
+--- a/src/Monolith/ClassifiedAds.Infrastructure/Csv/ImportProductsFromCsvHandler.cs
++++ b/src/Monolith/ClassifiedAds.Infrastructure/Csv/ImportProductsFromCsvHandler.cs
+@@ -1,33 +1,146 @@
+-﻿using ClassifiedAds.Application.Products.DTOs;
++using ClassifiedAds.Application.Products.DTOs;
+ using ClassifiedAds.CrossCuttingConcerns.Csv;
+-using ClassifiedAds.Domain.Entities;
+-using CsvHelper.Configuration;
+-using System.Globalization;
++using System.Collections.Generic;
+ using System.IO;
+-using System.Linq;
++using System.Text;
+ using System.Threading.Tasks;
+ 
+ namespace ClassifiedAds.Infrastructure.Csv;
+ 
++/// <summary>
++/// Reads a CSV file (RFC 4180) into records, with the line where each record starts.
++/// A field with a comma, a quote, or a line break is in double quotes, and a quote inside is doubled.
++/// A UTF-8 byte order mark at the start is skipped.
++/// </summary>
+ public class ImportProductsFromCsvHandler : ICsvReader<ImportProductsFromCsv>
+ {
+-    public Task<ImportProductsFromCsv> ReadAsync(Stream stream)
++    public async Task<ImportProductsFromCsv> ReadAsync(Stream stream)
+     {
+-        using var reader = new StreamReader(stream);
++        using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
++        var text = await reader.ReadToEndAsync();
++        return Parse(text);
++    }
+ 
+-        var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+-        {
+-            HeaderValidated = null,
+-            MissingFieldFound = null,
+-        };
++    public static ImportProductsFromCsv Parse(string text)
++    {
++        var result = new ImportProductsFromCsv();
++        var position = 0;
++        var line = 1;
++        var field = new StringBuilder();
+ 
+-        using var csv = new CsvHelper.CsvReader(reader, config);
++        if (text.Length > 0 && text[0] == '﻿')
++        {
++            position = 1;
++        }
+ 
+-        var response = new ImportProductsFromCsv
++        while (position < text.Length)
+         {
+-            Products = csv.GetRecords<Product>().ToList(),
+-        };
++            var record = new ImportProductsFromCsvRecord { Line = line, IsBlank = true };
++
++            while (true)
++            {
++                field.Clear();
++
++                if (position < text.Length && text[position] == '"')
++                {
++                    record.IsBlank = false;
++                    position++;
++
++                    while (true)
++                    {
++                        if (position >= text.Length)
++                        {
++                            result.Errors.Add(new ImportProductsError(record.Line, "A quoted field has no closing quote."));
++                            return result;
++                        }
++
++                        var c = text[position];
++                        if (c == '"')
++                        {
++                            if (position + 1 < text.Length && text[position + 1] == '"')
++                            {
++                                field.Append('"');
++                                position += 2;
++                                continue;
++                            }
++
++                            position++;
++                            break;
++                        }
++
++                        if (c == '\r' && position + 1 < text.Length && text[position + 1] == '\n')
++                        {
++                            field.Append("\r\n");
++                            position += 2;
++                            line++;
++                            continue;
++                        }
++
++                        if (c == '\r' || c == '\n')
++                        {
++                            line++;
++                        }
++
++                        field.Append(c);
++                        position++;
++                    }
+ 
+-        return Task.FromResult(response);
++                    if (position < text.Length && !IsDelimiterOrLineEnd(text[position]))
++                    {
++                        result.Errors.Add(new ImportProductsError(line, "A closing quote must be followed by a comma or the end of the line."));
++                        return result;
++                    }
++                }
++                else
++                {
++                    while (position < text.Length && !IsDelimiterOrLineEnd(text[position]))
++                    {
++                        field.Append(text[position]);
++                        position++;
++                    }
++
++                    if (!string.IsNullOrWhiteSpace(field.ToString()))
++                    {
++                        record.IsBlank = false;
++                    }
++                }
++
++                record.Fields.Add(field.ToString());
++
++                if (position < text.Length && text[position] == ',')
++                {
++                    record.IsBlank = false;
++                    position++;
++                    continue;
++                }
++
++                if (position < text.Length && text[position] == '\r')
++                {
++                    position++;
++                    if (position < text.Length && text[position] == '\n')
++                    {
++                        position++;
++                    }
++
++                    line++;
++                }
++                else if (position < text.Length && text[position] == '\n')
++                {
++                    position++;
++                    line++;
++                }
++
++                break;
++            }
++
++            result.Records.Add(record);
++        }
++
++        return result;
++    }
++
++    private static bool IsDelimiterOrLineEnd(char c)
++    {
++        return c == ',' || c == '\r' || c == '\n';
+     }
+ }
+diff --git a/src/Monolith/ClassifiedAds.UnitTests/Application/Products/ImportProductsRulesTests.cs b/src/Monolith/ClassifiedAds.UnitTests/Application/Products/ImportProductsRulesTests.cs
+new file mode 100644
+index 0000000..b3e51a5
+--- /dev/null
++++ b/src/Monolith/ClassifiedAds.UnitTests/Application/Products/ImportProductsRulesTests.cs
+@@ -0,0 +1,52 @@
++using ClassifiedAds.Application.Products.Commands;
++using ClassifiedAds.Infrastructure.Csv;
++using System.Linq;
++using Xunit;
++
++namespace ClassifiedAds.UnitTests.Application.Products;
++
++public class ImportProductsRulesTests
++{
++    [Fact]
++    public void Validate_ValidFile_ReturnsProductLinesWithoutBlankLines()
++    {
++        var file = ImportProductsFromCsvHandler.Parse("Code,Name,Description\nA,a,\n\nB,b,desc\n");
++
++        var errors = ImportProductsRules.Validate(file, out var lines);
++
++        Assert.Empty(errors);
++        Assert.Equal([2, 4], lines.Select(x => x.Line));
++    }
++
++    [Fact]
++    public void Validate_WrongLines_ReportsEachLineAndBothDuplicates()
++    {
++        var file = ImportProductsFromCsvHandler.Parse("Code,Name,Description\n,a,\nB,,\nC," + new string('n', 101) + ",\n ab ,x,\nAB,y,\nD," + new string('n', 100) + ",\n");
++
++        var errors = ImportProductsRules.Validate(file, out var lines);
++
++        Assert.Empty(lines);
++        Assert.Equal([2, 3, 4, 5, 6], errors.Select(x => x.Line));
++    }
++
++    [Theory]
++    [InlineData("")]
++    [InlineData("Name,Code,Description\n")]
++    [InlineData("Code,Name\n")]
++    public void Validate_WrongHeader_RefusesTheFile(string text)
++    {
++        var errors = ImportProductsRules.Validate(ImportProductsFromCsvHandler.Parse(text), out _);
++
++        Assert.Equal(1, Assert.Single(errors).Line);
++    }
++
++    [Fact]
++    public void Validate_MoreThan1000Products_RefusesTheFile()
++    {
++        var text = "Code,Name,Description\n" + string.Concat(Enumerable.Range(0, 1001).Select(i => $"C{i},N,\n"));
++
++        var errors = ImportProductsRules.Validate(ImportProductsFromCsvHandler.Parse(text), out _);
++
++        Assert.Single(errors);
++    }
++}
+diff --git a/src/Monolith/ClassifiedAds.UnitTests/ClassifiedAds.UnitTests.csproj b/src/Monolith/ClassifiedAds.UnitTests/ClassifiedAds.UnitTests.csproj
+index c1b801b..547a317 100644
+--- a/src/Monolith/ClassifiedAds.UnitTests/ClassifiedAds.UnitTests.csproj
++++ b/src/Monolith/ClassifiedAds.UnitTests/ClassifiedAds.UnitTests.csproj
+@@ -32,6 +32,7 @@
+   <ItemGroup>
+     <ProjectReference Include="..\ClassifiedAds.Application\ClassifiedAds.Application.csproj" />
+     <ProjectReference Include="..\ClassifiedAds.Domain\ClassifiedAds.Domain.csproj" />
++    <ProjectReference Include="..\ClassifiedAds.Infrastructure\ClassifiedAds.Infrastructure.csproj" />
+   </ItemGroup>
+   
+ </Project>
+diff --git a/src/Monolith/ClassifiedAds.UnitTests/Infrastructure/Csv/ImportProductsFromCsvHandlerTests.cs b/src/Monolith/ClassifiedAds.UnitTests/Infrastructure/Csv/ImportProductsFromCsvHandlerTests.cs
+new file mode 100644
+index 0000000..07da957
+--- /dev/null
++++ b/src/Monolith/ClassifiedAds.UnitTests/Infrastructure/Csv/ImportProductsFromCsvHandlerTests.cs
+@@ -0,0 +1,40 @@
++using ClassifiedAds.Infrastructure.Csv;
++using System.Linq;
++using Xunit;
++
++namespace ClassifiedAds.UnitTests.Infrastructure.Csv;
++
++public class ImportProductsFromCsvHandlerTests
++{
++    [Fact]
++    public void Parse_QuotedFields_KeepCommasQuotesAndLineBreaks()
++    {
++        var file = ImportProductsFromCsvHandler.Parse("﻿Code,Name,Description\r\nA,\"x, y\",\"say \"\"hi\"\"\nnext\"\r\nB,b,\n");
++
++        Assert.Empty(file.Errors);
++        Assert.Equal(3, file.Records.Count);
++        Assert.Equal(["Code", "Name", "Description"], file.Records[0].Fields);
++        Assert.Equal(["A", "x, y", "say \"hi\"\nnext"], file.Records[1].Fields);
++        Assert.Equal(2, file.Records[1].Line);
++        Assert.Equal(4, file.Records[2].Line);
++        Assert.Equal(["B", "b", string.Empty], file.Records[2].Fields);
++    }
++
++    [Fact]
++    public void Parse_EmptyLines_AreBlankAndKeepTheLineNumbers()
++    {
++        var file = ImportProductsFromCsvHandler.Parse("Code,Name,Description\n\n  \nA,a,\n");
++
++        Assert.Equal([false, true, true, false], file.Records.Select(x => x.IsBlank));
++        Assert.Equal(4, file.Records[3].Line);
++    }
++
++    [Fact]
++    public void Parse_QuoteWithoutEnd_GivesErrorOnStartLine()
++    {
++        var file = ImportProductsFromCsvHandler.Parse("Code,Name,Description\nA,\"open\nB,b,\n");
++
++        var error = Assert.Single(file.Errors);
++        Assert.Equal(2, error.Line);
++    }
++}
+diff --git a/src/Monolith/ClassifiedAds.WebAPI/Endpoints/ProductsEndpoints.cs b/src/Monolith/ClassifiedAds.WebAPI/Endpoints/ProductsEndpoints.cs
+index 8c379f2..9ad9953 100644
+--- a/src/Monolith/ClassifiedAds.WebAPI/Endpoints/ProductsEndpoints.cs
++++ b/src/Monolith/ClassifiedAds.WebAPI/Endpoints/ProductsEndpoints.cs
+@@ -1,4 +1,4 @@
+-using ClassifiedAds.Application;
++﻿using ClassifiedAds.Application;
+ using ClassifiedAds.Application.AuditLogEntries.DTOs;
+ using ClassifiedAds.Application.AuditLogEntries.Queries;
+ using ClassifiedAds.Application.Products.Commands;
+@@ -115,11 +115,14 @@ public class ProductsEndpoints
+             .WithTags("Products")
+             .WithName("Products_ImportCsv")
+             .RequireAuthorization()
++            .RequireAuthorization(Permissions.AddProduct)
++            .RequireAuthorization(Permissions.UpdateProduct)
+             .RequireRateLimiting(RateLimiterPolicyNames.DefaultPolicy)
+             .AddEndpointFilter<ModelValidationFilter<UploadFileModel>>()
+             .ProducesValidationProblem()
+             .DisableAntiforgery()
+-            .Produces(StatusCodes.Status200OK);
++            .Produces<ImportProductsResultModel>(StatusCodes.Status200OK)
++            .ProducesProblem(StatusCodes.Status400BadRequest);
+     }
+ 
+     private static async Task<IResult> Get([FromServices] Dispatcher dispatcher,
+@@ -288,12 +291,43 @@ public class ProductsEndpoints
+     }
+ 
+     private static async Task<IResult> ImportCsv([FromForm] UploadFileModel model,
+-        [FromServices] ICsvReader<ImportProductsFromCsv> productCsvReader)
++        [FromServices] ICsvReader<ImportProductsFromCsv> productCsvReader,
++        [FromServices] Dispatcher dispatcher)
+     {
+-        using var stream = model.FormFile.OpenReadStream();
+-        var result = await productCsvReader.ReadAsync(stream);
++        if (model?.FormFile == null)
++        {
++            return Results.ValidationProblem(new Dictionary<string, string[]>
++            {
++                [nameof(UploadFileModel.FormFile)] = ["The File field is required."],
++            });
++        }
++
++        ImportProductsFromCsv file;
++        using (var stream = model.FormFile.OpenReadStream())
++        {
++            file = await productCsvReader.ReadAsync(stream);
++        }
++
++        var command = new ImportProductsCommand { File = file };
++        await dispatcher.DispatchAsync(command);
++
++        if (command.Errors.Count > 0)
++        {
++            return Results.Problem(
++                statusCode: StatusCodes.Status400BadRequest,
++                title: "The file was not imported.",
++                detail: "Correct the lines in the errors list and import the file again. No product was changed.",
++                extensions: new Dictionary<string, object>
++                {
++                    ["errors"] = command.Errors.Select(x => new ImportProductsErrorModel { Line = x.Line, Message = x.Message }).ToList(),
++                });
++        }
+ 
+-        // TODO: import to database
+-        return Results.Ok(result.Products);
++        return Results.Ok(new ImportProductsResultModel
++        {
++            Created = command.Created,
++            Updated = command.Updated,
++            Unchanged = command.Unchanged,
++        });
+     }
+ }
+diff --git a/src/Monolith/ClassifiedAds.WebAPI/Models/Products/ImportProductsResultModel.cs b/src/Monolith/ClassifiedAds.WebAPI/Models/Products/ImportProductsResultModel.cs
+new file mode 100644
+index 0000000..5e0356a
+--- /dev/null
++++ b/src/Monolith/ClassifiedAds.WebAPI/Models/Products/ImportProductsResultModel.cs
+@@ -0,0 +1,21 @@
++using System.Text.Json.Serialization;
++
++namespace ClassifiedAds.WebAPI.Models.Products;
++
++public class ImportProductsResultModel
++{
++    public int Created { get; set; }
++
++    public int Updated { get; set; }
++
++    public int Unchanged { get; set; }
++}
++
++public class ImportProductsErrorModel
++{
++    [JsonPropertyName("line")]
++    public int Line { get; set; }
++
++    [JsonPropertyName("message")]
++    public string Message { get; set; }
++}
+diff --git a/src/Monolith/ClassifiedAds.WebAPI/Models/Products/UploadFileModel.cs b/src/Monolith/ClassifiedAds.WebAPI/Models/Products/UploadFileModel.cs
+index e03c98e..326ca4f 100644
+--- a/src/Monolith/ClassifiedAds.WebAPI/Models/Products/UploadFileModel.cs
++++ b/src/Monolith/ClassifiedAds.WebAPI/Models/Products/UploadFileModel.cs
+@@ -1,8 +1,11 @@
+ ﻿using Microsoft.AspNetCore.Http;
++using System.ComponentModel.DataAnnotations;
+ 
+ namespace ClassifiedAds.WebAPI.Models.Products;
+ 
+ public class UploadFileModel
+ {
++    [Required]
++    [Display(Name = "File")]
+     public IFormFile FormFile { get; set; }
+ }
+diff --git a/src/UIs/angular/src/app/products/product.service.ts b/src/UIs/angular/src/app/products/product.service.ts
+index e661468..9096251 100644
+--- a/src/UIs/angular/src/app/products/product.service.ts
++++ b/src/UIs/angular/src/app/products/product.service.ts
+@@ -3,7 +3,7 @@ import { HttpClient, HttpErrorResponse } from "@angular/common/http";
+ import { Observable, throwError } from "rxjs";
+ import { catchError, tap, map } from "rxjs/operators";
+ 
+-import { IProduct } from "./product";
++import { IImportProductsResult, IProduct } from "./product";
+ import { environment } from "../../environments/environment";
+ import { IAuditLogEntry } from "../auditlogs/audit-log";
+ 
+@@ -57,10 +57,10 @@ export class ProductService {
+       .pipe(catchError(this.handleError));
+   }
+ 
+-  importCsvFile(file: File): Observable<IProduct[] | undefined> {
++  importCsvFile(file: File): Observable<IImportProductsResult | undefined> {
+     const formData: FormData = new FormData();
+     formData.append("formFile", file);
+-    return this.http.post<IProduct[]>(this.productUrl + "/ImportCsv", formData);
++    return this.http.post<IImportProductsResult>(this.productUrl + "/ImportCsv", formData);
+   }
+ 
+   private handleError(err: HttpErrorResponse) {
+diff --git a/src/UIs/angular/src/app/products/product.ts b/src/UIs/angular/src/app/products/product.ts
+index 850253f..2753659 100644
+--- a/src/UIs/angular/src/app/products/product.ts
++++ b/src/UIs/angular/src/app/products/product.ts
+@@ -8,3 +8,9 @@ export interface IProduct {
+   starRating: number;
+   imageUrl: string;
+ }
++
++export interface IImportProductsResult {
++  created: number;
++  updated: number;
++  unchanged: number;
++}

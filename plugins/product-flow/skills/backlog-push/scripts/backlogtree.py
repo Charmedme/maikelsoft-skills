@@ -7,6 +7,10 @@
     python3 backlogtree.py log set <push-log.json> <item id> <remote id> [--url <url>] [--status created|linked|skipped|updated]
     python3 backlogtree.py log status <push-log.json>
     python3 backlogtree.py export <file.md> [...] --format md|txt|html --split|--combined --out <folder>
+    python3 backlogtree.py specs <file.md> [...]
+
+"specs" checks the Behaviour spec of each story and each bug in the files with specsync.py
+(the file next to this script, or shared/specsync.py of the repository). A bug gets --kind bug.
 
 An item is a Markdown heading with a "**Type:**" line under it, as the
 backlog-* skills write it. "**Parent:**" names the title of the parent item.
@@ -26,7 +30,8 @@ import sys
 
 ORDER = {"product goal": 0, "productdoel": 0, "epic": 1, "feature": 2, "kenmerk": 2,
          "user story": 3, "story": 3, "product backlog item": 3, "pbi": 3, "requirement": 3,
-         "issue": 3, "spike": 3, "enabler": 3, "sprint goal": 9, "sprintdoel": 9}
+         "issue": 3, "spike": 3, "enabler": 3, "bug": 3, "defect": 3, "fout": 3, "sprint goal": 9, "sprintdoel": 9}
+BUG_TYPES = {"bug", "defect", "fout"}
 HEADING = re.compile(r"^(#{1,6})\s+(.*)$")
 TYPE_LINE = re.compile(r"^\*\*(type|soort):\*\*\s*(.+)$", re.I)
 PARENT_LINE = re.compile(r"^\*\*(parent|ouder|bovenliggend):\*\*\s*(.+)$", re.I)
@@ -254,6 +259,27 @@ def cmd_export(args):
     return 0
 
 
+def cmd_specs(args):
+    here = pathlib.Path(__file__).resolve().parent
+    for folder in (here, here.parents[2] / "shared"):
+        if (folder / "specsync.py").is_file():
+            sys.path.insert(0, str(folder))
+            break
+    import specsync
+    total = 0
+    for it in parse(args.files):
+        if it["rank"] != 3:
+            continue
+        kind = "bug" if it["type"].lower() in BUG_TYPES else "story"
+        found, _ = specsync.check(specsync.read_spec(it["body"], "md"), kind)
+        print(f"{it['file']}:{it['line']}: {it['title']} ({kind}): {len(found)} errors")
+        for _, rule, message in found:
+            print(f"  ERROR {rule}: {message}")
+        total += len(found)
+    print(f"specs: {total} errors")
+    return 1 if total else 0
+
+
 def main():
     p = argparse.ArgumentParser()
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -266,6 +292,7 @@ def main():
     e = sub.add_parser("export"); e.add_argument("files", nargs="+"); e.add_argument("--format", required=True, choices=["md", "txt", "html"])
     g = e.add_mutually_exclusive_group(required=True); g.add_argument("--split", action="store_true"); g.add_argument("--combined", action="store_true")
     e.add_argument("--out", required=True)
+    sp = sub.add_parser("specs"); sp.add_argument("files", nargs="+")
     args = p.parse_args()
     for f in getattr(args, "files", []):
         if not pathlib.Path(f).is_file():
@@ -279,7 +306,7 @@ def main():
                 print("log set needs <item id> <remote id>")
                 return 1
             args.item, args.remote = args.rest
-    return {"tree": cmd_tree, "similar": cmd_similar, "log": cmd_log, "export": cmd_export}[args.cmd](args)
+    return {"tree": cmd_tree, "similar": cmd_similar, "log": cmd_log, "export": cmd_export, "specs": cmd_specs}[args.cmd](args)
 
 
 if __name__ == "__main__":

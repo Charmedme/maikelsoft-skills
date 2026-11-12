@@ -27,7 +27,7 @@
     {
       "name": "dev-flow",
       "source": "./plugins/dev-flow",
-      "description": "Builds one approved work item (story, bug, task, or chore) from the tracker to tested commits, spec first. Example mapping, acceptance tests that are locked after your approval, and one scenario at a time. Sets a tier from the size and the risk of the change. Product questions go back to the product owner on the item.",
+      "description": "Builds one work item (story, bug, task, or chore) from its ticket to tested commits, spec first. Copies the Behaviour spec of the ticket and locks one test file for each rule. Builds one scenario at a time with TDD. Proves the result with held-back tests, a mutation check, and fresh reviews. Sets the size from the change and the risk. Product questions go back to the product owner on the ticket.",
       "category": "development",
       "tags": [
         "planning",
@@ -64,7 +64,7 @@
     {
       "name": "product-flow",
       "source": "./plugins/product-flow",
-      "description": "Take a product idea to an approved backlog: research, questions, a prototype with your branding, a spec with a story map, and goals, epics, features, and user stories in your ticket system. Example mapping turns an item into rules, examples, and questions before the build. For product owners and business analysts.",
+      "description": "One command for each phase of the backlog work: an idea, a request, or a bug to approved items. Each user story and bug gets acceptance criteria and a Gherkin Behaviour spec, a refine pass with the product owner, and a push to Jira, Azure DevOps, GitHub, GitLab, Linear, or files after approval. Research, a story map, and a prototype only for larger work. For product owners and business analysts.",
       "category": "productivity",
       "tags": [
         "product-owner",
@@ -91,7 +91,7 @@
     {
       "name": "dev-stack",
       "source": "./plugins/dev-stack",
-      "description": "Stack skills for a .NET 10 team: C#, ASP.NET Core, OpenAPI, validation, EF Core, SQL Server, PostgreSQL, MSTest 4, analyzers, observability, Redis, Elasticsearch, RabbitMQ, Wolverine, MailKit, PuppeteerSharp, secure coding, and the move to AwesomeAssertions. Version-specific rules, a check step with a tool, and one report format.",
+      "description": "Stack skills for a .NET 10 team with an Angular front end: C#, ASP.NET Core, OpenAPI, validation, EF Core, SQL Server, PostgreSQL, MSTest 4, analyzers, observability, Redis, Elasticsearch, RabbitMQ, Wolverine, MailKit, PuppeteerSharp, Angular, secure coding, and the move to AwesomeAssertions. Version-specific rules, a check step with a tool, and one report format.",
       "category": "development",
       "tags": [
         "dotnet",
@@ -111,6 +111,7 @@
         "wolverine",
         "mailkit",
         "puppeteersharp",
+        "angular",
         "security",
         "awesomeassertions",
         "asd-ste100",
@@ -158,6 +159,21 @@
         "simplified-technical-english",
         "dutch",
         "b1"
+      ]
+    },
+    {
+      "name": "dev-setup",
+      "source": "./plugins/dev-setup",
+      "description": "One setup for the delivery flow: your role for all projects or one repository, the facts of the project, REVIEW.md, a pull request template, a CI check, and the Claude Code basics of a project.",
+      "category": "productivity",
+      "tags": [
+        "setup",
+        "role",
+        "onboarding",
+        "claude-code",
+        "review",
+        "ci",
+        "asd-ste100"
       ]
     }
   ]

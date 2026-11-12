@@ -1,0 +1,26 @@
+{
+  "id": 262,
+  "name": "angular-review-hard",
+  "skill": "angular",
+  "stack": "angular",
+  "base_skill": {"repo": "https://github.com/angular/skills", "commit": "39cea5112a3ca4c8474a5fb892e35508d4d557f0", "path": "angular-developer"},
+  "kind": "review",
+  "fixture": "review-angular-hard",
+  "base": "angular-products",
+  "planted": "planted/review-angular-hard.json",
+  "human": "absent",
+  "request": "Review this change before we merge it. It adds a price change page: the user selects products, enters a percentage and an effective date, sees a preview of the new prices, and applies the change. It also adds a search box with suggestions to the products list.",
+  "traps": [
+    "The answer sheet planted/review-angular-hard.json lists 12 planted mistakes (P1 to P12) and 7 decoys (D1 to D7)."
+  ],
+  "assertions": [
+    {"id": "C1", "check": "files_unchanged"},
+    {"id": "J1", "judge": "The review finds at least 9 of the 12 planted mistakes."},
+    {"id": "J2", "judge": "The review finds every planted mistake with severity 'high' (P1, P2, P8)."},
+    {"id": "J3", "judge": "The review finds at least 4 of the 6 planted mistakes marked 'subtle' (P3, P5, P6, P8, P10, P12)."},
+    {"id": "J4", "judge": "The review flags none of the decoys (D1 to D7), and has at most 2 other false positives. A false positive is a claim that is wrong, or a fix that would break the code or that uses an Angular API that does not exist or is outdated (for example *ngIf, @Input() for new code, ChangeDetectionStrategy.Default, or withFetch() in Angular 22). A real problem that is not on the answer sheet is not a false positive."},
+    {"id": "J5", "judge": "For P8, the review explains that toISOString() of a local midnight gives the day before east of UTC, and proposes to send the date as yyyy-MM-dd from the local parts (or from the value of the date input)."},
+    {"id": "J6", "judge": "Each finding gives the file and the line (or quotes the code) and a concrete fix."},
+    {"id": "J7", "judge": "The review separates blocking issues from minor ones and ends with a clear merge verdict that does not approve the change as it is."}
+  ]
+}

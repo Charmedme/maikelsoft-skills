@@ -1,0 +1,97 @@
+<ng-container *transloco="let t; prefix: 'products.form'">
+  <h1>{{ t('editTitle') }}</h1>
+
+  @if (notFound()) {
+    <p role="alert">{{ t('notFound') }}</p>
+    <a routerLink="/products">{{ t('backToList') }}</a>
+  } @else if (product.error()) {
+    <p role="alert">{{ t('loadFailed') }}</p>
+    <a routerLink="/products">{{ t('backToList') }}</a>
+  } @else if (product.isLoading() && !product.hasValue()) {
+    <p role="status">{{ t('loading') }}</p>
+  } @else {
+    <div role="alert" class="form-error">
+      @if (conflict()) {
+        <p>{{ t('conflict') }}</p>
+        <button type="button" class="button secondary" (click)="product.reload(); conflict.set(false)">
+          {{ t('reload') }}
+        </button>
+      }
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+      <div class="field">
+        <label for="name">{{ t('name') }}</label>
+        <input
+          #field
+          id="name"
+          formControlName="name"
+          autocomplete="off"
+          [attr.aria-invalid]="hasError('name')"
+          [attr.aria-describedby]="hasError('name') ? 'name-error' : null"
+          (input)="clearServerError('name')"
+        />
+        @if (hasError('name')) {
+          <span id="name-error" class="field-error">{{ serverErrors().name ?? t('errors.nameRequired') }}</span>
+        }
+      </div>
+
+      <div class="field">
+        <label for="code">{{ t('code') }}</label>
+        <input
+          #field
+          id="code"
+          formControlName="code"
+          autocomplete="off"
+          [attr.aria-invalid]="hasError('code')"
+          [attr.aria-describedby]="hasError('code') ? 'code-error' : null"
+          (input)="clearServerError('code')"
+        />
+        @if (hasError('code')) {
+          <span id="code-error" class="field-error">{{ serverErrors().code ?? t('errors.codeFormat') }}</span>
+        }
+      </div>
+
+      <div class="field">
+        <label for="price">{{ t('price') }}</label>
+        <input
+          #field
+          id="price"
+          type="number"
+          step="0.01"
+          min="0"
+          formControlName="price"
+          [attr.aria-invalid]="hasError('price')"
+          [attr.aria-describedby]="hasError('price') ? 'price-error' : null"
+          (input)="clearServerError('price')"
+        />
+        @if (hasError('price')) {
+          <span id="price-error" class="field-error">{{ serverErrors().price ?? t('errors.priceInvalid') }}</span>
+        }
+      </div>
+
+      <div class="field">
+        <label for="availableFrom">{{ t('availableFrom') }}</label>
+        <input
+          #field
+          id="availableFrom"
+          type="date"
+          formControlName="availableFrom"
+          [attr.aria-invalid]="hasError('availableFrom')"
+          [attr.aria-describedby]="hasError('availableFrom') ? 'availableFrom-error' : null"
+          (input)="clearServerError('availableFrom')"
+        />
+        @if (hasError('availableFrom')) {
+          <span id="availableFrom-error" class="field-error">
+            {{ serverErrors().availableFrom ?? t('errors.availableFromRequired') }}
+          </span>
+        }
+      </div>
+
+      <div class="actions">
+        <button class="button" type="submit" [attr.aria-disabled]="saving()">{{ t('save') }}</button>
+        <a class="button secondary" routerLink="/products">{{ t('cancel') }}</a>
+      </div>
+    </form>
+  }
+</ng-container>

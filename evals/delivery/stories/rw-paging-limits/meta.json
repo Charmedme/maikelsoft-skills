@@ -1,0 +1,28 @@
+{
+  "fixture": "conduit",
+  "size": "small",
+  "risk": "normal",
+  "difficulty": "medium",
+  "kinds": [
+    "open behaviour"
+  ],
+  "defects": [
+    5
+  ],
+  "role": "exact boundaries on two endpoints and input that is not a number",
+  "hurl": [
+    "articles.hurl",
+    "auth.hurl",
+    "comments.hurl",
+    "errors_articles.hurl",
+    "errors_auth.hurl",
+    "errors_authorization.hurl",
+    "errors_comments.hurl",
+    "errors_profiles.hurl",
+    "favorites.hurl",
+    "feed.hurl",
+    "pagination.hurl",
+    "profiles.hurl",
+    "tags.hurl"
+  ]
+}

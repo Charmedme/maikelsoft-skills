@@ -5,3 +5,12 @@ __pycache__/
 
 # axe-core for the ux-design review evals (npm install in evals/ux-design/tools/)
 evals/ux-design/tools/node_modules/
+
+# delivery suite: pinned fixture clones
+evals/delivery/.cache/
+
+# dev-stack evals: pinned outside skills (run.py base_skill)
+evals/dev-stack/.cache/
+
+# claude.ai upload zips (scripts/build_claude_ai.py)
+dist/

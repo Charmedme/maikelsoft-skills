@@ -74,5 +74,20 @@ class BacklogTreeTest(unittest.TestCase):
         self.assertNotIn("**Parent:**", "".join(p.read_text() for p in (self.dir / "out.md").glob("*.md")))
 
 
+    def test_specs_checks_each_story_and_bug(self):
+        good_story = ("## Free return\n\n**Type:** User Story\n**Parent:** None\n\n### Behaviour spec\n\n"
+                      "Rule: R1 Free return (AC1)\n  Scenario: return\n    When the customer returns it\n"
+                      "    Then the return is free\n")
+        bad_bug = ("\n## Day 30 is charged\n\n**Type:** Bug\n**Parent:** None\n\n### Behaviour spec\n\n"
+                   "Rule: R1 Free within 30 days\n  Now: day 30 costs 4.95 euro.\n  Scenario: day 30\n"
+                   "    When the customer returns it on day 30\n    Then the return is free\n")
+        (self.dir / "specs.md").write_text(good_story, encoding="utf-8")
+        self.assertEqual(run("specs", "specs.md", cwd=self.dir).returncode, 0)
+        (self.dir / "specs.md").write_text(good_story + bad_bug, encoding="utf-8")
+        out = run("specs", "specs.md", cwd=self.dir)
+        self.assertEqual(out.returncode, 1)
+        self.assertIn("SPEC-BUG-UNCHANGED", out.stdout)
+        self.assertIn("(bug)", out.stdout)
+
 if __name__ == "__main__":
     unittest.main()

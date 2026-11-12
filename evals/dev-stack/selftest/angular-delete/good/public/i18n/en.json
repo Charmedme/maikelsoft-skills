@@ -1,0 +1,54 @@
+{
+  "app": {
+    "title": "Products admin",
+    "skipToContent": "Skip to content",
+    "mainNavigation": "Main navigation",
+    "nav": {
+      "products": "Products"
+    },
+    "language": {
+      "label": "Language",
+      "en": "English",
+      "nl": "Nederlands"
+    }
+  },
+  "products": {
+    "list": {
+      "title": "Products",
+      "add": "Add product",
+      "empty": "There are no products yet.",
+      "columns": {
+        "name": "Name",
+        "code": "Code",
+        "price": "Price",
+        "availableFrom": "Available from"
+      },
+      "actions": "Actions",
+      "delete": "Delete",
+      "deleteDialog": {
+        "title": "Delete product?",
+        "text": "{{name}} will be removed from the catalog. You cannot undo this.",
+        "confirm": "Delete",
+        "cancel": "Cancel"
+      },
+      "deleted": "{{name}} was deleted.",
+      "deleteFailed": "{{name}} could not be deleted. Try again."
+    },
+    "form": {
+      "createTitle": "Add product",
+      "name": "Name",
+      "code": "Code",
+      "price": "Price",
+      "availableFrom": "Available from",
+      "save": "Save",
+      "cancel": "Cancel",
+      "saveFailed": "The product could not be saved. Try again.",
+      "errors": {
+        "nameRequired": "Enter a name of at most 100 characters.",
+        "codeFormat": "Enter a code of 3 to 20 capital letters, digits, or hyphens.",
+        "priceInvalid": "Enter a price of 0 or more.",
+        "availableFromRequired": "Enter the date from which the product is available."
+      }
+    }
+  }
+}

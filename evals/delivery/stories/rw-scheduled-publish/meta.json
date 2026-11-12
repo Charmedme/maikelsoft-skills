@@ -1,0 +1,32 @@
+{
+  "fixture": "conduit",
+  "size": "large",
+  "risk": "normal",
+  "difficulty": "hard",
+  "kinds": [
+    "time and state",
+    "seams"
+  ],
+  "defects": [
+    6,
+    7,
+    16,
+    26
+  ],
+  "role": "a visibility rule that touches every read path, time offsets, and the tag list",
+  "hurl": [
+    "articles.hurl",
+    "auth.hurl",
+    "comments.hurl",
+    "errors_articles.hurl",
+    "errors_auth.hurl",
+    "errors_authorization.hurl",
+    "errors_comments.hurl",
+    "errors_profiles.hurl",
+    "favorites.hurl",
+    "feed.hurl",
+    "pagination.hurl",
+    "profiles.hurl",
+    "tags.hurl"
+  ]
+}

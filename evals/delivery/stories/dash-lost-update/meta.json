@@ -1,0 +1,13 @@
+{
+  "fixture": "dashboard",
+  "size": "medium",
+  "risk": "normal",
+  "difficulty": "medium",
+  "kinds": [
+    "time and state"
+  ],
+  "defects": [
+    9
+  ],
+  "role": "optimistic concurrency with a real race on PostgreSQL; the entity already has a concurrency token that the API ignores"
+}

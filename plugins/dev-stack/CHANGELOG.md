@@ -6,6 +6,23 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-04
+
+### Added
+
+- The skill `angular` for Angular 22 and 21 in an existing app with an ASP.NET Core API. It works next to the official skill `angular-developer` of the Angular team, and it covers what that skill does not:
+  - A version gate. Angular 20 and older go to the human.
+  - Rules for zone.js apps, NgModule apps, and existing code style.
+  - Server errors (ValidationProblemDetails) on the matching form fields, also with PascalCase keys.
+  - ETag and `If-Match`, a 412 conflict that keeps the typed values, and one request for a double click.
+  - A fresh list after a save or a delete, when a service keeps the list in memory.
+  - The focus after a dialog, a cancel, a save, and a delete. A status region that exists before its text.
+  - Transloco texts in each language, and dates without a time (no `toISOString()` for a date).
+  - Tests with Vitest or Karma, and a browser check at 390 and 1440 px with axe-core and a Tab walk.
+  - A review checklist and a table of corrections to the official skill.
+- 10 tool rules for `stackcheck.py` (`ANG-*`). Examples: `[disabled]` on a submit while the form is invalid, `toISOString()` for a date, and a live region inside an `@if`.
+- The report of the `angular` skill names the Angular version, each new UI text, and the focus target of each action.
+
 ## [1.2.2] - 2026-10-29
 
 ### Added

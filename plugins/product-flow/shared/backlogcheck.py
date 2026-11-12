@@ -44,6 +44,9 @@ CLICK_WORDS = re.compile(r"\b(clicks?|clicking|press(es)?|taps?|klikt|klik|drukt
 GHERKIN = re.compile(r"^\s*(?:[-*]\s*(?:\[[ xX]\]\s*)?)?\**(given|gegeven)\b|\bgiven\b.+\bwhen\b.+\bthen\b|"
                      r"\bgegeven\b.+\bwanneer\b.+\bdan\b|^\s*\**(then|and)\**\s", re.I)
 EXAMPLES_HEAD = re.compile(r"^#{2,6}\s*(examples|voorbeelden)\s*$", re.I)
+SPEC_HEAD = re.compile(r"^#{2,6}\s*(behaviou?r spec|gedragsspecificatie)\s*$", re.I)
+RULE_LINE = re.compile(r"^\s*(?:rule|regel)\s*:\s*(.*)$", re.I)
+BUG_TYPES = {"bug", "defect", "fout"}
 AC_LABEL = re.compile(r"\bAC\s?(\d+)\b", re.I)
 CRITERIA_HEAD = re.compile(r"^#{2,6}\s*(acceptance criteria|acceptatiecriteria)\s*$", re.I)
 HEADING = re.compile(r"^(#{1,6})\s+(.*)$")
@@ -108,6 +111,8 @@ def check_item(start, title, block):
         return check_epic(start, title, block)
     if kind in GOAL_TYPES:
         return check_goal(start, title, block, kind)
+    if kind in BUG_TYPES:
+        return check_bug(start, title, block, parent)
     if kind not in STORY_TYPES and not special:
         return f  # another item type: no rules yet
 
@@ -169,18 +174,51 @@ def check_item(start, title, block):
             f.append(Finding(ln, "warning", "A4", "Steps in the screen. Write the result for the user.", raw))
         if not re.match(r"^\s*[-*]\s+\[[ xX]\]", raw) and not GHERKIN.match(text):
             f.append(Finding(ln, "warning", "A5", "Write the criterion as a checklist item (- [ ]).", raw))
+    # A11: the Behaviour spec has one or more rules for each criterion, and each rule names its criterion.
+    spec = section(block, SPEC_HEAD) if criteria and not special else None
+    if spec is not None:
+        rules = [(start + 1 + k, l) for k, l in enumerate(block) if RULE_LINE.match(l) and l in spec]
+        named = set()
+        for ln, l in rules:
+            labels = [int(n) for n in AC_LABEL.findall(l)]
+            if not labels:
+                f.append(Finding(ln, "warning", "A11", "The rule names no criterion. Add (AC<n>) to the rule line.", l))
+            for n in labels:
+                if n < 1 or n > len(criteria):
+                    f.append(Finding(ln, "error", "A11", f"The rule names AC{n}, but the story has {len(criteria)} criteria.", l))
+                named.add(n)
+        for n in range(1, len(criteria) + 1):
+            if n not in named:
+                f.append(Finding(criteria[n - 1][0], "error", "A11", f"AC{n} has no rule in the Behaviour spec. "
+                                 f"Add a rule with (AC{n}).", criteria[n - 1][2]))
     # A10: each criterion has one or more concrete examples, the base of the acceptance tests.
-    if criteria and not special:
+    elif criteria and not special:
         examples = section(block, EXAMPLES_HEAD)
         if not examples or not any(l.strip() for l in examples):
-            f.append(Finding(start, "error", "A10", "No examples. Give each criterion one or more concrete examples "
-                             "(Given/When/Then with real values, or a table), under \"Examples\".", title))
+            f.append(Finding(start, "error", "A10", "No Behaviour spec. Give each criterion one or more rules with "
+                             "scenarios, under \"Behaviour spec\" (or concrete examples under \"Examples\").", title))
         else:
             labels = {int(n) for l in examples for n in AC_LABEL.findall(l)}
             for n in range(1, len(criteria) + 1):
                 if n not in labels:
                     f.append(Finding(criteria[n - 1][0], "warning", "A10", f"AC{n} has no example. "
                                      f"Label each example with its criterion (AC{n}).", criteria[n - 1][2]))
+    return f
+
+
+def check_bug(start, title, block, parent):
+    """B1 to B3: a bug item has a short title, a parent line, and a Behaviour spec."""
+    f = []
+    if len(title) > TITLE_HARD_MAX:
+        f.append(Finding(start, "error", "T1", f"Title is longer than {TITLE_HARD_MAX} characters.", title))
+    elif len(title) > TITLE_MAX:
+        f.append(Finding(start, "warning", "T1", f"Title is longer than {TITLE_MAX} characters.", title))
+    if parent is None:
+        f.append(Finding(start, "warning", "PARENT", "No **Parent:** line. Write the parent or \"None\".", title))
+    spec = section(block, SPEC_HEAD)
+    if spec is None or not any(RULE_LINE.match(l) for l in spec):
+        f.append(Finding(start, "error", "B1", "No Behaviour spec with rules. Give the broken rule with a Now: line, "
+                         "and a rule \"Unchanged\".", title))
     return f
 
 
@@ -385,7 +423,7 @@ def check_file(path, profile=None):
     if profile.get("criteria", "").lower() == "scenarios":
         findings = [x for x in findings if x.rule != "A5"]
     if profile.get("examples", "").lower() == "no":
-        findings = [x for x in findings if x.rule != "A10"]
+        findings = [x for x in findings if x.rule not in ("A10", "A11")]
     if profile.get("epic-criteria", "").lower() == "yes":
         findings = [x for x in findings if x.rule != "E7"]
     return items, findings

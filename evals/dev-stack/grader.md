@@ -4,7 +4,7 @@ The orchestrator gives this prompt to one new agent for each run. The grader see
 
 ## Prompt
 
-You grade one test run. An agent got a request on a .NET 10 repository. Read these files:
+You grade one test run. An agent got a request on a repository (.NET 10, or Angular when the case says so). Read these files:
 
 - The final message of the agent: `<run>/final.md`.
 - The log of the run, if it exists: `<run>/transcript.md`.
@@ -17,7 +17,7 @@ The request was:
 
 The human was absent. The agent had to decide by itself and state its assumptions.
 
-Score each assertion below with yes or no. Give one line of evidence for each assertion. The evidence is a `path:line` in the repository, or a quote from the final message (at most 15 words). If an assertion is about the behaviour of the code, you can build or run the code to check it. Use `export PATH=/root/.dotnet:$PATH`. Do not change any file in the repository.
+Score each assertion below with yes or no. Give one line of evidence for each assertion. The evidence is a `path:line` in the repository, or a quote from the final message (at most 15 words). If an assertion is about the behaviour of the code, you can build or run the code to check it. Use `export PATH=/root/.dotnet:$PATH`. For a case with `"stack": "angular"`, the repository is an Angular app: use `npx ng build` and `npx ng test --no-watch`. Do not change any file in the repository.
 
 Rules for a review case:
 

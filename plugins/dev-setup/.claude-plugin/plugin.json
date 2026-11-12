@@ -1,0 +1,14 @@
+{
+  "name": "dev-setup",
+  "displayName": "Delivery setup",
+  "version": "1.0.0",
+  "description": "One setup for the delivery flow: /setup asks your role (product owner, designer, developer, tech lead, or all) for all projects or one repository, and the facts of the project, and writes .claude/rules/delivery.md, REVIEW.md, a pull request template, and a CI check. /setup route changes the steps of your route. /setup starter makes the Claude Code basics of a project. A session-start hook gives each session your role. Output in ASD-STE100 Simplified Technical English or Begrijpelijk Nederlands (B1).",
+  "author": {
+    "name": "Maikel",
+    "url": "https://github.com/Charmedme"
+  },
+  "homepage": "https://github.com/Charmedme/maikelsoft-skills/tree/main/plugins/dev-setup",
+  "repository": "https://github.com/Charmedme/maikelsoft-skills",
+  "license": "MIT",
+  "keywords": ["setup", "role", "onboarding", "claude-code", "review", "ci", "asd-ste100"]
+}

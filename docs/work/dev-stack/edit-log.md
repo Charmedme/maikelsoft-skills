@@ -172,6 +172,30 @@ This log records each change to a skill or to an eval case, the test that measur
 - Verdict: helped (C11), index section not measured
 - Evidence: `docs/work/dev-stack/hard-cases/results.md`
 
+### E19: angular, a new skill next to the official angular-developer skill
+- Date and version: 2026-11-03, dev-stack 1.3.0 (not released)
+- Change: the new skill `angular` (`SKILL.md`, 5 reference files, 10 tool rules in `rules.json`). It fills the gaps of the official skill `angular-developer` that the brief lists.
+- Test: `angular-delete`, `angular-edit-hard`, and `angular-review-hard`, 3 runs for each variant, on Sonnet. Both variants had the official skill. Blind graders scored the judge items.
+- Observed: delete and edit script checks went from 53/75 to 75/75. Grader items went from 9/24 to 15/24. Review grader items went from 15/21 to 21/21, and planted mistakes found went from 7.7 to 11 of 12.
+- Verdict: helped
+- Evidence: `docs/work/dev-stack/angular/results.md`
+
+### E20: angular report: the version, the new UI texts, and the focus targets
+- Date and version: 2026-11-04, dev-stack 1.3.0 (not released)
+- Change: the Report section of `SKILL.md` now asks for three items under "Assumptions". They are the Angular version, the text of each new message, dialog, and button, and the focus target of each new action.
+- Test: `angular-delete` and `angular-edit-hard`, skill variant, 3 runs each, on Sonnet.
+- Observed: delete J3 and J4 went from 0/3 to 3/3. Edit J4 went from 0/3 to 3/3. Edit J3 went from 3/3 to 2/3. The script checks stayed at 75/75 (one probe time-out passed on a rerun).
+- Verdict: helped (delete J3 and J4, edit J4)
+- Evidence: `docs/work/dev-stack/angular/results.md`
+
+### E21: eval tools: inline confirmation in the delete probe, and hook folders in score.py
+- Date and version: 2026-11-04, eval tools only
+- Change: the delete probe accepts an inline confirmation in the row, and the Dutch word "Annuleren". `score.py` skips `.claude-flow/` and `.remember/`. `run.py` sends the prompt on stdin.
+- Test: rescore of the 6 delete runs and the 6 review runs, and the self-test of the Angular cases.
+- Observed: the delete baseline went from 4/12 to 8/12 in each run. Its remaining failures are real focus and live-region defects. The review check "files unchanged" went from 0/6 to 6/6. Self-test: 58 of 58 as expected.
+- Verdict: helped (a fair baseline)
+- Evidence: `docs/work/dev-stack/angular/results.md`
+
 ## Lessons
 
 ### Round 1.1.0 (2026-10-21)

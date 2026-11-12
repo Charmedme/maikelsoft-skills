@@ -24,10 +24,13 @@ All files of one story are in the run folder `docs/work/<slug>/`. The files are 
 | `core-review.md` | reflector senior | 6 |
 | `packages/NN-plan.md`, `NN-report.md`, `NN-checks.md` | medior | 7 |
 | `packages/NN-plan-feedback.md`, `NN-review.md` | senior | 7 |
+| `risk-1.txt`, `risk-2.txt` | main (`riskcheck.py`) | 6, 10 |
 | `security-review.md` | security reviewer | 8 |
 | `g2-checks.md`, `g2.md` | main | 9 |
 | `commands.jsonl` | the plugin hook | each Bash command |
-| `follow-ups/NN-comments.md`, `NN-replies.md`, `NN-review.md` | main (process-review), senior | After G2 |
+| `older-problems.md` | main | 10, after G2. One row for each older finding |
+| `follow-ups/NN-comments.md`, `NN-replies.md`, `NN-review.md`, `NN-risk.txt` | main (process-review), senior | After G2 |
+| `follow-ups/NN-change.md` | main. Quotes a change that the human asks for | After G2 |
 
 ## run.md
 
@@ -44,7 +47,7 @@ All files of one story are in the run folder `docs/work/<slug>/`. The files are 
 | G1 | open / approved by <name> on <date> / changed on <date> |
 | G2 | open / shown on <date> |
 | Answer sheet | <path> / none |
-| Mode | full / light (from design.md, as approved at G1) |
+| Mode | full / light (from design.md, as approved at G1) / raised (a light run with high risk: a security review and no reflection) |
 
 ## Counters
 
@@ -82,18 +85,18 @@ One row per step and agent. Rules:
 - Decisions: decision IDs that the step used or opened. Assumptions: what the step assumed.
 - Reason: one sentence. Why the step ended with this status.
 
-The hook writes each Bash command to `commands.jsonl`. `runcheck.py` fails a row that says a check passed when that agent ran no check command.
+The hook writes each Bash command to `commands.jsonl`. Before G2, `runcheck.py` fails a row that says a check passed when that agent ran no check command. After G2, it needs one `checks.py` command in each follow-up.
 
 ## Status words
 
 | Step | Status words |
 |------|--------------|
-| main | `STARTED`, `G1_APPROVED`, `G1_CHANGED`, `G2_SHOWN`, `FOLLOWUP_STARTED`, `FOLLOWUP_DONE`, `NEEDS_HUMAN`, `BLOCKED` |
+| main | `STARTED`, `G1_APPROVED`, `G1_CHANGED`, `RISK_CHECKED`, `G2_SHOWN`, `FOLLOWUP_STARTED`, `FOLLOWUP_DONE`, `NEEDS_HUMAN`, `BLOCKED` |
 | design, apply-reflection | `DESIGN_READY`, `NEEDS_HUMAN`, `BLOCKED` |
 | reflect | `REFLECTION_READY` |
 | build-core | `CORE_DONE`, `CORE_DONE_WITH_CONCERNS`, `NEEDS_HUMAN`, `BLOCKED` |
 | review-core, NN review | `APPROVED`, `APPROVED_WITH_COMMENTS`, `CHANGES_REQUIRED` |
-| fix | `FIX_DONE`, `BLOCKED` |
+| fix | `FIX_DONE`, `NEEDS_HUMAN`, `BLOCKED` |
 | packages | `PACKAGES_DONE`, `PACKAGES_DONE_WITH_CONCERNS`, `BLOCKED` |
 | NN plan | `PLAN_READY`, `NEEDS_CONTEXT`, `BLOCKED` |
 | NN plan-feedback | `PLAN_APPROVED`, `PLAN_APPROVED_WITH_CHANGES` |

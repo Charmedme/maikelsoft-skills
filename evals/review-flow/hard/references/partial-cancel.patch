@@ -1,0 +1,108 @@
+diff --git a/src/Orders.Api/Orders/Order.cs b/src/Orders.Api/Orders/Order.cs
+index e245344..b4c25b9 100644
+--- a/src/Orders.Api/Orders/Order.cs
++++ b/src/Orders.Api/Orders/Order.cs
+@@ -68,6 +68,15 @@ public sealed class Order
+         return CancelOutcome.Cancelled;
+     }
+ 
++    public void CancelPart(OrderLine line, int quantity)
++    {
++        line.Reduce(quantity);
++        if (line.Quantity == 0)
++        {
++            _lines.Remove(line);
++        }
++    }
++
+     public void MarkShipped(DateTimeOffset now)
+     {
+         if (Status != OrderStatus.Placed)
+diff --git a/src/Orders.Api/Orders/OrderContracts.cs b/src/Orders.Api/Orders/OrderContracts.cs
+index 4b62950..fab7d40 100644
+--- a/src/Orders.Api/Orders/OrderContracts.cs
++++ b/src/Orders.Api/Orders/OrderContracts.cs
+@@ -20,6 +20,8 @@ public sealed record OrderResponse(
+     decimal Total,
+     IReadOnlyList<OrderLineResponse> Lines);
+ 
++public sealed record CancelPartRequest(int Quantity);
++
+ public sealed record OrderEventResponse(string Type, DateTimeOffset OccurredAt);
+ 
+ public sealed record StockRequest(
+diff --git a/src/Orders.Api/Orders/OrderEndpoints.cs b/src/Orders.Api/Orders/OrderEndpoints.cs
+index 4812584..f6ac510 100644
+--- a/src/Orders.Api/Orders/OrderEndpoints.cs
++++ b/src/Orders.Api/Orders/OrderEndpoints.cs
+@@ -18,6 +18,7 @@ public static class OrderEndpoints
+         group.MapGet("/{id:guid}/events", GetEventsAsync);
+         group.MapPost("/{id:guid}/cancel", CancelAsync);
+         group.MapPost("/{id:guid}/ship", ShipAsync);
++        group.MapPost("/{id:guid}/lines/{sku}/cancel", CancelPartAsync);
+ 
+         var stock = app.MapGroup("/stock").WithTags("Stock");
+         stock.MapPut("/", PutStockAsync);
+@@ -132,6 +133,50 @@ public static class OrderEndpoints
+         return await SaveAsync(order, db, ct);
+     }
+ 
++    private static async Task<Results<Ok<OrderResponse>, NotFound, ProblemHttpResult>> CancelPartAsync(
++        Guid id,
++        string sku,
++        CancelPartRequest request,
++        OrdersDbContext db,
++        TimeProvider time,
++        IOptions<OrdersOptions> options,
++        CancellationToken ct)
++    {
++        if (request.Quantity < 1)
++        {
++            return TypedResults.Problem(title: "The quantity must be 1 or more.", statusCode: StatusCodes.Status400BadRequest);
++        }
++
++        await using var tx = await db.Database.BeginTransactionAsync(ct);
++        await db.Database.ExecuteSqlAsync($"SELECT 1 FROM orders WHERE \"Id\" = {id} FOR UPDATE", ct);
++        var order = await db.Orders.Include(order => order.Lines).FirstOrDefaultAsync(order => order.Id == id, ct);
++        var line = order?.Lines.FirstOrDefault(line => line.Sku == sku);
++        if (order is null || line is null)
++        {
++            return TypedResults.NotFound();
++        }
++
++        var now = time.GetUtcNow();
++        if (order.Status != OrderStatus.Placed || now - order.PlacedAt > options.Value.CancelWindow || request.Quantity > line.Quantity)
++        {
++            return TypedResults.Problem(title: "This part cannot be cancelled.", statusCode: StatusCodes.Status409Conflict);
++        }
++
++        order.CancelPart(line, request.Quantity);
++        var item = await db.Stock.FindAsync([sku], ct);
++        item?.Release(request.Quantity);
++        db.Events.Add(new OrderEvent(order.Id, "OrderLineCancelled", now));
++        if (order.Lines.Count == 0)
++        {
++            order.Cancel(now, options.Value.CancelWindow);
++            db.Events.Add(new OrderEvent(order.Id, "OrderCancelled", now));
++        }
++
++        var result = await SaveAsync(order, db, ct);
++        await tx.CommitAsync(ct);
++        return result;
++    }
++
+     private static async Task<Results<Ok<OrderResponse>, NotFound, ProblemHttpResult>> ShipAsync(
+         Guid id,
+         OrdersDbContext db,
+diff --git a/src/Orders.Api/Orders/OrderLine.cs b/src/Orders.Api/Orders/OrderLine.cs
+index 89863b8..a85dea4 100644
+--- a/src/Orders.Api/Orders/OrderLine.cs
++++ b/src/Orders.Api/Orders/OrderLine.cs
+@@ -26,5 +26,7 @@ public sealed class OrderLine
+ 
+     public decimal UnitPrice { get; private set; }
+ 
++    public void Reduce(int quantity) => Quantity -= quantity;
++
+     public decimal LineTotal => Quantity * UnitPrice;
+ }

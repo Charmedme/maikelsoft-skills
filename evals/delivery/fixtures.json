@@ -1,0 +1,69 @@
+{
+  "conduit": {
+    "about": "RealWorld (Conduit) API on ASP.NET Core 10 with EF Core and SQLite. Known-solution set: the upstream code and the upstream API tests are the check.",
+    "url": "https://github.com/realworld-apps/aspnetcore-realworld-example-app",
+    "commit": "fa572f08aebd1d44119d47e1fd4de8b973998ba3",
+    "license": "MIT",
+    "strip": [
+      "realworld",
+      ".gitmodules",
+      ".github"
+    ],
+    "upstream_tests": {
+      "url": "https://github.com/realworld-apps/realworld",
+      "commit": "ebbcdeb8d55b42a3a613c787560498b8ef10003f",
+      "hurl": "specs/api/hurl"
+    },
+    "build": [
+      "dotnet",
+      "build",
+      "src/Conduit/Conduit.csproj",
+      "-c",
+      "Debug",
+      "-v",
+      "q",
+      "-nologo"
+    ],
+    "test": [
+      "dotnet",
+      "test",
+      "Conduit.slnx",
+      "-v",
+      "q",
+      "-nologo"
+    ]
+  },
+  "dashboard": {
+    "about": "Practical.CleanArchitecture Monolith: admin dashboard for users, roles, products, files, settings and audit logs on .NET 10 and Angular 22. Main set.",
+    "url": "https://github.com/phongnguyend/Practical.CleanArchitecture",
+    "commit": "9c6e43b205d2ead5f163280e32969232859ef104",
+    "license": "MIT",
+    "patch": "fixtures/dashboard-headless.patch",
+    "strip": [
+      ".github"
+    ],
+    "build": [
+      "dotnet",
+      "build",
+      "src/Monolith/ClassifiedAds.WebAPI/ClassifiedAds.WebAPI.csproj",
+      "-c",
+      "Debug",
+      "-v",
+      "q",
+      "-nologo"
+    ],
+    "test": [
+      "bash",
+      "-c",
+      "dotnet test src/Monolith/ClassifiedAds.UnitTests -v q -nologo && dotnet test src/Monolith/ClassifiedAds.ArchTests -v q -nologo"
+    ],
+    "notes": "The headless patch adds PostgreSQL in a container, a test sign-in (header X-Test-User: admin or user), enforced permission claims, and eval/start.sh and eval/stop.sh. Two upstream test projects (Migrator.Tests, ContractTests) fail on the pinned commit without the patch, so they are not run."
+  },
+  "juice-shop": {
+    "about": "OWASP Juice Shop: a shop with known security holes and known fixes. Security set.",
+    "url": "https://github.com/juice-shop/juice-shop",
+    "commit": "717f5efa886b0417eeecb52378b03cf10567b7e2",
+    "license": "MIT",
+    "status": "not started"
+  }
+}

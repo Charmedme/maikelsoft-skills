@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repository is
 
-A Claude Code plugin marketplace (`.claude-plugin/marketplace.json`) with 7 plugins in `plugins/`. Most changes are Markdown: skills (`skills/<skill>/SKILL.md`), agents (`agents/*.md`), READMEs, and changelogs. The code is Python 3.9+ with the standard library only: checkers that the skills run, the sync script, eval scorers, and tests. There is no build step and no package install.
+A Claude Code plugin marketplace (`.claude-plugin/marketplace.json`) with 8 plugins in `plugins/`. Most changes are Markdown: skills (`skills/<skill>/SKILL.md`), agents (`agents/*.md`), READMEs, and changelogs. The code is Python 3.9+ with the standard library only: checkers that the skills run, the sync script, eval scorers, and tests. There is no build step and no package install.
 
 ## Write each Markdown file with the language rules
 
@@ -41,7 +41,7 @@ Each skill folder holds copies of the shared files, because a skill must work al
 
 - Each skill gets `shared/language.md` as `references/language.md`, and `shared/doccheck.py` and `shared/convert.py` in `scripts/`.
 - The dev-build skills also get `shared/grill.md`.
-- `shared/po-questions.md`, `shared/example-mapping.md`, and `shared/examplecheck.py` go only into a skill whose `SKILL.md` names the file.
+- Each file of the list `NAMED_COPIES` in `sync_shared.py` goes only into a skill whose `SKILL.md` names the file. Examples are `po-questions.md`, `cycle.md`, `review-rules.md`, `specsync.py`, and `speclock.py`.
 - `plugins/<plugin>/shared/*` goes only into a skill of that plugin whose `SKILL.md` names the file. A `.py` file goes into `scripts/`, other files into `references/`.
 - `shared/workflow.md` replaces the text between the `<!-- BEGIN shared/workflow.md -->` and `<!-- END shared/workflow.md -->` lines of a `SKILL.md`.
 

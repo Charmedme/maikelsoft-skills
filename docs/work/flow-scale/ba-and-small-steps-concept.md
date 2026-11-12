@@ -1,6 +1,6 @@
 # Concept: a BA in the team, small steps, and spec holes (2026-10-24)
 
-Input: the summary of the video of Dave Farley that the owner gave (`AI_Code_Summary.md`), and the first zitten-kloten runs (issues #36 to #39).
+Input: the summary of the video of Dave Farley that the owner gave (`AI_Code_Summary.md`), and the first runs on 4 items of an internal project.
 
 ## What the summary adds to our spec-first flow
 
@@ -12,10 +12,10 @@ Input: the summary of the video of Dave Farley that the owner gave (`AI_Code_Sum
 | Mutation testing finds holes in the specification | Optional report, not used | Not used. Our runs show the hole that it finds (below) |
 | Reading code becomes a choice from the risk | Review sub-agent on medium items | Covered |
 
-## What the zitten-kloten runs show
+## What the runs on the internal items show
 
 1. **Each arm missed the same boundary.** The real test expects the round to go on at exactly 2:00. Each built run went on only after 2:00. Neither the issue nor the contract says which. A mutation of `>=` to `>` in the deadline check survives each acceptance test that the agents wrote. A mutation check finds that hole, and the hole is a question for the PO.
-2. **The flows asked the PO a question that the PO had answered.** Three flow runs stopped to ask what happens to the time limit during a pause. Decision Q44 in the backlog context file answers it: "Bij een pauze stopt de lopende ronde. De ronde gaat daarna verder waar hij stopte." The decision existed before the build. The flows did not search the decision log, because the issue does not link to it.
+2. **The flows asked the PO a question that the PO had answered.** Three flow runs stopped to ask what happens to the time limit during a pause. A recorded decision in the backlog context file answers it. The running step stops, and it continues later from that point. The decision existed before the build. The flows did not search the decision log, because the issue does not link to it.
 3. **The tests that the agent writes from its own examples do not find gaps.** The spec-first flow wrote its own examples, and they did not cover the boundary. Farley says the same: tests that the agent writes confirm what the agent thinks, not what the human means.
 
 ## Proposal
@@ -33,7 +33,7 @@ The skill lives in product-flow (`example-mapping`), because it is product work.
 
 ### B. The PO stays a human
 
-An AI PO that decides product questions brings back the double front end: two sources of product decisions. It would also invent answers that only the business can give. The BA recommends. The human PO decides. One exception for solo work: when the owner is the PO, an answer that cites an existing decision (for example Q44) counts as approved. A new decision still needs the human.
+An AI PO that decides product questions brings back the double front end: two sources of product decisions. It would also invent answers that only the business can give. The BA recommends. The human PO decides. One exception for solo work: when the owner is the PO, an answer that cites an existing decision counts as approved. A new decision still needs the human.
 
 ### C. Small steps
 
@@ -45,10 +45,10 @@ A script (`mutate.py`) changes each comparison in the changed lines, one at a ti
 
 ## How we measure it
 
-Rerun zitten-kloten #36 to #39 with the new flow, on Sonnet (one third of the cost of Opus, the same result so far), 3 runs:
+Rerun the 4 internal items with the new flow, on Sonnet (one third of the cost of Opus, the same result so far), 3 runs:
 
 - The hidden tests (10).
-- The known gaps that the run finds: the deadline boundary, the pause (answered by Q44), and where the old cards of the Kaartruil go.
+- The known gaps that the run finds: the deadline boundary, the pause, and the list for the old entries.
 - The stops that it avoids because a decision answers the question.
 - The cost and the time, with the stop rules of the run script.
 

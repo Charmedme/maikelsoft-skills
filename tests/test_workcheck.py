@@ -1,170 +1,121 @@
-"""Tests for the workcheck.py script of the plan-and-build skill. Run: python3 -m unittest discover -s tests"""
+"""Tests for the workcheck.py script of the build skill. Run: python3 -m unittest tests.test_workcheck"""
 import pathlib
+import subprocess
 import sys
 import tempfile
 import unittest
 
-SCRIPTS = pathlib.Path(__file__).resolve().parents[1] / "plugins" / "dev-flow" / "skills" / "plan-and-build" / "scripts"
+SCRIPTS = pathlib.Path(__file__).resolve().parents[1] / "plugins" / "dev-flow" / "skills" / "build" / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 import workcheck  # noqa: E402
 
-PLAN = """# Plan: ORD-1 Test
+RUN = "---\nflow: solo\nitem: ORD-1\nsize: {size}\nstep: plan gate\nbaseline: set\n---\n\n# Run\n"
 
-**Item:** ORD-1
-**Tier:** {tier} feature. Test.
+SPEC = """# Spec: ORD-1
 
-## Item
+<!-- BEGIN behaviour spec: ORD-1 -->
+```gherkin
+  Rule: R1 A return within 30 days is free (AC1)
+    Scenario: at the limit
+      When the customer returns the order on day 30
+      Then the return is free
+  Rule: R2 A return after 30 days costs a fee (AC2)
+    Scenario: above the limit
+      When the customer returns the order on day 31
+      Then the return costs 5 euro
+```
+<!-- END behaviour spec -->
 
-- AC1: It works.
+## Checks
 
-## Plan
-
-| No | Ticket | AC | Blocked by | Status |
-|----|--------|----|------------|--------|
+| Part | Check |
+|------|-------|
 {rows}
-
-## Waiting for the PO
-
-None.
-
-## Gates
-
-{gate_lines}
 """
 
-TICKET = """# {n}: Ticket {n}
+ROWS = "| R1 Free return | `tests/Specs/R1FreeReturn.cs` |\n| R2 Fee | `tests/Specs/R2Fee.cs` |"
 
-**Item:** [ORD-1](../plan.md#item), AC1
-**Blocked by:** {blocked}
-**Status:** {status}
-
-## Acceptance criteria
-
-- [{mark}] It works.
-"""
+PLAN = "# Plan: ORD-1\n\n## Scenarios\n\n{lines}\n\n## Files\n\n- src/Returns.cs\n"
 
 
-def make(folder, tickets, gates=("approved", "open"), tier="medium"):
-    """tickets: list of (number, blocked_by, status). gates: the states of the gates of the tier, in order."""
-    root = pathlib.Path(folder)
-    (root / "tickets").mkdir()
-    rows = []
-    for n, blocked, status in tickets:
-        mark = "x" if status == "done" else " "
-        (root / "tickets" / f"{n}-t.md").write_text(
-            TICKET.format(n=n, blocked=blocked, status=status, mark=mark), encoding="utf-8")
-        rows.append(f"| {n} | [Ticket {n}](tickets/{n}-t.md) | AC1 | {blocked} | {status} |")
-    names = workcheck.TIERS.get(tier, ("Spec", "Done"))
-    gate_lines = "\n".join(f"- {g}: {s}" for g, s in zip(names, gates))
-    (root / "plan.md").write_text(PLAN.format(rows="\n".join(rows), tier=tier, gate_lines=gate_lines), encoding="utf-8")
-    return root
+class WorkCheck(unittest.TestCase):
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.repo = pathlib.Path(tmp.name)
+        subprocess.run(["git", "init", "-q", str(self.repo)], check=True)
+        self.folder = self.repo / "docs" / "work" / "ord-1"
+        self.folder.mkdir(parents=True)
 
+    def write(self, size="small", rows=ROWS, plan=None, spec=SPEC):
+        (self.folder / "run.md").write_text(RUN.format(size=size), encoding="utf-8")
+        (self.folder / "spec.md").write_text(spec.format(rows=rows), encoding="utf-8")
+        if plan is not None:
+            (self.folder / "plan.md").write_text(PLAN.format(lines=plan), encoding="utf-8")
 
-def messages(root):
-    findings, tickets, _ = workcheck.check(root)
-    return [f.message for f in findings if f.severity == "error"], tickets
+    def codes(self, final=False):
+        return [code for code, _ in workcheck.check(self.folder, final)]
 
+    def test_a_small_folder_with_a_check_for_each_rule_passes(self):
+        self.write()
+        self.assertEqual(self.codes(), [])
 
-class Valid(unittest.TestCase):
-    def test_valid_folder_has_no_errors(self):
-        with tempfile.TemporaryDirectory() as d:
-            root = make(d, [("01", "None", "done"), ("02", "01", "todo")])
-            errors, _ = messages(root)
-            self.assertEqual(errors, [])
+    def test_a_rule_without_a_row_fails(self):
+        self.write(rows="| R1 Free return | `tests/Specs/R1FreeReturn.cs` |")
+        self.assertEqual(self.codes(), ["CHECK-RULE"])
 
-    def test_next_gives_unblocked_todo_tickets(self):
-        with tempfile.TemporaryDirectory() as d:
-            root = make(d, [("01", "None", "done"), ("02", "01", "todo"), ("03", "02", "todo")])
-            _, tickets = messages(root)
-            self.assertEqual([t.number for t in workcheck.frontier(tickets)], ["02"])
+    def test_a_row_without_a_check_fails(self):
+        self.write(rows="| R1 Free return | `tests/Specs/R1FreeReturn.cs` |\n| R2 Fee |  |")
+        self.assertIn("CHECK-EMPTY", self.codes())
 
+    def test_review_only_is_a_check(self):
+        self.write(rows="| R1 Free return | `tests/Specs/R1FreeReturn.cs` |\n| R2 Fee | review only |")
+        self.assertEqual(self.codes(), [])
 
-class Tiers(unittest.TestCase):
-    def test_small_needs_spec_and_done(self):
-        with tempfile.TemporaryDirectory() as d:
-            errors, _ = messages(make(d, [], ("open", "open"), tier="small"))
-            self.assertEqual(errors, [])
+    def test_a_spec_without_a_checks_table_fails(self):
+        self.write(spec=SPEC.split("## Checks")[0])
+        self.assertIn("CHECKS", self.codes())
 
+    def test_a_missing_spec_fails(self):
+        (self.folder / "run.md").write_text(RUN.format(size="small"), encoding="utf-8")
+        self.assertEqual(self.codes(), ["SPEC-FILE"])
 
-class Errors(unittest.TestCase):
-    def test_missing_blocker(self):
-        with tempfile.TemporaryDirectory() as d:
-            errors, _ = messages(make(d, [("01", "05", "draft")], ("open", "open")))
-            self.assertTrue(any("Blocker 05 does not exist" in e for e in errors))
+    def test_a_missing_header_fails(self):
+        self.write()
+        (self.folder / "run.md").write_text("# Run\n", encoding="utf-8")
+        self.assertIn("RUN-HEADER", self.codes())
 
-    def test_cycle(self):
-        with tempfile.TemporaryDirectory() as d:
-            errors, _ = messages(make(d, [("01", "02", "draft"), ("02", "01", "draft")], ("open", "open")))
-            self.assertTrue(any("cycle" in e for e in errors))
+    def test_a_chore_without_a_spec_block_needs_a_row(self):
+        chore = "# Spec: ORD-1\n\n## Checks\n\n| Part | Check |\n|------|-------|\n{rows}\n"
+        self.write(spec=chore, rows="| Update the package | `tests/BuildTests.cs` |")
+        self.assertEqual(self.codes(), [])
+        self.write(spec=chore, rows="")
+        self.assertIn("CHECKS", self.codes())
 
-    def test_build_before_plan_gate(self):
-        with tempfile.TemporaryDirectory() as d:
-            errors, _ = messages(make(d, [("01", "None", "todo")], ("open", "open")))
-            self.assertTrue(any("gate Spec is not passed" in e for e in errors))
+    def test_medium_needs_the_scenarios_in_the_plan(self):
+        self.write(size="medium")
+        self.assertIn("PLAN", self.codes())
+        self.write(size="medium", plan="1. R1 Free return\n2. R2 Fee")
+        self.assertEqual(self.codes(), [])
 
-    def test_done_cannot_be_assumed(self):
-        with tempfile.TemporaryDirectory() as d:
-            errors, _ = messages(make(d, [("01", "None", "done")], ("approved", "assumed")))
-            self.assertTrue(any("only a human" in e for e in errors))
+    def test_medium_fails_when_a_tested_rule_is_not_in_the_plan(self):
+        self.write(size="medium", plan="1. R1 Free return")
+        self.assertEqual(self.codes(), ["PLAN-RULE"])
 
-    def test_large_needs_design_before_plan(self):
-        with tempfile.TemporaryDirectory() as d:
-            errors, _ = messages(make(d, [("01", "None", "draft")], ("open", "approved", "open"), tier="large"))
-            self.assertTrue(any("Design is not" in e for e in errors))
+    def test_final_needs_each_test_file(self):
+        self.write()
+        self.assertEqual(self.codes(final=True).count("CHECK-FILE"), 2)
+        for name in ("R1FreeReturn.cs", "R2Fee.cs"):
+            (self.repo / "tests" / "Specs").mkdir(parents=True, exist_ok=True)
+            (self.repo / "tests" / "Specs" / name).write_text("// test\n", encoding="utf-8")
+        self.assertEqual(self.codes(final=True), [])
 
-    def test_plan_not_assumed_while_po_waits(self):
-        with tempfile.TemporaryDirectory() as d:
-            root = make(d, [("01", "None", "draft")], ("assumed", "open"))
-            plan = root / "plan.md"
-            plan.write_text(plan.read_text().replace("## Waiting for the PO\n\nNone.", "## Waiting for the PO\n\n- P1: Where does the mail address come from?"), encoding="utf-8")
-            errors, _ = messages(root)
-            self.assertTrue(any("waits for the PO" in e for e in errors))
-
-    def test_bad_tier(self):
-        with tempfile.TemporaryDirectory() as d:
-            errors, _ = messages(make(d, [("01", "None", "draft")], tier="huge"))
-            self.assertTrue(any("Tier" in e for e in errors))
-
-    def test_ac_without_ticket(self):
-        with tempfile.TemporaryDirectory() as d:
-            root = make(d, [("01", "None", "draft")], ("open", "open"))
-            plan = root / "plan.md"
-            plan.write_text(plan.read_text().replace("- AC1: It works.", "- AC1: It works.\n- AC2: It also fails well."), encoding="utf-8")
-            errors, _ = messages(root)
-            self.assertTrue(any("AC2 of the item is in no ticket" in e for e in errors))
-
-    def test_done_with_open_blocker(self):
-        with tempfile.TemporaryDirectory() as d:
-            errors, _ = messages(make(d, [("01", "None", "todo"), ("02", "01", "done")]))
-            self.assertTrue(any("blocker 01 is todo" in e for e in errors))
-
-    def test_plan_table_differs(self):
-        with tempfile.TemporaryDirectory() as d:
-            root = make(d, [("01", "None", "draft")], ("open", "open"))
-            plan = root / "plan.md"
-            plan.write_text(plan.read_text().replace("| None | draft |", "| None | todo |"), encoding="utf-8")
-            errors, _ = messages(root)
-            self.assertTrue(any("differs from the ticket file" in e for e in errors))
-
-    def test_done_needs_all_criteria_checked(self):
-        with tempfile.TemporaryDirectory() as d:
-            root = make(d, [("01", "None", "done")])
-            t = root / "tickets" / "01-t.md"
-            t.write_text(t.read_text() + "- [ ] Another check.\n", encoding="utf-8")
-            errors, _ = messages(root)
-            self.assertTrue(any("criteria are not checked" in e for e in errors))
-
-    def test_bad_file_name(self):
-        with tempfile.TemporaryDirectory() as d:
-            root = make(d, [], ("open", "open"))
-            (root / "tickets" / "first.md").write_text("# 01: X\n", encoding="utf-8")
-            errors, _ = messages(root)
-            self.assertTrue(any("NN-slug.md" in e for e in errors))
-
-    def test_no_plan(self):
-        with tempfile.TemporaryDirectory() as d:
-            errors, _ = messages(pathlib.Path(d))
-            self.assertEqual(errors, ["plan.md does not exist"])
+    def test_the_command_line_exits_1_on_an_error(self):
+        self.write(rows="")
+        p = subprocess.run([sys.executable, str(SCRIPTS / "workcheck.py"), str(self.folder)],
+                           capture_output=True, text=True)
+        self.assertEqual(p.returncode, 1)
+        self.assertIn("ERROR", p.stdout)
 
 
 if __name__ == "__main__":

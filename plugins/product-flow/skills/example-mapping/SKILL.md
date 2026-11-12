@@ -1,10 +1,13 @@
 ---
 name: example-mapping
-description: Turns one approved backlog item into rules, concrete examples, and questions before the team builds it, as a business analyst (BA) in a "three amigos" refinement. Searches the existing product decisions first, and sends only the open questions to the product owner. Use when a product owner, a BA, or a developer wants an item refined with examples, wants the examples for acceptance tests, or asks "what is not clear in this item". Also started by dev-flow:plan-and-build when an item has no examples or too few.
+description: Writes examples.md, the example mapping file that dev-flow:plan-and-build 2.x reads. Use when dev-flow:plan-and-build asks for example mapping. For a person who wants an item refined, use product-flow:refine.
+user-invocable: false
 allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/examplecheck.py *), Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/doccheck.py *)
 ---
 
 # Example mapping
+
+This skill stays for dev-flow until its next major version. For a person, `/refine` replaces it.
 
 You prepare the refinement of one item as a business analyst (BA). The product owner (PO) decides. Your examples become the acceptance tests of the team, so each example must have one clear result. Write all text in the language rules of `references/language.md`. Keep the text of the item in its own language.
 
