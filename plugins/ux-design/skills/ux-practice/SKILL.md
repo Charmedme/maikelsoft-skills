@@ -1,6 +1,7 @@
 ---
 name: ux-practice
-description: UX design of a user story, a feature, or a screen, with a fixed method - Double Diamond phases, a design spec with a source for each decision, the UX decision log, evidence tags, severity, and the modes light, full, and new-direction. Use when someone asks for the UX design, a design spec, or UX work before developers build, or when another UX skill names this method.
+description: The method of the ux-designer agent for the UX design of a story, a feature, or a screen - Double Diamond phases, a design spec with a source for each decision, the UX decision log, evidence tags, severity, and the modes light, full, and new-direction. Preloaded by the ux-designer agent. Use when the ux-designer agent or another UX skill names this method. For the design of an item, a person starts ux-design:ux-design.
+user-invocable: false
 ---
 
 # UX practice

@@ -217,6 +217,25 @@ class SetupscanTests(unittest.TestCase):
         self.assertIn("nl", facts["languages"])
         self.assertIn("react ^19.0.0", facts["ui_stack"])
         self.assertIn(".: npm run dev", facts["run"])
+        self.assertIsNone(facts["design_section_file"])
+
+    def test_delivery_md_wins_over_claude_md(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = pathlib.Path(tmp)
+            (tmp / "CLAUDE.md").write_text("# P\n\n## Design\n- Mockup tool: figma\n")
+            code, out = run(SETUPSCAN, tmp, "--json")
+            self.assertEqual(code, 0, out)
+            facts = json.loads(out)
+            self.assertEqual(facts["design_section_file"], "CLAUDE.md")
+            self.assertEqual(facts["design_section"], "- Mockup tool: figma")
+            (tmp / ".claude" / "rules").mkdir(parents=True)
+            (tmp / ".claude" / "rules" / "delivery.md").write_text(
+                "# Delivery facts\n\n## Design\n- Mockup tool: html\n\n## Review\n- Limits: REVIEW.md\n")
+            code, out = run(SETUPSCAN, tmp, "--json")
+        self.assertEqual(code, 0, out)
+        facts = json.loads(out)
+        self.assertEqual(facts["design_section_file"], ".claude/rules/delivery.md")
+        self.assertEqual(facts["design_section"], "- Mockup tool: html")
 
 
 class OpimportTests(unittest.TestCase):

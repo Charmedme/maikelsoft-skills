@@ -6,6 +6,17 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-11-12
+
+### Changed
+
+- **Breaking.** The skill `doc-plan` has the new name `update-docs`. Start it with `/dev-docs:update-docs`, or `/update-docs`. Action required: use the new command. The old command is out of the `/` menu. A call from another skill still works, because the old skill sends the request to `update-docs`.
+- `update-docs` selects the mode itself: a plan for a project with few docs, an audit for an existing doc set. An outdated page gets the status "update" with the facts that changed. The skill ends with a report and a `Next:` line.
+
+### Deprecated
+
+- The skill `doc-plan`. Use `update-docs`. A later major version removes the old skill.
+
 ## [1.4.0] - 2026-10-12
 
 ### Added

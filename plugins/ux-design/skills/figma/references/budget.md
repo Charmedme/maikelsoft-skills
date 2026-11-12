@@ -15,7 +15,7 @@ Status on 2026-10-25. Figma can change the limits. Source: the Figma page "Plans
 
 ## Limit for `figmamap.py count`
 
-| Seat in CLAUDE.md | `--limit` |
+| Seat in the `## Design` section | `--limit` |
 |-------------------|-----------|
 | Dev or Full, Professional or Organization | 180 (keep 20 for the human) |
 | Dev or Full, Enterprise | 550 |

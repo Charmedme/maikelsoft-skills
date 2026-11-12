@@ -76,7 +76,7 @@
       "prompt": "Document this project for me: the Go CLI in <gron>. It has almost no docs.",
       "output": null,
       "assertions": [
-        {"judge": "The agent used doc-plan."},
+        {"judge": "The agent used update-docs (or doc-plan, which forwards to it)."},
         {"judge": "The reply has a table of documents with path, type, skill, and source."},
         {"judge": "The agent wrote no document and asked for approval."}
       ]
