@@ -1,0 +1,22 @@
+{
+  "plugin": "product-flow",
+  "method": [
+    "Give a Haiku agent the name and description of each skill of the marketplace that a person can start (no skill with user-invocable false), plus the forwarders, and one query. Ask which skill it starts, or none.",
+    "3 tries for each query. A query passes when the expected skill is picked in at least 2 of 3 tries. 'none' means no product-flow skill. A forwarder (old name) never passes as a pick."
+  ],
+  "queries": [
+    {"q": "We want customers to save a search and get a mail for new matches. Turn this into backlog items.", "expect": "to-backlog"},
+    {"q": "Customers report that the discount code is lost after a page refresh in the checkout. Log it for the team.", "expect": "bug-item"},
+    {"q": "Write a user story with acceptance criteria for the export of invoices to CSV.", "expect": "user-story"},
+    {"q": "Can you refine SHOP-12 so the devs can start? Some parts are vague.", "expect": "refine"},
+    {"q": "Write a feature for bulk price updates, with the stories under it.", "expect": "feature"},
+    {"q": "We need an epic for the new loyalty programme.", "expect": "epic"},
+    {"q": "Make a clickable mock of the new returns flow so I can show the stakeholders.", "expect": "prototype"},
+    {"q": "Write a sprint goal for the next sprint around faster checkout.", "expect": "product-goal"},
+    {"q": "Fix the null reference in OrderService.Cancel, the stack trace is below.", "expect": "none"},
+    {"q": "Build SHOP-12 for me, it is ready.", "expect": "none"},
+    {"q": "Review the comments on pull request 41 and fix them.", "expect": "none"},
+    {"q": "Write release notes for version 2.3.", "expect": "none"},
+    {"q": "Set my role to product owner for this repository.", "expect": "none"}
+  ]
+}

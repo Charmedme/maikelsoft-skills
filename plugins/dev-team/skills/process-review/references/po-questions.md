@@ -16,7 +16,7 @@ A question about how the code does it is technical when the result for the user 
 
 ## What to do
 
-1. **Search first.** A decision that the PO made can answer the question already. Search the item, its comments and links, the backlog context file (section "Decisions"), and the decision records. In solo work the PO is the human in the session. Then an answer that cites an existing decision counts as approved. Write the decision ID and its words.
+1. **Search first.** A decision that the PO made can answer the question already. Search the item, its comments, and its links. Also search the decision records. Search the section "Decisions" of the intent file, or of an older backlog context file. In solo work the PO is the human in the session. Then an answer that cites an existing decision counts as approved. Write the decision ID and its words.
 2. **Collect.** Put all open product questions in one list. Give each question the options and your recommended answer with the reason in one sentence. The PO can then answer "ok".
 3. **Draft the comment.** Write one comment for the item, in the language of the item. Start with one line that says which work waits for the answer.
 4. **Get approval.** Show the human the exact text. Post nothing before the human approves it.

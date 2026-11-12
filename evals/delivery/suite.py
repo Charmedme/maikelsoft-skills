@@ -48,15 +48,19 @@ def _load(name, path):
 
 
 runner = _load("reviewflow_run", HERE.parent / "review-flow" / "run.py")
-ARMS = {"baseline": ["dev-stack"], "flow": ["dev-flow", "dev-stack"], "team": ["dev-team", "dev-stack"],
-        "both": ["dev-flow", "dev-team", "dev-stack"]}
+ARMS = {"baseline": ["dev-stack"], "flow": ["dev-flow", "dev-stack"], "build": ["dev-flow", "dev-stack"],
+        "buildspec": ["dev-flow", "dev-stack"], "flowspec": ["dev-flow", "dev-stack"],
+        "team": ["dev-team", "dev-stack"], "both": ["dev-flow", "dev-team", "dev-stack"]}
 NEUTRAL = "Deliver the story in {story}. The answer sheet of the human is {answers}. Take each answer of the human from that sheet. Work on a new branch and commit."
 PROMPTS = {
     "baseline": NEUTRAL,
     "both": NEUTRAL,
     "flow": "Use the dev-flow:plan-and-build skill to build the approved item in {story}. The answer sheet of the human is {answers}. The human is also the product owner. Take each answer of the human from that sheet.",
+    "build": "Use the dev-flow:build skill to build the item in {story}. The item file is the ticket. The answer sheet of the human is {answers}. The human is also the product owner. Take each answer of the human from that sheet. The sheet approves the item, the spec, and each gate.",
     "team": "Use the dev-team:deliver-story skill to deliver the story in {story}. The answer sheet of the human is {answers}. Take each answer of the human from that sheet.",
 }
+PROMPTS["buildspec"] = PROMPTS["build"]  # the same prompt: only the ticket differs (ticket.md with a ready Behaviour spec)
+PROMPTS["flowspec"] = PROMPTS["flow"]  # the control: the old flow with the same ticket; run it with a _plugins folder of dev-flow 2.1.0
 SUFFIX = " Nobody can answer questions in this run. Do not push. Do not call any tool whose name starts with mcp__. Work only inside the current folder and the input folder."
 
 
@@ -312,10 +316,16 @@ def one(run, story, arm, args):
     inputs.mkdir(exist_ok=True)
     for name in ("story.md", "answers.md"):
         shutil.copy(STORIES / story / name, inputs / name)
+    if arm in ("buildspec", "flowspec"):  # the ticket with the reviewed Behaviour spec takes the place of story.md
+        ticket = STORIES / story / "ticket.md"
+        if not ticket.exists():
+            raise FileNotFoundError(f"{ticket} is missing: the arms buildspec and flowspec need it")
+        shutil.copy(ticket, inputs / "story.md")
     env = runner.environment()
     profile = run / "profile.md"
     profile.write_text("# Dev-team profile\n\n| ID | Answer | Date |\n|----|--------|------|\n", encoding="utf-8")
     env["DEV_TEAM_PROFILE"] = str(profile)
+    env["DEV_FLOW_HELDBACK"] = str(run / "heldback")  # the held-back tests of dev-flow:build stay in the run
     before = runner.fingerprint(runner.REAL_PROFILE)
     prompt = PROMPTS[arm].format(story=inputs / "story.md", answers=inputs / "answers.md") + SUFFIX
     cmd = ["claude", "-p", prompt, "--model", args.model, "--permission-mode", "bypassPermissions",

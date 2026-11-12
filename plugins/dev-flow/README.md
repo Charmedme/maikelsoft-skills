@@ -31,11 +31,12 @@ Do you have an idea, and no item yet? Make the item first with `product-flow:ide
 
 ## Commands
 
-Claude Code starts a skill by itself when your request matches its trigger. You can also start a skill with its command. Text after the command goes to the skill, for example `/dev-flow:plan-and-build AB#1234`.
+Claude Code starts a skill by itself when your request matches its trigger. You can also start a skill with its command. Text after the command goes to the skill, for example `/dev-flow:build AB#1234`.
 
 | Command | What it does | Starts by itself when you ask for |
 |---------|--------------|-----------------------------------|
-| `/dev-flow:plan-and-build` | Builds one approved item from the tracker to tested commits in one session, with locked acceptance tests and TDD. | An item, a ticket, a bug fix, or a story built, "plan and build", or a run with a `docs/work/<slug>/plan.md` to continue |
+| `/dev-flow:build` | Builds one work item from its ticket to tested commits. It locks one test file for each rule of the Behaviour spec, and builds with TDD, held-back tests, and fresh reviews. | An item, a ticket, a bug fix, or a story built, "build" or "plan and build", or a run with a `docs/work/<item>/run.md` to continue |
+| `/dev-flow:review-comments` | Handles the review comments on a pull request of a solo build. It sorts and fixes each comment, and replies in each thread. | Review comments on a pull request to process, fix, or answer |
 
 ## Usage
 

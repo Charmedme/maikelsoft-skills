@@ -1,0 +1,90 @@
+{
+  "system": "Azure DevOps",
+  "project": "OfficeShop",
+  "process": "Agile",
+  "levels": [
+    {
+      "name": "Epics",
+      "types": [
+        "Epic"
+      ]
+    },
+    {
+      "name": "Features",
+      "types": [
+        "Feature"
+      ]
+    },
+    {
+      "name": "Stories",
+      "types": [
+        "User Story"
+      ]
+    },
+    {
+      "name": "Tasks",
+      "types": [
+        "Task",
+        "Bug"
+      ]
+    }
+  ],
+  "text_format": "HTML for System.Description and Microsoft.VSTS.Common.AcceptanceCriteria",
+  "items": [
+    {
+      "id": "1201",
+      "type": "Feature",
+      "title": "Product catalogue",
+      "parent": null
+    },
+    {
+      "id": "1202",
+      "type": "User Story",
+      "title": "Find a product by article number",
+      "parent": "1201"
+    },
+    {
+      "id": "1203",
+      "type": "User Story",
+      "title": "Export the order list to Excel",
+      "parent": null
+    },
+    {
+      "id": "1204",
+      "type": "User Story",
+      "title": "Free returns for damaged goods",
+      "parent": null
+    }
+  ],
+  "next": 1300,
+  "fields": {
+    "Feature": [
+      {
+        "name": "System.Title",
+        "kind": "string"
+      },
+      {
+        "name": "System.Description",
+        "kind": "html"
+      },
+      {
+        "name": "Microsoft.VSTS.Common.AcceptanceCriteria",
+        "kind": "html"
+      },
+      {
+        "name": "Microsoft.VSTS.Common.BusinessValue",
+        "label": "Business Value",
+        "kind": "integer"
+      },
+      {
+        "name": "Microsoft.VSTS.Common.ValueArea",
+        "label": "Value Area",
+        "kind": "picklist",
+        "values": [
+          "Business",
+          "Architectural"
+        ]
+      }
+    ]
+  }
+}

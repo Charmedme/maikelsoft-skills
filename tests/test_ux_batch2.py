@@ -77,7 +77,7 @@ class ProtoShellTests(unittest.TestCase):
             self.assertEqual(code, 0, msg)
 
     def test_skill_copies_match_the_source(self):
-        for skill in ("plugins/ux-design/skills/ux-prototype", "plugins/product-flow/skills/product-prototype"):
+        for skill in ("plugins/ux-design/skills/ux-prototype", "plugins/product-flow/skills/prototype"):
             for src in SHELL.iterdir():
                 target = (ROOT / skill / "scripts" / src.name if src.suffix == ".py"
                           else ROOT / skill / "references" / "proto-shell" / src.name)

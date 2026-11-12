@@ -1,8 +1,8 @@
 {
   "name": "product-flow",
   "displayName": "Product flow",
-  "version": "1.4.0",
-  "description": "Take a product idea to an approved backlog: research, questions, a prototype with your branding, a spec with a story map, and goals, epics, features, and user stories that go into Jira, Azure DevOps, GitHub, GitLab, Linear, or files. For product owners and business analysts.",
+  "version": "2.0.0",
+  "description": "One command for each phase of the backlog work: an idea, a request, or a bug to approved items. Each user story and bug gets acceptance criteria and a Gherkin Behaviour spec, a refine pass with the product owner, and a push to Jira, Azure DevOps, GitHub, GitLab, Linear, or files after approval. Research, a story map, and a prototype only for larger work. For product owners and business analysts.",
   "author": {
     "name": "Maikel",
     "url": "https://github.com/Charmedme"

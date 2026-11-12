@@ -17,7 +17,7 @@ The default is 2 levels: Feature, then User Story. Use 3 levels (Epic, Feature, 
 Goals:
 
 - Each Feature has its own goal and measure: the part of the result that this feature gives.
-- Write the product goal one time, above the features. Put it in the context file. Make a goal item only when the team keeps goals as items.
+- Write the product goal one time, above the features. Put it in the intent file. Make a goal item only when the team keeps goals as items.
 - Each Feature refers to the product goal with a "Supports:" line in its "Goal" section. Do not copy the product goal into the features.
 
 ## Select the profile

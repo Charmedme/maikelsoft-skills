@@ -6,6 +6,27 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking.** The skill `plan-and-build` has the new name `build`. Start it with `/dev-flow:build`. The old command still works: it sends you to `build`.
+- **Breaking.** The ticket is the contract. `build` reads the section "Behaviour spec" of the ticket and copies it into `spec.md`. Each rule of the spec gets one test file, and the skill locks each test file before the build. This spec replaces example mapping in the build.
+- A ticket without a Behaviour spec, or with a draft spec, first gets the refine pass. Then `build` waits for the approval of the product owner. This works without the product-flow plugin.
+- When there is no ticket, `build` drafts the item and pushes it after your approval.
+- The size of the change (patch, small, medium, large) replaces the word "tier". `run.md` holds the header of the run.
+- `workcheck.py` checks the new work folder. Each part of `spec.md` needs a check: a test file, or "review only". A medium or large change also needs the order of the scenarios in `plan.md`.
+
+### Added
+
+- `review-comments`: handles the review comments on a pull request of a solo build. It sorts each comment, fixes it, has a fresh agent review the fix, pushes without force, and replies in each thread. It never resolves a thread.
+- Held-back tests for a medium or large change. A separate agent writes them from the spec. `heldback.py` keeps them outside the repository and runs them in the proof step. The guard hook blocks each direct read of their folder, so the builder cannot see them.
+- A security review from the medium size up, or when `riskcheck.py` finds a risk in the change.
+- The docs step: `docscheck.py` names each doc that the change makes old.
+- The final report gives the testing, the risk, how to undo the change, and the commits.
+
+### Deprecated
+
+- The command `/dev-flow:plan-and-build`. Use `/dev-flow:build`. A later major version removes the old command.
+
 ## [2.1.0] - 2026-10-25
 
 ### Added

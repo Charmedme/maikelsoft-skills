@@ -6,6 +6,32 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-11-05
+
+### Added
+
+- `bug-item` writes one bug item. Its Behaviour spec has the rule that the bug breaks, with a `Now:` line for the current behaviour. A rule "Unchanged" holds the behaviour that must stay.
+- Each user story and each bug item has a section "Behaviour spec" in Gherkin below the acceptance criteria. Each rule names its criterion, and each limit has a scenario below, at, and above it. `specsync.py check` checks the spec.
+- `refine` makes a draft item ready: a new reviewer, the open questions to the product owner in one message, and the approval. At most 3 rounds. Each item command ends with this pass.
+- The label `spec:ready` or `spec:draft` on each pushed item. Only the tool sets `spec:ready`. When a person sets it by hand, the next command checks the item again.
+- `backlogcheck.py` rule A11: each criterion has a rule in the Behaviour spec, and each rule names a criterion that exists. Rule B1 checks a bug item.
+- `backlogtree.py specs` checks the Behaviour spec of each story and bug in a draft.
+- `scripts/build_claude_ai.py` makes the plugin zip for an upload to claude.ai.
+
+### Changed
+
+- Breaking change: type the new command names, for example `/product-flow:to-backlog`. Change each script or instruction that names an old skill name.
+- New command names: `to-backlog` (was `idea-to-backlog`), `epic` (was `backlog-epic`), `feature` (was `backlog-feature`), `user-story` (was `backlog-story`), `prototype` (was `product-prototype`), and `product-goal` (was `backlog-goal`).
+- `to-backlog` sets the depth by size. A small request (one story or one bug) gets no research and no story map. A prototype comes only after a yes.
+- Each item command reads the role and the facts of the project from `dev-setup` first, and pushes after the approval of the product owner.
+- The run file is now `docs/backlog/<slug>/intent.md`. `to-backlog` still reads an older `backlog-<slug>.md`.
+- `backlog-push` is out of the `/` menu. The commands start it.
+
+### Deprecated
+
+- The old names `idea-to-backlog`, `backlog-epic`, `backlog-feature`, `backlog-story`, `backlog-goal`, and `product-prototype`. Each one starts the skill with the new name, and is out of the `/` menu. They stop in version 3.0.0.
+- `example-mapping` and `examples.md`. The skill is out of the `/` menu and stays only for `dev-flow:plan-and-build` 2.x. Use `refine` for an item.
+
 ## [1.4.0] - 2026-10-25
 
 ### Changed
@@ -79,7 +105,9 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 - The shared language rules: English in ASD-STE100 Simplified Technical English, and Dutch in Begrijpelijk Nederlands (B1).
 - Test results for each skill against a baseline without the skill.
 
-[Unreleased]: https://github.com/Charmedme/maikelsoft-skills/compare/product-flow-v1.3.0...HEAD
+[Unreleased]: https://github.com/Charmedme/maikelsoft-skills/compare/product-flow-v2.0.0...HEAD
+[2.0.0]: https://github.com/Charmedme/maikelsoft-skills/compare/product-flow-v1.4.0...product-flow-v2.0.0
+[1.4.0]: https://github.com/Charmedme/maikelsoft-skills/compare/product-flow-v1.3.0...product-flow-v1.4.0
 [1.3.0]: https://github.com/Charmedme/maikelsoft-skills/compare/product-flow-v1.2.0...product-flow-v1.3.0
 [1.2.0]: https://github.com/Charmedme/maikelsoft-skills/compare/product-flow-v1.1.0...product-flow-v1.2.0
 [1.1.0]: https://github.com/Charmedme/maikelsoft-skills/compare/product-flow-v1.0.0...product-flow-v1.1.0

@@ -16,6 +16,7 @@ This suite compares delivery flows on stories from easy to very hard. The storie
 | File | Seen by the run | Purpose |
 |------|-----------------|---------|
 | `story.md` | yes | The item |
+| `ticket.md` | yes, only in the arms `buildspec` and `flowspec`, in the place of `story.md` | The item with a reviewed Behaviour spec and the status `spec:ready` |
 | `answers.md` | yes | The answers of the product owner |
 | `meta.json` | no | Size, risk, difficulty, kinds, and the trap |
 | `base.patch` | yes, as the start state | Removes a feature or adds project files |

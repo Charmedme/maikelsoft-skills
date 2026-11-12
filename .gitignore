@@ -11,3 +11,6 @@ evals/delivery/.cache/
 
 # dev-stack evals: pinned outside skills (run.py base_skill)
 evals/dev-stack/.cache/
+
+# claude.ai upload zips (scripts/build_claude_ai.py)
+dist/

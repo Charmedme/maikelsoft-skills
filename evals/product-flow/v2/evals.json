@@ -1,0 +1,302 @@
+{
+ "plugin": "product-flow",
+ "version": "2.0.0",
+ "method": [
+  "run.py makes one git repository for each run from the fixture, and starts a headless claude run with the prompt of runner.md. Each run has its own HOME.",
+  "The human plays from humans/<eval>.md: one reply for each turn, in order, separated by '---'. The agent never sees the file.",
+  "3 runs for each variant. 'baseline' gets the request only. 'skill' also gets the skill folder of the command.",
+  "'check' assertions: score.py. 'judge' assertions: one blind grader for each eval. A 'variant' field limits an assertion to that variant.",
+  "The smoke cases (name 'smoke-...') run 1 time with the skill only: run.py --eval <names> --variant skill --runs-per-variant 1. They compare with the results of version 1 in evals/product-flow/results-2026-10-12-*.md."
+ ],
+ "evals": [
+  {
+   "id": 1,
+   "name": "user-story",
+   "skill": "user-story",
+   "fixture": "shop",
+   "human": "humans/user-story.md",
+   "request": "Write a user story for this: customers can return an order without cost within 30 days after delivery. After that, the shop charges a fee.",
+   "assertions": [
+    {
+     "check": "spec_ok",
+     "kind": "story",
+     "min": 1
+    },
+    {
+     "check": "backlogcheck_ok"
+    },
+    {
+     "check": "text_in_items",
+     "text": "4.95"
+    },
+    {
+     "check": "text_in_items",
+     "text": "spec:ready"
+    },
+    {
+     "judge": "The agent asked its open questions in one message, each with a recommended answer."
+    },
+    {
+     "judge": "The rule with the 30-day limit has a scenario below, at, and above the limit (for example day 29, 30, and 31)."
+    },
+    {
+     "judge": "The agent marked the item ready (or wrote the final item) only after the human approved it."
+    },
+    {
+     "judge": "Each acceptance criterion has a rule in the Behaviour spec, and each rule names its criterion."
+    }
+   ]
+  },
+  {
+   "id": 2,
+   "name": "bug-item",
+   "skill": "bug-item",
+   "fixture": "shop",
+   "human": "humans/bug-item.md",
+   "request": "Bug: a customer returned an order on day 30 after delivery and was charged 4.95 euro. Returns within 30 days must be free.",
+   "assertions": [
+    {
+     "check": "spec_ok",
+     "kind": "bug",
+     "min": 1
+    },
+    {
+     "check": "text_in_items",
+     "text": "spec:ready"
+    },
+    {
+     "judge": "The bug spec states the current behaviour (a return on day 30 costs 4.95 euro) separately from the expected behaviour."
+    },
+    {
+     "judge": "The spec keeps a rule or scenario that must not change: a return after day 30 still costs the fee."
+    },
+    {
+     "judge": "The agent marked the item ready (or wrote the final item) only after the human approved it."
+    }
+   ]
+  },
+  {
+   "id": 3,
+   "name": "to-backlog-small",
+   "skill": "to-backlog",
+   "fixture": "shop",
+   "human": "humans/to-backlog-small.md",
+   "request": "Turn this into backlog items: the export button on the order list does nothing in Firefox.",
+   "assertions": [
+    {
+     "check": "spec_ok",
+     "kind": "bug",
+     "min": 1
+    },
+    {
+     "check": "item_count_max",
+     "value": 1
+    },
+    {
+     "check": "no_glob",
+     "pattern": "docs/backlog/*/intent.md"
+    },
+    {
+     "judge": "The agent made one bug item, and said why it chose that level."
+    },
+    {
+     "judge": "The agent did no market or product research and made no story map for this small request."
+    },
+    {
+     "judge": "The agent wrote the final item only after the human approved it."
+    }
+   ]
+  },
+  {
+   "id": 4,
+   "name": "to-backlog-medium",
+   "skill": "to-backlog",
+   "fixture": "shop",
+   "human": "humans/to-backlog-medium.md",
+   "request": "Turn this into backlog items: customers want to save a search in the web shop and get an email when a new product matches it.",
+   "assertions": [
+    {
+     "check": "spec_ok",
+     "kind": "story",
+     "min": 2
+    },
+    {
+     "check": "glob_exists",
+     "pattern": "docs/backlog/*/intent.md"
+    },
+    {
+     "judge": "The agent chose a level (feature or epic, with stories) and said why."
+    },
+    {
+     "judge": "The agent asked before it made a prototype, and made none after the human said no."
+    },
+    {
+     "judge": "Each story has acceptance criteria and a Behaviour spec with rules and scenarios."
+    },
+    {
+     "judge": "The agent wrote the final items only after the human approved the list."
+    }
+   ]
+  },
+  {
+   "id": 5,
+   "name": "refine",
+   "skill": "refine",
+   "fixture": "shop-draft",
+   "human": "humans/refine.md",
+   "request": "Refine the story in docs/backlog/returns/SHOP-12-free-returns.md, so the team can build it.",
+   "assertions": [
+    {
+     "check": "spec_ok",
+     "kind": "story",
+     "min": 1
+    },
+    {
+     "check": "backlogcheck_ok"
+    },
+    {
+     "check": "text_in_items",
+     "text": "4.95"
+    },
+    {
+     "check": "text_in_items",
+     "text": "spec:ready"
+    },
+    {
+     "judge": "The agent asked the human about the amount of the fee and about the meaning of '30 days' (calendar or working days, from order or from delivery). It did not decide these itself."
+    },
+    {
+     "judge": "The agent asked its questions in one message, each with a recommended answer."
+    },
+    {
+     "judge": "After the answers, AC3 (sale items) has a rule, and the 30-day rule has a scenario below, at, and above the limit."
+    },
+    {
+     "judge": "The agent set the status to ready only after the human approved it."
+    }
+   ]
+  },
+  {
+   "id": 6,
+   "name": "smoke-epic",
+   "skill": "epic",
+   "fixture": "shop",
+   "human": "humans/smoke-epic.md",
+   "request": "Write an epic for a loyalty programme in the web shop: customers earn points on each order and spend them on a discount.",
+   "assertions": [
+    {
+     "check": "glob_exists",
+     "pattern": "docs/backlog/**/*.md"
+    },
+    {
+     "judge": "The epic has an outcome with a measure, and does not invent a target value."
+    },
+    {
+     "judge": "The epic has 2 to 6 features in delivery order, each with a goal, scope, and criteria."
+    },
+    {
+     "judge": "The agent ran a review or refine step and asked the open questions before the final items."
+    },
+    {
+     "judge": "The agent wrote the final items only after the human approved them."
+    }
+   ]
+  },
+  {
+   "id": 7,
+   "name": "smoke-feature",
+   "skill": "feature",
+   "fixture": "shop",
+   "human": "humans/smoke-feature.md",
+   "request": "Write a feature for bulk price updates by the shop admin, with its user stories.",
+   "assertions": [
+    {
+     "check": "spec_ok",
+     "kind": "story",
+     "min": 2
+    },
+    {
+     "check": "backlogcheck_ok"
+    },
+    {
+     "judge": "The feature has a goal with a measure, and a scope in and out."
+    },
+    {
+     "judge": "Each story has acceptance criteria and a Behaviour spec, and each rule names its criterion."
+    },
+    {
+     "judge": "The agent set spec:ready only after the human approved the items."
+    }
+   ]
+  },
+  {
+   "id": 8,
+   "name": "smoke-goal",
+   "skill": "product-goal",
+   "fixture": "shop",
+   "human": "humans/smoke-goal.md",
+   "request": "Write a sprint goal for these items: SHOP-21 one-page checkout, SHOP-22 save the card for the next order, SHOP-23 show the delivery date in the checkout, SHOP-30 fix a typo in the footer.",
+   "assertions": [
+    {
+     "judge": "The goal is one sentence of at most 25 words, and states an outcome, not a list of output."
+    },
+    {
+     "judge": "The goal has a measure or a check."
+    },
+    {
+     "judge": "The goal names its supporting items, and leaves SHOP-30 (the typo fix) out of the goal."
+    },
+    {
+     "judge": "The goal has a time frame, or is marked as a proposal for the sprint."
+    }
+   ]
+  },
+  {
+   "id": 9,
+   "name": "smoke-prototype",
+   "skill": "prototype",
+   "fixture": "shop",
+   "human": "humans/smoke-prototype.md",
+   "request": "Make a clickable prototype of the returns flow: the customer picks an order, picks the items, and sees the return fee.",
+   "assertions": [
+    {
+     "check": "glob_exists",
+     "pattern": "**/*.html"
+    },
+    {
+     "judge": "The prototype shows the one question that it answers, and is marked as a prototype."
+    },
+    {
+     "judge": "The prototype has an empty state and an error state."
+    },
+    {
+     "judge": "The agent asked 'Is this what you mean?' with options after it made the prototype."
+    }
+   ]
+  },
+  {
+   "id": 10,
+   "name": "smoke-push",
+   "skill": "backlog-push",
+   "fixture": "shop-ado",
+   "human": "humans/smoke-push.md",
+   "request": "Push the approved item in docs/backlog/order-return-fee/ to Azure DevOps.",
+   "assertions": [
+    {
+     "check": "tracker_has",
+     "title": "30 days",
+     "label": "spec:ready"
+    },
+    {
+     "judge": "Before it created anything, the agent showed 1204 'Free returns for damaged goods' as a possible duplicate and asked the human."
+    },
+    {
+     "judge": "The acceptance criteria and the Behaviour spec are in the field Acceptance Criteria of the created item, criteria first."
+    },
+    {
+     "judge": "The agent created the item only after the human said to create it."
+    }
+   ]
+  }
+ ]
+}
