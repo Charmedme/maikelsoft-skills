@@ -30,7 +30,7 @@ This skill builds one work item. The Behaviour spec on the ticket is the contrac
 | `references/spec.md` | Step 3: `spec.md`, the checks, the test layers, and the lock. |
 | `references/tiers.md`, `references/cycle.md` | Step 4: the size, the risk, and the caps of each phase. |
 | `references/plan.md`, `references/research.md` | Step 4, medium and large. |
-| `references/heldback.md` | Step 5, medium and large. |
+| `references/heldback.md` | Step 5, large or a risk. |
 | `references/build.md` | Step 6: the scenario loop. |
 | `references/prove.md` | Step 7. |
 | `references/review.md`, `references/review-rules.md` | Step 8. |
@@ -43,12 +43,12 @@ This skill builds one work item. The Behaviour spec on the ticket is the contrac
 1. **Context.** Read `references/context.md` and do its steps. When `docs/work/<item>/run.md` exists, read its header with `runheader.py read` and continue at the open step. Done when you know the role, the route, and the facts that the build needs.
 2. **Ticket.** Read `references/ticket.md` and do its steps. Each build has a ticket. Without one, draft the item, get the approval, and push it first. Done when you have the ticket key, its criteria, and its Behaviour spec. A chore or a task has no spec.
 3. **Spec.** A spec with the status `spec:draft` gets the refine pass of `references/refine.md` first. The build starts only after the approval of the PO. Then read `references/spec.md`, copy the spec with `specsync.py copy`, and add the table "## Checks". Done when `specsync.py check` and `workcheck.py` show 0 errors.
-4. **Size and plan.** Read `references/tiers.md`. Write the header with `runheader.py write --flow solo`. Tell the human the size in one line. Medium and large: read `references/plan.md` and write `plan.md`. A fresh plan reviewer checks it, in at most 3 rounds. Then stop at the plan gate. Small: the plan gate shows only the list of scenarios. Patch: no gate. Done when the human approved the plan and the list of scenarios.
-5. **Held-back tests.** Medium and large: read `references/heldback.md`. A separate agent writes them. Done when `heldback.py list` shows one file or more.
-6. **Scenario loop.** Read `references/build.md`. For each rule: the test file, the lock, red, green, a step review, a commit. At most 3 tries to get green. Done when each rule has a locked test that passes.
+4. **Size and plan.** Read `references/tiers.md`. Write the header with `runheader.py write --flow solo`. Tell the human the size in one line. Medium and large: read `references/plan.md` and write `plan.md`. A fresh plan reviewer checks it: medium 1 round, large at most 3 rounds. Then stop at the plan gate. Small: the plan gate shows only the list of scenarios. Patch: no gate. Done when the human approved the plan and the list of scenarios.
+5. **Held-back tests.** Large, or a risk of `references/tiers.md`: read `references/heldback.md`. The plan reviewer writes them after its last round. Done when `heldback.py list` shows one file or more.
+6. **Scenario loop.** Read `references/build.md`. For each rule: the test file, the lock, red, green, a commit. At most 3 tries to get green. Done when each rule has a locked test that passes.
 7. **Prove.** Read `references/prove.md`: the full suite, `speclock.py check`, the held-back tests, and `mutate.py`. At most 2 fix rounds. Done when all are green, or each hole went to the human.
-8. **Reviews.** Read `references/review.md`. The code review has 1 or 2 passes by size. The security review runs from medium up, or when `riskcheck.py` raises it. Then the UX review when the item has UI work. Done when no blocking finding is open, or the human chose an option at the cap.
-9. **Docs.** Run `docscheck.py --base <base>`. Update each doc that it names, or give it with `--ok` and the reason. Done when it shows 0 findings.
+8. **Reviews.** Read `references/review.md`. Medium: one fresh reviewer checks the code and the security. Large: two passes. Patch and small: the security part only when `riskcheck.py` raises it. Then the UX review when the item has UI work. Done when no blocking finding is open, or the human chose an option at the cap.
+9. **Docs.** Run `docscheck.py --base <base>` one time. Update each doc that it names, or give it with `--ok` and the reason in the second and last run. Done when it shows 0 findings.
 10. **Final gate.** Read `references/final-gate.md`. Run `workcheck.py --final` and `speclock.py check`. Give the report: Testing, Risk, How to undo, and the commits. An open finding stops the gate. After a miss, give one proposal. End with the `Next:` line. Done when the human has the report.
 
 ## When the spec changes during the build

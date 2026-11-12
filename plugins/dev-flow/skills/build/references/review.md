@@ -8,10 +8,10 @@ Each review is a new sub-agent that did not write the code and did not share you
 |------|-------------|-----------|
 | Patch | 1 (quick: the diff and the test only) | 1 |
 | Small | 1 | 2 |
-| Medium | 1 | 3 |
-| Large | 2 | 3 |
+| Medium | 1 (code and security) | 2 |
+| Large | 2 (pass 2: security) | 3 |
 
-A pass is one reviewer that reads the full diff from the base. Large: the second pass is a new reviewer with the findings of the first pass. A round is a fix of the blocking findings and a new reviewer of the fix diff.
+A pass is one reviewer that reads the full diff from the base. Medium: the one reviewer also does the security review below, in the same pass. Large: the second pass is a new reviewer with the findings of the first pass, and it does the security review. A fix round gets the fix diff only. A round is a fix of the blocking findings and a new reviewer of the fix diff.
 
 Give each reviewer:
 
@@ -19,7 +19,7 @@ Give each reviewer:
 - `review.md` with the findings of the earlier rounds and their status,
 - the WATCH lines of `speclock.py check`, so it checks that no DSL check got weaker,
 - `REVIEW.md` of the base (`git show "<base>:REVIEW.md"`), when it exists,
-- these questions: Does each part of `spec.md` have its code and its check? Does the change follow the project guide and the code around it? Is there input without a check, an error without a handler, data that a change can lose, or a query in a loop?
+- these questions: Does each change stay inside its rule? Does each part of `spec.md` have its code and its check? Does the change follow the project guide and the code around it? Is there input without a check, an error without a handler, data that a change can lose, or a query in a loop?
 
 Fix each blocking finding with a test first. Write each finding in `review.md`. Stop at the cap of the size, and give the options of `cycle.md`.
 
@@ -27,10 +27,11 @@ Fix each blocking finding with a test first. Write each finding in `review.md`. 
 
 | Size | When |
 |------|------|
-| Patch, small | When `riskcheck.py --root . --base <base>` gives `raise: yes` |
-| Medium, large | Always |
+| Patch, small | When `riskcheck.py --root . --base <base>` gives `raise: yes`: a separate sub-agent |
+| Medium | Always, in the pass of the code reviewer |
+| Large | Always, in pass 2 |
 
-Start a separate sub-agent. Give it the diff, `spec.md`, and the output of `riskcheck.py`. It loads the skill `dev-stack:secure-coding` when the session has it. Without dev-stack, give it a checklist at the level of the OWASP Top 10:
+Give the reviewer the diff, `spec.md`, and the output of `riskcheck.py`. It loads the skill `dev-stack:secure-coding` when the session has it. Without dev-stack, give it a checklist at the level of the OWASP Top 10:
 
 - access control and tenant isolation,
 - injection,

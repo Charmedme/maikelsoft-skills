@@ -44,7 +44,9 @@ The four layers:
 | 3. Protocol driver | Talks to the real system: HTTP through the test host of the project, or the UI | `HttpReturnsDriver` with `HttpClient` from the `WebApplicationFactory` |
 | 4. System under test | The application | |
 
-Find the place first: the project guide, or an acceptance folder that exists. Else make one folder in the test project, for example `tests/<Project>.Tests/Acceptance/` with `Specs/`, `Dsl/`, and `Drivers/`. Use the test framework, the assertion library, and the test host that the project has. Do not add a package for this. The test name says the scenario in domain words.
+Find the place first: the project guide, or an acceptance folder that exists.
+
+Look for a test project at each layer, also a browser test project (for example Playwright) in another language than the app. Use it before you ask for a new test package. Else make one folder in the test project, for example `tests/<Project>.Tests/Acceptance/` with `Specs/`, `Dsl/`, and `Drivers/`. Use the test framework, the assertion library, and the test host that the project has. Do not add a package for this. The test name says the scenario in domain words.
 
 ## Lock a test file
 

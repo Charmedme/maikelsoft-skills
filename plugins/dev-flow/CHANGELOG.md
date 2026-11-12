@@ -6,6 +6,8 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-11-12
+
 ### Changed
 
 - **Breaking.** The skill `plan-and-build` has the new name `build`. Start it with `/dev-flow:build`. The old command still works: it sends you to `build`.
@@ -14,12 +16,14 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 - When there is no ticket, `build` drafts the item and pushes it after your approval.
 - The size of the change (patch, small, medium, large) replaces the word "tier". `run.md` holds the header of the run.
 - `workcheck.py` checks the new work folder. Each part of `spec.md` needs a check: a test file, or "review only". A medium or large change also needs the order of the scenarios in `plan.md`.
+- The mutation check `mutate.py` runs one time on the locked test files, with a limit, while the reviews run.
+- A scenario has no step review of its own. The code review checks that each change stays inside its rule.
 
 ### Added
 
 - `review-comments`: handles the review comments on a pull request of a solo build. It sorts each comment, fixes it, has a fresh agent review the fix, pushes without force, and replies in each thread. It never resolves a thread.
-- Held-back tests for a medium or large change. A separate agent writes them from the spec. `heldback.py` keeps them outside the repository and runs them in the proof step. The guard hook blocks each direct read of their folder, so the builder cannot see them.
-- A security review from the medium size up, or when `riskcheck.py` finds a risk in the change.
+- Held-back tests for a large change, or for a medium change with a risk. The plan reviewer writes them from the spec before the code exists. `heldback.py` keeps them outside the repository and runs them in the proof step. The guard hook blocks each direct read of their folder, so the builder cannot see them.
+- A security review at each size from medium up. At medium, the one code reviewer also does the security review. At large, the second review pass does it. At patch and small, a separate agent does it when `riskcheck.py` finds a risk in the change.
 - The docs step: `docscheck.py` names each doc that the change makes old.
 - The final report gives the testing, the risk, how to undo the change, and the commits.
 
@@ -78,6 +82,8 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 - The shared language rules: English in ASD-STE100 Simplified Technical English, and Dutch in Begrijpelijk Nederlands (B1). The format is fixed: Markdown.
 - An eval set with three evals, and the results of two test rounds against the six source skills.
 
-[Unreleased]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-flow-v2.0.0...HEAD
+[Unreleased]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-flow-v3.0.0...HEAD
+[3.0.0]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-flow-v2.1.0...dev-flow-v3.0.0
+[2.1.0]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-flow-v2.0.0...dev-flow-v2.1.0
 [2.0.0]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-flow-v1.0.0...dev-flow-v2.0.0
 [1.0.0]: https://github.com/Charmedme/maikelsoft-skills/releases/tag/dev-flow-v1.0.0

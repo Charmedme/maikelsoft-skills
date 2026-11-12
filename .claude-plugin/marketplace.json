@@ -27,7 +27,7 @@
     {
       "name": "dev-flow",
       "source": "./plugins/dev-flow",
-      "description": "Builds one approved work item (story, bug, task, or chore) from the tracker to tested commits, spec first. Example mapping, acceptance tests that are locked after your approval, and one scenario at a time. Sets a tier from the size and the risk of the change. Product questions go back to the product owner on the item.",
+      "description": "Builds one work item (story, bug, task, or chore) from its ticket to tested commits, spec first. Copies the Behaviour spec of the ticket and locks one test file for each rule. Builds one scenario at a time with TDD. Proves the result with held-back tests, a mutation check, and fresh reviews. Sets the size from the change and the risk. Product questions go back to the product owner on the ticket.",
       "category": "development",
       "tags": [
         "planning",

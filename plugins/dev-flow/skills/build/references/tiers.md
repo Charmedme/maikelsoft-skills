@@ -2,6 +2,8 @@
 
 The size sets the steps, the gates, and the caps (`cycle.md`). Set it from facts in the item and in the code, not from a guess. Read the code that the change touches first.
 
+More than one app can take the change, and the item names none? Then take the app that the start script or the CI of the repository runs. Write the choice and its source in `decisions.md`. Ask only when no script names an app.
+
 ## Size
 
 | Size | Signal |
@@ -19,14 +21,14 @@ Count them from the item and the code. Do not guess.
 
 1. Three or more endpoints, screens, or message handlers are new or change.
 2. The schema changes, or a migration must change the data.
-3. The item has more than 8 acceptance criteria or more than 5 rules.
+3. The item has more than 8 acceptance criteria.
 4. The plan has more than 10 files that change.
 
 Write the count in the size line, for example: "Size: large feature. Signals 1 (3 endpoints) and 2 (new columns)."
 
 ## Risk
 
-Each of these sets the size to medium or higher:
+Each of these sets the size to medium or higher. A risk alone does not make the size large:
 
 - A schema change or a data migration.
 - Sign-in, authorization, secrets, or file upload.

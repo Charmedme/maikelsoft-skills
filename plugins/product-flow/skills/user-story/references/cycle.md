@@ -16,7 +16,7 @@ Each phase of the work runs the same cycle: research, design, write, test, revie
 | Idea and intent | `/to-backlog` | A new reviewer asks: is this the real problem, and what is missing? | 3 rounds | The product owner accepts `intent.md`. |
 | Item and behaviour spec | `/to-backlog` and the item commands | The refine pass: a new reviewer checks INVEST and the scenarios. Open questions go to the product owner. | 3 rounds | The product owner approves: the spec is ready. |
 | Spec and plan | `/build` | `specsync.py check`, then a new plan reviewer: does each part have a check, and does the plan fit the system? | 3 rounds | Plan gate: the person approves the plan and the list of scenarios. |
-| Each scenario | `/build` | Red for the right reason, green, a step review of the diff. | 3 tries to get green | Commit. At the cap, stop and ask. |
+| Each scenario | `/build` | Red for the right reason, green. | 3 tries to get green | Commit. At the cap, stop and ask. |
 | Check against the spec | `/build` | Full test suite, held-back tests, `speclock.py check`, `mutate.py`. | 2 fix rounds | All green, or the gap goes to the person. |
 | Code review | `/build` | A new reviewer with the history of the findings. | Set by size (table below) | No open blocking finding. |
 | Security review | `/build` | A separate agent with the secure-coding rules. | 2 rounds | No open finding of Critical or High. |
@@ -32,8 +32,8 @@ The size sets the rounds and the staffing. The risk sets the spec check and the 
 | Round cap, then step back | 1 | 2 | 3 | 3 | 3 |
 | Spec | One failing test | Locked scenarios | Locked scenarios | Locked scenarios | Locked scenarios |
 | Test layers | Plain test | Plain tests in domain words | Four layers | Four layers | Four layers |
-| Held-back tests | No | No | Yes | Yes | Yes |
-| Security review | When the risk check raises it | When the risk check raises it | Own agent | Own agent | Own agent |
+| Held-back tests | No | No | When a risk applies | Yes | Yes |
+| Security review | When the risk check raises it | When the risk check raises it | In the code review | Pass 2 | Own agent |
 
 ## At the cap
 

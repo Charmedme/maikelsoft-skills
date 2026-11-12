@@ -14,12 +14,13 @@ Build one rule at a time, in the order of "## Scenarios" in `plan.md`. Small: in
 1. **Test file.** Write the test file of the rule, with one test for each scenario (`spec.md`, "Test layers"). Run it: it must fail for the right reason.
 2. **Lock.** Approve and lock the file (`spec.md`, "Lock a test file").
 3. **Green.** Write unit tests and code until the test file passes. Each test that passed before stays green. At most 3 tries: a try is a change of the code and a run of the tests. At the cap, stop and give the options of `cycle.md`.
-4. **Step review.** Start a new sub-agent. Give it the diff of this rule, the rule, and the test file. It answers: is this the smallest change that makes the rule pass, and does a change go outside the rule? Fix a blocking finding.
-5. **Commit.** Run `speclock.py check`. Commit with the message `<item key>: R<n> <rule title>`. Follow the commit rules of the project when it has them. Set the status of the scenario to `done` in `plan.md`.
+4. **Commit.** Commit with the message `<item key>: R<n> <rule title>`. Follow the commit rules of the project when it has them. Set the status of the scenario to `done` in `plan.md`.
 
 Start the next rule only after the commit. Change the driver when the protocol needs it.
 
-A patch has one rule: the test that fails because of the bug. Steps 2 and 4 do not apply.
+The hook blocks each edit of a locked file, so do not run `speclock.py check` after each rule. The prove step runs it one time. The code review of step 8 checks that each change stays inside its rule.
+
+A patch has one rule: the test that fails because of the bug. Step 2 does not apply.
 
 ## Stop and ask the human only when
 
