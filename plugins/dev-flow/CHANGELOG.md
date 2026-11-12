@@ -6,6 +6,18 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-11-12
+
+The hand-over to the team mode of dev-team 1.0.0.
+
+### Changed
+
+- For a large item with a risk, `build` reads the route step `team`. With `ask`, it offers the team. With `on`, it takes the team without the question. With `off`, it builds in one session. The hand-over gives the work folder to `dev-team:deliver-story` 1.0.0, which takes over `run.md`, `spec.md`, and the locks.
+- `build` gives a run with the header `flow: team` to `dev-team:deliver-story`. The hand-over comes after `runheader.py write --flow solo`, so the header has the item and the size.
+- `build` and `review-comments` give a `run.md` without a header (an older run) the header with `runheader.py adopt` before they read it.
+- `review-comments` gives a team run to `dev-team:process-review` only when dev-team is installed, together with the work folder. Without dev-team, it handles the comments itself.
+- The source of `heldback.py` is now `shared/heldback.py`, so that dev-team uses the same script. The script did not change.
+
 ## [3.0.0] - 2026-11-12
 
 ### Changed
@@ -82,7 +94,8 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 - The shared language rules: English in ASD-STE100 Simplified Technical English, and Dutch in Begrijpelijk Nederlands (B1). The format is fixed: Markdown.
 - An eval set with three evals, and the results of two test rounds against the six source skills.
 
-[Unreleased]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-flow-v3.0.0...HEAD
+[Unreleased]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-flow-v3.1.0...HEAD
+[3.1.0]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-flow-v3.0.0...dev-flow-v3.1.0
 [3.0.0]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-flow-v2.1.0...dev-flow-v3.0.0
 [2.1.0]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-flow-v2.0.0...dev-flow-v2.1.0
 [2.0.0]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-flow-v1.0.0...dev-flow-v2.0.0

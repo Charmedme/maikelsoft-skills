@@ -1,6 +1,6 @@
 # Run files
 
-All files of one story are in the run folder `docs/work/<slug>/`. The files are the memory of the team: a new agent can continue from them.
+All files of one item are in the work folder `docs/work/<item>/`. It is the same folder as the folder of a solo build of `dev-flow:build`. The files are the memory of the team: a new agent can continue from them.
 
 ## Contents
 
@@ -13,36 +13,51 @@ All files of one story are in the run folder `docs/work/<slug>/`. The files are 
 
 | File | Written by | Step |
 |------|-----------|------|
-| `run.md` | main | each step |
+| `run.md` | main (`runheader.py` writes the header) | each step |
 | `log.md` | each agent | each step |
-| `story.md` | main (story-intake) | 2 |
+| `ticket.txt` | main (story-intake, or `dev-flow:build` before the hand-over). The raw text of the ticket | 2 |
+| `spec.md` | main (story-intake, `specsync.py copy`), then senior (section "## Checks") | 2, 3 |
+| `spec-baseline.json` | `specsync.py copy`. The fingerprint of each rule | 2 |
+| `story.md` | an old run from dev-team 0.6.0 only, in place of `spec.md` | - |
 | `design.md` | senior | 3, 4 |
 | `decision-sheet.md` | senior, then main (answers) | 3, 5 |
 | `packages/NN-<slug>.md` | senior | 3 |
 | `reflection.md` | reflector senior | 4 |
-| `core-report.md` | senior | 6 |
-| `core-review.md` | reflector senior | 6 |
-| `packages/NN-plan.md`, `NN-report.md`, `NN-checks.md` | medior | 7 |
-| `packages/NN-plan-feedback.md`, `NN-review.md` | senior | 7 |
-| `risk-1.txt`, `risk-2.txt` | main (`riskcheck.py`) | 6, 10 |
-| `security-review.md` | security reviewer | 8 |
-| `g2-checks.md`, `g2.md` | main | 9 |
+| `core-report.md` | senior | 7 |
+| `core-review.md` | reflector senior | 7 |
+| `packages/NN-plan.md`, `NN-report.md`, `NN-checks.md` | medior | 8 |
+| `packages/NN-plan-feedback.md`, `NN-review.md` | senior | 8 |
+| `risk-1.txt`, `risk-2.txt` | main (`riskcheck.py`) | 7, 13 |
+| `security-review.md` | security reviewer | 9 |
+| `g2-checks.md`, `g2.md` | main | 13 |
 | `commands.jsonl` | the plugin hook | each Bash command |
-| `older-problems.md` | main | 10, after G2. One row for each older finding |
+| `older-problems.md` | main | 13, after G2. One row for each older finding |
 | `follow-ups/NN-comments.md`, `NN-replies.md`, `NN-review.md`, `NN-risk.txt` | main (process-review), senior | After G2 |
 | `follow-ups/NN-change.md` | main. Quotes a change that the human asks for | After G2 |
 
+The test files of the rules are in the repository, and `.dev-flow/spec-lock.json` locks them. The held-back tests are outside the repository, in the data folder of dev-flow.
+
 ## run.md
 
+`run.md` starts with the shared header of dev-flow and dev-team. `runheader.py` writes it. Do not write it by hand. The team body follows the header.
+
 ```markdown
-# Run: <slug>
+---
+flow: team
+item: <ticket key>
+size: <the size of dev-flow:build, else large>
+step: <n> <step name>
+baseline: <set after specsync.py copy, legacy for an old run>
+---
+
+# Run: <item>
 
 | Field | Value |
 |-------|-------|
-| Story | <title> (<ticket ID or "pasted">) |
-| Step | <1 to 9> <step name> |
+| Item | <title> (<ticket key>) |
+| Step | <1 to 13> <step name> |
 | Status | <last status word> |
-| Branch | dev-team/<slug> |
+| Branch | <the branch rule of the project, else feat/<item> or fix/<item>> |
 | Base | <commit hash at the start> |
 | G1 | open / approved by <name> on <date> / changed on <date> |
 | G2 | open / shown on <date> |
@@ -60,16 +75,18 @@ All files of one story are in the run folder `docs/work/<slug>/`. The files are 
 | security-fix | 1 | 0 |
 | ux-review | 1 | 0 |
 | ux-fix | 1 | 0 |
+| heldback-fix | 1 | 0 |
+| docs-fix | 1 | 0 |
 ```
 
 After G2, each follow-up adds two rows: `followup NN fix` and `followup NN review`. Each has limit 1. An example of a follow-up is the comments of a pull request review. A second round is a new follow-up with the next number.
 
-The senior adds three rows for each package when it starts the package: `NN plan-feedback`, `NN review`, and `NN fix`. Each has limit 1. Only the agent of a step changes the counter of that step. `runcheck.py` reads the counters.
+The senior adds three rows for each package when it starts the package: `NN plan-feedback`, `NN review`, and `NN fix`. Each has limit 1. Only the agent of a step changes the counter of that step. `runcheck.py` reads the header and the counters.
 
 ## log.md
 
 ```markdown
-# Log: <slug>
+# Log: <item>
 
 | Time | Agent | Step | Status | Files | Commit | Checks | Decisions | Assumptions | Reason |
 |------|-------|------|--------|-------|--------|--------|-----------|-------------|--------|

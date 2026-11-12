@@ -1,7 +1,7 @@
 {
   "name": "dev-flow",
   "displayName": "Developer flow",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "Builds one work item (story, bug, task, or chore) from its ticket to tested commits, spec first. Copies the Behaviour spec of the ticket and locks one test file for each rule. Builds one scenario at a time with TDD. Proves the result with held-back tests, a mutation check, and fresh reviews. Sets the size from the change and the risk. Product questions go back to the product owner on the ticket. Output in ASD-STE100 Simplified Technical English or Begrijpelijk Nederlands (B1).",
   "author": {
     "name": "Maikel",

@@ -11,7 +11,7 @@ sync = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(sync)
 
 NEW = ["context.md", "cycle.md", "review-rules.md", "review-template.md",
-       "runheader.py", "specsync.py", "docscheck.py", "speclock.py", "mutate.py"]
+       "runheader.py", "specsync.py", "docscheck.py", "speclock.py", "mutate.py", "heldback.py"]
 
 
 class SyncShared(unittest.TestCase):

@@ -6,6 +6,32 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-12
+
+dev-team becomes the team mode of the dev-flow chain. It needs dev-flow 3.1.0, which has the hand-over. The design notes are in `docs/work/dev-team/team-mode-1.0.md`.
+
+### Added
+
+- `deliver-story` takes over the work folder of `dev-flow:build` (the hand-over). It writes `flow: team` in the shared header of `run.md` with `runheader.py`, and keeps the item, the size, `spec.md`, and the locks.
+- G1 is the plan gate: it shows the scenarios (each rule with its test file). Its approval also approves the lock of each rule that is not high risk.
+- In `build-core`, the senior writes the test file of each rule first, runs it red, and locks it with `speclock.py`, as in a solo build. The lock of a high-risk rule asks the human first.
+- Held-back tests: a separate agent writes them after G1 with `heldback.py`, and the lead runs them before G2. One fix pass for a failed test (counter `heldback-fix`).
+- A docs step before G2 runs `docscheck.py`, with one fix pass of the senior for the docs that it names (counter `docs-fix`).
+- G2 is the final gate: it runs `speclock.py check`, shows the rules with their locked tests, and stops on an open blocking finding.
+- The PO can change the spec on the ticket during the run. Then `specsync.py diff` names each changed rule, and the human accepts it. Only the tests of that rule are unlocked.
+- `runcheck.py` reads the shared header (`RUN-HEADER`), and checks the section "## Checks" of `spec.md` (`RUN-SPEC`). The G2 table "Rule (verbatim) | Locked test" replaces the table of the criteria.
+- `process-review` reads the header and uses the classes of dev-flow (`review-rules.md`). It stops at the round cap of the size in `cycle.md` (small 1, medium 2, large 3). At the cap, the human can also send the open points back (option c).
+- A run from 0.6.0 goes on: `runheader.py adopt` gives it the header with `baseline: legacy`, and `runcheck.py` accepts its `story.md`. Such a run skips the held-back tests and the prove step, and G2 says so.
+
+### Changed
+
+- **Breaking.** The skills of dev-team are out of the `/` menu (`user-invocable: false`): `deliver-story`, `process-review`, `story-intake`, `team-decisions`, `senior-practice`, `medior-practice`, and `stack-index`. Other skills still start them, and Claude Code starts the team when you ask for it. Action required: use `/dev-flow:build` to build an item, and `/dev-flow:review-comments` for the comments on a pull request. Both give a team run to the team.
+- **Breaking.** dev-team needs dev-flow 3.1.0 or later. `plugin.json` declares dev-flow as a dependency without a version range. Claude Code installs a missing dependency with the plugin. Action required: update dev-flow to 3.1.0 or later when you have an older version.
+- **Breaking.** A team run writes `spec.md` in place of `story.md`. `story-intake` copies the Behaviour spec of the ticket with `specsync.py`, with the fingerprint of each rule in `spec-baseline.json`. An item without a Behaviour spec, or with a spec in draft, stops: the refine pass of `dev-flow:build` comes first. Action required: give the team items with a ready Behaviour spec. A chore or a task needs none.
+- **Breaking.** A new run uses the branch rules of the project, else `feat/<item>` or `fix/<item>`, not `dev-team/<slug>`. The work folder is `docs/work/<item>/`, with the ticket key as the item. Action required: none. A run from 0.6.0 keeps its branch and folder.
+- The session-start hook keeps its rules. It names the entry skills (now `dev-flow:build` and `dev-flow:review-comments`), unless dev-setup surely gives the route. That is when dev-setup is installed for this folder, enabled, and has a role set.
+- The senior and the mediors never change a locked test file or make a DSL check weaker. The hook of dev-flow blocks such an edit.
+
 ## [0.6.0] - 2026-10-31
 
 The changes come from `docs/work/review-flow/`. Origin, `REVIEW.md`, the nit cap, and proposal rows are on hold until a test shows their value.

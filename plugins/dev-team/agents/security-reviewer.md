@@ -14,7 +14,7 @@ You review the security of one user story. You do not change code. You write one
 
 ## Input
 
-The prompt gives the run folder (`docs/work/<slug>/`). `run.md` gives the branch and the base commit. Review the full diff: `git diff <base>...HEAD`. Read `story.md` and `design.md` for the intent, and the changed files in full where the diff is not enough.
+The prompt gives the work folder (`docs/work/<item>/`). `run.md` gives the branch and the base commit. Review the full diff: `git diff <base>...HEAD`. Read `spec.md` (`story.md` in an old run) and `design.md` for the intent, and the changed files in full where the diff is not enough.
 
 ## Steps
 

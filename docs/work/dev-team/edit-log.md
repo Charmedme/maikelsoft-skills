@@ -35,3 +35,12 @@ This log records each change to a skill, an agent, or a script of the plugin, th
 - Observed: the fix pass kept the migration in 3 of 3 runs, and the round stop fired only on its trigger. Bug finding gave no difference between the cut version and the held rules (10 of 10 each).
 - Verdict: keep the cut. Each result comes from a small sample with fixtures that the author wrote.
 - Evidence: `docs/work/review-flow/comparison.md`
+
+### E3: the team mode of the dev-flow chain
+- Date and version: 2026-11-12, dev-team 1.0.0 and dev-flow 3.1.0
+- Change: step 7 of plan version 7. `deliver-story` is the team mode of `dev-flow:build`, and `process-review` is the team mode of `dev-flow:review-comments`. The team uses the shared header of `run.md`, `spec.md` with the fingerprints, the lock of one test file for each rule, and the held-back tests. G1 is the plan gate and G2 is the final gate. The skills are out of the `/` menu. The session-start hook gives the route only without dev-setup.
+- Fix pass: a review found gaps. One fix pass closed them: the release of dev-flow 3.1.0, old runs without a header, the docs step, and the hook. The decisions are in `team-mode-1.0.md`.
+- Test: `tests/test_devteam.py` (new tests for `RUN-HEADER`, `RUN-SPEC`, an old run, the G2 rules table, and the hook with and without dev-setup), `tests/test_sync_shared.py`, `tests/test_readme_commands.py`. The checkers `skillcheck.py` and `doccheck.py` on each changed skill and Markdown file. No run of the team on an item.
+- Observed: the scripts and hooks pass their tests. The behaviour of the skills is not measured.
+- Verdict: Not tested in the delivery suite yet. Plan step 9 tests it.
+- Evidence: `docs/work/dev-team/team-mode-1.0.md`

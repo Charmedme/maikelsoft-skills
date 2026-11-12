@@ -7,19 +7,27 @@
     python3 runcheck.py docs/work/<slug> --format json
 
 What it checks:
-    RUN-FILE      run.md, story.md, design.md, decision-sheet.md, and log.md exist.
+    RUN-HEADER    run.md starts with the shared header of dev-flow and dev-team (YAML front matter with
+                  flow, item, size, step, and baseline), and the flow is team. runheader.py writes it.
+    RUN-FILE      run.md, spec.md, design.md, decision-sheet.md, and log.md exist. A run with the header
+                  "baseline: legacy" (a run from before dev-team 1.0.0) can have story.md in place of spec.md.
+    RUN-SPEC      spec.md has a section "## Checks" with a table: Part | Check. Each rule R<n> of the
+                  behaviour spec block has a row, and each row names a test file or "review only".
+                  spec-baseline.json exists when spec.md has a spec block. At G2, each test file exists.
     RUN-STATUS    each step file has one "Status:" (or "Verdict:") line with a valid word, or the word
                   on the first line under a "## Verdict" heading.
     RUN-COUNTER   each counter in run.md is at or below its limit. At G2, security-review is 1.
                   A light run (run.md field Mode: light) has no reflection and no security review.
                   A raised run (Mode: raised) has a security review and no reflection.
-                  When the run folder has ux-design.md, or story.md lists a mock-up (a line "Mock-up: ..."), ux-review is 1 at G2 and ux-review.md exists.
+                  When the run folder has ux-design.md, or spec.md (story.md in a legacy run) lists a mock-up
+                  (a line "Mock-up: ..."), ux-review is 1 at G2 and ux-review.md exists.
     RUN-ROUNDS    each package has at most one plan feedback, one review, and one fix.
     RUN-STEPS     the files of each step exist (plan, feedback, report, review per package).
     RUN-FIX       a review with CHANGES_REQUIRED has a fix row in log.md.
     RUN-LOG       log.md has the columns of the template, and each row has a valid status.
-    RUN-G2        stage report: risk-2.txt exists, and g2.md has the line Result, the table of the acceptance criteria
-                  with one or more rows, and the text for the pull request.
+    RUN-G2        stage report: risk-2.txt exists, and g2.md has the line Result, the table of the rules
+                  (first column "Rule (verbatim)", or "Criterion (verbatim)" in an old run) with one or more rows,
+                  and the text for the pull request.
     RUN-EVIDENCE  before G2, a log row that says a check passed has a matching command in commands.jsonl.
                   After G2, each follow-up window has a checks.py command. A window starts at a FOLLOWUP_STARTED
                   row whose Reason holds the full UTC time, and it ends at the next such row. A follow-up that
@@ -37,6 +45,7 @@ import argparse
 import json
 import pathlib
 import re
+import subprocess
 import sys
 
 STATUS = {
@@ -65,6 +74,14 @@ CHECK_COMMAND = re.compile(r"checks\.py|dotnet\s+(build|test|format)|npm\s+(run|
 # A log name that is a mode of another agent: the hook logs the agent type, not the mode.
 AGENT_TYPES = {"reflector": "senior"}
 FULL_TIME = re.compile(r"\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\b")
+# The shared header of run.md. Keep it the same as FIELDS and ALLOWED in runheader.py.
+HEADER_FIELDS = ("flow", "item", "size", "step", "baseline")
+HEADER_ALLOWED = {"flow": ("solo", "team"), "size": ("patch", "small", "medium", "large"),
+                  "baseline": ("none", "set", "legacy")}
+FRONT = re.compile(r"\A---\n(.*?)\n---\n?", re.DOTALL)
+SPEC_BLOCK = re.compile(r"<!-- BEGIN behaviour spec: [^>]*-->(.*?)<!-- END behaviour spec -->", re.DOTALL)
+SPEC_RULE = re.compile(r"^\s*(?:Rule|Regel):\s*(R\d+)\b", re.MULTILINE)
+REVIEW_ONLY = re.compile(r"^review only$", re.IGNORECASE)
 
 
 def table_rows(text, first_header):
@@ -84,6 +101,86 @@ def table_rows(text, first_header):
         elif inside:
             break
     return rows
+
+
+def run_header(run):
+    """The fields of the shared header of run.md, or None when run.md has no header."""
+    path = run / "run.md"
+    if not path.is_file():
+        return None
+    match = FRONT.match(path.read_text(encoding="utf-8"))
+    if not match:
+        return None
+    fields = {}
+    for line in match.group(1).splitlines():
+        key, sep, value = line.partition(":")
+        if sep:
+            fields[key.strip()] = value.strip()
+    return fields
+
+
+def header_errors(fields):
+    """The problems of the header, as messages."""
+    if fields is None:
+        return ["run.md has no shared header. Run runheader.py write --flow team (or runheader.py adopt for an old run)"]
+    out = []
+    for key in HEADER_FIELDS:
+        value = fields.get(key, "")
+        if not value:
+            out.append(f"header field '{key}' is missing")
+        elif key in HEADER_ALLOWED and value not in HEADER_ALLOWED[key]:
+            out.append(f"header field '{key}' is '{value}'; use {', '.join(HEADER_ALLOWED[key])}")
+    for key in fields:
+        if key not in HEADER_FIELDS:
+            out.append(f"field '{key}' is not a header field")
+    if fields.get("flow") == "solo":
+        out.append("the header says flow: solo. A team run has flow: team")
+    return out
+
+
+def section(text, title):
+    """The text under '## <title>' up to the next heading of level 1 or 2."""
+    match = re.search(rf"^##\s+{re.escape(title)}\s*$(.*?)(?=^#{{1,2}}\s|\Z)", text, re.MULTILINE | re.DOTALL)
+    return match.group(1) if match else ""
+
+
+def repo_root(folder):
+    try:
+        done = subprocess.run(["git", "-C", str(folder), "rev-parse", "--show-toplevel"],
+                              capture_output=True, text=True, timeout=10)
+    except (OSError, subprocess.SubprocessError):
+        return folder
+    return pathlib.Path(done.stdout.strip()) if done.returncode == 0 else folder
+
+
+def check_spec(run, stage):
+    """The rule RUN-SPEC: spec.md has a check for each rule of the behaviour spec."""
+    path = run / "spec.md"
+    text = path.read_text(encoding="utf-8")
+    block = SPEC_BLOCK.search(text)
+    rules = SPEC_RULE.findall(block.group(1)) if block else []
+    findings = []
+    if block and not (run / "spec-baseline.json").is_file():
+        findings.append((str(run / "spec-baseline.json"), "RUN-SPEC",
+                         "file is missing. Copy the spec with specsync.py copy, so each rule has a fingerprint"))
+    rows = [cells for cells in table_rows(section(text, "Checks"), "part")[1:] if cells and cells[0]]
+    if not rows:
+        return findings + [(str(path), "RUN-SPEC", "spec.md needs a section '## Checks' with a table: Part | Check")]
+    parts = {}
+    root = repo_root(run) if stage == "g2" else None
+    for cells in rows:
+        value = cells[1].strip().strip("`").strip() if len(cells) > 1 else ""
+        rid = re.match(r"(R\d+)\b", cells[0])
+        if rid:
+            parts.setdefault(rid.group(1), []).append(value)
+        if not value:
+            findings.append((str(path), "RUN-SPEC", f"the part {cells[0]!r} has no check. Name a test file or 'review only'"))
+        elif root is not None and not REVIEW_ONLY.match(value) and not (root / value).exists():
+            findings.append((str(path), "RUN-SPEC", f"the test file {value} of {cells[0]!r} does not exist"))
+    for rid in rules:
+        if rid not in parts:
+            findings.append((str(path), "RUN-SPEC", f"the rule {rid} has no row in '## Checks'"))
+    return findings
 
 
 # The review template of dev-stack:secure-coding puts the word on the first line under "## Verdict".
@@ -119,8 +216,8 @@ def check_report(run):
     text = path.read_text(encoding="utf-8")
     if not re.search(r"^Result:", text, re.MULTILINE):
         findings.append((str(path), "RUN-G2", "the line 'Result:' is missing"))
-    if len(table_rows(text, "criterion (verbatim)")) < 2:
-        findings.append((str(path), "RUN-G2", "the table of the acceptance criteria has no rows"))
+    if len(table_rows(text, "rule (verbatim)")) < 2 and len(table_rows(text, "criterion (verbatim)")) < 2:
+        findings.append((str(path), "RUN-G2", "the table of the rules (Rule (verbatim) | Locked test) has no rows"))
     if not re.search(r"^#+\s*Text for the pull request", text, re.MULTILINE):
         findings.append((str(path), "RUN-G2", "the section 'Text for the pull request' is missing"))
     return findings
@@ -134,10 +231,18 @@ def check(run, stage):
     def add(file, rule, message):
         findings.append((str(file), rule, message))
 
-    must = ["run.md", "story.md", "design.md", "decision-sheet.md", "log.md"]
+    fields = run_header(run)
+    if (run / "run.md").is_file():
+        for message in header_errors(fields):
+            add(run / "run.md", "RUN-HEADER", message)
+    legacy = bool(fields) and fields.get("baseline") == "legacy"
+    item = "story.md" if legacy and not (run / "spec.md").is_file() else "spec.md"
+    must = ["run.md", item, "design.md", "decision-sheet.md", "log.md"]
     for name in must:
         if not (run / name).is_file():
             add(run / name, "RUN-FILE", "file is missing")
+    if item == "spec.md" and (run / "spec.md").is_file():
+        findings.extend(check_spec(run, stage))
     mode = run_mode(run)
     light = mode == "light"
     if stage == "g1" or light:
@@ -169,10 +274,10 @@ def check(run, stage):
                 add(run / "run.md", "RUN-COUNTER", f"{name} is {value}, the limit is {limit}")
         if stage != "g1" and not light and counters.get("security-review", (1, 0))[1] != 1:
             add(run / "run.md", "RUN-COUNTER", "security-review must be 1 before G2")
-        story = run / "story.md"
+        story = run / item
         has_mockup = story.is_file() and MOCKUP_LINE.search(story.read_text(encoding="utf-8", errors="ignore"))
         if stage != "g1" and ((run / "ux-design.md").is_file() or has_mockup):
-            source = "ux-design.md" if (run / "ux-design.md").is_file() else "a mock-up in story.md"
+            source = "ux-design.md" if (run / "ux-design.md").is_file() else f"a mock-up in {item}"
             if counters.get("ux-review", (1, 0))[1] != 1:
                 add(run / "run.md", "RUN-COUNTER", f"ux-review must be 1 before G2 (the run has {source})")
             if not (run / "ux-review.md").is_file():

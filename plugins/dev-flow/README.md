@@ -17,7 +17,7 @@ claude plugin install dev-flow@maikelsoft-skills
 
 Optional plugins:
 
-- `dev-team`: the skill offers `dev-team:deliver-story` for a large change with a risk. It starts the team only when you say yes.
+- `dev-team` 1.0.0 or later: the team mode of `build` for a large change with a risk. The route step `team` of your role decides: `ask` offers the team, `on` takes the team without the question, and `off` builds in one session.
 - `ux-design`: the UX review of an item with UI work needs it, and Playwright.
 - `product-flow`: drafts a bug item for a fix without a ticket. Without it, `build` drafts the item itself.
 - `dev-stack`: the security reviewer loads `dev-stack:secure-coding`. Without it, the reviewer uses a short checklist at the level of the OWASP Top 10.
@@ -100,7 +100,7 @@ A risk sets the size to medium or higher. A risk alone does not make the size la
 
 The type of the change also changes the steps. A bug starts with a test that fails because of the bug. A refactor runs the tests before and after. A chore or a task is patch or small, unless a risk applies. It has no Behaviour spec: the table "## Checks" of `spec.md` is its gate.
 
-The skill moves the size up when the facts show more work or a risk. It moves the size down only when you say so. When the size is large and a risk applies, the skill offers the team of `dev-team`.
+The skill moves the size up when the facts show more work or a risk. It moves the size down only when you say so. When the size is large and a risk applies, the skill offers the team of `dev-team`, or takes it when your route says `team=on`. The team works in the same work folder, with the same `spec.md` and locks.
 
 The size sets the steps:
 

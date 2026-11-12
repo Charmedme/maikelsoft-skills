@@ -53,7 +53,13 @@ Tell the human the size in one line, for example: "Size: small bug. One method i
 
 ## Large with a high risk
 
-When the size is large and a risk applies, offer the team in the size line: "The team of dev-team can build this. Do you want the team?" Start `dev-team:deliver-story` only when the human says yes. Else go on in this session.
+When the size is large, a risk applies, and the dev-team plugin is installed, the route step `team` (`context.md`) decides:
+
+- `ask` (the default): offer the team in the size line: "The team of dev-team can build this. Do you want the team?"
+- `on` (for example the route of a tech lead): take the team without the question. Say it in the size line.
+- `off`: go on in this session.
+
+Hand over after `runheader.py write --flow solo` of step 4, so that the header has the item and the size. To hand over, start `dev-team:deliver-story` with the work folder `docs/work/<item>/`, and stop this skill. The team takes over `run.md`, `ticket.txt`, `spec.md`, and the locks: it writes `flow: team` in the header. Without a yes, or without dev-team, go on in this session.
 
 ## Change the size
 

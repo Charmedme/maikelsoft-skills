@@ -15,16 +15,19 @@ Use the headings as written, in this order. Write "None." under an empty heading
 ## design.md
 
 ```markdown
-# Design: <story title>
+# Design: <item key>: <title>
 
 Status: DESIGN_READY
 
 ## Summary
 <3 to 5 lines: what changes, where, and why this design>
 
-## Acceptance criteria
-| # | Criterion (verbatim from story.md) | Design part | Package | Test |
-|---|------------------------------------|-------------|---------|------|
+## Rules and criteria
+| # | Rule R<n> or criterion AC<n> (verbatim from spec.md) | Design part | Package | Test file | Risk |
+|---|-------------------------------------------------------|-------------|---------|-----------|------|
+
+## Acceptance tests
+<the DSL files, the protocol driver, and the test project. The test file of each rule is in "## Checks" of spec.md.>
 
 ## Current facts
 | Fact | Value | Source | Date |
@@ -114,9 +117,15 @@ Status: REFLECTION_READY
 ## core-report.md
 
 ```markdown
-# Core report: <story title>
+# Core report: <item key>: <title>
 
 Status: CORE_DONE
+
+## Locked tests
+<each rule R<n>, its test file, the red result before the code, and the lock (who approved it)>
+
+## Locks to approve
+<only for a high-risk rule before its lock: the rule, the test file, and the scenarios that it checks. The answer of the human goes under each row. Or "None.">
 
 ## Done
 <files and what they do, one line each>
