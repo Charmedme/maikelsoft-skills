@@ -1,6 +1,6 @@
 {
   "plugin": "dev-stack",
-  "skills": ["angular", "angular-developer", "aspnetcore", "secure-coding", "dotnet-testing", "ux-design:ux-practice", "ux-design:web-accessibility"],
+  "skills": ["angular", "angular-developer", "aspnetcore", "secure-coding", "dotnet-testing", "ux-design:ux-design", "ux-design:web-accessibility"],
   "method": [
     "Load only the descriptions of the listed skills. Give each query to a new agent, 3 times. Record which skills the agent loads.",
     "'expect' is the skill that must trigger, or 'none'. 'not' is the near skill that must not trigger ('angular' unless stated).",
@@ -15,7 +15,7 @@
     {"q": "Translate the new buttons on the product page with Transloco", "expect": "angular"},
     {"q": "Add a PUT endpoint with ETag concurrency to the products API", "expect": "aspnetcore", "not": "angular"},
     {"q": "Is it safe to keep the JWT in localStorage in our Angular app?", "expect": "secure-coding", "not": "angular"},
-    {"q": "Design the layout and the states of the new product edit screen", "expect": "ux-design:ux-practice", "not": "angular"},
+    {"q": "Design the layout and the states of the new product edit screen", "expect": "ux-design:ux-design", "not": "angular"},
     {"q": "Fix the AngularJS 1.8 directive that renders the order table", "expect": "none", "not": "angular"},
     {"q": "Write a React hook that loads the products from the API", "expect": "none", "not": "angular"}
   ]

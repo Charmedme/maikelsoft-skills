@@ -3,7 +3,7 @@
 
     python3 evals/ux-design/score3.py <runs> --suite setup|brand
 
-setup  Reads the "## Design" section of repo/CLAUDE.md. Counts the topics that it covers, the facts
+setup  Reads the "## Design" section of repo/.claude/rules/delivery.md, else of repo/CLAUDE.md. Counts the topics that it covers, the facts
        of the fixture that it has right, and the claims of a Figma plan or seat that it does not mark
        as a guess (invented facts).
 brand  Runs brandcheck.py on repo/design-system/tokens.json and the copy check on PRODUCT.md. Counts the
@@ -61,11 +61,14 @@ GUESS = re.compile(r"(?i)guess|unknown|assum|confirm|not known|tbd|\?|ask|unveri
 
 
 def design_section(repo):
-    md = repo / "CLAUDE.md"
-    if not md.exists():
-        return ""
-    m = re.search(r"^## Design\b.*?$(.*?)(?=^## |\Z)", md.read_text(encoding="utf-8"), re.S | re.M)
-    return m.group(1) if m else ""
+    # ux-design 1.0.0 writes the section in .claude/rules/delivery.md, 0.x in CLAUDE.md.
+    for md in (repo / ".claude" / "rules" / "delivery.md", repo / "CLAUDE.md"):
+        if not md.exists():
+            continue
+        m = re.search(r"^## Design\b.*?$(.*?)(?=^## |\Z)", md.read_text(encoding="utf-8"), re.S | re.M)
+        if m:
+            return m.group(1)
+    return ""
 
 
 def score_setup(run):

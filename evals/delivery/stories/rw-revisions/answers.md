@@ -7,3 +7,4 @@
 - The revision list has no paging for now.
 - `version` in the body of a create is ignored.
 - A slug can go back to an earlier title of the same article. The article then simply has that slug again.
+- The article list and the feed show the `version` of each article too.

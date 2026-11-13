@@ -6,6 +6,7 @@
 | R1 | `version` in a create body is ignored | answers.md line 8 |
 | R1 | An update that changes nothing: no new version, no revision | answers.md line 3 |
 | R1 | Existing articles start at version 1 with no revisions | answers.md line 4 |
+| R1 | The list and the feed show `version` | story.md AC1, answers.md line 10 |
 | R2 | `PUT /api/articles/{slug}` needs `version`; not current: 409, error on `version`, nothing changes | story.md AC2 |
 | R2 | Without `version`: 422, error on `version` | story.md AC3 |
 | R2 | Two updates from the same version: exactly one succeeds, the other 409 | story.md AC4 |

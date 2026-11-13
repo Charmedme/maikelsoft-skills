@@ -6,6 +6,22 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-12
+
+### Added
+
+- The command `/ux-design` (skill `ux-design`): the design of one item with UI work before the build. It reads the ticket and makes the work folder `docs/work/<item>/` with `story.md`. It starts the `ux-designer` agent in design and mockup mode, and in prototype mode after a yes. It holds the stops for the style direction and for the key screens, and adds an `Approved:` line to `ux-design.md` after the approval. It sends the state examples that the Behaviour spec does not cover, the proposed decisions, and the opportunities to the product owner in one message. It ends with a `Next:` line.
+- `/ux-review` is the command after the build. When a person starts it, it reads the design facts and finds the work folder and the base of the diff. It ends with the verdict and a `Next:` line. Without `ux-design.md`, it does an audit with the heuristics only.
+- `/ux-design` and `/ux-review` read the role and the route of the person from the dev-setup plugin. Without dev-setup, they use the defaults.
+
+### Changed
+
+- **Breaking.** The `## Design` section moves from `CLAUDE.md` to `.claude/rules/delivery.md`, the file of the project facts. Action required: none for a running project. The agent, the commands, and the tool skills still read the section in `CLAUDE.md` when `delivery.md` has none. The setup step offers to move it.
+- **Breaking.** `ux-setup` is out of the `/` menu. It is the setup step of this plugin: `/setup` of dev-setup and the ux-design commands start it. Action required: use `/setup`, or `/ux-design`, which asks the setup questions at its first run.
+- **Breaking.** `ux-practice` is out of the `/` menu. It is the method of the `ux-designer` agent. Action required: use `/ux-design` for the design of an item.
+- `setupscan.py` reads the `## Design` section in `.claude/rules/delivery.md` first, then in `CLAUDE.md`. The new field `design_section_file` gives the file.
+- The agent reads the mockup tool and the design-system source from the `## Design` section, in the file where it is.
+
 ## [0.4.0] - 2026-10-28
 
 ### Added

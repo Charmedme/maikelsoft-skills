@@ -4,6 +4,7 @@
 |------|--------------------|--------|
 | R1 | Route `POST /api/articles/{slug}/comments`, body `{"comment": {"body": ...}}`, reply fields `id`, `createdAt`, `updatedAt`, `body`, `author` | story.md AC1 |
 | R1 | Unknown article gives 404 on add | answers.md line 4 |
+| R1 | Adding a comment returns 201 | story.md AC1, answers.md line 9 |
 | R2 | 422 with an error on `body` for a comment without text | story.md AC5 |
 | R2 | A body of only spaces counts as without text | answers.md line 7 |
 | R2 | Error format `{"errors": {"body": [...]}}` (422, field name in lower case) | repo/src/Conduit/Infrastructure/Errors/ErrorHandlingMiddleware.cs (existing) |

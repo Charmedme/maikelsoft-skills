@@ -10,7 +10,7 @@
     {
       "name": "dev-docs",
       "source": "./plugins/dev-docs",
-      "description": "Write, rewrite, and review developer documentation: README, tutorial, how-to, reference, explanation, ADR, changelog, code comments, and UI text.",
+      "description": "Write, rewrite, and review developer documentation: README, tutorial, how-to, reference, explanation, ADR, changelog, code comments, and UI text. /update-docs checks and updates the whole doc set of a project.",
       "category": "documentation",
       "tags": [
         "documentation",
@@ -142,7 +142,7 @@
     {
       "name": "ux-design",
       "source": "./plugins/ux-design",
-      "description": "A UX designer agent and its practice skills: problem frame, flow, pattern rules, design spec with a source for each decision, states, mockups, prototypes, and reviews. Also Claude Design, Figma, and OpenPencil, brand files and DTCG tokens, WCAG 2.2 accessibility, and the project setup.",
+      "description": "/ux-design designs one item with UI before the build: problem frame, flow, pattern rules, design spec with a source for each decision, states, mockups, and a prototype for a test with users. /ux-review checks the built screens against the design. A UX designer agent does the work. Also Claude Design, Figma, and OpenPencil, brand files and DTCG tokens, and WCAG 2.2 accessibility.",
       "category": "design",
       "tags": [
         "ux",

@@ -1,5 +1,5 @@
 {
- "ux-practice": {
+ "ux-design": {
   "start": [
    "Design the UX for this user story before the developers start.",
    "We need a UX design with screens and states for the new returns flow.",
@@ -98,7 +98,7 @@
  "ux-setup": {
   "start": [
    "Set up this project for design work: which design tools do we use?",
-   "The ux-designer agent says the Design section of CLAUDE.md is missing. Fix that.",
+   "The ux-designer agent says the Design section of the project facts is missing. Fix that.",
    "We switched from Figma to Claude Design. Update the design setup of the repo.",
    "Before the first mockup, record our design system source and languages for the agent.",
    "Configure the mockup tool and the run command for the UX agent in this repo."

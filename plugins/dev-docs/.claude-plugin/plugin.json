@@ -1,8 +1,8 @@
 {
   "name": "dev-docs",
   "displayName": "Developer docs",
-  "version": "1.4.0",
-  "description": "Write, rewrite, and review developer documentation in ASD-STE100 Simplified Technical English or Begrijpelijk Nederlands (B1). Ten skills, one for each document type, with a built-in checker.",
+  "version": "2.0.0",
+  "description": "Write, rewrite, and review developer documentation in ASD-STE100 Simplified Technical English or Begrijpelijk Nederlands (B1). One skill for each document type, and /update-docs for the whole doc set, with a built-in checker.",
   "author": {
     "name": "Maikel",
     "url": "https://github.com/Charmedme"
