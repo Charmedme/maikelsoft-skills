@@ -1,6 +1,6 @@
 ---
 name: openpencil
-description: Design with OpenPencil (.op files, the op CLI, the OpenPencil MCP server) - put checked HTML mockups into OpenPencil with one frame for each state, then edit them with the openpencil-design skill. Use when CLAUDE.md names OpenPencil as a design tool or the mockup tool, when the project has .op files, or when the user asks for OpenPencil.
+description: Design with OpenPencil (.op files, the op CLI, the OpenPencil MCP server) - put checked HTML mockups into OpenPencil with one frame for each state, then edit them with the openpencil-design skill. Use when the design facts of the project (the "## Design" section) name OpenPencil as a design tool or the mockup tool, when the project has .op files, or when the user asks for OpenPencil.
 ---
 
 # OpenPencil
@@ -30,4 +30,4 @@ Do not use `op import:html` for these mockups. It cannot measure CSS tables and 
 
 ## New designs in OpenPencil
 
-When the human wants a design made in OpenPencil, not imported, follow `openpencil-design`. Use the tokens of the design-system source of `CLAUDE.md` as OpenPencil variables (`op vars:set`). Then check the result as a mockup: export the frames, and look at them as step 3 says.
+When the human wants a design made in OpenPencil, not imported, follow `openpencil-design`. Use the tokens of the design-system source of the `## Design` section as OpenPencil variables (`op vars:set`). Then check the result as a mockup: export the frames, and look at them as step 3 says.

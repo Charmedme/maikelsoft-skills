@@ -1,5 +1,15 @@
 # The "## Design" section
 
+The section is in `.claude/rules/delivery.md` at the root of the repository. That file has one section for each plugin. When the file does not exist, make it with this start, and add the section below it:
+
+```markdown
+# Delivery facts
+
+The facts of this project for the delivery flow. /setup writes this file. Change it in a pull request.
+```
+
+ux-design 0.x wrote the section in `CLAUDE.md`. The commands still read it there when `delivery.md` has no `## Design` section.
+
 ## Template
 
 ```markdown

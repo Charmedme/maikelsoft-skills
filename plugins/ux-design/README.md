@@ -4,7 +4,9 @@ ux-design is a Claude Code plugin with a UX designer agent and its practice skil
 
 English output follows ASD-STE100 Simplified Technical English. Dutch output follows Begrijpelijk Nederlands (taalniveau B1).
 
-Status: version 0.3.1, preview. The agent has four modes: design, mockup, prototype, and review. The tool skills connect it to Claude Design, Figma, and OpenPencil. product-flow, dev-flow, and dev-team call the agent when this plugin is installed. Read the test results below before you use it on real work.
+Status: version 1.0.0. Two commands carry the work: `/ux-design` designs one item before the build, and `/ux-review` checks the built screens against the design. The agent has four modes: design, mockup, prototype, and review. The tool skills connect it to Claude Design, Figma, and OpenPencil. product-flow, dev-flow, and dev-team call the agent when you install this plugin. The plugin works alone.
+
+Read the test results below before you use it on real work.
 
 ## Install
 
@@ -20,7 +22,7 @@ After the install, run `/reload-plugins` in each open Claude Code session, or st
 
 ## Quick start
 
-1. Ask Claude Code to "set up this project for UX work". The `ux-setup` skill scans the project, asks one round of questions, and writes the `## Design` section of `CLAUDE.md`. You can also write the section yourself:
+1. Set up the design facts of the project one time. With the dev-setup plugin, run `/setup`. Without it, `/ux-design` asks the questions at its first run. The answers go in the `## Design` section of `.claude/rules/delivery.md`:
 
    ```markdown
    ## Design
@@ -31,54 +33,69 @@ After the install, run `/reload-plugins` in each open Claude Code session, or st
    - Run the app: npm run dev, http://localhost:5173
    ```
 
-2. Put the story in a work folder, for example `docs/work/fl-31-assign/story.md`.
-3. Ask Claude Code:
+2. Design one item with UI work:
 
    ```
-   Use the ux-designer agent in design mode, then in mockup mode, for docs/work/fl-31-assign.
+   /ux-design SHOP-12
    ```
 
-4. Read `ux-design.md` and the mockups in `mockups/`. Each proposed decision and each opportunity waits for the product owner.
-5. For a test with users, ask for prototype mode. After the build, ask for review mode. Review mode needs the run command of the app and Python Playwright.
+   The command reads the ticket, makes the work folder `docs/work/SHOP-12/`, and starts the agent for the design and the mockups. It stops for your choice of a style direction and for your OK on the key screens. It offers a prototype for a test with users.
+3. Read `ux-design.md` and the mockups in `mockups/`, and approve the design. After your approval of the text, one message goes to the product owner. It holds the state examples, the proposed decisions, and the opportunities.
+4. After the build, check the built screens against the design:
+
+   ```
+   /ux-review SHOP-12
+   ```
+
+   The review needs the run command of the app and Python Playwright. It writes `ux-review.md` with a verdict.
+
+Each command ends with the next step, for example `Next: /build SHOP-12`.
+
+## Upgrade from 0.x
+
+- The `## Design` section moves from `CLAUDE.md` to `.claude/rules/delivery.md`. The commands and the agent still read it in `CLAUDE.md` when `delivery.md` has no such section. The setup step offers to move it.
+- `ux-setup` and `ux-practice` are out of the `/` menu. `/setup` or `/ux-design` starts the setup step, and `/ux-design` starts the method.
 
 ## Commands
 
-Claude Code starts a skill by itself when your request matches its trigger. You can also start a skill with its command. Text after the command goes to the skill, for example `/ux-design:ux-review Check the order screen at 390 px`.
+Claude Code starts a skill by itself when your request matches its trigger. You can also start a skill with its command. Text after the command goes to the skill, for example `/ux-design:ux-review SHOP-12`. When no other plugin has a command with the same name, the short name also works: `/ux-design`, `/ux-review`.
 
 | Command | What it does | Starts by itself when you ask for |
 |---------|--------------|-----------------------------------|
-| `/ux-design:ux-setup` | Sets up a project for UX work and writes the `## Design` section of `CLAUDE.md`. | "Set up this project for UX work", or a change of the design tools |
-| `/ux-design:ux-practice` | The method for the UX design of a story: phases, the design spec, and the decision log. | The UX design or a design spec before the build |
+| `/ux-design:ux-design` | Designs one item with UI work before the build: the design spec, the mockups of each state, and a prototype for a test with users. Sends the state examples to the product owner. | The UX design, a design spec, or the screens and states of a story before the build |
+| `/ux-design:ux-review` | Reviews a built feature against its design in each state and at each size. | A built screen checked against its design, or a UX audit |
 | `/ux-design:ux-patterns` | Selects an interaction pattern from the facts of a task. | A pattern for a list, a form, a flow, or a destructive action |
 | `/ux-design:ux-states` | Lists the states of each screen and how the user recovers. | The states of a screen, or more than the happy path |
 | `/ux-design:ui-craft` | The visual design method, with a rubric and a list of AI tells. | A screen judged on visual quality, or output that looks generic |
 | `/ux-design:brand-rules` | Writes and checks `DESIGN.md`, `PRODUCT.md`, and DTCG design tokens. | Brand rules, a style guide, or design tokens |
 | `/ux-design:web-accessibility` | WCAG 2.2 AA checks for a design or a built feature. | Accessibility, focus, contrast, or screen reader use |
-| `/ux-design:ux-prototype` | Makes a clickable prototype with A/B variants and a test plan. | A flow tested with users, or variants compared |
-| `/ux-design:ux-review` | Reviews a built feature against its design in each state and at each size. | A built screen checked against its design, or a UX audit |
+| `/ux-design:ux-prototype` | Makes a clickable prototype with A/B variants and a test plan, for an existing design. | A flow tested with users, or variants compared |
 | `/ux-design:figma` | Reads from and writes to Figma through the official MCP server. | A Figma link, or Figma as the design tool |
 | `/ux-design:claude-design` | Works with Claude Design and Design System artifacts. | A Claude Design link, or Claude Design as the design tool |
 | `/ux-design:openpencil` | Puts mockups into OpenPencil. | OpenPencil, or a project with `.op` files |
+
+Two skills have no command. `ux-setup` is the setup step: `/setup` and the commands start it. `ux-practice` is the method of the agent.
 
 The agents have no command. A skill starts them, except where the table says otherwise.
 
 | Agent | What it does | Started by |
 |-------|--------------|------------|
-| `ux-design:ux-designer` | Designs one story, makes mockups and a prototype, and reviews the build. | You. Ask for it by name, for example "Use the ux-designer agent in design mode for docs/work/fl-31-assign" |
+| `ux-design:ux-designer` | Designs one story, makes mockups and a prototype, and reviews the build. | `/ux-design`, `/ux-review`, and the build flows of dev-flow and dev-team. You can also ask for it by name, for example "Use the ux-designer agent in design mode for docs/work/SHOP-12" |
 
 ## What is in the plugin
 
 | Part | Name | What it does |
 |------|------|--------------|
 | Agent | `ux-designer` | Design mode: frame, opportunities, flow, patterns, options, design spec, states, copy, accessibility, self-check. Mockup mode: one frame for each state, then a check and a critique. Prototype mode: a clickable prototype with variants and a test plan. Review mode: the built feature against the design. |
+| Skill | `ux-design` | The command for the design of one item. It reads the ticket, makes the work folder, and starts the agent in each mode. It holds the stops for the human and sends one message to the product owner. |
 | Skill | `ux-practice` | The method: four phases, the design spec with a source for each decision, the decision log, evidence tags, and opportunities. Also the modes light, full, and new-direction, and the `uxcheck.py` checker. |
 | Skill | `ux-patterns` | Decision tables that select an interaction pattern from the facts of the task, each rule with an ID. Also the rules for icons and toggles, with their research and the web values. |
 | Skill | `ui-craft` | The visual method in a fixed order, the option and mockup rubrics, and the list of AI tells. Also a foundation for a project without a design system, and an audit for an existing one. |
 | Skill | `ux-states` | The state inventory: the core states, each error kind, and the business states. Each state says what the user sees, can do, and how the user recovers. |
 | Skill | `ux-prototype` | A prototype in the shared `proto-shell/1` standard: the same header, toolbar, variants, states, sizes, and Test mode in each prototype. The question with the highest risk, and a test plan. |
-| Skill | `ux-review` | A walk file makes each state of the built app. Screenshots at 3 widths, axe-core, the Tab walk, the tell checks, the heuristics, and findings with a severity and an owner. |
+| Skill | `ux-review` | The command after the build. A walk file makes each state of the built app. Screenshots at 3 widths, axe-core, the Tab walk, the tell checks, the heuristics, and findings with a severity and an owner. |
 | Skill | `web-accessibility` | WCAG 2.2 AA: a checklist for the design and for the build, and the manual checks that no tool does. Also the status of the EAA and EN 301 549. |
-| Skill | `ux-setup` | Scans the project and writes the `## Design` section of `CLAUDE.md` after one round of questions. |
+| Skill | `ux-setup` | The setup step. Scans the project and writes the `## Design` section of `.claude/rules/delivery.md` after one round of questions. |
 | Skill | `brand-rules` | `DESIGN.md`, `PRODUCT.md` with a Words table, and DTCG tokens with usage notes and contrast pairs. `brandcheck.py` checks and converts the tokens. |
 | Skill | `claude-design` | Reads a Claude Design System, turns the checked HTML mockups into a Design canvas, and makes a Design System from DTCG tokens. |
 | Skill | `figma` | Adds to the official Figma plugin: a call budget, a read order, and a map from the variables to the tokens. It writes only in a draft file. |

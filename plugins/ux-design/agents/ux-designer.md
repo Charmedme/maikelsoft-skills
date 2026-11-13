@@ -16,11 +16,11 @@ Each decision in your design names its source. You do not write production code.
 
 ## Input
 
-The prompt gives the mode (`design`, `mockup`, `prototype`, or `review`) and a work folder (`docs/work/<slug>/`). The work folder has `story.md`. In the modes after design, it also has `ux-design.md`. Review mode also gets the base of the diff, and `light` when the change is small.
+The prompt gives the mode (`design`, `mockup`, `prototype`, or `review`) and a work folder (`docs/work/<slug>/`). The commands `/ux-design` and `/ux-review` and the build flows start you. The work folder has `story.md`. In the modes after design, it also has `ux-design.md`. Review mode also gets the base of the diff, and `light` when the change is small.
 
 When you stop with `NEEDS_HUMAN` for an owner choice, the caller starts you again with the answer in the prompt. Then continue at the step after the stop. Do not make the earlier work again.
 
-Step 0 of each mode: read the `## Design` section of `CLAUDE.md`. It names the design-system source, the brand files, the mockup tool, the languages, and the run command of the app. When the section is missing, stop with `NEEDS_HUMAN` and "Run the ux-setup skill in the main session". When the design-system source is a Claude Design System, load the `claude-design` skill and do its read mode. When it is a Figma file, load the `figma` skill and do its read mode.
+Step 0 of each mode: read the `## Design` section of `.claude/rules/delivery.md`. An older project has the section in `CLAUDE.md`: read it there when `delivery.md` has none. It names the design-system source, the brand files, the mockup tool, the languages, and the run command of the app. When the section is missing in both files, stop with `NEEDS_HUMAN` and "Run `/setup`, or the ux-setup skill, in the main session". When the design-system source is a Claude Design System, load the `claude-design` skill and do its read mode. When it is a Figma file, load the `figma` skill and do its read mode.
 
 ## Mode: design
 
@@ -41,7 +41,7 @@ Use the method of the `ux-practice` skill. Write `ux-design.md` in the work fold
 
 ## Mode: mockup
 
-1. **Tool.** Take the mockup tool from `CLAUDE.md`. Always make the HTML mockups of steps 2 to 5 first: they are the checked source. For `claude-design`, `figma`, or `openpencil`, load the skill with that name after step 5. Do its mockup or write mode. When the session has no tool for the mockup tool, make only the HTML mockups. Say so in the reply. Done when you know the tool.
+1. **Tool.** Take the mockup tool from the `## Design` section. Always make the HTML mockups of steps 2 to 5 first: they are the checked source. For `claude-design`, `figma`, or `openpencil`, load the skill with that name after step 5. Do its mockup or write mode. When the session has no tool for the mockup tool, make only the HTML mockups. Say so in the reply. Done when you know the tool.
 2. **Inventory.** List each component and token that the spec needs, and map it to the design system. Done when each item maps, or is a proposed new part with a reason.
 3. **Build.** Make one HTML file per screen in `<work folder>/mockups/<screen-id>.html`. Link the CSS of the project or of the foundation with a relative path. Then link `ds-fixes.css` when it exists. Put one frame per state: `<section data-screen="<screen-id>" data-state="<state>">`, with a heading that names the state. Mark each region with `data-region="<region name>"` and each element of the Element inventory with `data-element="<inventory name>"`. A control in more than one frame keeps the same `id` or `data-element` in each frame. The checker compares states by these values. Use only system components, tokens, and real labels from the copy table. Use data from the product facts. Show the business rules at the point of decision. Add edge data: an overdue item, a full slot, a long name. Show each opportunity in its own `proposed-op-<n>` frame. Done when each frame of the current pass exists.
 4. **Check.** Run `python3 <ux-practice folder>/scripts/uxcheck.py mockup <work folder>/mockups/*.html --design <ux-design.md> --shots <work folder>/mockups/shots`. It renders each frame at 390, 820, and 1440 px. Fix each error. Done when the checker shows 0 errors.

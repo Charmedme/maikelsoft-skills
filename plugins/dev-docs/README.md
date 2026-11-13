@@ -4,6 +4,8 @@ dev-docs is a Claude Code plugin for developers who write documentation. It writ
 
 English output follows ASD-STE100 Simplified Technical English. Dutch output follows Begrijpelijk Nederlands (taalniveau B1), with the STE rules for sentences and procedures. Each skill includes a checker that counts the rules that a script can count.
 
+Status: version 2.0.0. The command `/update-docs` replaces `/dev-docs:doc-plan`.
+
 ## Install
 
 You need Claude Code and Python 3.9 or later. For HTML, PDF, or Word output, you also need pandoc.
@@ -34,11 +36,11 @@ Do you also use the skills `engineering:documentation`, `engineering:architectur
 
 ## Commands
 
-Claude Code starts a skill by itself when your request matches its trigger. You can also start a skill with its command. Text after the command goes to the skill, for example `/dev-docs:doc-readme Rewrite the README`.
+Claude Code starts a skill by itself when your request matches its trigger. You can also start a skill with its command. Text after the command goes to the skill, for example `/dev-docs:doc-readme Rewrite the README`. The short name works too, for example `/update-docs`, when no other installed plugin has a skill with the same name.
 
 | Command | What it does | Starts by itself when you ask for |
 |---------|--------------|-----------------------------------|
-| `/dev-docs:doc-plan` | Plans or audits the docs of a whole project, and sends each document to the correct skill. | A project documented, or which docs are missing |
+| `/dev-docs:update-docs` | Checks and updates the whole doc set of a project: a plan or an audit, your approval, then each document from the correct skill. | A project documented, or which docs are missing or out of date |
 | `/dev-docs:doc-readme` | Writes, rewrites, or reviews a README. | A README, or what a project needs on its front page |
 | `/dev-docs:doc-tutorial` | Writes a lesson for a new user. | A tutorial, a getting-started page, or an onboarding lesson |
 | `/dev-docs:doc-howto` | Writes the steps of one task, or a runbook. | Steps to install, configure, deploy, migrate, or recover |
@@ -55,7 +57,7 @@ Claude Code starts a skill by itself when your request matches its trigger. You 
 
 | Skill | Document type | Example request |
 |-------|---------------|-----------------|
-| `doc-plan` | Documentation plan or audit | Document this project. Which docs are missing? |
+| `update-docs` | Check and update of the whole doc set | Document this project. Which docs are missing or out of date? |
 | `doc-readme` | README | Write a README for this repo. |
 | `doc-tutorial` | Tutorial (a lesson for a new user) | Write a getting-started tutorial. |
 | `doc-howto` | How-to guide or runbook | Write the steps to rotate the API key. |
@@ -66,7 +68,7 @@ Claude Code starts a skill by itself when your request matches its trigger. You 
 | `doc-code-comments` | Code comments and doc comments | Review the comments in `Parser.cs`. |
 | `doc-ui-text` | UI text (buttons, errors, dialogs) | Schrijf de foutmelding voor een volle schijf. |
 
-`doc-plan` makes a plan and waits for your approval. Then it uses the other skills, and it writes the README last.
+`update-docs` makes a plan, or an audit of the existing docs, and waits for your approval. Then it uses the other skills, and it writes the README last. The docs of one change are a job of the build: dev-flow `/build` updates them before its final gate.
 
 ### Modes
 
@@ -96,7 +98,7 @@ Some outputs have a fixed format:
 
 - `doc-code-comments` writes in the source file. It does not ask.
 - `CHANGELOG.md` and `README.md` in the repo are always Markdown. You can get another format as an extra file.
-- `doc-plan` asks one time for all documents.
+- `update-docs` asks one time for all documents.
 
 When nobody can answer (an unattended run), the skill uses the best signal, or Markdown. It lists the format as an open question in the report.
 

@@ -4,7 +4,9 @@
     python3 setupscan.py [<project folder>] [--json]
 
 It reads files and runs a few version commands. It changes nothing. It reports:
-  design_section   the "## Design" section of CLAUDE.md, when it exists
+  design_section   the "## Design" section, when it exists: first in .claude/rules/delivery.md,
+                   else in CLAUDE.md (the place of an older project)
+  design_section_file  the file that holds design_section, or null
   brand_files      DESIGN.md, PRODUCT.md, and where they are
   tokens           DTCG files (JSON with $value), and CSS files with 10 or more custom properties
   tailwind         a Tailwind config file, or "@theme" in a CSS file
@@ -60,14 +62,18 @@ def main(argv):
     args = [a for a in argv if a != "--json"]
     root = Path(args[0] if args else ".").resolve()
     rel = lambda p: str(p.relative_to(root))
-    facts = {"project": str(root), "design_section": None, "brand_files": {}, "tokens": [], "tailwind": [],
+    facts = {"project": str(root), "design_section": None, "design_section_file": None, "brand_files": {}, "tokens": [], "tailwind": [],
              "storybook": False, "figma_links": [], "openpencil": {"files": [], "cli": None},
              "plugins": {}, "ui_stack": [], "run": {}, "languages": [], "playwright": {}}
-    claude_md = root / "CLAUDE.md"
-    if claude_md.exists():
-        m = re.search(r"^## Design\s*$(.*?)(?=^## |\Z)", claude_md.read_text(encoding="utf-8"), re.S | re.M)
+    # delivery.md is the place of the project facts. CLAUDE.md is the place of ux-design 0.x.
+    for source in (root / ".claude" / "rules" / "delivery.md", root / "CLAUDE.md"):
+        if not source.exists():
+            continue
+        m = re.search(r"^## Design\s*$(.*?)(?=^## |\Z)", source.read_text(encoding="utf-8"), re.S | re.M)
         if m:
             facts["design_section"] = m.group(1).strip()
+            facts["design_section_file"] = rel(source)
+            break
     langs, figma = set(), set()
     for p in files(root):
         name = p.name

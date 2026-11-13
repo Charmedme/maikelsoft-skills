@@ -262,6 +262,14 @@ This log records each change to a skill or to an eval case, the test that measur
 - Verdict: confounded (one test covers all the changes)
 - Evidence: `docs/work/ux-design/0.4.0/results.md`
 
+### E31: commands /ux-design and /ux-review, Design section in delivery.md
+- Date and version: 2026-11-12, ux-design 1.0.0
+- Change: the new skill `ux-design` (the command `/ux-design`). `ux-review` is the command `/ux-review`, with a start section for a person. `ux-setup` and `ux-practice` leave the `/` menu. The `## Design` section moves to `.claude/rules/delivery.md`, with `CLAUDE.md` as the fallback. Decisions: `docs/work/ux-design/commands-v7.md`.
+- Test: unit tests `tests/test_v7_ux_docs_names.py` and `SetupscanTests` in `tests/test_ux_batch3.py`. No eval run.
+- Observed: no eval data.
+- Verdict: proposed. Not tested in the delivery suite yet. Plan step 9 tests it.
+- Evidence: `docs/work/ux-design/commands-v7.md`
+
 ## Lesson of batch 1
 
 - Cue: a design skill adds completeness rules (more states, more failure paths).
