@@ -11,7 +11,7 @@ The comment feature was removed during a rewrite. The database table `Comments` 
 
 ## Acceptance criteria
 
-1. `POST /api/articles/{slug}/comments` with `{"comment": {"body": "..."}}` adds a comment by the signed-in reader and returns `{"comment": {...}}` with `id`, `createdAt`, `updatedAt`, `body`, and `author` (a profile).
+1. `POST /api/articles/{slug}/comments` with `{"comment": {"body": "..."}}` adds a comment by the signed-in reader and returns 201 with `{"comment": {...}}` with `id`, `createdAt`, `updatedAt`, `body`, and `author` (a profile).
 2. `GET /api/articles/{slug}/comments` returns `{"comments": [...]}` for each visitor, also without a token.
 3. `DELETE /api/articles/{slug}/comments/{id}` removes the comment.
 4. Only the author of a comment can remove it.
@@ -31,7 +31,7 @@ Rule: R1 A signed-in reader adds a comment to an article (AC1)
   Scenario: reader adds a comment
     Given the article "my-trip" has no comments
     When the reader "ann" adds the comment "Great trip!" to "my-trip"
-    Then the reply is a comment with body "Great trip!", an id, createdAt, updatedAt, and author "ann"
+    Then the reply is 201 with a comment with body "Great trip!", an id, createdAt, updatedAt, and author "ann"
 
   Scenario: reader adds a comment to an unknown article
     Given no article has the slug "no-such-trip"

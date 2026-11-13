@@ -6,3 +6,4 @@
 - Comments are listed oldest first.
 - A body of only spaces counts as "without text".
 - Removing a comment returns 204 with an empty body, as in the RealWorld specification.
+- Adding a comment returns 201 with the new comment, as in the RealWorld specification.
