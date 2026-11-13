@@ -22,6 +22,7 @@ Each skill whose SKILL.md names one of these files also gets it (a .py file in s
     shared/examplecheck.py       shared/review-rules.md    shared/docscheck.py
     shared/riskcheck.py          shared/review-template.md shared/speclock.py
     shared/refine.md             shared/behaviour-spec.md  shared/mutate.py
+    shared/heldback.py
 A SKILL.md names a file when the file name is in the text, with no letter, digit, "_", or "-"
 just before it. So "backlog-context.md" does not name "context.md".
 
@@ -57,7 +58,7 @@ NAMED_COPIES = [SHARED / name for name in (
     "po-questions.md", "example-mapping.md", "examplecheck.py", "riskcheck.py",
     "context.md", "cycle.md", "review-rules.md", "review-template.md",
     "runheader.py", "specsync.py", "docscheck.py", "speclock.py", "mutate.py",
-    "refine.md", "behaviour-spec.md")]
+    "refine.md", "behaviour-spec.md", "heldback.py")]
 # Shared folders for each skill that names the folder in its SKILL.md.
 NAMED_FOLDERS = [SHARED / "proto-shell"]
 BLOCK = re.compile(r"(<!-- BEGIN shared/workflow\.md -->\n).*?(<!-- END shared/workflow\.md -->)", re.DOTALL)

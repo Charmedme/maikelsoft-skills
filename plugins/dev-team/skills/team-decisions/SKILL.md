@@ -1,6 +1,7 @@
 ---
 name: team-decisions
 description: The flow of team decisions in a dev-team run - the pre-filled decision sheet at G1, the decision index docs/dev-team/decisions.md, one ADR per decision, the user profile of earlier answers, the approval of a new package, a reopened decision, and decisioncheck.py. Use when a dev-team agent meets a decision that the story needs, writes the index or an ADR, or when the user asks to record or check team decisions.
+user-invocable: false
 ---
 
 # Team decisions

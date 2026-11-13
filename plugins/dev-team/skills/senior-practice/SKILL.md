@@ -1,6 +1,7 @@
 ---
 name: senior-practice
-description: Rules and templates of the senior developer in the dev-team flow - design, work packages, reflection on a design or core code, plan feedback, code review, the self-check, and the track record. Preloaded by the dev-team senior agent. Use when you act as the senior in a dev-team run, or when the user asks for a senior design or review in the dev-team format.
+description: Rules and templates of the senior developer in the dev-team flow - design, the checks of spec.md, work packages, reflection on a design or core code, the locked acceptance tests, plan feedback, code review, the self-check, and the track record. Preloaded by the dev-team senior agent. Use when you act as the senior in a dev-team run.
+user-invocable: false
 ---
 
 # Senior practice
@@ -9,16 +10,17 @@ The rules that make a senior design and review the same on each run. The templat
 
 ## Design (mode `design`)
 
-1. Read `story.md`, `docs/dev-team/decisions.md`, `docs/dev-team/conventions.md`, and the profile when they exist. The profile is the file in `$DEV_TEAM_PROFILE` when it is set, else `~/.claude/dev-team/profile.md`.
+1. Read `spec.md` (the Behaviour spec block and the section "## Item"). An old run has `story.md` in its place. Read `docs/dev-team/decisions.md`, `docs/dev-team/conventions.md`, and the profile when they exist. The profile is the file in `$DEV_TEAM_PROFILE` when it is set, else `~/.claude/dev-team/profile.md`.
 2. Learn the system: the solution layout, the build and test commands, the code style, and the code near the story. When `conventions.md` is missing, write it from what you find. Give the source file of each rule. Also do these things:
    - Find the sibling code. For each kind of work in the story, find how the neighbour modules do the same job. Examples: a child collection that syncs, a query by specification, a validator, a mapping. Write that pattern in `conventions.md` with its file. Follow it, or name the break and the reason.
    - Write the build and test commands under "Build and test" in `conventions.md`. Include any pin of the SDK or of a tool.
    - When the pinned SDK is not installed, find a working way one time. An example is a temporary change of `global.json` that you undo before each commit. Test it. Write the way and the undo step under "Build and test". Later agents use that entry and do not search again.
    - Find the pipeline of the project (for example `.github/workflows`, or `azure-pipelines.yml`). Write the checks it runs under "CI checks", one command in backticks for each bullet. `checks.py` runs them. When you find no pipeline, leave the section out. The check output then says that parity is not known.
 3. Check the current facts of each technology that the story touches. Use the version gate of its stack skill (`stack-index` tells you which).
-4. Design the simplest solution that meets each acceptance criterion. Follow the existing conventions. Add a layer, an abstraction, or a package only for a concrete reason, and name it. Name the trade-off of each real choice.
+4. Design the simplest solution that meets each rule of the spec and each acceptance criterion. Follow the existing conventions. Add a layer, an abstraction, or a package only for a concrete reason, and name it. Name the trade-off of each real choice.
 5. Write the threat model in five lines. Name the new input, the callers, and the data. Then name what can go wrong and what stops it.
 6. Name the aggregates first. For each entity of the story, name the aggregate root that owns it. Say who may change it. Say what stays consistent in one transaction. Feature folders and packages follow the aggregates, not the tables of a data model. An entity with two possible owners is a decision for the sheet. Use the `domain-modeling` skill when it is installed.
+   Plan the acceptance tests. Each rule R<n> of the spec gets one test file. Use the four layers. Layer 1 is a test case in domain words for each scenario. Layer 2 is a DSL with domain verbs and checks. Layer 3 is a protocol driver that talks to the real system. Layer 4 is the system. Use the test project, the framework, and the test host that the project has. Write the section "## Checks" of `spec.md`: one row for each rule, with its test file. After a hand-over from `dev-flow:build`, the section exists: update that table, and do not add a second one. A part that no test can check gets `review only`. Name the DSL files and the driver in the part "Acceptance tests" of `design.md`. Mark a rule "high risk" when a schema change, sign-in, authorization, secrets, money, or a deletion of data touches it.
    Then split the work: the critical core (you build it) and work packages (mediors build them). The core is the part where a mistake breaks the story or the data. A package has one goal and a size (`standard` or `hard`). It names its owned files, its acceptance criteria (verbatim), its contracts, and the skills to load. Few packages are better than many. A small story has no packages.
 7. List each decision that the story needs. Use the `team-decisions` skill for the decision sheet.
 8. An open question with a safe default goes to G1. A default is safe when the story supports it, and when it is easy to change later. Choose the default and write it under "Assumptions to confirm" in `design.md`, with the other options. Then go on with the design.
@@ -29,7 +31,8 @@ The rules that make a senior design and review the same on each run. The templat
 
 You check the work of another senior one time. Give at most 10 improvements, ranked by effect. Each one says what to change, how, and why it is better. Look for these problems:
 
-- a criterion without a design part or a test
+- a rule or a criterion without a design part or a test
+- a scenario of the spec that the planned test file does not check
 - a simpler design
 - a missing failure case
 - a broken convention
@@ -64,13 +67,25 @@ Follow the Google code review guide: approve when the change makes the code heal
 
 ## Build (modes `build-core` and `fix`)
 
-Write the test of the core behavior first, then the code. Follow the stack skills and the decisions. Run `checks.py` after your last change and keep its output. Commit each finished part.
+In `build-core`, write the test file of each rule of "## Checks" first, also of the rules that a package builds. Run each one: it must fail for the right reason, for example 404 because the endpoint does not exist yet. A test that passes before the change tests nothing new: change it, or stop with `NEEDS_HUMAN`. Commit the test files. Then lock each one:
+
+```sh
+python3 <this skill folder>/scripts/speclock.py approve --item <key> --by "<name> (G1)" --rule R<n> <test file> --watch <DSL files>
+```
+
+A rule that G1 marked high risk needs the yes of the human first. Write the section "Locks to approve" in `core-report.md`: each rule, its test file, and the scenarios that it checks. Then stop with `NEEDS_HUMAN`. The team lead starts you again with the answers. Then lock these files.
+
+After the locks, write the test of the core behavior, then the code. Follow the stack skills and the decisions. Run `checks.py` after your last change and keep its output. Commit each finished part.
 
 In `fix`, the prompt names the comments to fix. Change only what these comments need, and keep each other line as it is. Other findings go to the human at G2.
 
 A fix keeps the scope that G1 approved. When a named comment needs you to remove or add such scope, stop with `NEEDS_HUMAN` and name the comment. Without a human, keep the code and write the comment under "Open points" in your report.
 
-A fix does not weaken a check. For a bug, write the test that fails, run it, and commit it. Then commit the fix, and do not edit that test in the fix commit. Do not remove an assertion or skip a test. When a test is wrong, stop with `NEEDS_HUMAN` and say why.
+A fix does not weaken a check. Never change, skip, or delete a locked test file, and never make a DSL check weaker. You can add methods to the DSL, and the driver is free. `speclock.py check` lists each change for the review.
+
+A changed rule of the spec is the only reason to change a locked test. The team lead unlocks that rule. Then you change its test file and lock it again.
+
+For a bug, write the test that fails, run it, and commit it. Then commit the fix, and do not edit that test in the fix commit. Do not remove an assertion or skip a test. When a test is wrong, stop with `NEEDS_HUMAN` and say why.
 
 Prove a cause before you fix it. A cause is a hypothesis until a test fails for it. This holds for a claim of a reviewer and for your own idea. A sync by key gets a test with two items of the same kind.
 
@@ -78,7 +93,7 @@ Prove a cause before you fix it. A cause is a hypothesis until a test fails for 
 
 Before a design, a feedback, or a review goes out, check each item. Fix a failed item first.
 
-1. Each acceptance criterion (verbatim) maps to a design part, a package, and a test. Scope that the human adds outside the story gets its own row in that table, with a test. Then a later change that removes it makes a test fail.
+1. Each rule R<n> of the spec has a row in "## Checks" of `spec.md`. Each rule and each criterion (verbatim) maps to a design part, a package, and a test. Scope that the human adds outside the story gets its own row in that table, with a test. Then a later change that removes it makes a test fail.
 2. Each version and API comes from the repository or a look-up with a source and a date.
 3. No decision is made that `decisions.md` does not hold. Open ones are in the decision sheet.
 4. No new package without the name, version, license, reason, and "exists: yes" in the sheet.
@@ -95,3 +110,4 @@ Add one row per mode to `log.md` (template in `references/templates.md`). Use ag
 - `references/templates.md`: read before you write a file. The templates of `design.md`, a package, `reflection.md`, `core-report.md`, `NN-plan-feedback.md`, a review, and the log row.
 - `references/language.md`: the language rules.
 - `scripts/checks.py`: runs the build, test, format, and lint checks that apply. `python3 scripts/checks.py --root . --out <file>`.
+- `scripts/speclock.py`: locks the test file of each rule (`approve`), and lists each change of a locked or a watched file (`check`). It is the lock script of `dev-flow:build`, and both flows use the lock file `.dev-flow/spec-lock.json`.

@@ -17,7 +17,26 @@ import runcheck  # noqa: E402
 PLUGIN = ROOT / "plugins" / "dev-team"
 HOOK = PLUGIN / "hooks" / "log-command.py"
 
-RUN_MD = """# Run: demo
+RUN_HEADER = "---\nflow: team\nitem: demo\nsize: large\nstep: G2 final gate\nbaseline: {baseline}\n---\n"
+
+SPEC_MD = """# Spec: demo
+
+<!-- BEGIN behaviour spec: DEMO-1 -->
+Feature: Cancel an order
+Rule: R1 An open order can be cancelled
+Scenario: Cancel an open order
+When the customer cancels the open order
+Then the order is cancelled
+<!-- END behaviour spec -->
+
+## Checks
+
+| Part | Check |
+|------|-------|
+{rows}
+"""
+
+RUN_MD = RUN_HEADER.format(baseline="set") + """# Run: demo
 
 | Field | Value |
 |-------|-------|
@@ -54,7 +73,8 @@ def write(path, text):
 def make_run(root, security=1, fix=0, review="APPROVED", extra="", commands=True):
     run = root / "docs" / "work" / "demo"
     write(run / "run.md", RUN_MD.format(security=security, fix=fix))
-    write(run / "story.md", "# Story\n")
+    write(run / "spec.md", SPEC_MD.format(rows="| R1 An open order can be cancelled | review only |"))
+    write(run / "spec-baseline.json", "{}\n")
     write(run / "design.md", "# Design\n\nStatus: DESIGN_READY\n")
     write(run / "decision-sheet.md", "# Decisions\n")
     write(run / "reflection.md", "Status: REFLECTION_READY\n")
@@ -160,8 +180,83 @@ class RunCheck(unittest.TestCase):
             run = make_run(pathlib.Path(tmp))
             with contextlib.redirect_stdout(io.StringIO()):
                 self.assertEqual(runcheck.main([str(run)]), 0)
-                (run / "story.md").unlink()
+                (run / "spec.md").unlink()
                 self.assertEqual(runcheck.main([str(run)]), 1)
+
+
+class HeaderAndSpecTests(unittest.TestCase):
+    """dev-team 1.0.0: run.md has the shared header, and spec.md takes the place of story.md."""
+
+    def found(self, change, stage="g2"):
+        with tempfile.TemporaryDirectory() as tmp:
+            run = make_run(pathlib.Path(tmp))
+            change(run)
+            return [(r, m) for _, r, m in runcheck.check(run, stage)]
+
+    def test_run_without_the_header_is_a_header_finding(self):
+        def drop(run):
+            text = (run / "run.md").read_text(encoding="utf-8")
+            write(run / "run.md", text.split("---\n", 2)[2])
+        self.assertEqual({r for r, _ in self.found(drop)}, {"RUN-HEADER"})
+
+    def test_solo_flow_is_a_header_finding(self):
+        def solo(run):
+            text = (run / "run.md").read_text(encoding="utf-8")
+            write(run / "run.md", text.replace("flow: team", "flow: solo"))
+        found = self.found(solo)
+        self.assertEqual([r for r, _ in found], ["RUN-HEADER"])
+        self.assertIn("flow: solo", found[0][1])
+
+    def test_unknown_header_field_is_a_header_finding(self):
+        def extra(run):
+            text = (run / "run.md").read_text(encoding="utf-8")
+            write(run / "run.md", text.replace("baseline: set\n", "baseline: set\ntier: large\n"))
+        found = self.found(extra)
+        self.assertEqual([r for r, _ in found], ["RUN-HEADER"])
+        self.assertIn("tier", found[0][1])
+
+    def test_rule_without_a_check_row_is_a_spec_finding(self):
+        def no_row(run):
+            write(run / "spec.md", SPEC_MD.format(rows="| D1 The fee shows | review only |"))
+        found = self.found(no_row, "g1")
+        self.assertEqual([r for r, _ in found], ["RUN-SPEC"])
+        self.assertIn("R1", found[0][1])
+
+    def test_spec_block_without_a_baseline_is_a_spec_finding(self):
+        found = self.found(lambda run: (run / "spec-baseline.json").unlink(), "g1")
+        self.assertEqual([r for r, _ in found], ["RUN-SPEC"])
+
+    def test_missing_test_file_is_a_finding_at_g2_only(self):
+        def path(run):
+            write(run / "spec.md", SPEC_MD.format(rows="| R1 An open order can be cancelled | `tests/R1Tests.cs` |"))
+        self.assertEqual(self.found(path, "g1"), [])
+        self.assertEqual([r for r, _ in self.found(path, "g2")], ["RUN-SPEC"])
+
+    def test_empty_check_is_a_spec_finding(self):
+        def empty(run):
+            write(run / "spec.md", SPEC_MD.format(rows="| R1 An open order can be cancelled |  |"))
+        self.assertEqual([r for r, _ in self.found(empty, "g1")], ["RUN-SPEC"])
+
+    def test_legacy_run_keeps_story_md(self):
+        def legacy(run):
+            text = (run / "run.md").read_text(encoding="utf-8")
+            write(run / "run.md", text.replace("baseline: set", "baseline: legacy"))
+            (run / "spec.md").unlink()
+            (run / "spec-baseline.json").unlink()
+            write(run / "story.md", "# Story\n")
+        self.assertEqual(self.found(legacy), [])
+
+    def test_a_run_that_is_not_legacy_needs_spec_md(self):
+        def story_only(run):
+            (run / "spec.md").unlink()
+            write(run / "story.md", "# Story\n")
+        self.assertEqual(self.found(story_only), [("RUN-FILE", "file is missing")])
+
+    def test_header_fields_match_runheader_py(self):
+        sys.path.insert(0, str(ROOT / "shared"))
+        import runheader  # noqa: E402
+        self.assertEqual(runheader.FIELDS, runcheck.HEADER_FIELDS)
+        self.assertEqual(runheader.ALLOWED, {k: v for k, v in runcheck.HEADER_ALLOWED.items()})
 
 
 INDEX = """# Decisions
@@ -234,6 +329,11 @@ class ReportStage(unittest.TestCase):
     def test_full_report_passes(self):
         with tempfile.TemporaryDirectory() as tmp:
             self.assertEqual(self.report(tmp, self.GOOD), [])
+
+    def test_rule_table_of_1_0_passes(self):
+        text = self.GOOD.replace("| Criterion (verbatim) | Test or evidence |", "| Rule (verbatim) | Locked test |")
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(self.report(tmp, text), [])
 
     def test_stub_gives_each_finding(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -558,25 +658,30 @@ class RunHookTests(unittest.TestCase):
         self.assertEqual(rules.count("RUN-EVIDENCE"), 2)
 
 
-UX_RUN_MD = ("# Run: s\n\n| Field | Value |\n|---|---|\n| Step | 9 UX review |\n| Mode | light |\n\n## Counters\n\n"
+UX_RUN_MD = (RUN_HEADER.format(baseline="{baseline}") + "# Run: s\n\n| Field | Value |\n|---|---|\n| Step | 9 UX review |\n| Mode | light |\n\n## Counters\n\n"
           "| Counter | Limit | Value |\n|---|---|---|\n| ux-review | 1 | 0 |\n")
 
 
 class MockupTests(unittest.TestCase):
     """A story with a mock-up needs a UX review at G2, also without ux-design.md."""
 
-    def rules(self, story, ux_design=False):
+    def rules(self, story, ux_design=False, legacy=False):
         with tempfile.TemporaryDirectory() as tmp:
             run = pathlib.Path(tmp)
-            write(run / "run.md", UX_RUN_MD)
+            write(run / "run.md", UX_RUN_MD.replace("{baseline}", "legacy" if legacy else "set"))
             write(run / "log.md", HOOK_LOG.split("| 10:00")[0])
-            write(run / "story.md", story)
+            write(run / ("story.md" if legacy else "spec.md"), story)
             if ux_design:
                 write(run / "ux-design.md", "# Design\n")
             return [(f[1], f[2]) for f in runcheck.check(run, "g2") if "ux-review" in f[2] or f[0].endswith("ux-review.md")]
 
     def test_mockup_line_without_ux_design_needs_the_review(self):
         found = self.rules("# Story\n\n## Context\nMock-up: https://example.com/design/1\n")
+        self.assertEqual({r for r, _ in found}, {"RUN-COUNTER", "RUN-FILE"})
+        self.assertTrue(all("mock-up in spec.md" in m for _, m in found))
+
+    def test_mockup_line_in_the_story_of_a_legacy_run_needs_the_review(self):
+        found = self.rules("# Story\n\nMock-up: https://example.com/design/1\n", legacy=True)
         self.assertEqual({r for r, _ in found}, {"RUN-COUNTER", "RUN-FILE"})
         self.assertTrue(all("mock-up in story.md" in m for _, m in found))
 
@@ -645,14 +750,86 @@ class HookTests(unittest.TestCase):
             result = self.run_hook("session-start.py", json.dumps({"cwd": tmp}))
         self.assertEqual((result.returncode, result.stdout), (0, ""))
 
-    def test_session_start_names_the_entry_skills_in_a_dev_team_project(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            write(pathlib.Path(tmp) / "docs/dev-team/conventions.md", "# C\n")
-            result = self.run_hook("session-start.py", json.dumps({"cwd": tmp}))
+    SETUP = "dev-setup@maikelsoft-skills"
+
+    def start(self, installed=None, scope="user", project_path=None, enabled=True, role="global",
+              project_settings=None, env_role=None):
+        """Run the session-start hook in a dev-team project with a fake config folder.
+
+        installed: the plugins in installed_plugins.json. enabled: the value of enabledPlugins for dev-setup
+        in the user settings (None: no entry). role: "global", "project" (an entry for one project only), or
+        None. project_settings: enabledPlugins of .claude/settings.json of the project."""
+        with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as config:
+            root, cfg = pathlib.Path(tmp), pathlib.Path(config)
+            write(root / "docs/dev-team/conventions.md", "# C\n")
+            if installed is not None:
+                plugins = {}
+                for name in installed:
+                    entry = {"scope": scope, "version": "1.0.0"}
+                    if project_path is not None:
+                        entry["projectPath"] = str(root if project_path == "here" else project_path)
+                    plugins[name] = [entry]
+                write(cfg / "plugins" / "installed_plugins.json", json.dumps({"version": 2, "plugins": plugins}))
+            if enabled is not None:
+                write(cfg / "settings.json", json.dumps({"enabledPlugins": {self.SETUP: enabled}}))
+            if project_settings is not None:
+                write(root / ".claude" / "settings.json", json.dumps({"enabledPlugins": project_settings}))
+            if role == "global":
+                write(cfg / "plugins" / "data" / "dev-setup-maikelsoft-skills" / "roles.json",
+                      json.dumps({"global": {"role": "developer"}, "projects": {}}))
+            elif role == "project":
+                write(cfg / "plugins" / "data" / "dev-setup-maikelsoft-skills" / "roles.json",
+                      json.dumps({"global": None, "projects": {"example.com/a/b": {"role": "developer"}}}))
+            env = {k: v for k, v in os.environ.items() if k != "DELIVERY_ROLE"}
+            env["CLAUDE_CONFIG_DIR"] = config
+            if env_role:
+                env["DELIVERY_ROLE"] = env_role
+            result = self.run_hook("session-start.py", json.dumps({"cwd": tmp}), env=env)
         context = json.loads(result.stdout)["hookSpecificOutput"]
         self.assertEqual(context["hookEventName"], "SessionStart")
-        for skill in ("dev-team:deliver-story", "dev-flow:plan-and-build", "dev-team:process-review"):
-            self.assertIn(skill, context["additionalContext"])
+        return context["additionalContext"]
+
+    def assert_route(self, text, route=True):
+        for rule in ("docs/dev-team/conventions.md", "docs/dev-team/decisions.md", "Do not build inline"):
+            self.assertIn(rule, text)
+        for skill in ("dev-flow:build", "dev-flow:review-comments"):
+            (self.assertIn if route else self.assertNotIn)(skill, text)
+
+    def test_session_start_names_the_route_without_dev_setup(self):
+        self.assert_route(self.start(installed=["dev-flow@maikelsoft-skills", "dev-team@maikelsoft-skills"]))
+
+    def test_session_start_names_the_route_when_the_plugin_list_is_missing(self):
+        self.assert_route(self.start())
+
+    def test_session_start_keeps_the_rules_and_leaves_the_route_to_dev_setup(self):
+        self.assert_route(self.start(installed=[self.SETUP, "dev-team@maikelsoft-skills"]), route=False)
+
+    def test_session_start_names_the_route_when_dev_setup_is_disabled(self):
+        self.assert_route(self.start(installed=[self.SETUP], enabled=False))
+
+    def test_session_start_names_the_route_when_the_settings_do_not_name_dev_setup(self):
+        self.assert_route(self.start(installed=[self.SETUP], enabled=None))
+
+    def test_project_settings_win_over_the_user_settings(self):
+        text = self.start(installed=[self.SETUP], enabled=True, project_settings={self.SETUP: False})
+        self.assert_route(text)
+
+    def test_session_start_names_the_route_for_a_project_install_of_another_folder(self):
+        text = self.start(installed=[self.SETUP], scope="project", project_path="/no/such/project")
+        self.assert_route(text)
+
+    def test_a_project_install_of_this_folder_counts(self):
+        text = self.start(installed=[self.SETUP], scope="project", project_path="here")
+        self.assert_route(text, route=False)
+
+    def test_session_start_names_the_route_when_no_role_is_set(self):
+        self.assert_route(self.start(installed=[self.SETUP], role=None))
+
+    def test_a_role_for_some_projects_only_is_not_sure(self):
+        self.assert_route(self.start(installed=[self.SETUP], role="project"))
+
+    def test_the_cloud_role_counts_as_a_role(self):
+        self.assert_route(self.start(installed=[self.SETUP], role=None, env_role="developer"), route=False)
 
     def test_session_start_survives_bad_input(self):
         result = self.run_hook("session-start.py", "not json")

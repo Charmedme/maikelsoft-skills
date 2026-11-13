@@ -123,7 +123,7 @@
     {
       "name": "dev-team",
       "source": "./plugins/dev-team",
-      "description": "A small developer team for one work item, when you ask for the team: a senior designs and builds the core, mediors build work packages, a security reviewer checks the diff, and the main session leads with two human gates. Needs dev-stack. Preview.",
+      "description": "The team mode of dev-flow for one large or risky work item: a senior designs and builds the core, mediors build work packages, a security reviewer checks the diff, and the main session leads with the plan gate and the final gate. Same spec.md, locked tests, and run.md header as a solo build. Needs dev-flow 3.1.0 or later and dev-stack.",
       "category": "development",
       "tags": [
         "agents",

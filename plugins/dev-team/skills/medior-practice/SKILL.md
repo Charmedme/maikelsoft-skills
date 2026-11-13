@@ -1,6 +1,7 @@
 ---
 name: medior-practice
-description: Rules and templates of the medior developer in the dev-team flow - plan a work package, build it test first, run the checks, report with real command output, and do one fix pass. Preloaded by the dev-team medior agents. Use when you act as a medior in a dev-team run, or when the user asks for a package plan or report in the dev-team format.
+description: Rules and templates of the medior developer in the dev-team flow - plan a work package, build it test first, run the checks, report with real command output, and do one fix pass. Preloaded by the dev-team medior agents. Use when you act as a medior in a dev-team run.
+user-invocable: false
 ---
 
 # Medior practice
@@ -9,11 +10,11 @@ The rules that make a medior plan and build the same on each run. The templates 
 
 ## Plan (mode `plan`)
 
-1. Read the package, `design.md`, `docs/dev-team/decisions.md`, and `docs/dev-team/conventions.md`.
+1. Read the package, `spec.md`, `design.md`, `docs/dev-team/decisions.md`, and `docs/dev-team/conventions.md`.
 2. Read the code that the package touches and the tests near it.
 3. Restate the goal in one sentence. Quote each acceptance criterion verbatim.
 4. List the files that you change or add. Each one is an owned file of the package, or it has a reason.
-5. List the tests, core critical behavior first. Each criterion has at least one test. Name each test as it will be in the code.
+5. List the tests, core critical behavior first. Each criterion has at least one test. Name each test as it will be in the code. A rule of the spec already has a locked test file (section "## Checks" of `spec.md`): your code makes it pass.
 6. List the risks and the deviations from the design, each with the reason.
 7. Run the self-check. Write `packages/NN-plan.md` with `Status: PLAN_READY`.
 
@@ -24,7 +25,7 @@ A missing fact, a decision that `decisions.md` does not hold, or a needed packag
 1. Apply each change of `packages/NN-plan-feedback.md`.
 2. Load the stack skill of each technology that you touch. Read its version gate first.
 3. Write the test of the core behavior first and see it fail. Then write the code.
-4. Keep the contracts of the package as they are. Follow `conventions.md` and the decisions.
+4. Keep the contracts of the package as they are. Follow `conventions.md` and the decisions. Never change, skip, or delete a locked test file, and never make a DSL check weaker. You can add methods to the DSL. When a locked test seems wrong, stop with `NEEDS_CONTEXT` and say why.
 5. Run the checks after your last change: `python3 scripts/checks.py --root . --out <run folder>/packages/NN-checks.md`. Fix each failed check and run them again.
 6. Commit with a clear message. Write `packages/NN-report.md`.
 

@@ -1,6 +1,7 @@
 ---
 name: stack-index
 description: Routing table from a file type, a package, or a technology to the dev-stack skill that holds its rules, with the state of each skill (available or planned). Preloaded by the dev-team agents. Use when a dev-team agent must know which stack skill to load before it designs, builds, or reviews code.
+user-invocable: false
 ---
 
 # Stack index
