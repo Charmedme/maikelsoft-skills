@@ -290,3 +290,11 @@ This log records each change to a skill or to an eval case, the test that measur
 - Lesson: when a rule has one clear cause, make it an error that names the cause (RV-TABINDEX). A vague warning lets the agent pick another cause.
 - Evidence: E20, E21.
 - Confidence: medium. One fault, 3 runs before and 3 runs after the change.
+
+### E32: trigger check of the 1.0.0 skills (plan v7 step 9)
+- Date and version: 2026-11-17, ux-design 1.0.0
+- Change: no change to a skill. A trigger check of 12 skills, each with 5 start queries and 5 skip queries, 1 run each, Sonnet.
+- Test: `evals/ux-design/trigger.py`.
+- Observed: each skip query stays quiet (60 of 60). Start queries 5 of 5: `ux-patterns`, `ux-setup`, `figma`, and `brand-rules`. Start queries 4 of 5: `ux-design`, `ux-states`, `ux-review`, `claude-design`, and `web-accessibility`. `ux-prototype` 4 of 5, and the miss goes to `product-flow:prototype`. `ui-craft` 2 of 5. `openpencil` 1 of 5, and 3 misses go to a user-level skill with almost the same name.
+- Verdict: no observed effect for 10 skills. `ui-craft` has a weak description, and `openpencil` has a name clash with a skill outside this repository. The owner decides on both.
+- Evidence: this entry. The run folders are local and not in the repository.

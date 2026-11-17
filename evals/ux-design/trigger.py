@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """Trigger test: does each skill start for its own requests, and stay quiet for close requests?
 
-    python3 evals/ux-design/trigger.py <out folder> --plugin <plugin folder> [--model sonnet] [--parallel 4]
+    python3 evals/ux-design/trigger.py <out folder> --plugin <plugin folder> [<plugin folder> ...]
+                                       [--triggers <file>] [--model sonnet] [--parallel 4]
 
-Each query runs headless one time, with only this plugin loaded (--plugin-dir) and a clean
+--triggers defaults to triggers.json in this folder. Other sets: evals/dev-docs/triggers.json
+(plugin dev-docs) and evals/dev-team/triggers.json (plugins dev-flow, dev-team, and dev-stack).
+Each query runs headless one time, with only these plugins loaded (--plugin-dir) and a clean
 environment. A query counts as a start of skill X when the run calls the Skill tool with X in its
 first turns. Result: triggers-result.json in <out folder>, and a table per skill.
 """
@@ -22,8 +25,10 @@ from run import child_env  # noqa: E402
 def run_query(skill, kind, query, args, out):
     work = out / "work"
     work.mkdir(parents=True, exist_ok=True)
-    cmd = ["claude", "-p", query, "--model", args.model, "--plugin-dir", str(Path(args.plugin).resolve()),
-           "--permission-mode", "default", "--allowedTools", "Skill", "Read", "Glob", "Grep",
+    cmd = ["claude", "-p", query, "--model", args.model]
+    for plugin in args.plugin:
+        cmd += ["--plugin-dir", str(Path(plugin).resolve())]
+    cmd += ["--permission-mode", "default", "--allowedTools", "Skill", "Read", "Glob", "Grep",
            "--disallowedTools", "Write", "Edit", "Bash", "Agent", "WebFetch", "WebSearch",
            "--max-turns", "3", "--output-format", "stream-json", "--verbose", "--max-budget-usd", "1"]
     r = subprocess.run(cmd, cwd=work, env=child_env(), capture_output=True, text=True, timeout=600)
@@ -44,14 +49,15 @@ def run_query(skill, kind, query, args, out):
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("out")
-    p.add_argument("--plugin", required=True)
+    p.add_argument("--plugin", required=True, nargs="+")
+    p.add_argument("--triggers", type=Path, default=HERE / "triggers.json")
     p.add_argument("--model", default="sonnet")
     p.add_argument("--parallel", type=int, default=4)
     p.add_argument("--skill", nargs="*", help="test only these skills")
     args = p.parse_args()
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    spec = json.loads((HERE / "triggers.json").read_text(encoding="utf-8"))
+    spec = json.loads(args.triggers.read_text(encoding="utf-8"))
     if args.skill:
         spec = {k: v for k, v in spec.items() if k in args.skill}
     jobs = [(s, k, q) for s, kinds in spec.items() for k, qs in kinds.items() for q in qs]

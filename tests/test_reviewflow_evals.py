@@ -1,4 +1,5 @@
 """Tests of the review-flow comparison tools. They start no model."""
+import contextlib
 import importlib.util
 import json
 import pathlib
@@ -57,11 +58,42 @@ class Scenarios(unittest.TestCase):
             found = sorted(p.name for p in repo.glob(f"docs/work/{scenarios.SLUG}/follow-ups/*-comments.md"))
             self.assertEqual(found, ["01-comments.md", "02-comments.md", "03-comments.md"])
 
+    def test_recur_stays_under_the_round_limit_and_keeps_the_log_line_of_round_02(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = self.build("recur", tmp)
+            found = sorted(p.name for p in repo.glob(f"docs/work/{scenarios.SLUG}/follow-ups/*-comments.md"))
+            self.assertEqual(found, ["01-comments.md", "02-comments.md"])
+            self.assertIn("cancelled.", (repo / scenarios.ENDPOINTS).read_text(encoding="utf-8"))
+
+    def test_old_run_folder_is_checked_with_an_adopted_header_and_does_not_change(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = self.build("comments", tmp)
+            folder = repo / "docs" / "work" / scenarios.SLUG
+            before = (folder / "run.md").read_text(encoding="utf-8")
+            self.assertFalse(before.startswith("---"))
+            lines = score.runcheck_lines(folder)
+            self.assertTrue(lines)
+            self.assertFalse([line for line in lines if "RUN-HEADER" in line], lines)
+            self.assertEqual((folder / "run.md").read_text(encoding="utf-8"), before)
+
     def test_planted_code_scores_as_not_fixed(self):
         with tempfile.TemporaryDirectory() as tmp:
             facts = score.code_facts(self.build("review", tmp))
             self.assertFalse(facts["P1 shipped handled"] or facts["P2 window from options"] or facts["older bug changed"])
             self.assertFalse(facts["N1 o renamed"] or facts["N2 comment removed"])
+
+
+@contextlib.contextmanager
+def fake_ticket(tmp):
+    """A stand-in for cancel-order.ticket.md, which another change writes."""
+    saved = scenarios.TICKET
+    ticket = pathlib.Path(tmp) / "cancel-order.ticket.md"
+    ticket.write_text("# ORD-17 Cancel an order\n\n## Behaviour spec\n\nRule R1: a placed order can be cancelled.\n", encoding="utf-8")
+    scenarios.TICKET = ticket
+    try:
+        yield ticket
+    finally:
+        scenarios.TICKET = saved
 
 
 class Runner(unittest.TestCase):
@@ -83,11 +115,45 @@ class Runner(unittest.TestCase):
         self.assertTrue(all(d.startswith(str(ROOT)) for d in runner.plugin_dirs("new", "/old")))
 
     def test_each_arm_has_a_prompt_and_only_team_arms_name_the_skill(self):
-        for name in ("story", "review", "comments", "cap", "recur"):
-            with tempfile.TemporaryDirectory() as tmp:
-                self.assertNotIn("dev-team:", scenarios.prompt_for(name, "baseline", tmp))
-                self.assertIn("dev-team:", scenarios.prompt_for(name, "new", tmp))
-                self.assertNotIn(str(ROOT), scenarios.prompt_for(name, "new", tmp))
+        with tempfile.TemporaryDirectory() as tmp, fake_ticket(tmp):
+            for name in ("story", "review", "comments", "cap", "recur"):
+                folder = pathlib.Path(tmp) / name
+                self.assertNotIn("dev-team:", scenarios.prompt_for(name, "baseline", folder))
+                self.assertIn("dev-team:", scenarios.prompt_for(name, "current", folder))
+                self.assertIn("dev-team:", scenarios.prompt_for(name, "new", folder))
+                self.assertNotIn(str(ROOT), scenarios.prompt_for(name, "new", folder))
+
+    def test_new_loads_dev_flow_and_current_keeps_its_two_plugins(self):
+        self.assertEqual([pathlib.Path(d).name for d in runner.plugin_dirs("new", "/old")], ["dev-flow", "dev-team", "dev-stack"])
+        self.assertEqual(runner.plugin_dirs("current", "/old"), ["/old/plugins/dev-team", "/old/plugins/dev-stack"])
+
+    def test_story_gives_new_the_ticket_and_current_the_old_story(self):
+        with tempfile.TemporaryDirectory() as tmp, fake_ticket(tmp) as ticket:
+            new, current = pathlib.Path(tmp) / "new", pathlib.Path(tmp) / "current"
+            prompt = scenarios.prompt_for("story", "new", new)
+            self.assertIn(str(new / "ticket.md"), prompt)
+            self.assertIn("The item file is the ticket.", prompt)
+            self.assertEqual((new / "ticket.md").read_text(encoding="utf-8"), ticket.read_text(encoding="utf-8"))
+            self.assertFalse((new / "story.md").exists())
+            old = scenarios.prompt_for("story", "current", current)
+            self.assertEqual(old, scenarios.PROMPTS["story"]["team"].replace("{story}", str(current / "story.md"))
+                             + scenarios.AFTER.replace("{answers}", str(current / "answers.md")) + scenarios.SUFFIX)
+            self.assertEqual((current / "story.md").read_text(encoding="utf-8"), scenarios.STORY.read_text(encoding="utf-8"))
+
+    def test_review_restarts_new_at_step_7_and_current_at_step_6(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertIn("step 7", scenarios.prompt_for("review", "new", pathlib.Path(tmp) / "n"))
+            self.assertIn("step 6", scenarios.prompt_for("review", "current", pathlib.Path(tmp) / "c"))
+
+    def test_story_for_new_stops_when_the_ticket_is_missing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            saved = scenarios.TICKET
+            scenarios.TICKET = pathlib.Path(tmp) / "none.ticket.md"
+            try:
+                with self.assertRaises(FileNotFoundError):
+                    scenarios.prompt_for("story", "new", pathlib.Path(tmp) / "in")
+            finally:
+                scenarios.TICKET = saved
 
     def test_pinned_copy_sets_the_model_of_each_agent(self):
         with tempfile.TemporaryDirectory() as tmp:

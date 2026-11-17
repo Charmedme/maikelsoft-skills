@@ -20,6 +20,7 @@ import importlib.util
 import json
 import re
 import pathlib
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -27,6 +28,9 @@ import tempfile
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 SHARED = ROOT / "plugins" / "dev-team" / "shared"
+# The source of speclock.py. dev-flow 3.x copies it into skills/build/scripts; skills/plan-and-build has no scripts now.
+SPECLOCK = ROOT / "shared" / "speclock.py"
+RUNHEADER = ROOT / "shared" / "runheader.py"
 STACK_RULES = sorted(str(p) for p in (ROOT / "plugins" / "dev-stack" / "skills").glob("*/rules.json"))
 
 spec = importlib.util.spec_from_file_location("stackscore", HERE.parent / "dev-stack" / "score.py")
@@ -86,11 +90,16 @@ def usage(run):
     }
 
 
+# dev-team 1.0.0 names the branch feat/<item> (a bug: fix/<item>) when the project has no branch rule.
+# dev-team 0.6.0 named it dev-team/<slug>: keep that name, so that the old runs still score.
+TEAM_BRANCHES = ("feat/", "fix/", "dev-team/")
+
+
 def check_work_committed(repo, arm):
     code, branch = git(repo, "rev-parse", "--abbrev-ref", "HEAD")
     _, ahead = git(repo, "rev-list", "--count", "main..HEAD")
     n = int(ahead or 0)
-    ok = n > 0 and (arm != "team" or branch.startswith("dev-team/"))
+    ok = n > 0 and (arm != "team" or branch.startswith(TEAM_BRANCHES))
     return ok, f"{branch}, {n} commits since main"
 
 
@@ -108,6 +117,9 @@ def check_no_push(run):
 
 
 TIER_LINE = re.compile(r"\btier(?::| to| is)\W{0,6}(patch|small|medium|large)\b", re.IGNORECASE)
+# dev-flow 3.x writes the size in the shared header of run.md, not in plan.md.
+FRONT = re.compile(r"\A---\n(.*?)\n---", re.DOTALL)
+HEADER_SIZE = re.compile(r"^size:\s*(patch|small|medium|large)\b", re.IGNORECASE | re.MULTILINE)
 
 
 def assistant_text(run):
@@ -132,6 +144,12 @@ def check_tier(run, expected):
     """The tier that the run states (plan.md, else the text of the agents), against the expected tiers."""
     repo = run / "repo"
     texts = [p.read_text(encoding="utf-8", errors="ignore") for p in sorted(repo.glob("docs/work/*/plan.md"))]
+    for path in sorted(repo.glob("docs/work/*/run.md")):
+        front = FRONT.match(path.read_text(encoding="utf-8", errors="ignore"))
+        m = HEADER_SIZE.search(front.group(1)) if front else None
+        if m and not texts:
+            tier = m.group(1).lower()
+            return tier in expected, tier
     texts.append(assistant_text(run))
     for text in texts:
         m = TIER_LINE.search(text)
@@ -149,7 +167,7 @@ def check_speclock(repo):
     files = json.loads(lock.read_text(encoding="utf-8")).get("files", {})
     if not files:
         return False, "the lock file has no files"
-    script = ROOT / "plugins" / "dev-flow" / "skills" / "plan-and-build" / "scripts" / "speclock.py"
+    script = SPECLOCK
     p = subprocess.run([sys.executable, str(script), "check"], cwd=repo, capture_output=True, text=True)
     return p.returncode == 0, p.stdout.strip().splitlines()[-3:]
 
@@ -159,12 +177,31 @@ def run_folder(repo):
     return folders[-1] if folders else None
 
 
+def has_header(folder):
+    run_md = folder / "run.md"
+    return run_md.is_file() and run_md.read_text(encoding="utf-8", errors="ignore").startswith("---\n")
+
+
+def runcheck_json(folder):
+    """runcheck.py of dev-team 1.0.0 on a run folder. A run of dev-team 0.6.0 has a run.md without the
+    shared header: check a copy that runheader.py adopt gave the header (baseline: legacy), as a restart
+    of the run would. The run folder itself does not change."""
+    if has_header(folder):
+        return subprocess.run([sys.executable, str(SHARED / "runcheck.py"), str(folder), "--format", "json"],
+                              capture_output=True, text=True)
+    with tempfile.TemporaryDirectory() as tmp:
+        copy = pathlib.Path(tmp) / folder.name
+        shutil.copytree(folder, copy)
+        subprocess.run([sys.executable, str(RUNHEADER), "adopt", str(copy)], capture_output=True, text=True)
+        return subprocess.run([sys.executable, str(SHARED / "runcheck.py"), str(copy), "--format", "json"],
+                              capture_output=True, text=True)
+
+
 def check_runcheck(repo):
     folder = run_folder(repo)
     if folder is None:
         return False, "no run folder"
-    p = subprocess.run([sys.executable, str(SHARED / "runcheck.py"), str(folder), "--format", "json"],
-                       capture_output=True, text=True)
+    p = runcheck_json(folder)
     try:
         findings = json.loads(p.stdout)
     except ValueError:

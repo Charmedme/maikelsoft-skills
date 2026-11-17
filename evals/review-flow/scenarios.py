@@ -1,11 +1,11 @@
 """The scenarios of the review-flow comparison: small repositories with planted problems.
 
 Each scenario builds on the orders-api fixture of evals/dev-stack. The story is ORD-17 (cancel an order).
-    story     no prepared code. The arm delivers the story.
+    story     no prepared code. The arm delivers the story (the arm new: the ticket with a Behaviour spec).
     review    a built core with planted problems and a migration, in a run of mode light, at step 6.
     comments  a run after G2, with one earlier round and a new batch of pull request comments.
     cap       the same run with 3 earlier rounds. The new version shows the count and goes on.
-    recur     the same run, and one comment says that an earlier fix broke the behavior. The new version must stop.
+    recur     a run with 2 earlier rounds (under the limit), and one comment says that an earlier fix broke the behavior. The new version must stop.
 """
 import pathlib
 import subprocess
@@ -19,6 +19,8 @@ import prepare  # noqa: E402
 SLUG = "ord-17-cancel"
 STORY = ROOT / "evals" / "dev-team" / "stories" / "cancel-order.md"
 ANSWERS = ROOT / "evals" / "dev-team" / "stories" / "cancel-order.answers.md"
+# dev-team 1.0.0 stops a story without a Behaviour spec, so the arm new gets the ticket of the story.
+TICKET = ROOT / "evals" / "dev-team" / "stories" / "cancel-order.ticket.md"
 ENDPOINTS = "src/Orders.Api/Orders/OrderEndpoints.cs"
 
 # On main before the story: the total ignores the lines, because they are not loaded.
@@ -295,7 +297,7 @@ def prepare_scenario(name, repo):
     elif name == "cap":
         after_g2(repo, 3)
     elif name == "recur":
-        after_g2(repo, 3)
+        after_g2(repo, 2)  # under the round limit, so only the recurring bug can stop the run
         path = repo / ENDPOINTS
         text = path.read_text(encoding="utf-8")
         write(repo, ENDPOINTS, text.replace("        await db.SaveChangesAsync(ct);\n        return TypedResults.Ok(o.ToResponse());",
@@ -324,16 +326,31 @@ PROMPTS = {
         "baseline": f"The branch dev-team/{SLUG} is a pull request for the story in docs/work/{SLUG}/story.md. These are the new review comments. Handle them, commit, and draft a reply for each thread:\n{COMMENTS}",
     },
 }
+# The arm new runs dev-team 1.0.0. It builds the ticket, and its step numbers differ from 0.6.0:
+# step 6 is now the held-back tests (skipped in an adopted old run), and step 7 holds the risk check and the core review.
+PROMPTS["story"]["new"] = "Use the dev-team:deliver-story skill to build the item in {ticket}. The item file is the ticket."
+PROMPTS["review"]["new"] = (f"Use the dev-team:deliver-story skill to continue the run in docs/work/{SLUG}. G1 is approved and the core is built,"
+                            " so restart in step 7 after the build of the core, at the risk check and the core review.")
 PROMPTS["cap"] = PROMPTS["comments"]
 PROMPTS["recur"] = {"team": PROMPTS["comments"]["team"] + RECUR_COMMENT, "baseline": PROMPTS["comments"]["baseline"] + RECUR_COMMENT}
 
 
 def prompt_for(name, arm, folder):
-    """The prompt names the input by its copy in the folder of the run, so that it shows no path of this repository."""
+    """The prompt names the input by its copy in the folder of the run, so that it shows no path of this repository.
+    The arm new gets its own prompt where one exists (PROMPTS[name]["new"]), else the prompt of the team arms."""
     folder = pathlib.Path(folder)
     folder.mkdir(parents=True, exist_ok=True)
-    (folder / "story.md").write_text(STORY.read_text(encoding="utf-8"), encoding="utf-8")
     (folder / "answers.md").write_text(ANSWERS.read_text(encoding="utf-8"), encoding="utf-8")
     key = "baseline" if arm == "baseline" else "team"
-    text = PROMPTS[name][key].replace("{story}", str(folder / "story.md"))
+    if arm == "new" and "new" in PROMPTS[name]:
+        key = "new"
+    text = PROMPTS[name][key]
+    if "{ticket}" in text:
+        if not TICKET.is_file():
+            raise FileNotFoundError(f"{TICKET} is missing: the arm new needs the ticket of the story")
+        (folder / "ticket.md").write_text(TICKET.read_text(encoding="utf-8"), encoding="utf-8")
+        text = text.replace("{ticket}", str(folder / "ticket.md"))
+    else:  # the story.md copy as before 1.0.0; the arm new with a ticket sees only the ticket
+        (folder / "story.md").write_text(STORY.read_text(encoding="utf-8"), encoding="utf-8")
+        text = text.replace("{story}", str(folder / "story.md"))
     return text + AFTER.replace("{answers}", str(folder / "answers.md")) + SUFFIX

@@ -9,10 +9,29 @@ verdict. The arms show in the output, so a human who reads it is not blind.
 import json
 import pathlib
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 
 ENDPOINTS = "src/Orders.Api/Orders/OrderEndpoints.cs"
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+RUNCHECK = ROOT / "plugins" / "dev-team" / "shared" / "runcheck.py"
+RUNHEADER = ROOT / "shared" / "runheader.py"
+
+
+def runcheck_lines(folder, *extra):
+    """The output lines of runcheck.py of this worktree (dev-team 1.0.0). A run.md without the shared header
+    (a run of dev-team 0.6.0, the arm current) is checked on a copy that runheader.py adopt gave the header,
+    so that the arms differ in their run, not in the missing header. The run folder does not change."""
+    run_md = folder / "run.md"
+    if run_md.read_text(encoding="utf-8", errors="replace").startswith("---\n"):
+        return subprocess.run([sys.executable, str(RUNCHECK), str(folder), *extra], capture_output=True, text=True).stdout.splitlines()
+    with tempfile.TemporaryDirectory() as tmp:
+        copy = pathlib.Path(tmp) / folder.name
+        shutil.copytree(folder, copy)
+        subprocess.run([sys.executable, str(RUNHEADER), "adopt", str(copy)], capture_output=True, text=True)
+        return subprocess.run([sys.executable, str(RUNCHECK), str(copy), *extra], capture_output=True, text=True).stdout.splitlines()
 
 
 def git(repo, *args):
@@ -80,23 +99,20 @@ def run_facts(run):
         facts["older-problems.md"] = (folder / "older-problems.md").is_file()
         g2 = folder / "g2.md"
         facts["g2 Warnings"] = g2.is_file() and "Warnings" in g2.read_text(encoding="utf-8", errors="replace")
-        facts["runcheck findings"] = sum(1 for line in subprocess.run(
-            [sys.executable, str(pathlib.Path(__file__).resolve().parents[2] / "plugins" / "dev-team" / "shared" / "runcheck.py"), str(folder)],
-            capture_output=True, text=True).stdout.splitlines() if ": RUN-" in line)
+        facts["header"] = run_md.startswith("---\n")
+        facts["runcheck findings"] = sum(1 for line in runcheck_lines(folder) if ": RUN-" in line)
         risk2 = folder / "risk-2.txt"
         facts["risk-1 before the review"] = _risk_before_review(folder)
         facts["risk-2 lines"] = [line for line in (risk2.read_text(encoding="utf-8").splitlines() if risk2.is_file() else [])
                                  if line.startswith(("raise:", "new reason:", "gone reason:", "test edits since"))]
-        facts["report rule"] = sum(1 for line in subprocess.run(
-            [sys.executable, str(pathlib.Path(__file__).resolve().parents[2] / "plugins" / "dev-team" / "shared" / "runcheck.py"), str(folder), "--stage", "report"],
-            capture_output=True, text=True).stdout.splitlines() if ": RUN-G2" in line)
+        facts["report rule"] = sum(1 for line in runcheck_lines(folder, "--stage", "report") if ": RUN-G2" in line)
         facts["risk files"] = sorted(p.name for p in folder.rglob("*risk*.txt"))
         facts["follow-up files"] = sorted(p.name for p in folder.glob("follow-ups/*"))
     final = run / "final.md"
     text = final.read_text(encoding="utf-8", errors="replace") if final.is_file() else ""
     facts["final words"] = len(text.split())
     facts["Rounds line"] = bool(re.search(r"Rounds:\s*\d", text))
-    facts["three options"] = bool(re.search(r"(?i)go on", text) and re.search(r"(?i)close the threads", text) and re.search(r"(?i)new run", text))
+    facts["three options"] = bool(re.search(r"(?i)go on", text) and re.search(r"(?i)close the threads", text) and re.search(r"(?i)new (run|item)", text))  # 1.0.0 says "a new item"
     return facts
 
 

@@ -9,7 +9,8 @@ Each run gets <runs>/<scenario>/<arm>/repo and writes stream.jsonl and final.md 
 that has a final.md is skipped. The arms:
     baseline  plain Claude Code with dev-stack, no dev-team
     current   dev-team and dev-stack from --current-root
-    new       dev-team and dev-stack from this worktree
+    new       dev-flow, dev-team, and dev-stack from this worktree (dev-team 1.0.0 needs dev-flow). In the
+              scenario story, this arm gets the ticket of the story with a Behaviour spec.
 
 The runs read no user settings, so no installed plugin, hook, or router reaches them. Each run has its own empty
 profile, and a run that changes the real profile of the user stops the batch. Each arm runs from a copy of
@@ -60,7 +61,8 @@ def pinned_copy(folder, target, model):
 
 def plugin_dirs(arm, current_root):
     root = {"new": ROOT, "current": current_root, "baseline": current_root}[arm]
-    names = ["dev-stack"] if arm == "baseline" else ["dev-team", "dev-stack"]
+    # dev-team 1.0.0 (this worktree) is the team mode of dev-flow:build and needs dev-flow 3.1.0 or later.
+    names = {"baseline": ["dev-stack"], "current": ["dev-team", "dev-stack"], "new": ["dev-flow", "dev-team", "dev-stack"]}[arm]
     return [str(pathlib.Path(root) / "plugins" / name) for name in names]
 
 

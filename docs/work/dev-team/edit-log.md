@@ -44,3 +44,27 @@ This log records each change to a skill, an agent, or a script of the plugin, th
 - Observed: the scripts and hooks pass their tests. The behaviour of the skills is not measured.
 - Verdict: Not tested in the delivery suite yet. Plan step 9 tests it.
 - Evidence: `docs/work/dev-team/team-mode-1.0.md`
+
+### E4: the evals of the team mode (plan v7 step 9)
+- Date and version: 2026-11-17, dev-team 1.0.0 with dev-flow 3.1.0
+- Change: no change to a skill. The dev-team evals and the review-flow evals now give the team the ticket with the Behaviour spec. The review-flow scenario `recur` starts with 2 earlier rounds. That is under the round limit, so only the recurring bug can stop the run.
+- Test:
+  - The dev-team eval set, team arm, 8 stories, 2 runs each, Opus.
+  - The review flow, 0.6.0 against 1.0.0, 4 scenarios with 1 run each, and `recur` with 2 runs each, Sonnet.
+  - The delivery suite, 5 large stories, 2 runs for each arm, Sonnet. The arms: `flowspec` (dev-flow 2.1.0 with the spec), `buildspec` (dev-flow 3.1.0 alone), and `team`.
+  - A blind grading of the code of `team` against `buildspec`: 10 pairs, 2 graders, with the labels A and B changed for the second grader.
+  - The trigger queries of `build` and `deliver-story`: 5 start and 5 skip queries each.
+- Observed:
+  - dev-team evals: each check passes in 16 of 16 runs. No run stops early. A run costs $9.80 and takes 30 minutes on average.
+  - Review flow: `story` gives the same checks in both versions, for $2.64 against $1.64. In `review`, 1.0.0 fixes the 3 blocking comments, then stops on a question about the migration, before the 2 nits. In `cap`, 1.0.0 stops as designed. In `recur`, 1.0.0 stops for the recurring bug in 2 of 2 runs and gives the three options. Version 0.6.0 stops only at its round limit.
+  - Delivery suite, hidden tests: `flowspec` 256/256 (10 of 10 runs green, $1.48 and 16 minutes a run, 0.6 agents). `buildspec` 255/256 (9 of 10, $2.56, 21 minutes, 2.5 agents). `team` 256/256 (10 of 10, $8.98, 51 minutes, 9.3 agents). No run read the hidden tests.
+  - Blind grading: the two graders agree on 10 of 10 pairs. The team is better in 10 of 10 (sign test p = 0.002). The hidden tests did not find the defects of `buildspec`:
+    - A field of acceptance criterion 2 is missing in the list items. A check of the code confirms it.
+    - An existing end-to-end test breaks. A check of the code confirms it.
+    - A race gives 500 in place of 409 on SQL Server.
+    - The import loads a full table in memory.
+    - A test driver can delete the developer database.
+  - The defects of `team` are minor. An imported code is not trimmed, a delete and an edit can race, and two responses give 404 in place of 401.
+  - Triggers: 10 of 10 for `build` and 10 of 10 for `deliver-story`.
+- Verdict: helped. The team mode makes better code than the solo build on large items, and it costs 3.5 times as much. Keep it for large or risky items. The sample is small: 5 stories on one model. The owner decides about the default of the team route.
+- Evidence: this entry. The run folders are local and not in the repository.

@@ -50,17 +50,19 @@ def _load(name, path):
 runner = _load("reviewflow_run", HERE.parent / "review-flow" / "run.py")
 ARMS = {"baseline": ["dev-stack"], "flow": ["dev-flow", "dev-stack"], "build": ["dev-flow", "dev-stack"],
         "buildspec": ["dev-flow", "dev-stack"], "flowspec": ["dev-flow", "dev-stack"],
-        "team": ["dev-team", "dev-stack"], "both": ["dev-flow", "dev-team", "dev-stack"]}
+        "team": ["dev-flow", "dev-team", "dev-stack"], "both": ["dev-flow", "dev-team", "dev-stack"]}
 NEUTRAL = "Deliver the story in {story}. The answer sheet of the human is {answers}. Take each answer of the human from that sheet. Work on a new branch and commit."
 PROMPTS = {
     "baseline": NEUTRAL,
     "both": NEUTRAL,
     "flow": "Use the dev-flow:plan-and-build skill to build the approved item in {story}. The answer sheet of the human is {answers}. The human is also the product owner. Take each answer of the human from that sheet.",
     "build": "Use the dev-flow:build skill to build the item in {story}. The item file is the ticket. The answer sheet of the human is {answers}. The human is also the product owner. Take each answer of the human from that sheet. The sheet approves the item, the spec, and each gate.",
-    "team": "Use the dev-team:deliver-story skill to deliver the story in {story}. The answer sheet of the human is {answers}. Take each answer of the human from that sheet.",
+    # dev-team 1.0.0 is the team mode of dev-flow:build: it needs dev-flow 3.1.0 or later, and a ticket with a Behaviour spec.
+    "team": "Use the dev-team:deliver-story skill to build the item in {story}. The item file is the ticket. The answer sheet of the human is {answers}. Take each answer of the human from that sheet. The sheet approves the item, the spec, each gate, and each lock of a test file.",
 }
 PROMPTS["buildspec"] = PROMPTS["build"]  # the same prompt: only the ticket differs (ticket.md with a ready Behaviour spec)
 PROMPTS["flowspec"] = PROMPTS["flow"]  # the control: the old flow with the same ticket; run it with a _plugins folder of dev-flow 2.1.0
+TICKET_ARMS = ("buildspec", "flowspec", "team")  # these arms get ticket.md in the place of story.md
 SUFFIX = " Nobody can answer questions in this run. Do not push. Do not call any tool whose name starts with mcp__. Work only inside the current folder and the input folder."
 
 
@@ -308,19 +310,25 @@ def verify(stories, keep, labels=("base", "reference")):
 
 
 # runs
+def prepare_inputs(run, story, arm):
+    """Copy what the run sees into <run>/input. The arms of TICKET_ARMS get ticket.md as story.md."""
+    inputs = run / "input"
+    inputs.mkdir(parents=True, exist_ok=True)
+    for name in ("story.md", "answers.md"):
+        shutil.copy(STORIES / story / name, inputs / name)
+    if arm in TICKET_ARMS:  # the ticket with the reviewed Behaviour spec takes the place of story.md
+        ticket = STORIES / story / "ticket.md"
+        if not ticket.exists():
+            raise FileNotFoundError(f"{ticket} is missing: the arms {', '.join(TICKET_ARMS)} need it")
+        shutil.copy(ticket, inputs / "story.md")
+    return inputs
+
+
 def one(run, story, arm, args):
     repo = run / "repo"
     if not repo.exists():
         make_workspace(story, repo)
-    inputs = run / "input"
-    inputs.mkdir(exist_ok=True)
-    for name in ("story.md", "answers.md"):
-        shutil.copy(STORIES / story / name, inputs / name)
-    if arm in ("buildspec", "flowspec"):  # the ticket with the reviewed Behaviour spec takes the place of story.md
-        ticket = STORIES / story / "ticket.md"
-        if not ticket.exists():
-            raise FileNotFoundError(f"{ticket} is missing: the arms buildspec and flowspec need it")
-        shutil.copy(ticket, inputs / "story.md")
+    inputs = prepare_inputs(run, story, arm)
     env = runner.environment()
     profile = run / "profile.md"
     profile.write_text("# Dev-team profile\n\n| ID | Answer | Date |\n|----|--------|------|\n", encoding="utf-8")
