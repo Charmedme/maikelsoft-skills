@@ -51,9 +51,9 @@ Each of these sets the size to medium or higher. A risk alone does not make the 
 
 Tell the human the size in one line, for example: "Size: small bug. One method in `OrderService`, no contract change." When a risk sets the size, name the risk.
 
-## Large with a high risk
+## Large: offer the team
 
-When the size is large, a risk applies, and the dev-team plugin is installed, the route step `team` (`context.md`) decides:
+When the size is large and the dev-team plugin is installed, the route step `team` (`context.md`) decides. A risk is not necessary. In a blind grading on large items, the team made better code than one session, for about 3.5 times the cost:
 
 - `ask` (the default): offer the team in the size line: "The team of dev-team can build this. Do you want the team?"
 - `on` (for example the route of a tech lead): take the team without the question. Say it in the size line.
