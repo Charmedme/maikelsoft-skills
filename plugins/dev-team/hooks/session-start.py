@@ -33,7 +33,7 @@ RULES = """This project uses the dev-team plugin. Do development work with the s
 - Use the build and test commands of conventions.md, also the steps that get past an SDK pin."""
 
 ROUTE = """
-- An item to build: skill dev-flow:build. It sets the size, and it gives a large item with a risk to the team (dev-team:deliver-story).
+- An item to build: skill dev-flow:build. It sets the size, and it offers the team for a large item (dev-team:deliver-story).
 - A team run to continue (the header of docs/work/<item>/run.md says flow: team): skill dev-team:deliver-story.
 - The comments of a pull request review: skill dev-flow:review-comments. It gives a team run to dev-team:process-review."""
 

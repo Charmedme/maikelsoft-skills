@@ -75,5 +75,35 @@ class StreamFactsTests(unittest.TestCase):
         self.assertTrue(facts["peeked"])
 
 
+class TeamArmTests(unittest.TestCase):
+    """The team arm runs dev-team 1.0.0: the team mode of dev-flow:build, on a ticket with a Behaviour spec."""
+
+    def test_the_team_arm_loads_dev_flow_dev_team_and_dev_stack(self):
+        self.assertEqual(suite.ARMS["team"], ["dev-flow", "dev-team", "dev-stack"])
+        self.assertEqual(suite.ARMS["baseline"], ["dev-stack"])
+
+    def test_the_team_prompt_asks_the_team_for_the_ticket(self):
+        prompt = suite.PROMPTS["team"]
+        self.assertIn("dev-team:deliver-story", prompt)
+        self.assertIn("The item file is the ticket.", prompt)
+        self.assertIn("Take each answer of the human from that sheet.", prompt)
+        self.assertNotIn("/build", prompt)
+
+    def test_the_team_arm_reads_ticket_md_and_the_baseline_reads_story_md(self):
+        story = "dash-audit-range"
+        ticket = (suite.STORIES / story / "ticket.md").read_text(encoding="utf-8")
+        plain = (suite.STORIES / story / "story.md").read_text(encoding="utf-8")
+        self.assertNotEqual(ticket, plain)
+        with tempfile.TemporaryDirectory() as tmp:
+            for arm, expected in (("team", ticket), ("buildspec", ticket), ("baseline", plain), ("flow", plain)):
+                inputs = suite.prepare_inputs(pathlib.Path(tmp) / arm, story, arm)
+                self.assertEqual((inputs / "story.md").read_text(encoding="utf-8"), expected, arm)
+                self.assertTrue((inputs / "answers.md").is_file(), arm)
+
+    def test_each_story_has_a_ticket_for_the_team_arm(self):
+        for story in suite.all_stories():
+            self.assertTrue((suite.STORIES / story / "ticket.md").is_file(), story)
+
+
 if __name__ == "__main__":
     unittest.main()

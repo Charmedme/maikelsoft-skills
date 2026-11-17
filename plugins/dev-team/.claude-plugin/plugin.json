@@ -1,7 +1,7 @@
 {
   "name": "dev-team",
   "displayName": "Developer team agents",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "The team mode of dev-flow: one large or risky work item, built by a small team of agents on the same chain as a solo build (spec.md, locked tests, the run.md header). A senior designs and builds the core, mediors build the work packages, a security reviewer checks the diff, and the main session leads with the plan gate and the final gate. Also the review comments of a team run. Branch and commit only, with a track record, a command log, and checks. Needs dev-flow 3.1.0 or later and dev-stack. Output in ASD-STE100 Simplified Technical English or Begrijpelijk Nederlands (B1).",
   "author": {
     "name": "Maikel",

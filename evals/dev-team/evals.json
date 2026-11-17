@@ -1,9 +1,9 @@
 {
   "plugin": "dev-team",
-  "method": "Each story runs in a fresh copy of the orders-api fixture of dev-stack. Arm 'team' loads dev-team and dev-stack and starts the deliver-story skill. Arm 'baseline' loads dev-stack only and gets the same story and answer sheet. Both arms run headless with an answer sheet. The checks are in score.py; the judge assertions need a blind grader. Arm 'flow' loads dev-flow, dev-team, and dev-stack and starts the plan-and-build skill, which sets a tier and runs large items with dev-team. Arms 'flowspec' (the current dev-flow, spec first) and 'flow20' (dev-flow 2.0 from DEV_FLOW20_ROOT) compare the two flows.",
+  "method": "Each story runs in a fresh copy of the orders-api fixture of dev-stack. Arm 'team' loads dev-flow, dev-team, and dev-stack, and starts the deliver-story skill, the team mode of dev-flow:build (dev-team 1.0.0 needs dev-flow 3.1.0 or later). It gets the ticket of the story (the field 'ticket': the story with a Behaviour spec) in place of the story, because a story without a Behaviour spec stops a team run. Arm 'baseline' loads dev-stack only and gets the plain story and the same answer sheet. All arms run headless with an answer sheet. The checks are in score.py; the judge assertions need a blind grader. Arm 'flow' loads dev-flow, dev-team, and dev-stack and starts the plan-and-build skill, which sets a tier and runs large items with dev-team. Arms 'flowspec' (the current dev-flow, spec first) and 'flow20' (dev-flow 2.0 from DEV_FLOW20_ROOT) compare the two flows. Runs from dev-team 0.6.0 (branch dev-team/<slug>, run.md without a header) still score.",
   "fixture": "orders-api",
   "prompt": {
-    "team": "Use the dev-team:deliver-story skill to deliver the story in {story}. The answer sheet of the human is {answers}. Take each answer of the human from that sheet.",
+    "team": "Use the dev-team:deliver-story skill to build the item in {story}. The item file is the ticket. The answer sheet of the human is {answers}. Take each answer of the human from that sheet. The sheet approves each lock of a test file that says what its rule means.",
     "baseline": "Deliver the story in {story}. The answer sheet of the human is {answers}. Take each answer of the human from that sheet. Work on a new branch and commit. Do not push.",
     "suffix": " Do not call any tool whose name starts with mcp__Agent_Mesh. Those tools reach a live system that is not part of this task.",
     "flow": "Use the dev-flow:plan-and-build skill to build the approved item in {story}. The answer sheet of the human is {answers}. The human is also the product owner. Take each answer of the human from that sheet.",
@@ -16,6 +16,7 @@
       "name": "get-order",
       "size": "small",
       "story": "stories/get-order.md",
+      "ticket": "stories/get-order.ticket.md",
       "answers": "stories/get-order.answers.md",
       "assertions": [
         {
@@ -86,6 +87,7 @@
       "name": "cancel-order",
       "size": "medium",
       "story": "stories/cancel-order.md",
+      "ticket": "stories/cancel-order.ticket.md",
       "answers": "stories/cancel-order.answers.md",
       "assertions": [
         {
@@ -163,6 +165,7 @@
       "name": "order-mail",
       "size": "trap",
       "story": "stories/order-mail.md",
+      "ticket": "stories/order-mail.ticket.md",
       "answers": "stories/order-mail.answers.md",
       "assertions": [
         {
@@ -197,6 +200,7 @@
       "name": "ship-history",
       "size": "large",
       "story": "stories/ship-history.md",
+      "ticket": "stories/ship-history.ticket.md",
       "answers": "stories/ship-history.answers.md",
       "assertions": [
         {
@@ -276,6 +280,7 @@
       "name": "cancel-shop-day",
       "size": "medium-risk",
       "story": "stories/cancel-shop-day.md",
+      "ticket": "stories/cancel-shop-day.ticket.md",
       "answers": "stories/cancel-shop-day.answers.md",
       "assertions": [
         {
@@ -353,6 +358,7 @@
       "name": "list-empty-customer",
       "size": "patch",
       "story": "stories/list-empty-customer.md",
+      "ticket": "stories/list-empty-customer.ticket.md",
       "answers": "stories/list-empty-customer.answers.md",
       "assertions": [
         {
@@ -414,6 +420,7 @@
       "name": "order-discount",
       "size": "medium-hidden",
       "story": "stories/order-discount.md",
+      "ticket": "stories/order-discount.ticket.md",
       "answers": "stories/order-discount.answers.md",
       "assertions": [
         {
@@ -486,6 +493,7 @@
       "name": "order-export",
       "size": "small-hidden",
       "story": "stories/order-export.md",
+      "ticket": "stories/order-export.ticket.md",
       "answers": "stories/order-export.answers.md",
       "assertions": [
         {

@@ -6,6 +6,12 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-11-17
+
+### Changed
+
+- `build` offers the team of dev-team for each large item, also without a risk. The route step `team` still decides: `ask` (the default) offers the team, `on` takes it, and `off` builds in one session. On 5 large stories, a blind grading found better code from the team in 10 of 10 pairs. The team costs about 3.5 times as much.
+
 ## [3.1.0] - 2026-11-12
 
 The hand-over to the team mode of dev-team 1.0.0.
@@ -94,7 +100,8 @@ The hand-over to the team mode of dev-team 1.0.0.
 - The shared language rules: English in ASD-STE100 Simplified Technical English, and Dutch in Begrijpelijk Nederlands (B1). The format is fixed: Markdown.
 - An eval set with three evals, and the results of two test rounds against the six source skills.
 
-[Unreleased]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-flow-v3.1.0...HEAD
+[Unreleased]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-flow-v3.2.0...HEAD
+[3.2.0]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-flow-v3.1.0...dev-flow-v3.2.0
 [3.1.0]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-flow-v3.0.0...dev-flow-v3.1.0
 [3.0.0]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-flow-v2.1.0...dev-flow-v3.0.0
 [2.1.0]: https://github.com/Charmedme/maikelsoft-skills/compare/dev-flow-v2.0.0...dev-flow-v2.1.0

@@ -1,0 +1,18 @@
+{
+ "update-docs": {
+  "start": [
+   "Check all the docs of this repository and tell me which pages are out of date.",
+   "This project has no documentation yet. Which documents does it need?",
+   "Update the documentation of this project after the last release.",
+   "Audit the doc set of this repo for missing and stale pages.",
+   "Make a documentation plan for this service."
+  ],
+  "skip": [
+   "Write a README for this package.",
+   "Add XML doc comments to the OrderService class.",
+   "Write the changelog entry for version 2.1.0.",
+   "Write a how-to guide that rotates the API key.",
+   "Fix the failing unit test in OrderTests."
+  ]
+ }
+}

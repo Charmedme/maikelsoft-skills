@@ -6,6 +6,12 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-11-17
+
+### Changed
+
+- The text of the session-start hook and the README say that `/dev-flow:build` 3.2.0 offers the team for each large item, also without a risk.
+
 ## [1.0.0] - 2026-11-12
 
 dev-team becomes the team mode of the dev-flow chain. It needs dev-flow 3.1.0, which has the hand-over. The design notes are in `docs/work/dev-team/team-mode-1.0.md`.

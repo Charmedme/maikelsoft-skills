@@ -6,7 +6,7 @@ The human approves two times: the plan (G1) and the result (G2). The team works 
 
 English output follows ASD-STE100 Simplified Technical English. Dutch output follows Begrijpelijk Nederlands (taalniveau B1).
 
-Status: version 1.0.0. The team has no command of its own. `/dev-flow:build` gives it a large item with a risk. `/dev-flow:review-comments` gives it the comments on a pull request of a team run.
+Status: version 1.0.1. The team has no command of its own. `/dev-flow:build` offers it for a large item. `/dev-flow:review-comments` gives it the comments on a pull request of a team run.
 
 Product questions of the senior go to the product owner as a comment on the item. Read the test results below before you use it on real work. The test results come from version 0.6.0 and earlier.
 
@@ -29,7 +29,7 @@ claude plugin install dev-team@maikelsoft-skills
    /dev-flow:build PROJ-123
    ```
 
-3. `build` copies the Behaviour spec into `spec.md` and sets the size. For a large item with a risk, it asks: "The team of dev-team can build this. Do you want the team?" Answer "yes". With the route `team=on` (for example a tech lead), it takes the team without the question. You can also ask for the team: "Build PROJ-123 with the team."
+3. `build` copies the Behaviour spec into `spec.md` and sets the size. For a large item, it asks: "The team of dev-team can build this. Do you want the team?" Answer "yes". With the route `team=on` (for example a tech lead), it takes the team without the question. You can also ask for the team: "Build PROJ-123 with the team."
 4. The team designs the item and shows gate G1, the plan gate. G1 shows the design, the scenarios (each rule with its test file), the open decisions, and the new packages. Answer "ok", or name the rows that you change.
 5. The team locks the test file of each rule and builds on the branch of the item. It reviews each part one time, and runs a security review and the held-back tests. It updates the docs of the change.
 6. Gate G2, the final gate, shows the checks, the rules with their locked tests, and the open findings. You review the branch, push it, and open the pull request.
@@ -41,7 +41,7 @@ dev-team has no command in the `/` menu. Use the commands of dev-flow:
 
 | Command of dev-flow | What it does with the team |
 |---------------------|----------------------------|
-| `/dev-flow:build` | Offers the team for a large item with a risk, or takes the team when your route says `team=on`. Continues a team run when the header of `run.md` says `flow: team`. |
+| `/dev-flow:build` | Offers the team for a large item, or takes the team when your route says `team=on`. Continues a team run when the header of `run.md` says `flow: team`. |
 | `/dev-flow:review-comments` | Gives the comments on a pull request of a team run to the team. |
 
 Claude Code also starts the team when you ask for it, for example "let the team do it". The skills of dev-team are out of the menu, and other skills start them. The agents have no command. A skill starts them.

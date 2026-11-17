@@ -1,0 +1,34 @@
+{
+ "deliver-story": {
+  "start": [
+   "Let the team build SHOP-12.",
+   "Deliver this story with the dev team: docs/backlog/SHOP-40.md",
+   "Use the team of agents for ticket ORD-88: a senior for the design and mediors for the packages.",
+   "Let the team do SHOP-7. It is large and touches the payments.",
+   "I want the dev-team flow for this item, not a solo build: ORD-91."
+  ],
+  "skip": [
+   "Build SHOP-12.",
+   "Fix the typo in the README.",
+   "Handle the review comments on pull request 42.",
+   "Write a user story for the order export.",
+   "Plan and build the bug ORD-45."
+  ]
+ },
+ "build": {
+  "start": [
+   "Build SHOP-12.",
+   "Plan and build the bug ORD-45.",
+   "Build the ticket in docs/backlog/SHOP-40.md.",
+   "Implement story ORD-17 from its ticket, spec first.",
+   "Continue the build in docs/work/SHOP-12."
+  ],
+  "skip": [
+   "Let the team build SHOP-12.",
+   "Handle the review comments on pull request 42.",
+   "Write a user story for the order export.",
+   "Explain how the EF Core change tracker works.",
+   "Turn this idea into backlog items: customers want to pause a subscription."
+  ]
+ }
+}
