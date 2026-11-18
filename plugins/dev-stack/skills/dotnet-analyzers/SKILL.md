@@ -1,6 +1,6 @@
 ---
 name: dotnet-analyzers
-description: Code quality tools for .NET and the agent loop that uses them. Covers SDK analyzers (AnalysisLevel), EnforceCodeStyleInBuild, warnings as errors, Roslynator, Meziantou, VS Threading analyzers, BannedApiAnalyzers, .editorconfig, Directory.Build.props, dotnet format, and SARIF. Use when C# code must be checked or cleaned before a commit, a build shows CA, IDE, RCS, MA, VSTHRD, RS, or MSTEST warnings, a task touches .editorconfig, Directory.Build.props, NoWarn, pragma warning, analyzer packages, or warnings as errors, or a repo needs an analyzer baseline. Not for the C# language rules (dev-stack:csharp), test code (dev-stack:dotnet-testing), writing a new Roslyn analyzer, or linters for other languages.
+description: Code quality tools for .NET and the agent loop that uses them. Covers SDK analyzers (AnalysisLevel), EnforceCodeStyleInBuild, warnings as errors, Roslynator, Meziantou, VS Threading analyzers, BannedApiAnalyzers, .editorconfig, Directory.Build.props, dotnet format, and SARIF. Use when C# code must be checked or cleaned before a commit, a build shows CA, IDE, RCS, MA, VSTHRD, RS, or MSTEST warnings, a task touches .editorconfig, Directory.Build.props, NoWarn, pragma warning, analyzer packages, or warnings as errors, or a repo needs an analyzer baseline. Not for the C# language rules (dev-stack:csharp), test code (test-stack:dotnet-testing), writing a new Roslyn analyzer, or linters for other languages.
 metadata:
   verified: "2026-10-27"
   versions: ".NET SDK 10.0.403 (tested on 10.0.402 with Roslyn 5.9), Roslynator.Analyzers 5.0.1, Roslynator CLI 1.0.1, Meziantou.Analyzer 3.0.317, Microsoft.VisualStudio.Threading.Analyzers 18.12.1, Microsoft.CodeAnalysis.BannedApiAnalyzers 5.6.0, MSTest 4"
@@ -8,7 +8,7 @@ metadata:
 
 # .NET analyzers
 
-This skill covers the tools that keep .NET code clean and the same in each run. These are the analyzer setup, the severities, `dotnet format`, SARIF, and the build-fix loop. It owns the tool commands and the rule IDs. The reason for each code rule is in `dev-stack:csharp`. MSTest rules are in `dev-stack:dotnet-testing`.
+This skill covers the tools that keep .NET code clean and the same in each run. These are the analyzer setup, the severities, `dotnet format`, SARIF, and the build-fix loop. It owns the tool commands and the rule IDs. The reason for each code rule is in `dev-stack:csharp`. MSTest rules are in `test-stack:dotnet-testing`.
 
 ## First
 

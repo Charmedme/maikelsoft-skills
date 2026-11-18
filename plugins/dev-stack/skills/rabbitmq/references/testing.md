@@ -1,6 +1,6 @@
 # Tests against RabbitMQ
 
-How to test publishers and consumers against a real broker. The general Testcontainers rules (one container per assembly, image pins, Docker in CI) are in `dev-stack:dotnet-testing`. The code compiles with Testcontainers.RabbitMq 4.16.0, RabbitMQ.Client 7.2.2, and MSTest 4.
+How to test publishers and consumers against a real broker. The general Testcontainers rules (one container per assembly, image pins, Docker in CI) are in `test-stack:dotnet-testing`. The code compiles with Testcontainers.RabbitMq 4.16.0, RabbitMQ.Client 7.2.2, and MSTest 4.
 
 ## Contents
 

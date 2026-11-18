@@ -8,7 +8,7 @@ metadata:
 
 # RabbitMQ
 
-The messaging principles, the RabbitMQ 4.3 and 4.4 broker, and the raw RabbitMQ.Client 7 API. Wolverine handlers and the Wolverine RabbitMQ transport are in `dev-stack:wolverine`. Broker users, vhosts, and TLS are in `dev-stack:secure-coding`. Test containers in general are in `dev-stack:dotnet-testing`.
+The messaging principles, the RabbitMQ 4.3 and 4.4 broker, and the raw RabbitMQ.Client 7 API. Wolverine handlers and the Wolverine RabbitMQ transport are in `dev-stack:wolverine`. Broker users, vhosts, and TLS are in `dev-stack:secure-coding`. Test containers in general are in `test-stack:dotnet-testing`.
 
 ## First
 

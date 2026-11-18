@@ -1,14 +1,14 @@
 ---
 name: secure-coding
-description: Security rules for writing and reviewing code in the .NET 10, ASP.NET Core, EF Core, Angular and AngularJS stack, with its integrations, supply chain, containers and Kubernetes config. Covers authentication, authorization and tenant isolation, injection, deserialization, SSRF, file upload, secrets, crypto, CSRF, CORS, headers, logging, dependencies and LLM calls, mapped to OWASP Top 10 2025, API Top 10 2023, ASVS 5.0 level 2 and CWE Top 25 2025. Use when code adds or changes an endpoint, sign-in, a permission check, input binding, SQL, a file or path, an outbound URL, a serializer, a secret or key, a cookie or token, a log of user data, a dependency, a Dockerfile, a manifest, a CI workflow or an LLM call, or when the user asks for a security review, a threat model, or "is this safe". Not for general code review without a security question, pure styling or text changes, or token issuing inside the identity provider.
+description: Security rules for writing and reviewing server code in the .NET 10, ASP.NET Core, and EF Core stack, with its integrations, supply chain, containers and Kubernetes config. Covers authentication, authorization and tenant isolation, injection, deserialization, SSRF, file upload, secrets, crypto, CSRF, CORS, headers, logging, dependencies and LLM calls, mapped to OWASP Top 10 2025, API Top 10 2023, ASVS 5.0 level 2 and CWE Top 25 2025. Use when code adds or changes an endpoint, sign-in, a permission check, input binding, SQL, a file or path, an outbound URL, a serializer, a secret or key, a cookie or token, a log of user data, a dependency, a Dockerfile, a manifest, a CI workflow or an LLM call, or when the user asks for a security review, a threat model, or "is this safe". Not for browser code (frontend-stack:web-security), general code review without a security question, pure styling or text changes, or token issuing inside the identity provider.
 metadata:
   verified: "2026-10-27"
-  versions: ".NET 10 (SDK 10.0.403, ASP.NET Core 10.0.14), EF Core 10, Angular 22, AngularJS 1.8, FileSignatures 7.3.0, MailKit 4.18.2, PuppeteerSharp 25.15.0, Trivy 0.76.1, OWASP Top 10:2025, API Security Top 10:2023, ASVS 5.0.0, CWE Top 25:2025, OWASP LLM Top 10:2026"
+  versions: ".NET 10 (SDK 10.0.403, ASP.NET Core 10.0.14), EF Core 10, FileSignatures 7.3.0, MailKit 4.18.2, PuppeteerSharp 25.15.0, Trivy 0.76.1, OWASP Top 10:2025, API Security Top 10:2023, ASVS 5.0.0, CWE Top 25:2025, OWASP LLM Top 10:2026"
 ---
 
 # Secure coding
 
-Security rules for each change in this stack, for the writer and for the reviewer. Framework use is in the stack skills (`dev-stack:aspnetcore`, `dev-stack:efcore`, `dev-stack:angular`). This skill adds what makes that use safe. EF Core raw SQL rules are in `dev-stack:efcore` (rules `EF-RAW-SQL-*`).
+Security rules for each change in this stack, for the writer and for the reviewer. Framework use is in the stack skills (`dev-stack:aspnetcore`, `dev-stack:efcore`). This skill adds what makes that use safe. The browser side (sanitizer, DOM writes, CSP, Trusted Types, token storage, AngularJS) is in `frontend-stack:web-security`: load it too for each front-end change. EF Core raw SQL rules are in `dev-stack:efcore` (rules `EF-RAW-SQL-*`).
 
 ## First
 
@@ -125,8 +125,6 @@ Existing code keeps its style. Ask each open decision when the work first needs 
 | `logger.LogInformation($"User {name}")` | `logger.LogInformation("User {UserName}", name)` |
 | `.DisableAntiforgery()` on a cookie-authenticated endpoint because a form test fails | Send the token in the test |
 | Antiforgery on a form endpoint of an API without cookies | `.DisableAntiforgery()` with the reason: no cookie, so no CSRF |
-| `bypassSecurityTrustHtml(userHtml)` to stop stripping | Bind with `[innerHTML]` and let Angular sanitize |
-| `localStorage.setItem('token', ...)` | BFF cookie, or a token in memory |
 | `--no-sandbox` "for Docker" | Non-root user with the sandbox on |
 | `Path.Combine(root, file.FileName)` | `Path.Combine(root, $"{Guid.NewGuid():N}{ext}")` |
 | `ASPNETCORE_FORWARDEDHEADERS_ENABLED=true`, `KnownNetworks` | `KnownProxies` or `KnownIPNetworks` |
@@ -179,7 +177,7 @@ The full list, with the ASVS and CWE mapping, is in `references/review-checklist
 11. No secrets in code, config, images or CI. `tool (SC-APPSETTINGS-SECRET, SC-PRIVATE-KEY, gitleaks)`
 12. No weak crypto, no disabled certificate check, `RandomNumberGenerator` for secrets. `tool (SC-CERT-ACCEPT-ALL, SC-RANDOM-SECRET, CA5351, CA5359, CA5394)`
 13. Errors give no internals. Authorization code fails closed. `tool (SC-DEV-EXCEPTION-PAGE)` + `judge`
-14. Angular: no unsafe DOM writes, no token storage. `tool (SC-TS-*)`
+14. Front-end code: the checklist of `frontend-stack:web-security`. `tool (SC-TS-*, SC-NG1-*)` + `judge`
 15. New packages exist, are mature and come from mapped sources. CI actions have a SHA pin. `tool (SC-ACTION-NOT-PINNED, NuGetAudit)` + `judge`
 
 The security reviewer reports with the format in `references/review-report.md`.
@@ -196,7 +194,7 @@ Read the file for each boundary that the change touches.
 - `references/backend-dotnet.md`: authentication, authorization, JWT, cookies, antiforgery, CORS, Data Protection, input, SQL, deserialization, XML, SSRF, paths, redirects, regex, errors, logs, crypto, rate limits, headers, proxies. Read for each API change.
 - `references/file-upload.md`: the upload pipeline with FileSignatures. Read when code accepts or serves user files.
 - `references/integrations.md`: Valkey and Redis, RabbitMQ, Elasticsearch, MailKit, PuppeteerSharp. Read when the change uses one of them.
-- `references/frontend.md`: Angular sanitizer, `bypassSecurityTrust`, CSP, Trusted Types, XSRF, token storage, AngularJS. Read for each frontend change.
+- Browser code: the skill `frontend-stack:web-security`. When it is not installed, give the human `claude plugin install frontend-stack@maikelsoft-skills`.
 - `references/supply-chain.md`: NuGet, npm, lock files, source mapping, cooldown, package check, CI pinning, Trivy incident. Read when a dependency or a workflow changes.
 - `references/containers-kubernetes.md`: Dockerfile and manifest security. Read when a Dockerfile or a manifest changes.
 - `references/llm-apps.md`: OWASP LLM Top 10:2026. Read only when the code calls an LLM.

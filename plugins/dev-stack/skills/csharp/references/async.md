@@ -188,7 +188,7 @@ public async Task WaitAsync_completes_when_time_advances()
 
 - Give each test its own `FakeTimeProvider`. Do not mix `TimeProvider.System` and a fake in one test.
 - Test the edges: midnight, month end, daylight saving time (`SetLocalTimeZone`), leap years.
-- The test framework, assertions, and test layout belong to `dev-stack:dotnet-testing`.
+- The test framework, assertions, and test layout belong to `test-stack:dotnet-testing`.
 
 ## Traps
 

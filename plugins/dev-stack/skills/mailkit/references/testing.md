@@ -1,6 +1,6 @@
 # Mail tests
 
-How to test mail code at three levels (decision MAIL-04). The test code was compiled and run with MSTest 4.5.1, Testcontainers.Mailpit 4.16.0, Mailpit v1.31.6 and MailKit 4.18.1. The pin is now v1.32.0 (security fixes, no change to the API v1 in its changelog). The test was not run again on v1.32.0. Test setup in general is in `dev-stack:dotnet-testing`.
+How to test mail code at three levels (decision MAIL-04). The test code was compiled and run with MSTest 4.5.1, Testcontainers.Mailpit 4.16.0, Mailpit v1.31.6 and MailKit 4.18.1. The pin is now v1.32.0 (security fixes, no change to the API v1 in its changelog). The test was not run again on v1.32.0. Test setup in general is in `test-stack:dotnet-testing`.
 
 ## Contents
 

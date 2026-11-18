@@ -1,16 +1,12 @@
 # dev-stack
 
-dev-stack is a Claude Code plugin for a .NET 10 team with an Angular front end. It has 19 stack skills. Each skill tells the agent what is true for this version of the stack and what the agent usually gets wrong. Each skill also has a check step with a tool and one report format.
+dev-stack is a Claude Code plugin for a .NET 10 team. It has 16 stack skills for the back end. Each skill tells the agent what is true for this version of the stack and what the agent usually gets wrong. Each skill also has a check step with a tool and one report format.
 
 English output follows ASD-STE100 Simplified Technical English. Dutch output follows Begrijpelijk Nederlands (taalniveau B1).
 
 ## Install
 
-You need Claude Code, the .NET 10 SDK, and Python 3.9 or later. For the `angular` skill, you also need Node.js and the official Angular skill in the project:
-
-```sh
-npx skills add https://github.com/angular/skills
-```
+You need Claude Code, the .NET 10 SDK, and Python 3.9 or later.
 
 ```sh
 claude plugin marketplace add Charmedme/maikelsoft-skills
@@ -53,11 +49,8 @@ Claude Code starts a skill by itself when your request matches its trigger. You 
 | `/dev-stack:wolverine` | Messaging with Wolverine 6. | Handlers, the durable outbox, error policies, or the RabbitMQ transport |
 | `/dev-stack:mailkit` | Outgoing mail with MailKit 4. | SMTP, `MimeMessage`, a mail outbox, or OAuth2 SMTP |
 | `/dev-stack:puppeteersharp` | HTML to PDF with headless Chrome. | An invoice or report as PDF, or Chrome in a container |
-| `/dev-stack:angular` | Angular 22 and 21 next to the official `angular-developer` skill. | Angular components, templates, services, forms, routes, specs, or Transloco texts |
-| `/dev-stack:dotnet-testing` | Tests with MSTest 4, fakes, and Testcontainers. | .NET tests written, reviewed, or fixed, or a test project set up |
 | `/dev-stack:dotnet-analyzers` | Analyzers, warnings as errors, and the code-quality gate. | Analyzer warnings, `.editorconfig`, `NoWarn`, or a cleanup before a commit |
 | `/dev-stack:secure-coding` | Security rules for code and its supply chain. | A new endpoint, sign-in, a secret, a package, or a security review |
-| `/dev-stack:migrate-fluentassertions` | Moves a test project from FluentAssertions to AwesomeAssertions 9, step by step. | Never: it changes packages, so only its command starts it |
 
 ## Skills
 
@@ -76,12 +69,22 @@ Claude Code starts a skill by itself when your request matches its trigger. You 
 | `rabbitmq` | RabbitMQ 4.3 with RabbitMQ.Client 7: exchanges, quorum queues, publisher confirms, consumers, dead letters, and the shared messaging principles. |
 | `wolverine` | Wolverine 6: handlers, the durable outbox and inbox on EF Core, error policies, local queues, and the RabbitMQ transport. |
 | `mailkit` | Outgoing mail with MailKit 4 and MimeKit 4: TLS, the SMTP password, a mail outbox with retries, templates, and OAuth2 SMTP. |
-| `angular` | Angular 22 and 21 in an existing app, next to the official `angular-developer` skill. Server errors on form fields, ETag and 412 conflicts, and stale lists. Focus, live regions, Transloco, dates, tests, and the browser check. |
 | `puppeteersharp` | HTML to PDF and screenshots with PuppeteerSharp and headless Chrome: the Chrome sandbox, Chrome in a container, SSRF, and user text in the HTML. |
-| `dotnet-testing` | MSTest 4 on Microsoft.Testing.Platform, FluentAssertions 7.2.2 or AwesomeAssertions 9, fakes, `FakeTimeProvider`, `WebApplicationFactory`, and Testcontainers. |
 | `dotnet-analyzers` | SDK analyzers, warnings as errors, Roslynator, Meziantou, `BannedSymbols.txt`, and the CI gate. |
-| `secure-coding` | Security rules for writing and reviewing code: sign-in, access control, input, secrets, supply chain, and containers. |
-| `migrate-fluentassertions` | The step-by-step move of a test project from FluentAssertions 5, 6, or 7 to AwesomeAssertions 9. |
+| `secure-coding` | Security rules for writing and reviewing server code: sign-in, access control, input, secrets, supply chain, and containers. Browser code is in `frontend-stack:web-security`. |
+
+## Moved skills (2.0.0)
+
+Version 2.0.0 splits the stack into three plugins. Install the plugin of each skill that you use:
+
+| Skill | New place | Install |
+|-------|-----------|---------|
+| `angular` | `frontend-stack:angular` | `claude plugin install frontend-stack@maikelsoft-skills` |
+| `dotnet-testing` | `test-stack:dotnet-testing` | `claude plugin install test-stack@maikelsoft-skills` |
+| `migrate-fluentassertions` | `test-stack:migrate-fluentassertions` | `claude plugin install test-stack@maikelsoft-skills` |
+| The browser part of `secure-coding` | `frontend-stack:web-security` | `claude plugin install frontend-stack@maikelsoft-skills` |
+
+The old names stay in dev-stack 2.x. Each old name only sends the request to the new skill. Version 3.0.0 removes them.
 
 ## Team rules in each skill
 
@@ -102,9 +105,9 @@ Claude Code starts a skill by itself when your request matches its trigger. You 
 
 Method, cases, and results are in `evals/dev-stack/`.
 
-### Version 1.3.0: the angular skill
+### Version 1.3.0: the angular skill (now in frontend-stack)
 
-Both variants had the official `angular-developer` skill. The skill variant also had `dev-stack:angular`. Three cases (a delete, a hard edit form, and a hard review) ran 3 times for each variant on Sonnet. Scripts ran the build, the tests, and hidden browser probes with axe-core. Blind graders scored the reports.
+Both variants had the official `angular-developer` skill. The skill variant also had `frontend-stack:angular`. Three cases (a delete, a hard edit form, and a hard review) ran 3 times for each variant on Sonnet. Scripts ran the build, the tests, and hidden browser probes with axe-core. Blind graders scored the reports.
 
 | Measure | Official skill only | Official skill and `angular` |
 |---------|---------------------|------------------------------|

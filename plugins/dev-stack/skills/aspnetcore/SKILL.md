@@ -186,7 +186,7 @@ Run the tools in this order. Fix each error. For each warning, fix it or give th
    dotnet list package --deprecated --vulnerable --include-transitive
    ```
 
-5. Run the tests. Pass: all green, including one test that starts the host with `ValidateOnBuild` and one HTTP test per new endpoint (`dev-stack:dotnet-testing`).
+5. Run the tests. Pass: all green, including one test that starts the host with `ValidateOnBuild` and one HTTP test per new endpoint (`test-stack:dotnet-testing`).
 
    ```
    dotnet test

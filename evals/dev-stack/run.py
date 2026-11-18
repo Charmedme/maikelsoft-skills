@@ -79,11 +79,20 @@ def prompt_for(ev, variant, repo):
         lines.append(f"The official skill for this stack is in `{official}`. Read `{official}/SKILL.md` "
                      "and the references that it names when you need them.")
     if variant == "skill":
-        skill = ROOT / "plugins" / "dev-stack" / "skills" / ev["skill"]
+        skill = skill_folder(ev["skill"])
         lines.append(f"The skill is in `{skill}`. Read `{skill}/SKILL.md` and follow it.")
     if lines:
         text = text.replace("\nNobody can answer", "\n" + "\n".join(lines) + "\n\nNobody can answer", 1)
     return text + SUFFIX
+
+
+def skill_folder(name):
+    """The folder of a stack skill. Since the split, a skill is in dev-stack, frontend-stack, or test-stack."""
+    for plugin in ("dev-stack", "frontend-stack", "test-stack"):
+        folder = ROOT / "plugins" / plugin / "skills" / name
+        if (folder / "SKILL.md").is_file() and "This skill has a new name:" not in (folder / "SKILL.md").read_text(encoding="utf-8"):
+            return folder
+    raise FileNotFoundError(f"no stack skill named {name}")
 
 
 def final_message(stream):

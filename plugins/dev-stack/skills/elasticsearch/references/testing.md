@@ -1,6 +1,6 @@
 # Testing search code
 
-Which test for which behavior: a real container for mappings and queries, the in-memory transport for response handling. Test framework rules are in `dev-stack:dotnet-testing`.
+Which test for which behavior: a real container for mappings and queries, the in-memory transport for response handling. Test framework rules are in `test-stack:dotnet-testing`.
 
 ## Contents
 

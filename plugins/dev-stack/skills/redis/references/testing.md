@@ -1,6 +1,6 @@
 # Testing cache and Redis code
 
-Test cached code against a real Valkey container. A fake `IDistributedCache` is enough only for a unit test of the cache logic itself. Test framework rules are in `dev-stack:dotnet-testing`.
+Test cached code against a real Valkey container. A fake `IDistributedCache` is enough only for a unit test of the cache logic itself. Test framework rules are in `test-stack:dotnet-testing`.
 
 ## Contents
 

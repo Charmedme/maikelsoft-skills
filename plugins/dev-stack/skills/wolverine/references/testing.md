@@ -1,6 +1,6 @@
 # Tests
 
-How to test Wolverine handlers and flows. The general test rules (MSTest, Testcontainers, one database container per assembly) are in `dev-stack:dotnet-testing`. The code compiles with WolverineFx 6.51.0 (runs of 2026-10-19). Use 6.51.3 or later in a project (rule 14), `Microsoft.AspNetCore.Mvc.Testing` 10, and MSTest 4. The tracked session tests below ran against the app of `configuration.md`.
+How to test Wolverine handlers and flows. The general test rules (MSTest, Testcontainers, one database container per assembly) are in `test-stack:dotnet-testing`. The code compiles with WolverineFx 6.51.0 (runs of 2026-10-19). Use 6.51.3 or later in a project (rule 14), `Microsoft.AspNetCore.Mvc.Testing` 10, and MSTest 4. The tracked session tests below ran against the app of `configuration.md`.
 
 ## Contents
 

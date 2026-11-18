@@ -196,6 +196,30 @@ This log records each change to a skill or to an eval case, the test that measur
 - Verdict: helped (a fair baseline)
 - Evidence: `docs/work/dev-stack/angular/results.md`
 
+### E22: the stack split (dev-stack 2.0.0)
+- Date and version: 2026-11-18, dev-stack 2.0.0, frontend-stack 1.0.0, test-stack 1.0.0, dev-team 1.1.0
+- Change: `angular` moves to frontend-stack, and `dotnet-testing` and `migrate-fluentassertions` move to test-stack, without a change to their rules. Each old name stays as a forwarder for one major version. `stackcheck.py` and `stack-rules.md` come from `shared/`. `stack-index` routes to the 3 plugins.
+- Test: unit tests (`test_stack_rules.py` now reads each plugin), `sync_shared.py --check`, `claude plugin validate --strict` on the 4 plugins, `skillcheck.py` and `doccheck.py` on each changed file.
+- Observed: each check passes. No eval run, because no rule changed.
+- Verdict: no observed effect expected. Not measured
+- Evidence: `docs/work/stack-split/brief.md`
+
+### E23: web-security, the browser part of secure-coding
+- Date and version: 2026-11-18, frontend-stack 1.0.0, dev-stack 2.0.0
+- Change: the reference `frontend.md` and the tool rules `SC-TS-*` and `SC-NG1-TRUST-HTML` move from `secure-coding` to the new skill `frontend-stack:web-security`. `secure-coding` keeps the server code, and its front-end checklist rows point to the new skill.
+- Test: trigger check, 5 start and 5 skip queries, Sonnet, with dev-stack loaded next to frontend-stack.
+- Observed: 5 of 5 starts, 5 of 5 quiet. The skip queries for JWT and CORS did not start `web-security`.
+- Verdict: helped (the split routes as designed). The rules did not change, so the behaviour is not measured
+- Evidence: `docs/work/stack-split/results.md`
+
+### E24: modern-web, a pointer to Modern Web Guidance
+- Date and version: 2026-11-18, frontend-stack 1.0.0
+- Change: a new skill without guidance of its own. It starts the skill of Modern Web Guidance (Google Chrome) when it is installed. Else it gives the install command and uses the `npx` search after the approval of the human. The description starts with "Run first for each task that writes or changes HTML, CSS, or client-side JavaScript".
+- Test: trigger check, 5 start and 5 skip queries, Sonnet, two versions of the description.
+- Observed: the first description ("Sends ... work to ... Use when ...") started 0 of 5. The second started 4 of 5. Both stayed quiet on 5 of 5 skip queries.
+- Verdict: helped (the trigger). The hand-over to the installed plugin is not tested
+- Evidence: `docs/work/stack-split/results.md`
+
 ## Lessons
 
 ### Round 1.1.0 (2026-10-21)

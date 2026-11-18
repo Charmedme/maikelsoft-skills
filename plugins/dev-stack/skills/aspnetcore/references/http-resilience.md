@@ -193,4 +193,4 @@ Code with `AddTransientHttpErrorPolicy`, `AddPolicyHandler`, and `Policy.Handle<
 - Unit test a typed client with a fake `HttpMessageHandler` that returns fixed responses.
 - Test the behavior, not the Polly settings: "a GET retries on 503", "a POST does not retry".
 - Do not test the defaults of the library.
-- Details: `dev-stack:dotnet-testing`.
+- Details: `test-stack:dotnet-testing`.

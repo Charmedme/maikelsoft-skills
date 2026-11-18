@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repository is
 
-A Claude Code plugin marketplace (`.claude-plugin/marketplace.json`) with 8 plugins in `plugins/`. Most changes are Markdown: skills (`skills/<skill>/SKILL.md`), agents (`agents/*.md`), READMEs, and changelogs. The code is Python 3.9+ with the standard library only: checkers that the skills run, the sync script, eval scorers, and tests. There is no build step and no package install.
+A Claude Code plugin marketplace (`.claude-plugin/marketplace.json`) with 10 plugins in `plugins/`. Most changes are Markdown: skills (`skills/<skill>/SKILL.md`), agents (`agents/*.md`), READMEs, and changelogs. The code is Python 3.9+ with the standard library only: checkers that the skills run, the sync script, eval scorers, and tests. There is no build step and no package install.
 
 ## Write each Markdown file with the language rules
 
@@ -64,7 +64,7 @@ The `MockupTests` in `tests/test_uxcheck.py` need a Playwright Chromium browser.
 
 The tests in `tests/` import each checker from its source location with `sys.path.insert`. For doccheck, this is `shared/`. For a single-skill script, it is the `scripts/` folder of the skill. Give a new checker a test file of the same name (`test_<checker>.py`).
 
-`tests/test_stack_rules.py` checks each `plugins/dev-stack/skills/*/rules.json`. Each rule needs `match` and `nomatch` example lines. The pattern must match each `match` line and no `nomatch` line. `plugins/dev-stack/shared/stackcheck.py` runs these rules (kinds `regex`, `require`, `package`, `detect`).
+`tests/test_stack_rules.py` checks each `plugins/*/skills/*/rules.json`. Each rule needs `match` and `nomatch` example lines. The pattern must match each `match` line and no `nomatch` line. `shared/stackcheck.py` runs these rules (kinds `regex`, `require`, `package`, `detect`).
 
 ## Release a change to a plugin
 

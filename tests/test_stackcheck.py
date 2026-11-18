@@ -8,7 +8,7 @@ import tempfile
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "plugins" / "dev-stack" / "shared"))
+sys.path.insert(0, str(ROOT / "shared"))
 import stackcheck  # noqa: E402
 
 RULES = {

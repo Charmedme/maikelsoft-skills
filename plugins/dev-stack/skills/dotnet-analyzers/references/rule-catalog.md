@@ -112,6 +112,6 @@ Keep these off or at Info. They are not in `latest-recommended`, or they are Inf
 | Meziantou | Package defaults. Seven duplicates and MA0026 off. |
 | VS Threading | Package defaults. VSTHRD200, VSTHRD111 off. |
 | BannedApiAnalyzers | RS0030 at warning (package default). |
-| MSTest | `MSTestAnalysisMode` `Recommended`. Details in `dev-stack:dotnet-testing`. |
+| MSTest | `MSTestAnalysisMode` `Recommended`. Details in `test-stack:dotnet-testing`. |
 
 IDE0079 (unnecessary suppression) does not run on build, only in the IDE. A stale `#pragma` stays. Find suppressions with `sarif.py --suppressed` or with the rule ANA-PRAGMA-REASON.

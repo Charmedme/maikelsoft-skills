@@ -2,7 +2,7 @@
 
 The team decisions that PostgreSQL code needs. The order is the order in which a new project meets them. The recommendation is the catalog default. Ask the human before you apply it (stack rule 4).
 
-This skill owns DATA-23, DATA-24, and DATA-25. For DATA-07, DATA-10, DATA-11, DATA-15, and DATA-22, the full entry with the EF side is in `dev-stack:efcore` (`references/decisions.md`). The entries below give only the PostgreSQL engine part. DATA-01 (engine) is in `dev-stack:efcore`, and DATA-20 (test database) is in `dev-stack:dotnet-testing`.
+This skill owns DATA-23, DATA-24, and DATA-25. For DATA-07, DATA-10, DATA-11, DATA-15, and DATA-22, the full entry with the EF side is in `dev-stack:efcore` (`references/decisions.md`). The entries below give only the PostgreSQL engine part. DATA-01 (engine) is in `dev-stack:efcore`, and DATA-20 (test database) is in `test-stack:dotnet-testing`.
 
 ## Contents
 
