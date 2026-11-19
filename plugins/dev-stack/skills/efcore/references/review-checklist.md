@@ -98,7 +98,7 @@ Each check is `tool (<rule ID>)` when a tool finds it, or `judge` when a reviewe
 | # | Check | Type |
 |---|-------|------|
 | 51 | No InMemory provider and no mocked `DbSet`. | tool (EF-INMEMORY, EF-PKG-INMEMORY, EF-MOCK-DBSET) |
-| 52 | Tests use the production engine in a container with a pinned image tag, and apply the migrations one time. | judge (`dev-stack:dotnet-testing`) |
+| 52 | Tests use the production engine in a container with a pinned image tag, and apply the migrations one time. | judge (`test-stack:dotnet-testing`) |
 | 53 | Non-trivial queries, concurrency, constraints, and filters have tests against the real engine. | judge |
 
 ## Decisions

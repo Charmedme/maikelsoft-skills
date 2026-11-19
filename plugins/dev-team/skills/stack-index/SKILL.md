@@ -1,6 +1,6 @@
 ---
 name: stack-index
-description: Routing table from a file type, a package, or a technology to the dev-stack skill that holds its rules, with the state of each skill (available or planned). Preloaded by the dev-team agents. Use when a dev-team agent must know which stack skill to load before it designs, builds, or reviews code.
+description: Routing table from a file type, a package, or a technology to the stack skill (dev-stack, frontend-stack, or test-stack) that holds its rules, with the state of each skill (available or planned). Preloaded by the dev-team agents. Use when a dev-team agent must know which stack skill to load before it designs, builds, or reviews code.
 user-invocable: false
 ---
 
@@ -12,11 +12,12 @@ Find the stack skill for each technology that the work touches. Load it with the
 
 1. List the files that the work touches, and the packages in the project files (`*.csproj`, `Directory.Packages.props`, `package.json`).
 2. Find each one in the table. One file can need more than one skill (an endpoint that writes to the database needs `aspnetcore` and `efcore`).
-3. For Angular, load the official skill `angular-developer` first, then `dev-stack:angular`. When the rules differ, `dev-stack:angular` wins. When `angular-developer` is not installed, give the human the command `npx skills add https://github.com/angular/skills`, and go on with `dev-stack:angular`.
-4. Always load `dev-stack:secure-coding` for code that takes input, handles a secret, or adds a package.
-5. A skill that is not installed: write one line in your report, for example "No stack skill for X. I used the official docs of version Y." Check the current facts with a look-up. Do not stop the run for it.
+3. For Angular, load the official skill `angular-developer` first, then `frontend-stack:angular`. When the rules differ, `frontend-stack:angular` wins. When `angular-developer` is not installed, give the human the command `npx skills add https://github.com/angular/skills`, and go on with `frontend-stack:angular`.
+4. Always load `dev-stack:secure-coding` for code that takes input, handles a secret, or adds a package. For browser code, also load `frontend-stack:web-security`.
+5. For HTML, CSS, or client-side JavaScript, also load `frontend-stack:modern-web`. It sends the work to Modern Web Guidance of Google Chrome.
+6. A skill of a plugin that is not installed: give the human the install command once, for example `claude plugin install frontend-stack@maikelsoft-skills`. Write one line in your report, for example "No stack skill for X. I used the official docs of version Y." Check the current facts with a look-up. Do not stop the run for it.
 
-## Available skills (dev-stack 1.3.0)
+## Available skills (dev-stack 2.0.0, frontend-stack 1.0.0, test-stack 1.0.0)
 
 | Signal | Skill |
 |--------|-------|
@@ -34,13 +35,15 @@ Find the stack skill for each technology that the work touches. Load it with the
 | `WolverineFx*` | `dev-stack:wolverine` |
 | `MailKit`, `MimeKit`, SMTP | `dev-stack:mailkit` |
 | `PuppeteerSharp`, HTML to PDF, headless Chrome | `dev-stack:puppeteersharp` |
-| Test projects, `MSTest*`, `AwesomeAssertions`, `Testcontainers*`, `WebApplicationFactory` | `dev-stack:dotnet-testing` |
-| `FluentAssertions` in a test project | `dev-stack:migrate-fluentassertions` |
+| Test projects, `MSTest*`, `AwesomeAssertions`, `Testcontainers*`, `WebApplicationFactory` | `test-stack:dotnet-testing` |
+| `FluentAssertions` in a test project | `test-stack:migrate-fluentassertions` |
 | Analyzer settings, `.globalconfig`, `Roslynator*`, `Meziantou.Analyzer`, `BannedSymbols.txt`, build warnings | `dev-stack:dotnet-analyzers` |
-| `@angular/*`, `*.component.ts`, Angular `*.spec.ts`, `@jsverse/transloco`, `@ngrx/*` | `angular-developer` (the official skill), then `dev-stack:angular` |
+| `@angular/*`, `*.component.ts`, Angular `*.spec.ts`, `@jsverse/transloco`, `@ngrx/*` | `angular-developer` (the official skill), then `frontend-stack:angular` |
 | Input, authentication, authorization, secrets, file upload, a new package, the security review | `dev-stack:secure-coding` |
+| `bypassSecurityTrust*`, `innerHTML`, a token in the browser, CSP, Trusted Types, AngularJS templates | `frontend-stack:web-security` |
+| `*.html`, `*.css`, `*.scss`, browser APIs, UI components, client-side JavaScript | `frontend-stack:modern-web` |
 
-## Planned skills (not in dev-stack yet)
+## Planned skills (not in a stack plugin yet)
 
 | Signal | Skill |
 |--------|-------|
@@ -51,7 +54,7 @@ Find the stack skill for each technology that the work touches. Load it with the
 | `Dockerfile`, `compose*.yml` | `docker` |
 | Kubernetes manifests, `kustomization.yaml` | `kubernetes` |
 
-When a planned skill is installed later, its name is `dev-stack:<skill>`.
+When a planned skill is installed later, a front-end skill is in frontend-stack, and a .NET or platform skill is in dev-stack.
 
 ## References
 

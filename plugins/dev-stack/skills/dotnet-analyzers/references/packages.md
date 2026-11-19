@@ -11,7 +11,7 @@ Checked on nuget.org on 2026-10-27. Check the version again before you add a pac
 | Microsoft.VisualStudio.Threading.Analyzers | 18.12.1 (2026-10-12) | MIT | Active. |
 | Microsoft.CodeAnalysis.BannedApiAnalyzers | 5.6.0 (2026-07-02) | MIT | Active. Source is now in dotnet/roslyn. |
 | Microsoft.CodeAnalysis.NetAnalyzers | Ships in the SDK (10.0.403) | MIT | Do not add the package. Set `AnalysisLevel`. |
-| MSTest.Analyzers | 4.5.2 (2026-10-27) | MIT | Comes with MSTest. See `dev-stack:dotnet-testing`. |
+| MSTest.Analyzers | 4.5.2 (2026-10-27) | MIT | Comes with MSTest. See `test-stack:dotnet-testing`. |
 
 ## Optional
 

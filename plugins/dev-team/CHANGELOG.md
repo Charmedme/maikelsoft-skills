@@ -6,6 +6,14 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-18
+
+### Changed
+
+- `stack-index` routes to the three stack plugins of the split: dev-stack 2.0.0, frontend-stack 1.0.0, and test-stack 1.0.0. New rows: `frontend-stack:web-security` for browser security, and `frontend-stack:modern-web` for HTML, CSS, and client-side JavaScript. Tests route to `test-stack:dotnet-testing`, and Angular to `frontend-stack:angular`.
+- When a stack plugin is not installed, the agent gives the human the install command once, and goes on.
+- The README recommends test-stack and frontend-stack next to dev-stack.
+
 ## [1.0.1] - 2026-11-17
 
 ### Changed

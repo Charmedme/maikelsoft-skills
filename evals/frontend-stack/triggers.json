@@ -1,0 +1,34 @@
+{
+ "modern-web": {
+  "start": [
+   "Add a confirm dialog before the user deletes a file on this page. Plain HTML and JavaScript.",
+   "Make this sidebar collapse into a drawer on small screens. The page is static HTML with CSS.",
+   "Add a tooltip that stays next to the info icon when the page scrolls.",
+   "The cards in this grid must change their layout when their container gets narrow, not the window.",
+   "Animate the switch between the list view and the detail view of this web page."
+  ],
+  "skip": [
+   "Add an endpoint that cancels an order. Answer 409 when the order is shipped.",
+   "Write an EF Core migration that adds a ShippedAt column to Orders.",
+   "Fix the failing MSTest test in OrderServiceTests.",
+   "Pin the GitHub Actions in our CI workflow to a commit SHA.",
+   "Write a SQL query that counts the orders per customer per month."
+  ]
+ },
+ "web-security": {
+  "start": [
+   "Our Angular app shows user comments as HTML. Is it safe to call bypassSecurityTrustHtml on them?",
+   "Where should the Angular app keep the access token after sign-in? Right now it goes into localStorage.",
+   "Add a Content Security Policy to our Angular app. We host it on nginx.",
+   "Review this AngularJS template for XSS. It also has Razor output in it.",
+   "The component writes the server message with nativeElement.innerHTML. Review it for security."
+  ],
+  "skip": [
+   "Add an Angular component that lists the orders of a customer, with paging.",
+   "Check the JWT bearer setup of our ASP.NET Core API for missing validation.",
+   "Add a CORS policy to the API for our partner portal.",
+   "Make the order list page load faster.",
+   "Write a unit test for the OrderService class."
+  ]
+ }
+}

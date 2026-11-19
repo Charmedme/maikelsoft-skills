@@ -24,7 +24,7 @@ Detail for the host, the DI container, configuration, options, hosted services, 
 |-----|---------|
 | Web API, web app | `WebApplication.CreateBuilder(args)` |
 | Worker, queue consumer, console app with DI | `Host.CreateApplicationBuilder(args)` |
-| Test of the web app | `WebApplicationFactory<Program>` (`dev-stack:dotnet-testing`) |
+| Test of the web app | `WebApplicationFactory<Program>` (`test-stack:dotnet-testing`) |
 
 Both builders give configuration (JSON, environment variables, user-secrets in Development, command line), logging, DI, and the host lifetime. `WebHost`, `WebHostBuilder`, and `IWebHost` are obsolete in .NET 10: `WebHostBuilder` gives ASPDEPR004, `WebHost` and `IWebHost` give ASPDEPR008.
 
@@ -59,7 +59,7 @@ builder.Host.UseDefaultServiceProvider(options =>
 });
 ```
 
-`ValidateOnBuild` cannot see services that code resolves with `GetRequiredService` at run time, or factory registrations. A test that starts the host covers more (`dev-stack:dotnet-testing`).
+`ValidateOnBuild` cannot see services that code resolves with `GetRequiredService` at run time, or factory registrations. A test that starts the host covers more (`test-stack:dotnet-testing`).
 
 ## Registration style
 

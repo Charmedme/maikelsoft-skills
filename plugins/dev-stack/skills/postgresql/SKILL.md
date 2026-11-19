@@ -8,7 +8,7 @@ metadata:
 
 # PostgreSQL
 
-Engine rules and SQL text for PostgreSQL. EF Core mapping, LINQ, and generated migrations are in `dev-stack:efcore`. Its `references/provider-postgresql.md` has the EF options: `UseNpgsql`, `xmin`, enums, and naming. Test containers are in `dev-stack:dotnet-testing`.
+Engine rules and SQL text for PostgreSQL. EF Core mapping, LINQ, and generated migrations are in `dev-stack:efcore`. Its `references/provider-postgresql.md` has the EF options: `UseNpgsql`, `xmin`, enums, and naming. Test containers are in `test-stack:dotnet-testing`.
 
 Write all output except code in the rules of `references/language.md`.
 

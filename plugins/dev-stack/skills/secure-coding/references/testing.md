@@ -1,6 +1,6 @@
 # Security tests
 
-Tests that prove a security control. Test framework rules are in `dev-stack:dotnet-testing`. The code was compiled and run on 2026-10-16 with MSTest.Sdk 4.5.1, AwesomeAssertions 9.6.0 and Microsoft.AspNetCore.Mvc.Testing 10.0.13 (6 tests passed). FluentAssertions 7.2.2 uses the same assertion calls.
+Tests that prove a security control. Test framework rules are in `test-stack:dotnet-testing`. The code was compiled and run on 2026-10-16 with MSTest.Sdk 4.5.1, AwesomeAssertions 9.6.0 and Microsoft.AspNetCore.Mvc.Testing 10.0.13 (6 tests passed). FluentAssertions 7.2.2 uses the same assertion calls.
 
 ## Contents
 

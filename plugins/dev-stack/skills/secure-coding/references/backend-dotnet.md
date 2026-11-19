@@ -495,7 +495,7 @@ public static IApplicationBuilder UseSecurityHeaders(this IApplicationBuilder ap
     });
 ```
 
-- The CSP of a JSON API is strict. The Angular app needs its own CSP (`frontend.md`).
+- The CSP of a JSON API is strict. The Angular app needs its own CSP (`frontend-stack:web-security`).
 - `UseHsts` defaults to 30 days without subdomains. Start short, then one year (SEC-08). APIs can reject plain HTTP instead of a redirect.
 - Behind a proxy, trust only the gateway:
 

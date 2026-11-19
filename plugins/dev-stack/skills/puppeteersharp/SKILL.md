@@ -1,6 +1,6 @@
 ---
 name: puppeteersharp
-description: HTML to PDF and page screenshots in .NET with PuppeteerSharp and headless Chrome. Use when code or a review renders an invoice, a report, or another HTML page to PDF, or touches PuppeteerSharp, Puppeteer.LaunchAsync, BrowserFetcher, chrome-headless-shell, PdfDataAsync, SetContentAsync, GoToAsync, --no-sandbox, Chrome in a Docker image, or user text in rendered HTML. Not for end-to-end UI tests with Playwright (dev-stack:dotnet-testing), PDF libraries without a browser (QuestPDF, PdfPig), or Node Puppeteer.
+description: HTML to PDF and page screenshots in .NET with PuppeteerSharp and headless Chrome. Use when code or a review renders an invoice, a report, or another HTML page to PDF, or touches PuppeteerSharp, Puppeteer.LaunchAsync, BrowserFetcher, chrome-headless-shell, PdfDataAsync, SetContentAsync, GoToAsync, --no-sandbox, Chrome in a Docker image, or user text in rendered HTML. Not for end-to-end UI tests with Playwright (test-stack:dotnet-testing), PDF libraries without a browser (QuestPDF, PdfPig), or Node Puppeteer.
 metadata:
   verified: "2026-10-27"
   versions: "PuppeteerSharp 25.15.0 (Chrome.DefaultBuildId 155.0.8059.84), chrome-headless-shell 155, .NET 10.0.14 (SDK 10.0.403), aspnet:10.0 (Ubuntu 24.04) images"

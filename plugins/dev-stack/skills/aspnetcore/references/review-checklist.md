@@ -117,6 +117,6 @@ Each check has a type. `tool` means an analyzer, the compiler, or a `rules.json`
 
 | # | Check | Type |
 |---|-------|------|
-| 54 | One HTTP test per new endpoint: status code, `Location`, ProblemDetails shape, 401 and 403. | judge (`dev-stack:dotnet-testing`) |
+| 54 | One HTTP test per new endpoint: status code, `Location`, ProblemDetails shape, 401 and 403. | judge (`test-stack:dotnet-testing`) |
 | 55 | One test starts the host with `ValidateOnBuild` and `ValidateScopes`. | judge |
 | 56 | One test shows that bad configuration stops the start. | judge |

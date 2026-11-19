@@ -8,7 +8,7 @@ metadata:
 
 # EF Core
 
-How to use EF Core well, with any relational provider. Engine rules (T-SQL, indexes, isolation, locks) are in `dev-stack:sqlserver` and `dev-stack:postgresql`. Test database setup is in `dev-stack:dotnet-testing`.
+How to use EF Core well, with any relational provider. Engine rules (T-SQL, indexes, isolation, locks) are in `dev-stack:sqlserver` and `dev-stack:postgresql`. Test database setup is in `test-stack:dotnet-testing`.
 
 ## First
 
@@ -149,7 +149,7 @@ Detail on teams, CI, bundles, scripts, seed data, and expand-contract: `referenc
 |-------|---------|
 | `FromSqlRaw($"... {name}")` or `"... " + name` | `FromSql($"... {name}")` |
 | `FromSqlInterpolated(...)` | `FromSql(...)` |
-| `options.UseInMemoryDatabase("test")` | Testcontainers with the production engine (`dev-stack:dotnet-testing`) |
+| `options.UseInMemoryDatabase("test")` | Testcontainers with the production engine (`test-stack:dotnet-testing`) |
 | `new Mock<DbSet<Order>>()` | A query test against the real engine |
 | `db.Database.EnsureCreated()` in app code | Migrations, deployed by a bundle or a script |
 | `app.Services...Database.Migrate()` in `Program.cs` | Bundle job (`dotnet ef migrations bundle`), or a startup call with a reason (DATA-18) |

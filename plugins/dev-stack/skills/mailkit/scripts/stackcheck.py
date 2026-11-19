@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check a repository against the rules of one or more dev-stack skills.
+"""Check a repository against the rules of one or more stack skills (dev-stack, frontend-stack, test-stack).
 
     python3 stackcheck.py                       # rules.json of this skill, current folder
     python3 stackcheck.py --root <repo>         # check another folder
@@ -225,7 +225,7 @@ def check(root, files, rules, detect):
 
 def main(argv=None):
     here = pathlib.Path(__file__).resolve().parent
-    parser = argparse.ArgumentParser(description="Check a repository against dev-stack rules.")
+    parser = argparse.ArgumentParser(description="Check a repository against stack rules.")
     parser.add_argument("--root", default=".", help="folder to check (default: current folder)")
     parser.add_argument("--rules", nargs="+", default=[str(here.parent / "rules.json")], help="rules.json files")
     parser.add_argument("--changed", metavar="BASE", help="check only files changed since the merge base with BASE")

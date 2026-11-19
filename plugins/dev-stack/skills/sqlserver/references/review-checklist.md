@@ -94,7 +94,7 @@ Each check is `tool (<rule ID>)` when a tool finds it, or `judge` when a reviewe
 
 | # | Check | Type |
 |---|-------|------|
-| 41 | Tests run against the pinned SQL Server image, not SQLite or the EF InMemory provider. | judge (`dev-stack:dotnet-testing`) |
+| 41 | Tests run against the pinned SQL Server image, not SQLite or the EF InMemory provider. | judge (`test-stack:dotnet-testing`) |
 | 42 | A counter, a claim, or an upsert has a test with parallel calls. | judge |
 | 43 | A report per local day has a test with an instant near midnight UTC. | judge |
 

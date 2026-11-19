@@ -1,8 +1,8 @@
 # Stack rules
 
-The source of this file is `plugins/dev-stack/shared/stack-rules.md` in the repository github.com/Charmedme/maikelsoft-skills. Each dev-stack skill has a copy. To change the rules, edit the source and run `python3 scripts/sync_shared.py`.
+The source of this file is `shared/stack-rules.md` in the repository github.com/Charmedme/maikelsoft-skills. Each skill of dev-stack, frontend-stack, and test-stack has a copy. To change the rules, edit the source and run `python3 scripts/sync_shared.py`.
 
-These rules apply to each dev-stack skill. The skill adds the rules of its technology.
+These rules apply to each stack skill. The skill adds the rules of its technology.
 
 ## Contents
 

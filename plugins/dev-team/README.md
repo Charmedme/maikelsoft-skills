@@ -6,18 +6,21 @@ The human approves two times: the plan (G1) and the result (G2). The team works 
 
 English output follows ASD-STE100 Simplified Technical English. Dutch output follows Begrijpelijk Nederlands (taalniveau B1).
 
-Status: version 1.0.1. The team has no command of its own. `/dev-flow:build` offers it for a large item. `/dev-flow:review-comments` gives it the comments on a pull request of a team run.
+Status: version 1.1.0. The team has no command of its own. `/dev-flow:build` offers it for a large item. `/dev-flow:review-comments` gives it the comments on a pull request of a team run.
 
 Product questions of the senior go to the product owner as a comment on the item. Read the test results below before you use it on real work. The test results come from version 0.6.0 and earlier.
 
 ## Install
 
-You need Claude Code, Python 3.9 or later, the dev-flow plugin 3.1.0 or later, and the dev-stack plugin. For a .NET repository you also need the .NET SDK. dev-team declares dev-flow as a dependency. When dev-flow is missing, Claude Code installs it with dev-team (see [Plugin dependencies in the Claude Code docs](https://code.claude.com/docs/en/plugins/dependencies)). The dependency has no version range, so update dev-flow yourself when you have a version before 3.1.0.
+You need Claude Code, Python 3.9 or later, the dev-flow plugin 3.1.0 or later, and the dev-stack plugin. The frontend-stack and test-stack plugins are optional: the team loads their skills when they are installed. For a .NET repository you also need the .NET SDK. dev-team declares dev-flow as a dependency. When dev-flow is missing, Claude Code installs it with dev-team (see [Plugin dependencies in the Claude Code docs](https://code.claude.com/docs/en/plugins/dependencies)). The dependency has no version range, so update dev-flow yourself when you have a version before 3.1.0.
 
 ```sh
 claude plugin marketplace add Charmedme/maikelsoft-skills
 claude plugin install dev-stack@maikelsoft-skills
 claude plugin install dev-team@maikelsoft-skills
+# Optional, recommended: the test skills and the front-end skills
+claude plugin install test-stack@maikelsoft-skills
+claude plugin install frontend-stack@maikelsoft-skills
 ```
 
 ## Quick start
@@ -62,7 +65,7 @@ Claude Code also starts the team when you ask for it, for example "let the team 
 | Skill | `story-intake` | Reads the item from Jira, Azure DevOps, GitHub, GitLab, or Linear (read only), and writes `spec.md` with `specsync.py`. After a hand-over from `build`, it adds only the item section. |
 | Skill | `senior-practice` | The rules and templates of the senior: design, packages, reflection, plan feedback, review, self-check. |
 | Skill | `medior-practice` | The rules and templates of a medior: plan, build test first, report with real output, fix. |
-| Skill | `stack-index` | Tells each agent which dev-stack skill to load. |
+| Skill | `stack-index` | Tells each agent which stack skill to load: dev-stack, frontend-stack, or test-stack. |
 | Skill | `team-decisions` | The decision sheet, the decision index, one ADR per decision, the profile, and `decisioncheck.py`. |
 | Agent | `senior` | Opus, effort high. Designs, reflects, builds the core, leads the mediors. |
 | Agent | `medior` | Sonnet, effort medium. Plans and builds a standard package. |

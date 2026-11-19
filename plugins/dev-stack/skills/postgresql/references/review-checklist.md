@@ -90,7 +90,7 @@ Each check is `tool (<rule ID>)` when a tool finds it, or `judge` when a reviewe
 
 | # | Check | Type |
 |---|-------|------|
-| 38 | Tests run against the pinned production image (DATA-20), not SQLite or the EF InMemory provider. | judge (`dev-stack:dotnet-testing`) |
+| 38 | Tests run against the pinned production image (DATA-20), not SQLite or the EF InMemory provider. | judge (`test-stack:dotnet-testing`) |
 | 39 | A claim, a counter, or an upsert has a test with parallel calls. | judge |
 | 40 | A report per local day has a test with an instant near midnight UTC. | judge |
 

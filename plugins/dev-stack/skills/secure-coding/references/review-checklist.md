@@ -128,6 +128,8 @@ The full checklist for the security reviewer and for the writer as a self-check.
 
 ## Frontend
 
+The rules, the tool rules, and the detail are in `frontend-stack:web-security`. Run its rule check for the front-end files.
+
 | # | Check | Type | Maps to |
 |---|-------|------|---------|
 | FE-1 | No new `bypassSecurityTrust*` on data that the code did not build from validated parts. | tool (SC-TS-BYPASS-TRUST) + judge | A05, CWE-79 |

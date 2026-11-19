@@ -6,6 +6,24 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-11-18
+
+The stack splits into three plugins: dev-stack for the .NET back end, frontend-stack, and test-stack.
+
+### Changed
+
+- `secure-coding` covers server code only. The browser rules (the Angular sanitizer, DOM writes, CSP, Trusted Types, token storage, AngularJS) and the tool rules `SC-TS-*` and `SC-NG1-TRUST-HTML` moved to `frontend-stack:web-security`. The front-end rows of the review checklist stay, and point to that skill.
+- The shared files `stackcheck.py` and `stack-rules.md` now come from `shared/` in the repository, so that each stack plugin gets the same copies.
+
+### Deprecated
+
+- `dev-stack:angular`, `dev-stack:dotnet-testing`, and `dev-stack:migrate-fluentassertions` are old names. Each one sends the request to the new skill and gives the install command when the new plugin is missing. Version 3.0.0 removes them.
+
+### Removed
+
+- The skill `angular` moved to `frontend-stack:angular`. Install frontend-stack.
+- The skills `dotnet-testing` and `migrate-fluentassertions` moved to test-stack. Install test-stack.
+
 ## [1.3.0] - 2026-11-04
 
 ### Added

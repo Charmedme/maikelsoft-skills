@@ -2,7 +2,7 @@
 
 The team decisions that SQL Server code needs. The order is the order in which a new project meets them. The recommendation is the catalog default. Ask the human before you apply it (stack rule 4).
 
-This skill owns DATA-26, DATA-27, DATA-28, and DATA-29. For DATA-07, DATA-10, DATA-11, DATA-15, and DATA-22, the full entry with the EF side is in `dev-stack:efcore` (`references/decisions.md`). The entries below give only the SQL Server engine part. DATA-01 (engine) is in `dev-stack:efcore`, and DATA-20 (test database) is in `dev-stack:dotnet-testing`.
+This skill owns DATA-26, DATA-27, DATA-28, and DATA-29. For DATA-07, DATA-10, DATA-11, DATA-15, and DATA-22, the full entry with the EF side is in `dev-stack:efcore` (`references/decisions.md`). The entries below give only the SQL Server engine part. DATA-01 (engine) is in `dev-stack:efcore`, and DATA-20 (test database) is in `test-stack:dotnet-testing`.
 
 ## Contents
 

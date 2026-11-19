@@ -1,5 +1,5 @@
 {
-  "plugin": "dev-stack",
+  "plugin": "frontend-stack",
   "skills": ["angular", "angular-developer", "aspnetcore", "secure-coding", "dotnet-testing", "ux-design:ux-design", "ux-design:web-accessibility"],
   "method": [
     "Load only the descriptions of the listed skills. Give each query to a new agent, 3 times. Record which skills the agent loads.",

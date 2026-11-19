@@ -1,6 +1,6 @@
 # EF Core decisions
 
-The team decisions that EF Core code needs. The order is the order in which a new project meets them. The recommendation is the catalog default. Ask the human before you apply it (stack rule 4). DATA-20 (test database) is in `dev-stack:dotnet-testing`.
+The team decisions that EF Core code needs. The order is the order in which a new project meets them. The recommendation is the catalog default. Ask the human before you apply it (stack rule 4). DATA-20 (test database) is in `test-stack:dotnet-testing`.
 
 ## Contents
 

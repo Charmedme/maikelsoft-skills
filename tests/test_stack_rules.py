@@ -4,7 +4,7 @@ import re
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-RULE_FILES = sorted(ROOT.glob("plugins/dev-stack/skills/*/rules.json"))
+RULE_FILES = sorted(ROOT.glob("plugins/*/skills/*/rules.json"))
 KINDS = {"regex", "require", "package", "detect"}
 
 

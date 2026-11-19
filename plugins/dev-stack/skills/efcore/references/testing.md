@@ -1,6 +1,6 @@
 # Testing EF Core code
 
-Only the EF part. The test framework, assertions, container lifetime, and Respawn setup are in `dev-stack:dotnet-testing` (decision DATA-20).
+Only the EF part. The test framework, assertions, container lifetime, and Respawn setup are in `test-stack:dotnet-testing` (decision DATA-20).
 
 ## Contents
 
@@ -51,7 +51,7 @@ public static class PgDatabase
 
 - Use `MigrateAsync`, not `EnsureCreated`. Then the tests run the same schema as production, and CI proves that each migration runs.
 - Build the test context with the same provider options as the app (`SetPostgresVersion`, naming convention, compatibility level).
-- Reset data between tests with Respawn, and keep `__EFMigrationsHistory` out of the reset (`dev-stack:dotnet-testing`).
+- Reset data between tests with Respawn, and keep `__EFMigrationsHistory` out of the reset (`test-stack:dotnet-testing`).
 - A transaction per test, rolled back at the end, is faster. It breaks when the code under test commits or uses the execution strategy.
 
 ## What to test

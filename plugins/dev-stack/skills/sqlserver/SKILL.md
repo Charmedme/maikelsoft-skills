@@ -8,7 +8,7 @@ metadata:
 
 # SQL Server
 
-Engine rules and T-SQL for SQL Server and Azure SQL. EF Core mapping, LINQ, and generated migrations are in `dev-stack:efcore`. Its `references/provider-sqlserver.md` has the EF options: `UseSqlServer`, `UseCompatibilityLevel`, `rowversion`, and collations in the model. Test containers are in `dev-stack:dotnet-testing`.
+Engine rules and T-SQL for SQL Server and Azure SQL. EF Core mapping, LINQ, and generated migrations are in `dev-stack:efcore`. Its `references/provider-sqlserver.md` has the EF options: `UseSqlServer`, `UseCompatibilityLevel`, `rowversion`, and collations in the model. Test containers are in `test-stack:dotnet-testing`.
 
 Write all output except code in the rules of `references/language.md`.
 

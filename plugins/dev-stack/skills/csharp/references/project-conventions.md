@@ -62,7 +62,7 @@ For apps. A library that targets more than one framework does not set `TargetFra
 | `TreatWarningsAsErrors` in CI | Strict merge gate, fast local loop (SOL-06) |
 
 - Do not set `LangVersion`. The target framework selects the C# version: 14 for `net10.0`, 15 for `net11.0`. `latest` or `preview` turns on preview features without a decision.
-- A test project uses `MSTest.Sdk` and gets its own settings from `dev-stack:dotnet-testing`.
+- A test project uses `MSTest.Sdk` and gets its own settings from `test-stack:dotnet-testing`.
 - A nested `Directory.Build.props` (for example in `tests/`) replaces the root file. Import the root file in it: `<Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />`.
 
 ## Directory.Packages.props
@@ -92,7 +92,7 @@ Packages that the team does not allow, or that need a decision:
 |---------|--------|-------------|
 | MediatR (all versions) | Not allowed | Direct handler classes. With approval: Mediator (martinothamar, MIT) or Wolverine |
 | AutoMapper (all versions) | Not allowed | Manual mapping, or Mapperly (Apache-2.0) for large mappings |
-| FluentAssertions 8 or later | Paid for commercial use | FluentAssertions 7.2.2 or AwesomeAssertions (see `dev-stack:dotnet-testing`) |
+| FluentAssertions 8 or later | Paid for commercial use | FluentAssertions 7.2.2 or AwesomeAssertions (see `test-stack:dotnet-testing`) |
 | System.Linq.Async on `net10.0` | Not needed | Built-in `System.Linq.AsyncEnumerable` |
 
 ## .editorconfig
