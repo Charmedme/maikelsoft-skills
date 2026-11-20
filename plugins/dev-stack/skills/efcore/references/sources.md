@@ -15,8 +15,8 @@ Checked on 2026-10-16. The facts of this skill come from these primary sources. 
 | Item | Version on 2026-10-27 | Source |
 |------|-----------------------|--------|
 | EF Core | 10.0.14 (LTS, support to 2028-11-10). 10.0.14 is part of the .NET security release of 2026-10-25. | [nuget.org Microsoft.EntityFrameworkCore](https://www.nuget.org/packages/Microsoft.EntityFrameworkCore), [EF Core releases](https://learn.microsoft.com/ef/core/what-is-new/) |
-| EF Core 11 | 11.0.0-rc.3.26522.148. EFCore.PG 11: 11.0.0-rc.2 | [What is new in EF Core 11](https://learn.microsoft.com/ef/core/what-is-new/ef-core-11.0/whatsnew) |
-| EF Core 8 and 9 | End of support 2026-11-10 | [EF Core releases](https://learn.microsoft.com/ef/core/what-is-new/) |
+| EF Core 11 | 11.0.0 (GA 2026-11-10, checked 2026-11-19). EFCore.PG 11: 11.0.0-rc.3 (2026-10-28), no GA on 2026-11-19 | [What is new in EF Core 11](https://learn.microsoft.com/ef/core/what-is-new/ef-core-11.0/whatsnew) |
+| EF Core 8 and 9 | Out of support since 2026-11-10 | [EF Core releases](https://learn.microsoft.com/ef/core/what-is-new/) |
 | Npgsql.EntityFrameworkCore.PostgreSQL | 10.0.3 | [nuget.org](https://www.nuget.org/packages/Npgsql.EntityFrameworkCore.PostgreSQL) |
 | EFCore.NamingConventions | 10.0.1 | [nuget.org](https://www.nuget.org/packages/EFCore.NamingConventions) |
 | SQL Server | 2025 (17.x), compatibility level 170 | [What is new in SQL Server 2025](https://learn.microsoft.com/sql/sql-server/what-s-new-in-sql-server-2025) |

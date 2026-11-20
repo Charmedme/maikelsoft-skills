@@ -2,7 +2,7 @@
 
 Read this file only when the project targets `net11.0`. For `net10.0`, the rules in `SKILL.md` apply without change.
 
-Status on 2026-10-27: .NET 11 is at RC 3 (11.0.0-rc.3, 2026-10-25), with "go-live" support. Microsoft expects GA in November 2026. .NET 11 is STS (24 months of support). .NET 10 is LTS. It stays the default for new projects (decision SOL-01 in `dev-stack:csharp`). The facts in this file come from the RC 2 documentation, and the list of breaking changes of 2026-10-27 adds no item for this file. Check the facts again after GA (stack rule 2). This file has no code examples, because the .NET 11 SDK is not installed in the authoring environment.
+Status on 2026-11-19: the GA release of .NET 11 and ASP.NET Core 11 came out on 2026-11-10 (11.0.0, SDK 11.0.100). The support of .NET 11 (STS) and .NET 10 (LTS) ends on the same day, 2028-11-14. For new projects, the default stays `net10.0` (decision SOL-01 in `dev-stack:csharp`). The move from `net10.0` is in `dev-stack:dotnet-11`. A build on SDK 11.0.100 confirmed the concurrency limiter removal and its replacement.
 
 ## Contents
 
@@ -41,14 +41,14 @@ Status on 2026-10-27: .NET 11 is at RC 3 (11.0.0-rc.3, 2026-10-25), with "go-liv
 ## Endpoints and middleware
 
 - `[ShortCircuit]` attribute: the attribute form of `.ShortCircuit()`. It works on minimal API handlers and on controllers. `.ShortCircuit()` still works.
-- ASP.NET Core 11 removes the `ConcurrencyLimiter` middleware (obsolete since ASP.NET Core 8 with warning CS0618). There is no 11.x package. Use `AddRateLimiter` with `AddConcurrencyLimiter("policy", ...)` and `RequireRateLimiting("policy")`.
+- ASP.NET Core 11 removes the `ConcurrencyLimiter` middleware (obsolete since ASP.NET Core 8 with warning CS0618). `app.UseConcurrencyLimiter()` and `services.AddConcurrencyLimiter()` give CS1061 on SDK 11.0.100. There is no 11.x package. Use `AddRateLimiter` with `AddConcurrencyLimiter("policy", ...)` and `RequireRateLimiting("policy")`, or a global `RateLimitPartition.GetConcurrencyLimiter`.
 - The rate limiter returns accurate `Retry-After` headers.
 - ASP.NET Core 11 removes the MVC compatibility options. Code that sets `CompatibilityVersion` or old MVC compatibility switches fails to compile.
 - Response compression always adds `Vary: Accept-Encoding` when it is on.
 
 ## Kestrel
 
-- HTTP/2 and HTTP/3: a request with `Connection`, `Proxy-Connection`, `Keep-Alive`, `TE` (other than `trailers`), `Transfer-Encoding`, or `Upgrade` is malformed and fails.
+- HTTP/2 and HTTP/3: Kestrel rejects a request with `Connection`, `Proxy-Connection`, `Keep-Alive`, `TE` (other than `trailers`), `Transfer-Encoding`, or `Upgrade` as malformed.
 - HTTP/1.1: a request with both `Content-Length` and `Transfer-Encoding` still runs, but Kestrel closes the connection after the response (request smuggling defense). Earlier versions get the same change in servicing updates.
 - What to do: check gateways and proxies that translate HTTP/1.1 to HTTP/2. Compliant clients see no change.
 
@@ -59,7 +59,7 @@ Detail is in `dev-stack:aspnetcore-openapi`. The short list:
 - `Microsoft.AspNetCore.OpenApi` 11 moves to Microsoft.OpenApi 3.x. Document, operation, and schema transformers that change the models need changes.
 - The default document version is OpenAPI 3.2. Set `options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_1` when a tool does not read 3.2 yet.
 - The document keeps each `[ProducesResponseType]` and each `.Produces()` per status code. Snapshot tests of the document change.
-- Asp.Versioning.OpenApi 10.2.3 pins Microsoft.OpenApi below 3.0 and does not run on ASP.NET Core 11 yet. Keep versioned APIs on .NET 10 until a compatible release ships.
+- Asp.Versioning.OpenApi 10.2.3 pins Microsoft.OpenApi below 3.0 and does not run on ASP.NET Core 11 yet (still the latest release on 2026-11-19). Keep versioned APIs on .NET 10 until a compatible release ships.
 
 ## Telemetry
 
@@ -77,9 +77,9 @@ Nine `Microsoft.Extensions.*` libraries are now in the shared framework: `Cachin
 
 ## Upgrade steps
 
-Do these steps only when the task asks for the upgrade (stack rule 1). The official `migrate-dotnet10-to-dotnet11` skill in github.com/dotnet/skills has the full procedure.
+Do these steps only when the task asks for the upgrade (stack rule 1). The full procedure is in `dev-stack:dotnet-11`. Do not use the versions of the Microsoft skill `migrate-dotnet10-to-dotnet11`: it still says preview.
 
-1. Change `TargetFramework` to `net11.0`, and update `global.json` to an 11.0 SDK.
+1. Change `TargetFramework` to `net11.0`, and update `global.json` to the GA SDK 11.0.100 or later.
 2. Update the `Microsoft.AspNetCore.*` and `Microsoft.Extensions.*` packages to 11.0. Done when `dotnet restore` gives no NU1510 and no NU1605.
 3. Build with `-warnaserror`. Fix each new obsolete warning.
 4. Search for `UseConcurrencyLimiter`, `IAsyncValidateOptions`, OpenAPI transformers, and `[ProducesResponseType]` snapshot tests. Apply the sections of this file.

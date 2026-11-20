@@ -17,12 +17,14 @@ Find the stack skill for each technology that the work touches. Load it with the
 5. For HTML, CSS, or client-side JavaScript, also load `frontend-stack:modern-web`. It sends the work to Modern Web Guidance of Google Chrome.
 6. A skill of a plugin that is not installed: give the human the install command once, for example `claude plugin install frontend-stack@maikelsoft-skills`. Write one line in your report, for example "No stack skill for X. I used the official docs of version Y." Check the current facts with a look-up. Do not stop the run for it.
 
-## Available skills (dev-stack 2.0.0, frontend-stack 1.0.0, test-stack 1.0.0)
+## Available skills (dev-stack 2.1.0, frontend-stack 1.1.0, test-stack 1.0.0)
 
 | Signal | Skill |
 |--------|-------|
 | `*.cs`, `*.csproj`, `Directory.Build.props`, `.editorconfig`, configuration binding | `dev-stack:csharp` |
 | `Program.cs`, endpoints, controllers, middleware, DI, options, `HttpClient`, health checks, `BackgroundService` | `dev-stack:aspnetcore` |
+| A move to `net11.0`, `global.json` with an SDK 11 version, the .NET 11 breaking changes | `dev-stack:dotnet-11` |
+| An HTTP API contract: URLs, status codes, errors, paging, idempotency, versions, an OpenAPI design | `dev-stack:api-design` |
 | `Microsoft.AspNetCore.OpenApi`, `Swashbuckle*`, `Scalar*`, `Asp.Versioning*`, an OpenAPI document | `dev-stack:aspnetcore-openapi` |
 | `FluentValidation*`, `AbstractValidator`, `RuleFor` | `dev-stack:fluentvalidation` |
 | `Microsoft.EntityFrameworkCore*`, `DbContext`, `Migrations/`, `Npgsql.EntityFrameworkCore.PostgreSQL` | `dev-stack:efcore` |
@@ -31,6 +33,10 @@ Find the stack skill for each technology that the work touches. Load it with the
 | `ILogger`, `LoggerMessage`, `Serilog*`, `OpenTelemetry*`, `Azure.Monitor.OpenTelemetry*`, `ApplicationInsights*`, `Meter`, `ActivitySource` | `dev-stack:dotnet-observability` |
 | `HybridCache`, `IDistributedCache`, `StackExchange.Redis`, Valkey | `dev-stack:redis` |
 | `Elastic.Clients.Elasticsearch`, `NEST` | `dev-stack:elasticsearch` |
+| `Microsoft.Orleans.*`, grains, `UseOrleans`, silo, `InProcessTestCluster` | `dev-stack:orleans` |
+| `Aspire.Hosting.*`, an AppHost, ServiceDefaults, `Aspire.*` client integrations, `aspire` CLI | `dev-stack:aspire` |
+| `*.razor`, `Microsoft.AspNetCore.Components*`, `QuickGrid`, render modes | `dev-stack:blazor` |
+| `ModelContextProtocol*`, an MCP server in .NET, `.mcp/server.json` | `dev-stack:dotnet-mcp` |
 | `RabbitMQ.Client`, `EasyNetQ`, an outbox table with a broker | `dev-stack:rabbitmq` |
 | `WolverineFx*` | `dev-stack:wolverine` |
 | `MailKit`, `MimeKit`, SMTP | `dev-stack:mailkit` |
@@ -42,6 +48,7 @@ Find the stack skill for each technology that the work touches. Load it with the
 | Input, authentication, authorization, secrets, file upload, a new package, the security review | `dev-stack:secure-coding` |
 | `bypassSecurityTrust*`, `innerHTML`, a token in the browser, CSP, Trusted Types, AngularJS templates | `frontend-stack:web-security` |
 | `*.html`, `*.css`, `*.scss`, browser APIs, UI components, client-side JavaScript | `frontend-stack:modern-web` |
+| `document.modelContext`, `registerTool`, WebMCP, tools for browser agents | `frontend-stack:webmcp` (preview) |
 
 ## Planned skills (not in a stack plugin yet)
 

@@ -1,0 +1,163 @@
+{
+ "S1": {
+  "skill": "dev-stack/dotnet-11",
+  "current": "csharp",
+  "task": "This folder holds an ASP.NET Core API on .NET 10 with EF Core 10. Move it to .NET 11. Change the files in place. Keep the behavior of the concurrency limit.",
+  "seed": {
+   "global.json": "{\n  \"sdk\": { \"version\": \"10.0.404\", \"rollForward\": \"latestFeature\" }\n}\n",
+   "Orders.Api/Orders.Api.csproj": "<Project Sdk=\"Microsoft.NET.Sdk.Web\">\n  <PropertyGroup>\n    <TargetFramework>net10.0</TargetFramework>\n    <Nullable>enable</Nullable>\n  </PropertyGroup>\n  <ItemGroup>\n    <PackageReference Include=\"Microsoft.EntityFrameworkCore.SqlServer\" Version=\"10.0.14\" />\n    <PackageReference Include=\"Microsoft.EntityFrameworkCore.Tools\" Version=\"10.0.14\" />\n    <PackageReference Include=\"Microsoft.AspNetCore.ConcurrencyLimiter\" Version=\"10.0.14\" />\n  </ItemGroup>\n</Project>\n",
+   "Orders.Api/Program.cs": "using Microsoft.EntityFrameworkCore;\n\nvar builder = WebApplication.CreateBuilder(args);\nbuilder.Services.AddDbContext<OrdersDb>(o => o.UseSqlServer(builder.Configuration.GetConnectionString(\"orders\")));\nbuilder.Services.AddQueuePolicy(o => { o.MaxConcurrentRequests = 50; o.RequestQueueLimit = 100; });\n\nvar app = builder.Build();\napp.UseConcurrencyLimiter();\napp.MapGet(\"/orders/{id:int}\", async (int id, OrdersDb db) => await db.Orders.FindAsync(id) is { } o ? Results.Ok(o) : Results.NotFound());\napp.Run();\n\npublic sealed class OrdersDb(DbContextOptions<OrdersDb> options) : DbContext(options)\n{\n    public DbSet<Order> Orders => Set<Order>();\n}\n\npublic sealed record Order(int Id, string Customer);\n"
+  },
+  "must": {
+   "tfm net11.0": "<TargetFramework>net11\\.0</TargetFramework>",
+   "global.json SDK 11.0.1xx GA": "\"version\"\\s*:\\s*\"11\\.0\\.1\\d\\d\"",
+   "EF Core 11 package": "Microsoft\\.EntityFrameworkCore\\.SqlServer\"\\s+Version=\"11\\.0\\.\\d+\"",
+   "rate limiter replaces concurrency limiter": "AddRateLimiter|UseRateLimiter"
+  },
+  "never": {
+   "preview flag or preview SDK": "EnablePreviewFeatures|11\\.0\\.100-preview|11\\.0\\.100-rc",
+   "removed concurrency limiter": "UseConcurrencyLimiter|AddQueuePolicy|Microsoft\\.AspNetCore\\.ConcurrencyLimiter",
+   "LangVersion pin": "<LangVersion>",
+   "Upgrade Assistant": "upgrade-assistant"
+  },
+  "judge_key": "Current facts (2026-11-19): .NET 11 GA on 2026-11-10, SDK 11.0.100, packages 11.0.0. .NET 10 LTS and .NET 11 STS end support the same day. global.json, TargetFramework and all Microsoft.* and EF Core packages move together. ASP.NET Core 11 removed the ConcurrencyLimiter middleware; the rate limiter (AddRateLimiter with a concurrency limiter, UseRateLimiter) replaces it. EF Core 11 needs net11.0. No preview flags."
+ },
+ "S2": {
+  "skill": "dev-stack/orleans",
+  "current": "csharp",
+  "task": "The project uses Orleans 10.4.2 on .NET 10. Write a grain that counts page views for a string key. Keep the count in the storage provider named \"store\". Write the count to storage each 30 seconds, not on each call. Write the grain interface, the grain, and the state type. Also write an MSTest test that activates the grain in a test cluster and checks the count after 3 calls.",
+  "seed": {},
+  "must": {
+   "IPersistentState": "IPersistentState<",
+   "PersistentState attribute": "\\[PersistentState\\(",
+   "RegisterGrainTimer": "RegisterGrainTimer",
+   "GenerateSerializer": "\\[GenerateSerializer\\b",
+   "Id attribute": "\\[Id\\(0\\)\\]",
+   "InProcessTestCluster": "InProcessTestCluster"
+  },
+  "never": {
+   "Grain<TState>": ":\\s*Grain<",
+   "RegisterTimer": "\\bRegisterTimer\\s*\\(",
+   "ConfigureAwait(false)": "ConfigureAwait\\(false\\)",
+   "Serializable": "\\[Serializable\\]",
+   "old test cluster": "(?<!InProcess)TestClusterBuilder|ISiloConfigurator|ISiloBuilderConfigurator|ConfigureApplicationParts"
+  },
+  "judge_key": "Current facts: Orleans 10.4.2. State through a constructor parameter [PersistentState(name, store)] IPersistentState<T>; Grain<TState> is legacy. Timers: this.RegisterGrainTimer(callback, state, GrainTimerCreationOptions); RegisterTimer is obsolete. Serialization: [GenerateSerializer], [Id(n)], [Alias]. No ConfigureAwait(false) in grain code (ORLEANS0014). Tests: InProcessTestClusterBuilder; TestClusterBuilder with ISiloConfigurator is the older form. A flush timer loses the count since the last write on a crash; good code says so or writes on deactivation."
+ },
+ "S3": {
+  "skill": "dev-stack/aspire",
+  "current": "aspnetcore",
+  "task": "Write a new Aspire AppHost for this solution: the project file and AppHost.cs in the folder Orders.AppHost. Resources: PostgreSQL with the database \"orders\", Redis, the API project ../Orders.Api/Orders.Api.csproj, and the worker ../Orders.Worker/Orders.Worker.csproj. The API and the worker use the database and Redis. Start them only after the database is ready. Use the latest Aspire.",
+  "seed": {},
+  "must": {
+   "Microsoft.NET.Sdk": "Sdk=\"Microsoft\\.NET\\.Sdk\"",
+   "AppHost package": "Aspire\\.Hosting\\.AppHost",
+   "AddDotnetProject": "AddDotnetProject\\s*\\(",
+   "AddPostgres": "AddPostgres\\s*\\(",
+   "WaitFor": "\\.WaitFor\\s*\\("
+  },
+  "never": {
+   "deprecated AppHost SDK": "Aspire\\.AppHost\\.Sdk|IsAspireHost",
+   "AddProject<>": "AddProject\\s*<",
+   "workload": "workload install"
+  },
+  "judge_key": "Current facts: Aspire 17.0.0 (2026-11-18). A new AppHost uses Sdk=\"Microsoft.NET.Sdk\", OutputType Exe, and package references to Aspire.Hosting.AppHost and Aspire.Hosting.Dotnet; Aspire.AppHost.Sdk is deprecated (ASPIRE012). builder.AddDotnetProject(\"name\", \"path.csproj\") replaces AddProject<Projects.X>. WithReference gives the connection; WaitFor waits for health. No workload install."
+ },
+ "S4": {
+  "skill": "dev-stack/blazor",
+  "current": "aspnetcore",
+  "task": "The app is a Blazor Web App on .NET 10. Write a routable component /products that runs with Interactive Server. It loads the products from the injected IProductService (Task<List<Product>> GetAllAsync()) one time. The list must not load twice or flicker when the page becomes interactive. Write Products.razor.",
+  "seed": {},
+  "must": {
+   "PersistentState": "\\[PersistentState\\]",
+   "InteractiveServer": "InteractiveServer"
+  },
+  "never": {
+   "old state API": "RegisterOnPersisting|TryTakeFromJson",
+   "Blazor Server host": "_Host\\.cshtml|AddServerSideBlazor|MapBlazorHub"
+  },
+  "judge_key": "Current facts: Blazor Web App on .NET 10. Prerendering is on by default for interactive modes, so OnInitializedAsync runs twice. [PersistentState] on a public property keeps the prerendered value (Products ??= await ...). RegisterOnPersisting/TryTakeFromJson is the older form. No _Host.cshtml."
+ },
+ "S5": {
+  "skill": "dev-stack/blazor",
+  "current": "aspnetcore",
+  "task": "The app is a Blazor Web App on .NET 10. Write an order form page /order for static server rendering (no interactivity). The model has a customer name, a shipping address (street, city, postal code, each required), and a list of order lines (product code and quantity 1 to 99). Each nested field must validate. Write the page, the model, and the lines to add to Program.cs.",
+  "seed": {},
+  "must": {
+   "AddValidation": "AddValidation\\s*\\(",
+   "ValidatableType": "\\[ValidatableType\\]",
+   "FormName": "FormName|@formname",
+   "SupplyParameterFromForm": "\\[SupplyParameterFromForm\\b"
+  },
+  "never": {
+   "old nested validation": "ObjectGraphDataAnnotationsValidator|ValidateComplexType",
+   "interactive mode": "@rendermode\\s*=?\\s*\"?@?(Interactive|new\\s|RenderMode\\.)"
+  },
+  "judge_key": "Current facts: .NET 10 Blazor. Nested and collection validation needs builder.Services.AddValidation() and [ValidatableType] on the root model in a .cs file; DataAnnotationsValidator alone validates only the top level. ObjectGraphDataAnnotationsValidator/[ValidateComplexType] is the older experimental form. A static SSR form needs a FormName and a [SupplyParameterFromForm] property; no render mode."
+ },
+ "S6": {
+  "skill": "dev-stack/dotnet-mcp",
+  "current": "aspnetcore",
+  "task": "Make a .NET 10 MCP server that a client starts with dnx from NuGet. It has a tool get_order_status(orderId) that reads from an injected IOrderStore, and a tool cancel_order(orderId). Write Program.cs, the tool class, the .csproj, and .mcp/server.json.",
+  "seed": {},
+  "must": {
+   "SDK 2.x": "ModelContextProtocol\"\\s+Version=\"2\\.",
+   "stdio transport": "WithStdioServerTransport",
+   "logs to stderr": "LogToStandardErrorThreshold",
+   "read-only hint": "ReadOnly\\s*=\\s*true",
+   "MCP package type": "<PackageType>McpServer</PackageType>"
+  },
+  "never": {
+   "stdout write": "Console\\.Write(Line)?\\s*\\(",
+   "old SDK": "ModelContextProtocol\"\\s+Version=\"(0\\.|1\\.)",
+   "prerelease": "--prerelease|-preview",
+   "legacy SSE": "EnableLegacySse"
+  },
+  "judge_key": "Current facts: ModelContextProtocol 2.4.0 (stable; spec 2026-07-28). Stdio server: AddMcpServer().WithStdioServerTransport().WithTools<T>() or WithToolsFromAssembly(); all logs to stderr (LogToStandardErrorThreshold = LogLevel.Trace); nothing on stdout. Tools have [McpServerTool] with ReadOnly = true on read tools and Destructive on writes. dnx packaging: <PackageType>McpServer</PackageType>, PackAsTool, and .mcp/server.json with a nuget package entry. A cancel tool needs a real user confirmation, not a confirm argument. MRTR on 2.4.0 (compiled and run): a tool throws InputRequiredException with an elicitation request, checks server.IsMrtrSupported first, and reads InputResponses on the retry. A server.json $schema of 2025-12-11 is current."
+ },
+ "S7": {
+  "skill": "dev-stack/api-design",
+  "current": "aspnetcore-openapi",
+  "task": "Write an OpenAPI YAML file openapi.yaml for an orders API. It lists the orders of a customer (up to 5 million rows, new orders arrive all the time) and gets one order. It creates an order (mobile clients retry on a timeout). It changes the delivery address of an order while other users can change the same order. It cancels an order. It exports all orders of a year, which takes minutes. Give the error responses too.",
+  "seed": {},
+  "must": {
+   "problem+json": "application/problem\\+json",
+   "If-Match": "If-Match",
+   "412": "['\"]?412['\"]?\\s*:",
+   "merge patch": "merge-patch\\+json",
+   "cursor paging": "cursor|page_?[tT]oken",
+   "202 for the export": "['\"]?202['\"]?\\s*:",
+   "cancel action": "/cancel",
+   "safe retry of create": "Idempotency-Key|^\\s*put:(?:\\n(?!\\s{0,4}\\S+:\\s*$).*){0,12}?\\n\\s*operationId:\\s*create"
+  },
+  "never": {
+   "RFC 7807": "7807",
+   "X-RateLimit": "X-RateLimit",
+   "verb paths": "^\\s*/(get|create|update|delete)[A-Za-z/]",
+   "OpenAPI 3.0 nullable": "nullable:\\s*true"
+  },
+  "judge_key": "Current facts: RFC 9457 problem details (application/problem+json) obsoletes RFC 7807. Large changing list: cursor paging. POST create with retries: Idempotency-Key header (IETF draft) or client-chosen id with PUT. Concurrent edit: ETag + If-Match, 412 on mismatch, 428 when missing. Partial update: PATCH with application/merge-patch+json. Cancel: POST /orders/{id}/cancel. Long export: 202 Accepted + Location of a status resource. Rate limit: 429 + Retry-After (X-RateLimit-* is old). OpenAPI 3.1 (or 3.2) uses type arrays, not nullable."
+ },
+ "S8": {
+  "skill": "frontend-stack/webmcp",
+  "current": "angular",
+  "task": "This plain JavaScript todo page (index.html, todo.js) has addTodo(text) and listTodos(). Let browser agents add and list todos through WebMCP. The page must still work in Firefox and Safari. Write the code in webmcp.js and load it from index.html.",
+  "seed": {
+   "index.html": "<!doctype html>\n<html lang=\"en\">\n<head><meta charset=\"utf-8\"><title>Todos</title></head>\n<body>\n<form id=\"add\"><input name=\"text\" required><button>Add</button></form>\n<ul id=\"list\"></ul>\n<script src=\"todo.js\"></script>\n</body>\n</html>\n",
+   "todo.js": "const todos = [];\nfunction render() {\n  document.getElementById('list').replaceChildren(...todos.map(t => Object.assign(document.createElement('li'), { textContent: t.text })));\n}\nfunction addTodo(text) {\n  const todo = { id: crypto.randomUUID(), text: String(text).slice(0, 200) };\n  todos.push(todo);\n  render();\n  return todo;\n}\nfunction listTodos() {\n  return todos.map(t => ({ ...t }));\n}\ndocument.getElementById('add').addEventListener('submit', e => {\n  e.preventDefault();\n  addTodo(new FormData(e.target).get('text'));\n  e.target.reset();\n});\n"
+  },
+  "must": {
+   "document.modelContext": "document\\.modelContext",
+   "registerTool": "registerTool",
+   "AbortSignal": "AbortController|signal",
+   "read-only hint": "readOnlyHint",
+   "feature check": "isSecureContext|['\"]modelContext['\"]\\s*in|document\\.modelContext\\s*\\?\\.|if\\s*\\(\\s*!?\\s*document\\.modelContext",
+   "awaited registration": "await\\s+[^;\\n]*registerTool"
+  },
+  "never": {
+   "navigator.modelContext": "navigator\\.modelContext",
+   "removed API": "provideContext|clearContext|unregisterTool|requestUserInteraction"
+  },
+  "judge_key": "Current facts: WebMCP is a W3C Community Group draft (preview). API: document.modelContext.registerTool(tool, { signal }) returns a Promise; await it; remove a tool with an AbortController. navigator.modelContext, provideContext, clearContext, unregisterTool and requestUserInteraction are old drafts. Feature check: isSecureContext and document.modelContext; the page works without it (Firefox, Safari). Annotations: readOnlyHint on read tools."
+ }
+}

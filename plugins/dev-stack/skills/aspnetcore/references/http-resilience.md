@@ -147,7 +147,7 @@ public static class ResilienceSetup
 
 - `DisableForUnsafeHttpMethods()` excludes POST, PATCH, PUT, DELETE, and CONNECT. `DisableFor(HttpMethod.Post, HttpMethod.Patch)` keeps retries for idempotent PUT and DELETE.
 - The method is in the namespace `Microsoft.Extensions.Http.Resilience`. With version 10.11.0 it is stable: the build gave no EXTEXP0001 diagnostic (checked 2026-10-16).
-- A POST with an idempotency key (decision API-13) can keep its retries.
+- A POST with an idempotency key (decision APD-04) can keep its retries.
 
 ## Timeouts
 

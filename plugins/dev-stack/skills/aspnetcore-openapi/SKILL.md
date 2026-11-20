@@ -2,8 +2,8 @@
 name: aspnetcore-openapi
 description: OpenAPI documents and API versions for ASP.NET Core 10 APIs. Covers the built-in generator (Microsoft.AspNetCore.OpenApi), response metadata for client generators, Scalar and Swagger UI, transformers on Microsoft.OpenApi 2.x, the build-time document in the repository, versioning with Asp.Versioning (URL segment, deprecation, sunset), and breaking-change checks with oasdiff. Use when code or a review touches AddOpenApi, MapOpenApi, MapScalarApiReference, Swashbuckle, Produces or ProducesProblem, WithName or operationId, a document, operation or schema transformer, Microsoft.Extensions.ApiDescription.Server, OpenApiDocumentsDirectory, AddApiVersioning, NewVersionedApi, a deprecated API version, or a contract that an external client generates code from. Not for endpoint design, ProblemDetails wiring, or JSON options (dev-stack:aspnetcore), client generation with Kiota or NSwag, or validation rules (dev-stack:fluentvalidation).
 metadata:
-  verified: "2026-10-27"
-  versions: ".NET 10 (SDK 10.0.403), Microsoft.AspNetCore.OpenApi 10.0.14, Microsoft.OpenApi 2.12.2, Microsoft.Extensions.ApiDescription.Server 10.0.14, Asp.Versioning 10.2.3, Scalar.AspNetCore 2.18.3, Swashbuckle.AspNetCore 10.3.1"
+  verified: "2026-11-19"
+  versions: ".NET 10 (SDK 10.0.404), Microsoft.AspNetCore.OpenApi 10.0.15, Microsoft.OpenApi 2.13.0, Microsoft.Extensions.ApiDescription.Server 10.0.15, .NET 11 with Microsoft.AspNetCore.OpenApi 11.0.0 and Microsoft.OpenApi 3.11, Asp.Versioning 10.2.3, Scalar.AspNetCore 2.18.3, Swashbuckle.AspNetCore 10.3.1"
 ---
 
 # ASP.NET Core OpenAPI and versioning
@@ -17,7 +17,7 @@ The OpenAPI document, the metadata that feeds it, the UI, the build-time documen
    - `TargetFramework` and the packages in `*.csproj` and `Directory.Packages.props`.
    - `net10.0` with `Microsoft.AspNetCore.OpenApi` 10.x: use this file. The document is OpenAPI 3.1, and transformers use Microsoft.OpenApi 2.x.
    - `Swashbuckle.AspNetCore` in the project: keep it. Swashbuckle 10 also uses Microsoft.OpenApi 2.x, so rule 9 applies. Do not migrate unless the task asks for it.
-   - `net11.0`: ASP.NET Core 11 moves to Microsoft.OpenApi 3.x. `Asp.Versioning.OpenApi` 10.2.3 allows only Microsoft.OpenApi below 3.0. An API with versioning stays on .NET 10 until a new Asp.Versioning release supports 3.x. Look up the current state (stack rule 2).
+   - `net11.0`: read the section ".NET 11". The move from `net10.0` is in `dev-stack:dotnet-11`.
 3. Find who reads the document: only the team, or an external client that generates code. An external consumer needs decisions API-10 and API-11 before the first endpoint.
 
 Done when you can name the generator, the UI, the consumer of the document, and the versioning scheme (or "none").
@@ -34,7 +34,18 @@ Existing code keeps its style. For new code, use the accepted decision in `docs/
 | Version format and window | Major versions (`v1`), 6 months after deprecation, 12 months for partners | API-18 |
 | Breaking-change gate | oasdiff in CI: a gate on `ERR` for an external consumer, a report for internal APIs | API-19 |
 | Schema of numbers and enums | Follows the JSON options of decision API-11 (`dev-stack:aspnetcore`) | API-11 |
-| Error responses | ProblemDetails (API-04), documented with `ProducesProblem` and `ProducesValidationProblem` | API-04 |
+| Error responses | ProblemDetails (APD-02), documented with `ProducesProblem` and `ProducesValidationProblem` | APD-02 |
+
+## .NET 11
+
+`Microsoft.AspNetCore.OpenApi` 11.0.0 depends on `Microsoft.OpenApi` 3.11 or later. These facts change a rule of this file on `net11.0`:
+
+| Rule | On `net11.0` |
+|------|--------------|
+| 1 | The default document version is OpenAPI 3.2 (`OpenApiVersion` is `OpenApi3_2`). When a client generator cannot read 3.2, set `options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_1`. |
+| 9 | Transformers use the `Microsoft.OpenApi` 3.x types. Look up the 3.x API before you change a transformer (stack rule 2). |
+| 14 | `Asp.Versioning.OpenApi` 10.2.3 is the latest on 2026-11-19. It allows only `Microsoft.OpenApi` below 3.0. An API with versioning stays on .NET 10 until a new release supports 3.x. |
+| Check 5 | A snapshot test of the document changes, because the document keeps each `Produces` metadata per status code. |
 
 ## Rules
 

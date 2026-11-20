@@ -129,7 +129,7 @@ private static async Task<Results<NoContent, NotFound, ProblemHttpResult>> Cance
     };
 ```
 
-The `code` extension is stable. Clients act on it and translate it (decisions API-04, CFG-10). The `title` is English text for people.
+The `code` extension is stable. Clients act on it and translate it (decisions APD-02, CFG-10). The `title` is English text for people.
 
 ## IExceptionHandler
 

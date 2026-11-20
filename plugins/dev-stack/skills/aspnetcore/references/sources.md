@@ -11,11 +11,12 @@ The author checked all facts on 2026-10-16, unless a line says otherwise. The au
 - Pipeline and wiring
 - .NET 11
 - Checked in this session
+- Checked on 2026-11-19
 - Credits
 
 ## Versions and support
 
-- .NET support policy (10.0.14 of 2026-10-25, LTS to 2028-11-14. .NET 8 and 9 end on 2026-11-10): https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core
+- .NET support policy (10.0.15 of 2026-11-10, LTS to 2028-11-14. .NET 8 and 9 ended on 2026-11-10. .NET 11 is STS to 2028-11-14): https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core
 - Release metadata: https://builds.dotnet.microsoft.com/dotnet/release-metadata/10.0/releases.json
 - Breaking changes in .NET 10: https://learn.microsoft.com/dotnet/core/compatibility/10
 - Breaking changes in ASP.NET Core 10: https://learn.microsoft.com/aspnet/core/breaking-changes/10/overview
@@ -101,6 +102,12 @@ The author checked these facts again with a build or a run on 2026-10-16:
 - `WebHostBuilder` gives ASPDEPR004, `WebHost` and `IWebHost` give ASPDEPR008: https://learn.microsoft.com/aspnet/core/breaking-changes/10/webhostbuilder-deprecated
 - ASP.NET Core supports a `Startup` class, but Microsoft does not recommend it: https://learn.microsoft.com/aspnet/core/fundamentals/startup
 - On nuget.org: Microsoft.AspNetCore.OpenApi, Microsoft.AspNetCore.Authentication.JwtBearer, and Microsoft.Extensions.Http.Polly 10.0.14. Microsoft.Extensions.Http.Resilience 10.11.0 and FluentValidation.DependencyInjectionExtensions 12.2.0 are still the latest.
+
+## Checked on 2026-11-19
+
+- .NET 10.0.15 and SDK 10.0.404 (2026-11-10, security release). .NET 11.0.0 and SDK 11.0.100 are GA since 2026-11-10: the same release metadata files.
+- On nuget.org: Microsoft.AspNetCore.OpenApi 10.0.15 and 11.0.0. Microsoft.AspNetCore.OpenApi 11.0.0 depends on Microsoft.OpenApi `[3.11.0, 4.0.0)`. Asp.Versioning.OpenApi 10.2.3 is still the latest and allows Microsoft.OpenApi below 3.0 only. Microsoft.Extensions.Http.Resilience 11.0.0 exists for .NET 11.
+- On SDK 11.0.100 (compile check of the stack split, phase 2): `app.UseConcurrencyLimiter()` and `services.AddConcurrencyLimiter()` give CS1061. `AddRateLimiter` with `RateLimitPartition.GetConcurrencyLimiter` and `UseRateLimiter` builds with 0 warnings.
 
 ## Credits
 

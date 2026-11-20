@@ -1,0 +1,18 @@
+{
+ "blazor": {
+  "start": [
+   "Write a routable component /products with Interactive Server. It loads the products from IProductService one time and must not load them twice or flicker.",
+   "Write an order form for static SSR with a nested shipping address and a list of lines. Each nested field must validate.",
+   "Our Blazor Server portal still has Pages/_Host.cshtml and MapBlazorHub. Add a page that lists invoices. Do we have to move to the new model first?",
+   "Which render mode should our new customer dashboard page use: Interactive Server, WebAssembly, or Auto?",
+   "The chart component calls IJSRuntime in OnInitializedAsync and fails when the page prerenders. Fix it."
+  ],
+  "skip": [
+   "Add a Razor Page /Orders/Edit with a PageModel that binds the order and validates it.",
+   "Change the MVC view Views/Home/Index.cshtml so it shows the latest five orders.",
+   "Add an Angular component that lists the orders of a customer, with paging.",
+   "Make this CSS grid layout of cards change to one column on small screens.",
+   "Add a minimal API endpoint that cancels an order and answers 409 when the order is shipped."
+  ]
+ }
+}

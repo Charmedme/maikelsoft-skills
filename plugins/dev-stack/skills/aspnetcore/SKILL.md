@@ -2,22 +2,22 @@
 name: aspnetcore
 description: Host-level .NET code for ASP.NET Core 10 and worker services. Covers the Generic Host, DI lifetimes, options, middleware order, minimal API endpoints, ProblemDetails, typed HTTP clients with resilience, health checks, background services, and the wiring of CORS, rate limits, and authentication. Use when the user writes or reviews Program.cs, endpoints, controllers, middleware, DI registrations, options classes, HttpClient code, BackgroundService or IHostedService, or health checks in a project with Microsoft.NET.Sdk.Web or Microsoft.Extensions.Hosting. Not for C# language rules (dev-stack:csharp), security rules (dev-stack:secure-coding), OpenAPI and versioning detail (dev-stack:aspnetcore-openapi), FluentValidation rules (dev-stack:fluentvalidation), EF Core (dev-stack:efcore), logging setup (dev-stack:dotnet-observability), or Aspire AppHost wiring.
 metadata:
-  verified: "2026-10-27"
-  versions: ".NET 10 (10.0.14, SDK 10.0.403), ASP.NET Core 10, Microsoft.Extensions.Http.Resilience 10.11.0, .NET 11 RC 3 in references/net11.md"
+  verified: "2026-11-19"
+  versions: ".NET 10 (10.0.15, SDK 10.0.404), ASP.NET Core 10, Microsoft.Extensions.Http.Resilience 10.11.0, .NET 11 (11.0.0, SDK 11.0.100) and ASP.NET Core 11 in references/net11.md"
 ---
 
 # ASP.NET Core and the Generic Host
 
-This skill covers code that needs a host: `IServiceCollection`, `IHost`, `HttpContext`, or an endpoint. Code that compiles in a plain class library is `dev-stack:csharp`, and this skill does not repeat its rules. Security rules are in `dev-stack:secure-coding`. This skill only shows where the security parts go in the pipeline.
+This skill covers code that needs a host: `IServiceCollection`, `IHost`, `HttpContext`, or an endpoint. Code that compiles in a plain class library is `dev-stack:csharp`, and this skill does not repeat its rules. Security rules are in `dev-stack:secure-coding`. The HTTP contract (URLs, status codes, errors, paging, idempotency, versions) is in `dev-stack:api-design`. This skill wires it. This skill only shows where the security parts go in the pipeline.
 
 ## First
 
 1. Read `references/stack-rules.md`.
 2. Read the version gate:
    - Read `TargetFramework` in the `*.csproj` files and in `Directory.Build.props`, and the `Sdk` attribute.
-   - `net10.0`: use this file. The app runs on runtime 10.0.14 or later, a security release of 2026-10-25. Check the base image tag or the runtime version in CI.
-   - `net11.0`: also read `references/net11.md`. Its rules apply only when the project targets `net11.0`.
-   - `net8.0` or `net9.0`: the rules apply, except `AddValidation` (rule 24) and the .NET 10 behavior changes (rules 9, 22, 34). Both versions end support on 2026-11-10. Tell the human.
+   - `net10.0`: use this file. The app runs on runtime 10.0.15 or later, a security release of 2026-11-10. Check the base image tag or the runtime version in CI.
+   - `net11.0`: also read `references/net11.md`. Its rules apply only when the project targets `net11.0`. The move from `net10.0` is in `dev-stack:dotnet-11`.
+   - `net8.0` or `net9.0`: the rules apply, except `AddValidation` (rule 24) and the .NET 10 behavior changes (rules 9, 22, 34). Both versions are out of support since 2026-11-10. Tell the human.
    - A ServiceDefaults project (Aspire) exists: it already adds resilience, health checks, and OpenTelemetry. Do not add them a second time. Use the `aspire` skill for that project.
 3. Read `Program.cs` and one existing feature before you write. The project style wins in existing code (stack rule 3).
 
@@ -32,18 +32,18 @@ Existing code keeps its style. For new code, use the accepted decision in `docs/
 | Endpoints | Minimal APIs | API-01 |
 | Organization | Static `MapX` per feature, `MapGroup`, named static handler methods | API-02 |
 | Contracts | `sealed record` per request and per response, no entities | API-03 |
-| Errors | ProblemDetails everywhere, extension `code`, `traceId` | API-04 |
+| Errors | ProblemDetails everywhere, extension `code`, `traceId` | APD-02 |
 | Expected failures | `TypedResults` union, no result library | API-05 |
 | Handlers | Direct handler class, no mediator (MediatR is not allowed) | API-06 |
 | Mapping | Manual, Mapperly for large mappings (AutoMapper is not allowed) | API-07 |
 | Validation | `AddValidation` for shape rules, FluentValidation when the project uses it | API-08 |
 | JSON | Web defaults, `JsonStringEnumConverter`, `NumberHandling.Strict`, `DateTimeOffset` | API-11 |
-| Paging | Offset with a maximum page size and a stable sort | API-12 |
-| Idempotency | Natural (client id or unique key), key header only for external side effects | API-13 |
+| Paging | Offset with a maximum page size and a stable sort | APD-03 |
+| Idempotency | Natural (client id or unique key), key header only for external side effects | APD-04 |
 | Rate limiting | Built-in limiter, 429, named policies on sensitive endpoints | API-14 |
 | CORS | Same origin, else one named policy with exact origins | API-15 |
 | Health | `/healthz/live` and `/healthz/ready` | API-16 |
-| URLs | `/api/orders/{id}/line-items`, actions as `POST /api/orders/{id}/cancel` | API-17 |
+| URLs | `/api/orders/{id}/line-items`, actions as `POST /api/orders/{id}/cancel` | APD-01 |
 | Options | Typed options, DataAnnotations, `ValidateOnStart` | CFG-01 |
 | Secrets | User-secrets in Development, environment or orchestrator secrets in production | CFG-02 |
 | Feature flags | Plain options, Microsoft.FeatureManagement for rollouts | CFG-03 |

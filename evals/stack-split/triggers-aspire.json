@@ -1,0 +1,18 @@
+{
+ "aspire": {
+  "start": [
+   "Write an AppHost for our order system: PostgreSQL with the database orders, Redis, the API project Orders.Api, and the worker Orders.Worker. Start the API and the worker after the database is ready.",
+   "Our AppHost still uses Aspire.AppHost.Sdk 13.6.5 and AddProject<Projects.Api>. Move it to Aspire 17.",
+   "Write an integration test that starts the AppHost and checks that GET /health of the api resource returns 200.",
+   "Add RabbitMQ to the AppHost and let the worker get its connection from Aspire instead of appsettings.json.",
+   "Set up the Aspire MCP server for Claude Code so the agent can read the logs and traces of the running app."
+  ],
+  "skip": [
+   "Write a docker-compose.yml that runs the API, PostgreSQL, and Redis for local development.",
+   "Write the Kubernetes Deployment and Service manifests for the order API by hand.",
+   "Add OpenTelemetry traces and metrics to the order API and export them to an OTLP collector. We do not use Aspire.",
+   "Add Dapr to the order service so it publishes events through the Dapr pub/sub building block.",
+   "Add a /healthz endpoint to this minimal API that checks the database connection."
+  ]
+ }
+}

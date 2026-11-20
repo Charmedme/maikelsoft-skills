@@ -24,6 +24,14 @@ The author checked all facts on 2026-10-19, unless a line says otherwise. The au
 | NSwag.AspNetCore | 14.7.1 | https://www.nuget.org/packages/NSwag.AspNetCore |
 | .NET | 10.0.14 (SDK 10.0.403, a security release of 2026-10-25, LTS to 2028-11-14), 11.0.0-rc.3 | https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core |
 
+Checked again on 2026-11-19 on nuget.org and in the .NET release metadata:
+
+- .NET 10.0.15 and SDK 10.0.404 (2026-11-10, security release). .NET 11.0.0 and SDK 11.0.100 are GA since 2026-11-10. Both end support on 2028-11-14.
+- Microsoft.AspNetCore.OpenApi 10.0.15 depends on Microsoft.OpenApi `[2.13.0, 3.0.0)`. Microsoft.AspNetCore.OpenApi 11.0.0 depends on Microsoft.OpenApi `[3.11.0, 4.0.0)`. Microsoft.OpenApi 3.11.1 is the newest.
+- Microsoft.Extensions.ApiDescription.Server 10.0.15 and 11.0.0.
+- Asp.Versioning.OpenApi 10.2.3 is still the newest, with only a `net10.0` asset and Microsoft.OpenApi `[2.7.5, 3.0.0)`.
+- TODO: Scalar.AspNetCore 3.0.2, Swashbuckle.AspNetCore 11.0.1, and NSwag.AspNetCore 14.8.0 are out. The rules of this skill do not cover them yet.
+
 ## Documentation
 
 - OpenAPI in ASP.NET Core: https://learn.microsoft.com/aspnet/core/fundamentals/openapi/overview

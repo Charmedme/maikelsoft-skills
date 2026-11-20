@@ -6,6 +6,16 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-19
+
+### Added
+
+- `webmcp` (preview): tools for browser agents with WebMCP. Covers the feature check, `document.modelContext.registerTool` with an `AbortSignal`, and tool design and hints. Also a confirmation that the agent cannot complete itself, the built-in API of Angular 22, and the W3C polyfill on request. The API is a Community Group draft and can change.
+
+### Changed
+
+- `angular` sends browser security to `frontend-stack:web-security`, and tools for browser agents to `webmcp`.
+
 ## [1.0.0] - 2026-11-18
 
 The first version. The skills come from dev-stack 1.3.0.

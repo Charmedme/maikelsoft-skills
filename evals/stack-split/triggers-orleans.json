@@ -1,0 +1,18 @@
+{
+ "orleans": {
+  "start": [
+   "Write a grain that counts page views for a key. Keep the count in the storage provider store and write it each 30 seconds.",
+   "Our CartGrain still derives from Grain<CartState> and calls RegisterTimer. What should change when I add a discount method to it?",
+   "Write an MSTest test that starts a test cluster and checks that the order grain keeps its status after two calls.",
+   "I want to rename a property of the state class of a grain. The cluster runs in production with Redis storage. Is that safe during a rolling deploy?",
+   "Set up the silo in Program.cs with ADO.NET clustering and grain storage on PostgreSQL, and add the Orleans Dashboard."
+  ],
+  "skip": [
+   "Add PostgreSQL, Redis, an API, and a worker to our Aspire AppHost, and make the API wait for the database.",
+   "Cache the product list in Redis with HybridCache and remove the key after a price change.",
+   "Why does my MSTest data row test not run in parallel, and how do I set the parallel scope for the assembly?",
+   "Write an Akka.NET actor that counts page views and persists the count with Akka.Persistence.",
+   "Build a Dapr actor in .NET that holds a shopping cart and uses a Dapr reminder to expire it."
+  ]
+ }
+}

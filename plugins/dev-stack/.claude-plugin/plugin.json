@@ -1,7 +1,7 @@
 {
   "name": "dev-stack",
   "displayName": "Developer stack skills for .NET",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Stack skills for the .NET 10 back end: C#, ASP.NET Core, OpenAPI, FluentValidation, EF Core, SQL Server, PostgreSQL, analyzers, logs and metrics, Redis caching, Elasticsearch, RabbitMQ, Wolverine, MailKit, PuppeteerSharp, and secure coding. Each skill gives version-specific rules, a check step with a tool, and one report format. Angular is in frontend-stack, and the test skills are in test-stack. Output in ASD-STE100 Simplified Technical English or Begrijpelijk Nederlands (B1).",
   "author": {
     "name": "Maikel",

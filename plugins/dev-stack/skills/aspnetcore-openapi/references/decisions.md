@@ -1,6 +1,6 @@
 # OpenAPI and versioning decisions
 
-The team decisions that this skill owns. The order is the order in which a project meets them. The recommendation is the catalog default. Ask the human before you apply it (stack rule 4). API-04 (error contract) and API-11 (JSON settings) are in `dev-stack:aspnetcore`. They change the document too, so ask them in the same message when the work needs them.
+The team decisions that this skill owns. The order is the order in which a project meets them. The recommendation is the catalog default. Ask the human before you apply it (stack rule 4). APD-02 (error contract) and API-11 (JSON settings) are in `dev-stack:aspnetcore`. They change the document too, so ask them in the same message when the work needs them.
 
 ## Contents
 
@@ -28,7 +28,7 @@ The team decisions that this skill owns. The order is the order in which a proje
 - Options: No versioning (one internal consumer that deploys with the API). URL segment (`/api/v1/orders`) with Asp.Versioning. Query string (`?api-version=1.0`). Header (`api-version`). Media type.
 - Recommended: No versioning for an internal API with one consumer. A URL segment with Asp.Versioning for each external or multi-consumer API, from the first endpoint. A path segment added later breaks each client.
 - Choose another option when: the organization has an API standard with a query string or header (Azure-style `api-version`). A gateway already routes on a header.
-- Depends on: API-09, API-17.
+- Depends on: API-09, APD-01.
 - Revisit when: a second consumer appears for an unversioned API.
 - Check: tool (OAS-URL-ASSUME-DEFAULT, AV0029, AV0030) and judge.
 - Detect: DET-API-10

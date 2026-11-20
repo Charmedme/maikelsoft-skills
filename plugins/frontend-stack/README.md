@@ -1,6 +1,6 @@
 # frontend-stack
 
-frontend-stack is a Claude Code plugin with stack skills for the front end of a web app. It has 3 skills. Each skill tells the agent what is true for this version of the stack and what the agent usually gets wrong. Each skill also has a check step with a tool and one report format.
+frontend-stack is a Claude Code plugin with stack skills for the front end of a web app. It has 4 skills. Each skill tells the agent what is true for this version of the stack and what the agent usually gets wrong. Each skill also has a check step with a tool and one report format.
 
 English output follows ASD-STE100 Simplified Technical English. Dutch output follows Begrijpelijk Nederlands (taalniveau B1).
 
@@ -47,6 +47,7 @@ The back-end rules are in dev-stack, and the test rules in test-stack.
 |-------|------------|-----------------------------------|
 | `/frontend-stack:angular` | Angular 22 and 21 in an existing app, next to the official `angular-developer` skill. Server errors on form fields, ETag and 412 conflicts, stale lists, focus, live regions, Transloco, dates, tests, and the browser check. | Angular components, templates, services, forms, routes, specs, or Transloco texts |
 | `/frontend-stack:web-security` | Security rules for browser code: the Angular sanitizer, `bypassSecurityTrust`, DOM writes, CSP and Trusted Types, XSRF, token storage, and AngularJS. | A token in the browser, `innerHTML`, a CSP, or a security review of front-end code |
+| `/frontend-stack:webmcp` | Preview. Tools for browser agents with WebMCP: the feature check, `registerTool`, tool hints, and a real user confirmation. | WebMCP, `document.modelContext`, or tools for browser agents |
 | `/frontend-stack:modern-web` | Sends HTML, CSS, and client-side JavaScript work to Modern Web Guidance of Google Chrome. It holds no guidance of its own. | Browser UI, CSS layout or animation, or client-side JavaScript |
 
 ## Why modern-web is a pointer

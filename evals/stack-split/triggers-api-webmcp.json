@@ -1,0 +1,34 @@
+{
+ "api-design": {
+  "start": [
+   "Write an OpenAPI 3.1 YAML contract for an orders API. Mobile clients retry on a timeout, and the export takes minutes.",
+   "Review this openapi.yaml. Are the error responses, the paging, and the rate-limit headers correct?",
+   "Two users can edit the same order at the same time. How should the API stop one change from overwriting the other?",
+   "We retire v1 of our public API next year. How do we tell clients in the HTTP responses?",
+   "Design the webhook that tells partners when an order ships. They must know that the call is from us and not a replay."
+  ],
+  "skip": [
+   "Register ProblemDetails and the exception handler in Program.cs of our ASP.NET Core API.",
+   "Add AddOpenApi and Scalar to the API, and write the build-time OpenAPI document to the repository.",
+   "Build an MCP server in C# with a stdio transport and a tool that reads an order.",
+   "Add a confirm dialog before the user deletes a row in this HTML table.",
+   "Check the JWT bearer setup of our API for missing audience validation."
+  ]
+ },
+ "webmcp": {
+  "start": [
+   "This plain JavaScript todo page has addTodo(text) and listTodos(). Let browser agents add and list todos. The page must still work in Firefox and Safari.",
+   "Expose a checkout_cart tool from the Angular cart component, only while the cart view is open. Checkout charges a card.",
+   "Our page calls navigator.modelContext.provideContext with all tools. Update it to the current WebMCP API.",
+   "Review this registerTool code. Are the readOnlyHint and consequentialHint annotations right?",
+   "Should we load a WebMCP polyfill so that agents can use our tools in every browser?"
+  ],
+  "skip": [
+   "Write an MCP server in .NET that exposes our order search as a tool over HTTP.",
+   "Add a Permissions-Policy and a Content Security Policy header to the nginx config of the Angular app.",
+   "Make this sidebar collapse into a drawer on small screens. Plain HTML and CSS.",
+   "Add an Angular component that lists the orders of a customer, with paging.",
+   "Animate the switch between the list view and the detail view of this web page."
+  ]
+ }
+}

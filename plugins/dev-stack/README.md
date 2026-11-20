@@ -1,6 +1,6 @@
 # dev-stack
 
-dev-stack is a Claude Code plugin for a .NET 10 team. It has 16 stack skills for the back end. Each skill tells the agent what is true for this version of the stack and what the agent usually gets wrong. Each skill also has a check step with a tool and one report format.
+dev-stack is a Claude Code plugin for a .NET 10 team. It has 22 stack skills for the back end. Each skill tells the agent what is true for this version of the stack and what the agent usually gets wrong. Each skill also has a check step with a tool and one report format.
 
 English output follows ASD-STE100 Simplified Technical English. Dutch output follows Begrijpelijk Nederlands (taalniveau B1).
 
@@ -50,6 +50,12 @@ Claude Code starts a skill by itself when your request matches its trigger. You 
 | `/dev-stack:mailkit` | Outgoing mail with MailKit 4. | SMTP, `MimeMessage`, a mail outbox, or OAuth2 SMTP |
 | `/dev-stack:puppeteersharp` | HTML to PDF with headless Chrome. | An invoice or report as PDF, or Chrome in a container |
 | `/dev-stack:dotnet-analyzers` | Analyzers, warnings as errors, and the code-quality gate. | Analyzer warnings, `.editorconfig`, `NoWarn`, or a cleanup before a commit |
+| `/dev-stack:dotnet-11` | The move to .NET 11: versions, breaking changes, and the upgrade checklist. | A move to `net11.0`, or an SDK 11 `global.json` |
+| `/dev-stack:orleans` | Orleans 10 grains, state, timers, streams, and the test cluster. | Grains, a silo, `IPersistentState`, or an Orleans test |
+| `/dev-stack:aspire` | Aspire 17 AppHosts, ServiceDefaults, integrations, and tests. | An AppHost, `Aspire.Hosting.*`, or `aspire` CLI commands |
+| `/dev-stack:blazor` | Blazor render modes, prerendering, forms, and validation. | `*.razor` components, render modes, or Blazor forms |
+| `/dev-stack:dotnet-mcp` | MCP servers in .NET with the C# SDK. | An MCP server, MCP tools, or `.mcp/server.json` |
+| `/dev-stack:api-design` | The HTTP contract of an API, independent of the framework. | URLs, status codes, errors, paging, idempotency, or an OpenAPI design |
 | `/dev-stack:secure-coding` | Security rules for code and its supply chain. | A new endpoint, sign-in, a secret, a package, or a security review |
 
 ## Skills
@@ -71,6 +77,12 @@ Claude Code starts a skill by itself when your request matches its trigger. You 
 | `mailkit` | Outgoing mail with MailKit 4 and MimeKit 4: TLS, the SMTP password, a mail outbox with retries, templates, and OAuth2 SMTP. |
 | `puppeteersharp` | HTML to PDF and screenshots with PuppeteerSharp and headless Chrome: the Chrome sandbox, Chrome in a container, SSRF, and user text in the HTML. |
 | `dotnet-analyzers` | SDK analyzers, warnings as errors, Roslynator, Meziantou, `BannedSymbols.txt`, and the CI gate. |
+| `dotnet-11` | The move to .NET 11: the version gate, `global.json`, packages, breaking changes, and runtime async. |
+| `orleans` | Orleans 10.4: grains, persistent state, grain timers and reminders, streams, serialization, the test cluster, and the Dashboard. |
+| `aspire` | Aspire 17: the AppHost, `AddDotnetProject`, `WaitFor`, ServiceDefaults, integrations, `Aspire.Hosting.Testing`, and the upgrade from 13.x. |
+| `blazor` | Blazor on .NET 10 and 11: render modes, `[PersistentState]`, forms with nested validation, navigation, the circuit, and QuickGrid. |
+| `dotnet-mcp` | MCP servers with the C# SDK 2.4: transports, tools and hints, authorization, packaging, and tests. |
+| `api-design` | The HTTP contract: RFC 9457 errors, ETags, idempotency keys, cursor paging, merge patch, long-running work, and versions. |
 | `secure-coding` | Security rules for writing and reviewing server code: sign-in, access control, input, secrets, supply chain, and containers. Browser code is in `frontend-stack:web-security`. |
 
 ## Moved skills (2.0.0)

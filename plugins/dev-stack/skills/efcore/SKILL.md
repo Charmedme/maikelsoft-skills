@@ -2,8 +2,8 @@
 name: efcore
 description: Data access code with Entity Framework Core 10 on SQL Server or PostgreSQL. Use when code or a review touches DbContext, DbSet, LINQ queries, Include, SaveChanges, ExecuteUpdate, raw SQL through EF, transactions, concurrency tokens, value objects, query filters, interceptors, migrations (dotnet ef, Migrations folder), seed data, or migration deployment in CI. Not for Dapper or plain ADO.NET code, T-SQL or PostgreSQL engine work (indexes, isolation, locks), or EF6 on .NET Framework.
 metadata:
-  verified: "2026-10-27"
-  versions: "EF Core 10.0 (LTS), EFCore.PG 10.0, SQL Server 2025, PostgreSQL 18, .NET 10. EF Core 11 RC 3 in references/ef11.md"
+  verified: "2026-11-19"
+  versions: "EF Core 10.0 (LTS), EFCore.PG 10.0, SQL Server 2025, PostgreSQL 18, .NET 10. EF Core 11.0.0 on .NET 11 and EFCore.PG 11 RC 3 in references/ef11.md"
 ---
 
 # EF Core
@@ -15,11 +15,22 @@ How to use EF Core well, with any relational provider. Engine rules (T-SQL, inde
 1. Read `references/stack-rules.md`.
 2. Find the EF version: the `Microsoft.EntityFrameworkCore*` package in `*.csproj` or `Directory.Packages.props`.
    - EF Core 10: use this file.
-   - EF Core 11: use this file and read `references/ef11.md`.
-   - EF Core 8 or 9: support ends on 2026-11-10. These rules apply, except the EF 10 APIs: complex type JSON, named query filters, `LeftJoin`, and the block lambda in `ExecuteUpdateAsync`. Tell the human about the upgrade. Do not upgrade unless the task asks for it.
+   - EF Core 11: use this file, the section ".NET 11", and `references/ef11.md`.
+   - EF Core 8 or 9: out of support since 2026-11-10. These rules apply, except the EF 10 APIs: complex type JSON, named query filters, `LeftJoin`, and the block lambda in `ExecuteUpdateAsync`. Tell the human about the upgrade. Do not upgrade unless the task asks for it.
 3. Find the provider: `UseSqlServer`, `UseAzureSql`, or `UseNpgsql`. Read `references/provider-sqlserver.md` or `references/provider-postgresql.md`.
 
 Done when you can name the EF version, the provider, and the provider version setting.
+
+## .NET 11
+
+EF Core 11.0.0 is GA since 2026-11-10. It needs `net11.0`, so a project on `net10.0` stays on EF Core 10. The move of the project is in `dev-stack:dotnet-11`. These facts change a rule of this file on EF Core 11:
+
+| Rule | On EF Core 11 |
+|------|---------------|
+| Provider | EFCore.PG 11 is at 11.0.0-rc.3 on 2026-11-19, with no GA. A PostgreSQL project keeps EF Core 10 and EFCore.PG 10 until the human decides. |
+| 5 | `UseSqlServer` now assumes compatibility level 160. Rule 5 stays: set the real level. |
+| 10 | A split query throws `DbQueryConcurrencyException` when the data changes between its statements. Retry it, or use a single query or a snapshot transaction. |
+| 29 to 31 | Reference `Microsoft.EntityFrameworkCore.Design` directly with `PrivateAssets="all"`, because the Tools package no longer brings it. `Migrate` throws when the assembly has no migrations. |
 
 ## Defaults for new code
 
