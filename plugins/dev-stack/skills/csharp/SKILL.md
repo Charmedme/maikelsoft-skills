@@ -2,8 +2,8 @@
 name: csharp
 description: C# code and project conventions for .NET 10 and C# 14, with a reference for .NET 11 and C# 15. Covers nullability, records, pattern matching, async and cancellation, disposal, exceptions, TimeProvider, collections and LINQ, naming, Directory.Build.props, Central Package Management, and global.json. Use when writing, reviewing, or refactoring C# in any .NET project, when editing .csproj or props files, or when fixing async, null, or disposal bugs. Not for host, DI, endpoints, options, or HttpClient setup (dev-stack:aspnetcore), analyzer severities (dev-stack:dotnet-analyzers), test code (test-stack:dotnet-testing), Unity C#, or .NET Framework 4.x.
 metadata:
-  verified: "2026-10-27"
-  versions: ".NET 10 (runtime 10.0.14, SDK 10.0.403), C# 14. Reference for .NET 11 RC 3 and C# 15."
+  verified: "2026-11-19"
+  versions: ".NET 10 (runtime 10.0.15, SDK 10.0.404), C# 14. Reference for .NET 11 (runtime 11.0.0, SDK 11.0.100) and C# 15."
 ---
 
 # C#
@@ -30,7 +30,7 @@ Existing code keeps its style (stack rule 3). For new code, these are the recomm
 
 | Area | Default | Decision |
 |------|---------|----------|
-| SDK pin | `global.json`: `10.0.403`, `rollForward: latestFeature` | SOL-05 |
+| SDK pin | `global.json`: `10.0.404`, `rollForward: latestFeature` | SOL-05 |
 | Solution shape | One project, feature folders | SOL-01, SOL-02 |
 | Build policy | `Directory.Build.props`: `net10.0`, `Nullable`, `ImplicitUsings`, `AnalysisLevel latest-recommended`, no `LangVersion` | SOL-03 |
 | Warnings | Nullable warnings are errors. All warnings are errors in CI. | SOL-06 |
@@ -40,6 +40,17 @@ Existing code keeps its style (stack rule 3). For new code, these are the recomm
 | Interfaces | Only at a seam (I/O, more than one implementation) | SOL-09 |
 | Time | `TimeProvider`, instants as UTC `DateTimeOffset` | CFG-04 |
 | Classes | `sealed` unless designed for inheritance | rule 1 |
+
+## .NET 11
+
+On `net11.0`, read `references/net11.md`. These facts change a rule of this file. The move from `net10.0` is in `dev-stack:dotnet-11`.
+
+| Rule | On `net11.0` |
+|------|--------------|
+| 10 | Use a `union` or a `closed` type. The `switch` names each case and has no discard arm. A missing case is warning CS8509: make it an error. |
+| 15 | Does not apply. C# 15 features compile. |
+| 37 | Still no `LangVersion`. Runtime async needs a decision and `<Features>runtime-async=on</Features>`, without a preview flag. |
+| SOL-05 | `global.json` pins the GA SDK 11.0.100 or later. |
 
 ## Rules
 

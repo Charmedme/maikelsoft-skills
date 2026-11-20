@@ -2,15 +2,15 @@
 
 The decisions that a team makes one time for new host and API code. Ask each decision when the work first needs it (stack rule 4). Existing code keeps its own style. Source: the defaults research of 2026-10-16. API-09 (OpenAPI) and API-10 (versioning) are in `dev-stack:aspnetcore-openapi`. CFG-04 (time source) is in `dev-stack:csharp`.
 
-Batch the questions: ask API-01, API-17, API-03, API-11, API-04, API-05, and API-08 together as one "first endpoint" question. Ask the others one by one when the work needs them.
+Batch the questions: ask API-01, APD-01, API-03, API-11, APD-02, API-05, and API-08 together as one "first endpoint" question. Ask the others one by one when the work needs them.
 
 ## Contents
 
 - API-01. Minimal APIs or controllers
-- API-17. URL style
+- API-17. URL style (moved: APD-01 in `dev-stack:api-design`)
 - API-03. Request and response contracts
 - API-11. JSON settings
-- API-04. Error contract
+- API-04. Error contract (moved: APD-02 in `dev-stack:api-design`)
 - API-05. Expected failures: exceptions or result values
 - API-08. Request validation
 - API-02. Endpoint organization
@@ -20,13 +20,13 @@ Batch the questions: ask API-01, API-17, API-03, API-11, API-04, API-05, and API
 - CFG-02. Secrets
 - CFG-08. Authentication model
 - CFG-09. Authorization model
-- API-12. Pagination style
+- API-12. Pagination style (moved: APD-03 in `dev-stack:api-design`)
 - API-16. Health endpoint paths
 - CFG-06. HTTP resilience defaults
 - CFG-05. Outbound HTTP clients
 - API-15. CORS policy
 - API-14. Rate limiting
-- API-13. Idempotency for POST
+- API-13. Idempotency for POST (moved: APD-04 in `dev-stack:api-design`)
 - CFG-07. Background jobs
 - CFG-03. Feature flags
 - CFG-10. Localization of backend messages
@@ -45,15 +45,7 @@ Batch the questions: ask API-01, API-17, API-03, API-11, API-04, API-05, and API
 
 ## API-17. URL style
 
-- Question: Do routes use lowercase plural nouns with kebab-case segments, for example `/api/orders/{id}/line-items`?
-- Ask when: the first endpoint.
-- Options: Lowercase plural nouns, kebab-case, `/api` prefix, actions as `POST /api/orders/{id}/cancel`. camelCase or PascalCase segments. RPC verbs (`/api/cancelOrder`).
-- Recommended: Lowercase plural nouns with kebab-case. Nouns name the resources, and an action that is not CRUD becomes a sub-resource with POST.
-- Choose another option when: the organization has an API style guide.
-- Depends on: API-01.
-- Revisit when: never.
-- Check: judge.
-- Detect: none
+Moved to `dev-stack:api-design` as APD-01. A project that accepted API-17 keeps its answer. The wiring stays in this skill.
 
 ## API-03. Request and response contracts
 
@@ -81,15 +73,7 @@ Batch the questions: ask API-01, API-17, API-03, API-11, API-04, API-05, and API
 
 ## API-04. Error contract
 
-- Question: Do all errors use RFC 9457 ProblemDetails, with a stable machine-readable `code`?
-- Ask when: the first response that is not 2xx.
-- Options: ProblemDetails with an extension `code` and `traceId`. ProblemDetails with the framework defaults only. An own error envelope.
-- Recommended: ProblemDetails everywhere, with `code` (for example `order.not_found`) on each 4xx and `traceId` from `CustomizeProblemDetails`. Clients act on the code and do not parse text.
-- Choose another option when: the API must match an error contract that is already published.
-- Depends on: API-01.
-- Revisit when: never.
-- Check: judge (`AddProblemDetails`, `UseExceptionHandler`, `UseStatusCodePages` in `Program.cs`).
-- Detect: none
+Moved to `dev-stack:api-design` as APD-02. A project that accepted API-04 keeps its answer. The wiring stays in this skill.
 
 ## API-05. Expected failures: exceptions or result values
 
@@ -98,7 +82,7 @@ Batch the questions: ask API-01, API-17, API-03, API-11, API-04, API-05, and API
 - Options: `TypedResults` unions at the endpoint and a small own result (or `null`, or a closed record set) from the handler. Custom exceptions mapped in one `IExceptionHandler`. ErrorOr. FluentResults, Ardalis.Result, or OneOf.
 - Recommended: No library. Endpoints return `Results<...>` unions, handlers return a small own result, and exceptions are only for bugs and infrastructure failures. Plain status results with pattern matching cover most cases in idiomatic C#.
 - Choose another option when: many layers pass errors up (ErrorOr, the only one of the four libraries with a release in the last 12 months). An existing code base that uses exceptions for flow keeps them, with one `IExceptionHandler` map.
-- Depends on: API-04.
+- Depends on: APD-02.
 - Revisit when: the project targets a framework with C# union types (`net11.0` or later).
 - Check: judge.
 - Detect: ASP-DET-API-05
@@ -110,7 +94,7 @@ Batch the questions: ask API-01, API-17, API-03, API-11, API-04, API-05, and API
 - Options: Built-in `builder.Services.AddValidation()` with DataAnnotations and `IValidatableObject`. FluentValidation with an explicit `ValidateAsync` call or a small endpoint filter. Manual checks in the handler.
 - Recommended: FluentValidation when the project already uses it. Else the built-in `AddValidation` for shape rules (required, length, range, format). It is source-generated, needs no package, and writes a ProblemDetails 400.
 - Choose another option when: many conditional or cross-field rules (FluentValidation). Controllers: the built-in validation does not apply, so use `[ApiController]` model validation or FluentValidation.
-- Depends on: API-01, API-04.
+- Depends on: API-01, APD-02.
 - Revisit when: .NET 11 (async and localized built-in validation).
 - Check: tool (ASP-FV-AUTOVALIDATION, ASP-PKG-FV-ASPNETCORE) and judge (one library per contract).
 - Detect: ASP-DET-API-08
@@ -202,15 +186,7 @@ Batch the questions: ask API-01, API-17, API-03, API-11, API-04, API-05, and API
 
 ## API-12. Pagination style
 
-- Question: Do list endpoints page by offset (page number and size) or by cursor (continuation token)?
-- Ask when: the first list endpoint.
-- Options: Offset with a maximum size. Cursor (keyset) with an opaque token. Both: offset for UI tables, cursor for exports and feeds.
-- Recommended: Offset with a hard maximum page size (for example 100) and a unique, stable sort order. It fits page-number UIs and is simple.
-- Choose another option when: large or fast-growing tables, infinite scroll, sync or export endpoints (cursor).
-- Depends on: API-03.
-- Revisit when: a list query passes about 100 ms on deep pages, or a table passes about 1 million rows.
-- Check: judge (a maximum page size exists).
-- Detect: none
+Moved to `dev-stack:api-design` as APD-03. A project that accepted API-12 keeps its answer. The wiring stays in this skill.
 
 ## API-16. Health endpoint paths
 
@@ -229,7 +205,7 @@ Batch the questions: ask API-01, API-17, API-03, API-11, API-04, API-05, and API
 - Question: Do all HTTP clients get the standard resilience handler by default, with retries off for unsafe methods?
 - Ask when: the first outbound HTTP call.
 - Options: `ConfigureHttpClientDefaults(b => b.AddStandardResilienceHandler())` with `DisableForUnsafeHttpMethods` where needed. The standard handler per client only. Polly 7 policies through Microsoft.Extensions.Http.Polly. None.
-- Recommended: The standard handler on all clients through `ConfigureHttpClientDefaults`, and no retry for POST or PATCH unless the call is idempotent (API-13). One handler gives retries with jitter, a circuit breaker, and timeouts.
+- Recommended: The standard handler on all clients through `ConfigureHttpClientDefaults`, and no retry for POST or PATCH unless the call is idempotent (APD-04). One handler gives retries with jitter, a circuit breaker, and timeouts.
 - Choose another option when: a client needs other timeouts (replace it per client with `RemoveAllResilienceHandlers`, which is experimental in 10.11.0).
 - Depends on: none.
 - Revisit when: never.
@@ -274,15 +250,7 @@ Batch the questions: ask API-01, API-17, API-03, API-11, API-04, API-05, and API
 
 ## API-13. Idempotency for POST
 
-- Question: Do create and action endpoints accept an idempotency key, so that a client can retry safely?
-- Ask when: the first POST with a side effect outside the database (payment, mail, external call), or the first client with automatic retries.
-- Options: Natural idempotency: the client sends the resource id and a unique constraint rejects duplicates. An `Idempotency-Key` header with a stored response per key (own endpoint filter and table). A library (IdempotentAPI, last release 2024). None.
-- Recommended: Natural idempotency (a client id or a unique business key). Add an `Idempotency-Key` filter only on POSTs with external side effects. ASP.NET Core has no built-in feature, and the IETF header is still a draft.
-- Choose another option when: a public API with payment-like operations (a key on each POST).
-- Depends on: API-04.
-- Revisit when: the IETF draft becomes an RFC.
-- Check: judge.
-- Detect: none
+Moved to `dev-stack:api-design` as APD-04. A project that accepted API-13 keeps its answer. The wiring stays in this skill.
 
 ## CFG-07. Background jobs
 
@@ -314,9 +282,9 @@ Batch the questions: ask API-01, API-17, API-03, API-11, API-04, API-05, and API
 - Question: Does the API return localized text, or stable error codes that the client translates?
 - Ask when: the first user-facing message in a response.
 - Options: A stable `code` plus an English `detail`, the client translates by code. Server localization with `IStringLocalizer` and `Accept-Language`. English only.
-- Recommended: A stable `code` in ProblemDetails (API-04) plus an English `detail`. Localize on the server only text that the server renders (mail, PDF), or when no own UI exists.
+- Recommended: A stable `code` in ProblemDetails (APD-02) plus an English `detail`. Localize on the server only text that the server renders (mail, PDF), or when no own UI exists.
 - Choose another option when: third-party clients show the API text to end users directly (server localization with a supported culture list).
-- Depends on: API-04.
+- Depends on: APD-02.
 - Revisit when: .NET 11 (localized built-in validation).
 - Check: judge.
 - Detect: none

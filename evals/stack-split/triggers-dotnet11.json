@@ -1,0 +1,18 @@
+{
+ "dotnet-11": {
+  "start": [
+   "Move our order API from net10.0 to .NET 11. It uses EF Core 10 on SQL Server.",
+   "Should we upgrade the solution to .NET 11 now that it is out, or stay on .NET 10?",
+   "After I changed the TargetFramework to net11.0, the build fails on app.UseConcurrencyLimiter(). What do I do?",
+   "Update global.json and Directory.Packages.props for the .NET 11 SDK and the 11.0.0 packages.",
+   "dotnet restore gives NU1510 for Microsoft.Extensions.Options after we moved to net11.0. How do we finish the upgrade?"
+  ],
+  "skip": [
+   "Our project is on net11.0. Write a SaveOrder result as a C# 15 union and map it to a message.",
+   "This EF Core query loads the orders with their lines and is slow. Make it faster.",
+   "Add a minimal API endpoint that returns 404 when the order does not exist.",
+   "Write an MSTest test for the OrderService class with a fake TimeProvider.",
+   "Create a new web API project on .NET 10 with Directory.Build.props and central package management."
+  ]
+ }
+}

@@ -426,7 +426,7 @@
     {
       "id": "ASP-DET-API-04",
       "kind": "detect",
-      "decision": "API-04",
+      "decision": "APD-02",
       "files": [
         "**/*.cs"
       ],

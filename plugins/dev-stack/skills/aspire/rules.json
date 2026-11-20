@@ -1,0 +1,257 @@
+{
+ "skill": "aspire",
+ "rules": [
+  {
+   "id": "AHS-OLD-SDK",
+   "kind": "regex",
+   "severity": "warning",
+   "files": [
+    "**/*.csproj",
+    "**/Directory.*.props",
+    "**/*.cs"
+   ],
+   "pattern": "\\bSdk\\s*=\\s*\"Aspire\\.AppHost\\.Sdk|<Sdk\\s+Name\\s*=\\s*\"Aspire\\.AppHost\\.Sdk\"|<IsAspireHost>\\s*true|^#:sdk\\s+Aspire\\.AppHost\\.Sdk",
+   "message": "Aspire 17 deprecates Aspire.AppHost.Sdk (ASPIRE012). aspire update also writes Aspire.AppHost.Sdk/17.0.0, which is a half-done move (microsoft/aspire#22383).",
+   "fix": "A new AppHost: Sdk=\"Microsoft.NET.Sdk\", OutputType Exe, and PackageReference items for Aspire.Hosting.AppHost and Aspire.Hosting.Dotnet 17.0.0. An existing 13.x AppHost keeps its form until the human decides AHS-01: suppress with a reason.",
+   "match": [
+    "<Project Sdk=\"Aspire.AppHost.Sdk/13.0.0\">",
+    "<Project Sdk=\"Aspire.AppHost.Sdk/17.0.0\">",
+    "  <Sdk Name=\"Aspire.AppHost.Sdk\" Version=\"9.1.0\" />",
+    "    <IsAspireHost>true</IsAspireHost>",
+    "#:sdk Aspire.AppHost.Sdk@13.0.0"
+   ],
+   "nomatch": [
+    "<Project Sdk=\"Microsoft.NET.Sdk\">",
+    "    <PackageReference Include=\"Aspire.Hosting.AppHost\" Version=\"17.0.0\" />",
+    "#:package Aspire.Hosting.AppHost@17.0.0",
+    "    <IsAspireSharedProject>true</IsAspireSharedProject>"
+   ]
+  },
+  {
+   "id": "AHS-ADD-PROJECT",
+   "kind": "regex",
+   "severity": "warning",
+   "files": [
+    "**/*.cs"
+   ],
+   "pattern": "\\bAddProject\\s*<|\\bAddCSharpApp\\s*\\(",
+   "message": "Aspire 17 marks AddProject<Projects.X> and AddCSharpApp obsolete (CS0618). On a Microsoft.NET.Sdk AppHost, AddProject<Projects.X> does not compile (CS0234).",
+   "fix": "Use builder.AddDotnetProject(\"api\", \"../Orders.Api/Orders.Api.csproj\") and remove the ProjectReference to the service. In a 13.x AppHost that keeps its form (AHS-01), suppress with a reason.",
+   "match": [
+    "var api = builder.AddProject<Projects.Orders_Api>(\"api\");",
+    "builder.AddProject <Projects.Worker>(\"worker\")",
+    "builder.AddCSharpApp(\"api\", \"../Api\");"
+   ],
+   "nomatch": [
+    "builder.AddDotnetProject(\"api\", \"../Orders.Api/Orders.Api.csproj\")",
+    "services.AddProjectServices();",
+    "var project = await repository.AddProjectAsync(dto, ct);"
+   ]
+  },
+  {
+   "id": "AHS-WORKLOAD",
+   "kind": "regex",
+   "severity": "warning",
+   "files": [
+    "**/*.md",
+    "**/*.sh",
+    "**/*.ps1",
+    "**/*.cmd",
+    "**/*.yml",
+    "**/*.yaml",
+    "**/Dockerfile*",
+    "**/*.json"
+   ],
+   "pattern": "\\bworkload\\s+(install|update|restore)\\b[^\\n]*\\baspire\\b",
+   "message": "Aspire does not use a .NET workload since version 9. An install step with the workload is stale.",
+   "fix": "Install the Aspire CLI (curl -sSL https://aspire.dev/install.sh | bash). The NuGet packages come with dotnet restore.",
+   "match": [
+    "dotnet workload install aspire",
+    "      - run: dotnet workload update && dotnet workload install aspire",
+    "RUN dotnet workload install aspire"
+   ],
+   "nomatch": [
+    "dotnet workload install wasm-tools",
+    "curl -sSL https://aspire.dev/install.sh | bash",
+    "aspire update"
+   ],
+   "exclude": [
+    "**/skills/**",
+    "**/CHANGELOG.md"
+   ]
+  },
+  {
+   "id": "AHS-TEST-DELAY",
+   "kind": "regex",
+   "severity": "warning",
+   "files": [
+    "**/*.cs"
+   ],
+   "pattern": "\\bTask\\s*\\.\\s*Delay\\s*\\((?=[\\s\\S]*\\bDistributedApplicationTestingBuilder\\b)|\\bDistributedApplicationTestingBuilder\\b(?=[\\s\\S]*\\bTask\\s*\\.\\s*Delay\\s*\\()",
+   "message": "This Aspire test file waits with Task.Delay. A fixed wait is too short on a slow CI agent and wastes time on a fast one.",
+   "fix": "Wait with app.ResourceNotifications.WaitForResourceHealthyAsync(\"api\", ct).WaitAsync(timeout, ct) before the first call.",
+   "match": [
+    "var b = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Orders_AppHost>(); await Task.Delay(5000);",
+    "await Task.Delay(TimeSpan.FromSeconds(10)); var b = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Orders_AppHost>();"
+   ],
+   "nomatch": [
+    "await Task.Delay(TimeSpan.FromSeconds(1), ct);",
+    "var b = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Orders_AppHost>();",
+    "await app.ResourceNotifications.WaitForResourceHealthyAsync(\"api\", ct).WaitAsync(StartTimeout, ct);"
+   ]
+  },
+  {
+   "id": "AHS-MCP-START",
+   "kind": "regex",
+   "severity": "warning",
+   "files": [
+    "**/*.json"
+   ],
+   "pattern": "\"mcp\"\\s*,\\s*\"start\"",
+   "message": "aspire mcp start is deprecated. aspire agent init cannot repair a config with an extra argument (microsoft/aspire#21958).",
+   "fix": "Change the args to [\"agent\", \"mcp\"] by hand, or remove the entry and run aspire agent init --mcp.",
+   "match": [
+    "      \"args\": [\"mcp\", \"start\"]",
+    "\"args\":[\"mcp\",\"start\",\"--apphost\",\"AppHost/AppHost.csproj\"]"
+   ],
+   "nomatch": [
+    "      \"args\": [\"agent\", \"mcp\"]",
+    "      \"command\": \"aspire\","
+   ]
+  },
+  {
+   "id": "AHS-DASHBOARD-MCP",
+   "kind": "regex",
+   "severity": "warning",
+   "files": [
+    "**/*.json",
+    "**/*.cs",
+    "**/*.yml",
+    "**/*.yaml",
+    "**/*.env"
+   ],
+   "pattern": "\\bASPIRE_DASHBOARD_MCP_ENDPOINT_URL\\b",
+   "message": "Aspire 13.3 removed the dashboard MCP server. The variable has no effect.",
+   "fix": "Remove the variable. Give the agent access with aspire agent init --mcp (decision AHS-06).",
+   "match": [
+    "        \"ASPIRE_DASHBOARD_MCP_ENDPOINT_URL\": \"https://localhost:16036/mcp\"",
+    "ASPIRE_DASHBOARD_MCP_ENDPOINT_URL=https://localhost:16036/mcp"
+   ],
+   "nomatch": [
+    "        \"ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL\": \"https://localhost:21093\"",
+    "        \"ASPNETCORE_ENVIRONMENT\": \"Development\""
+   ]
+  },
+  {
+   "id": "AHS-DET-01",
+   "kind": "detect",
+   "decision": "AHS-01",
+   "files": [
+    "**/*.csproj",
+    "**/Directory.*.props",
+    "**/*.cs"
+   ],
+   "pattern": "Aspire\\.Hosting\\.AppHost\\b|Aspire\\.AppHost\\.Sdk\\b",
+   "match": [
+    "    <PackageReference Include=\"Aspire.Hosting.AppHost\" Version=\"17.0.0\" />",
+    "<Project Sdk=\"Aspire.AppHost.Sdk/13.6.5\">"
+   ],
+   "nomatch": [
+    "    <PackageReference Include=\"Aspire.Npgsql\" Version=\"17.0.0\" />"
+   ]
+  },
+  {
+   "id": "AHS-DET-02",
+   "kind": "detect",
+   "decision": "AHS-02",
+   "files": [
+    "**/*.cs"
+   ],
+   "pattern": "\\bMapDefaultEndpoints\\s*\\(",
+   "match": [
+    "app.MapDefaultEndpoints();"
+   ],
+   "nomatch": [
+    "app.MapHealthChecks(\"/healthz/ready\");"
+   ]
+  },
+  {
+   "id": "AHS-DET-03",
+   "kind": "detect",
+   "decision": "AHS-03",
+   "files": [
+    "**/*.cs"
+   ],
+   "pattern": "\\.\\s*With(DataVolume|DataBindMount)\\s*\\(",
+   "match": [
+    "var postgres = builder.AddPostgres(\"postgres\").WithDataVolume();",
+    "    .WithDataBindMount(\"./data\")"
+   ],
+   "nomatch": [
+    "var cache = builder.AddRedis(\"cache\");"
+   ]
+  },
+  {
+   "id": "AHS-DET-04",
+   "kind": "detect",
+   "decision": "AHS-04",
+   "files": [
+    "**/*.csproj",
+    "**/Directory.*.props"
+   ],
+   "pattern": "Aspire\\.Hosting\\.(Kubernetes|Docker|Azure\\.AppContainers)\\b",
+   "match": [
+    "    <PackageReference Include=\"Aspire.Hosting.Kubernetes\" Version=\"17.0.0\" />",
+    "    <PackageVersion Include=\"Aspire.Hosting.Azure.AppContainers\" Version=\"17.0.0\" />"
+   ],
+   "nomatch": [
+    "    <PackageReference Include=\"Aspire.Hosting.Redis\" Version=\"17.0.0\" />"
+   ]
+  },
+  {
+   "id": "AHS-DET-05",
+   "kind": "detect",
+   "decision": "AHS-05",
+   "files": [
+    "**/*.cs"
+   ],
+   "pattern": "\\bAddParameter(FromConfiguration)?\\s*\\(",
+   "match": [
+    "var smtpPassword = builder.AddParameter(\"smtp-password\", secret: true);"
+   ],
+   "nomatch": [
+    "command.Parameters.AddWithValue(\"@id\", id);"
+   ]
+  },
+  {
+   "id": "AHS-DET-06",
+   "kind": "detect",
+   "decision": "AHS-06",
+   "files": [
+    "**/*.json"
+   ],
+   "pattern": "\"agent\"\\s*,\\s*\"mcp\"",
+   "match": [
+    "      \"args\": [\"agent\", \"mcp\"]"
+   ],
+   "nomatch": [
+    "      \"args\": [\"run\"]"
+   ]
+  },
+  {
+   "id": "AHS-DET-07",
+   "kind": "detect",
+   "decision": "AHS-07",
+   "files": [
+    "**/*.cs"
+   ],
+   "pattern": "\\bDistributedApplicationTestingBuilder\\b",
+   "match": [
+    "var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Orders_AppHost>();"
+   ],
+   "nomatch": [
+    "await using var factory = new WebApplicationFactory<Program>();"
+   ]
+  }
+ ]
+}

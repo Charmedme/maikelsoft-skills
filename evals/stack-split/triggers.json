@@ -1,0 +1,114 @@
+{
+ "api-design": {
+  "start": [
+   "Write an OpenAPI 3.1 YAML contract for an orders API. Mobile clients retry on a timeout, and the export takes minutes.",
+   "Review this openapi.yaml. Are the error responses, the paging, and the rate-limit headers correct?",
+   "Two users can edit the same order at the same time. How should the API stop one change from overwriting the other?",
+   "We retire v1 of our public API next year. How do we tell clients in the HTTP responses?",
+   "Design the webhook that tells partners when an order ships. They must know that the call is from us and not a replay."
+  ],
+  "skip": [
+   "Register ProblemDetails and the exception handler in Program.cs of our ASP.NET Core API.",
+   "Add AddOpenApi and Scalar to the API, and write the build-time OpenAPI document to the repository.",
+   "Build an MCP server in C# with a stdio transport and a tool that reads an order.",
+   "Add a confirm dialog before the user deletes a row in this HTML table.",
+   "Check the JWT bearer setup of our API for missing audience validation."
+  ]
+ },
+ "webmcp": {
+  "start": [
+   "This plain JavaScript todo page has addTodo(text) and listTodos(). Let browser agents add and list todos. The page must still work in Firefox and Safari.",
+   "Expose a checkout_cart tool from the Angular cart component, only while the cart view is open. Checkout charges a card.",
+   "Our page calls navigator.modelContext.provideContext with all tools. Update it to the current WebMCP API.",
+   "Review this registerTool code. Are the readOnlyHint and consequentialHint annotations right?",
+   "Should we load a WebMCP polyfill so that agents can use our tools in every browser?"
+  ],
+  "skip": [
+   "Write an MCP server in .NET that exposes our order search as a tool over HTTP.",
+   "Add a Permissions-Policy and a Content Security Policy header to the nginx config of the Angular app.",
+   "Make this sidebar collapse into a drawer on small screens. Plain HTML and CSS.",
+   "Add an Angular component that lists the orders of a customer, with paging.",
+   "Animate the switch between the list view and the detail view of this web page."
+  ]
+ },
+ "aspire": {
+  "start": [
+   "Write an AppHost for our order system: PostgreSQL with the database orders, Redis, the API project Orders.Api, and the worker Orders.Worker. Start the API and the worker after the database is ready.",
+   "Our AppHost still uses Aspire.AppHost.Sdk 13.6.5 and AddProject<Projects.Api>. Move it to Aspire 17.",
+   "Write an integration test that starts the AppHost and checks that GET /health of the api resource returns 200.",
+   "Add RabbitMQ to the AppHost and let the worker get its connection from Aspire instead of appsettings.json.",
+   "Set up the Aspire MCP server for Claude Code so the agent can read the logs and traces of the running app."
+  ],
+  "skip": [
+   "Write a docker-compose.yml that runs the API, PostgreSQL, and Redis for local development.",
+   "Write the Kubernetes Deployment and Service manifests for the order API by hand.",
+   "Add OpenTelemetry traces and metrics to the order API and export them to an OTLP collector. We do not use Aspire.",
+   "Add Dapr to the order service so it publishes events through the Dapr pub/sub building block.",
+   "Add a /healthz endpoint to this minimal API that checks the database connection."
+  ]
+ },
+ "blazor": {
+  "start": [
+   "Write a routable component /products with Interactive Server. It loads the products from IProductService one time and must not load them twice or flicker.",
+   "Write an order form for static SSR with a nested shipping address and a list of lines. Each nested field must validate.",
+   "Our Blazor Server portal still has Pages/_Host.cshtml and MapBlazorHub. Add a page that lists invoices. Do we have to move to the new model first?",
+   "Which render mode should our new customer dashboard page use: Interactive Server, WebAssembly, or Auto?",
+   "The chart component calls IJSRuntime in OnInitializedAsync and fails when the page prerenders. Fix it."
+  ],
+  "skip": [
+   "Add a Razor Page /Orders/Edit with a PageModel that binds the order and validates it.",
+   "Change the MVC view Views/Home/Index.cshtml so it shows the latest five orders.",
+   "Add an Angular component that lists the orders of a customer, with paging.",
+   "Make this CSS grid layout of cards change to one column on small screens.",
+   "Add a minimal API endpoint that cancels an order and answers 409 when the order is shipped."
+  ]
+ },
+ "dotnet-mcp": {
+  "start": [
+   "Make a .NET MCP server that a client starts with dnx. It needs a tool get_order_status(orderId) that reads from IOrderStore and a tool cancel_order(orderId).",
+   "Expose our order tools over HTTP as a remote MCP server in ASP.NET Core. Tokens come from our OpenID Connect provider, and the service runs on 3 nodes.",
+   "I ran dotnet new mcpserver. Which ModelContextProtocol version should the project use, and what must I change in .mcp/server.json?",
+   "Our C# MCP tool calls server.ElicitAsync to ask the user before a delete, and it throws in stateless mode. Fix it.",
+   "Write tests for the tools of our C# MCP server without a process or a port."
+  ],
+  "skip": [
+   "Write an MCP server in TypeScript with @modelcontextprotocol/sdk that exposes a search tool.",
+   "Add the GitHub MCP server to the Claude Code settings of this project.",
+   "Let a browser agent add a todo on our web page through document.modelContext.",
+   "Add a REST endpoint POST /api/orders/{id}/cancel that answers 409 when the order is shipped.",
+   "Call the OpenAI chat API from our .NET worker with Microsoft.Extensions.AI and IChatClient."
+  ]
+ },
+ "dotnet-11": {
+  "start": [
+   "Move our order API from net10.0 to .NET 11. It uses EF Core 10 on SQL Server.",
+   "Should we upgrade the solution to .NET 11 now that it is out, or stay on .NET 10?",
+   "After I changed the TargetFramework to net11.0, the build fails on app.UseConcurrencyLimiter(). What do I do?",
+   "Update global.json and Directory.Packages.props for the .NET 11 SDK and the 11.0.0 packages.",
+   "dotnet restore gives NU1510 for Microsoft.Extensions.Options after we moved to net11.0. How do we finish the upgrade?"
+  ],
+  "skip": [
+   "Our project is on net11.0. Write a SaveOrder result as a C# 15 union and map it to a message.",
+   "This EF Core query loads the orders with their lines and is slow. Make it faster.",
+   "Add a minimal API endpoint that returns 404 when the order does not exist.",
+   "Write an MSTest test for the OrderService class with a fake TimeProvider.",
+   "Create a new web API project on .NET 10 with Directory.Build.props and central package management."
+  ]
+ },
+ "orleans": {
+  "start": [
+   "Write a grain that counts page views for a key. Keep the count in the storage provider store and write it each 30 seconds.",
+   "Our CartGrain still derives from Grain<CartState> and calls RegisterTimer. What should change when I add a discount method to it?",
+   "Write an MSTest test that starts a test cluster and checks that the order grain keeps its status after two calls.",
+   "I want to rename a property of the state class of a grain. The cluster runs in production with Redis storage. Is that safe during a rolling deploy?",
+   "Set up the silo in Program.cs with ADO.NET clustering and grain storage on PostgreSQL, and add the Orleans Dashboard."
+  ],
+  "skip": [
+   "Add PostgreSQL, Redis, an API, and a worker to our Aspire AppHost, and make the API wait for the database.",
+   "Cache the product list in Redis with HybridCache and remove the key after a price change.",
+   "Why does my MSTest data row test not run in parallel, and how do I set the parallel scope for the assembly?",
+   "Write an Akka.NET actor that counts page views and persists the count with Akka.Persistence.",
+   "Build a Dapr actor in .NET that holds a shopping cart and uses a Dapr reminder to expire it."
+  ]
+ }
+}

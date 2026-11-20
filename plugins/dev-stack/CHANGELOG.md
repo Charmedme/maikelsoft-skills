@@ -6,6 +6,24 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-11-19
+
+Six new skills for the .NET back end. They give the current form of each technique, because the training data of a model holds older forms.
+
+### Added
+
+- `dotnet-11`: the move to .NET 11 (GA since 2026-11-10). The version gate, `global.json`, the target framework and the packages in one step, the breaking changes, runtime async, and the upgrade checklist.
+- `orleans`: Orleans 10.4 grains, state, timers, reminders, streams, serialization, the test cluster, and the Dashboard. A section for code on Orleans 3.x to 9.
+- `aspire`: Aspire 17 AppHosts on `Microsoft.NET.Sdk` with `AddDotnetProject`, ServiceDefaults, integrations, `WaitFor`, tests with `Aspire.Hosting.Testing`, and the upgrade from 13.x.
+- `blazor`: a decision table for the render modes, prerendering with `[PersistentState]`, and forms with nested validation. Also navigation, the circuit, auth state, QuickGrid, and the .NET 11 changes.
+- `dotnet-mcp`: MCP servers with the C# SDK 2.4: stdio and stateless HTTP, tools with annotations, authorization, packaging for `dnx`, and tests.
+- `api-design`: the HTTP contract, independent of the framework. Covers RFC 9457 errors, conditional requests, idempotency keys, cursor paging, merge patch, long-running work, and the version and deprecation policy.
+
+### Changed
+
+- `aspnetcore`: the minimum runtime is 10.0.15, a security release of 2026-11-10. The team decisions API-04, API-12, API-13, and API-17 moved to `api-design` (APD-02, APD-03, APD-04, APD-01). A project keeps its recorded answers.
+- `csharp`, `aspnetcore`, `aspnetcore-openapi`, and `efcore` have a .NET 11 section. `csharp/references/net11.md` is now for the GA release, and the SDK pin is 10.0.404.
+
 ## [2.0.0] - 2026-11-18
 
 The stack splits into three plugins: dev-stack for the .NET back end, frontend-stack, and test-stack.

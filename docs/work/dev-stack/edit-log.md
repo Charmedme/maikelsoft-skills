@@ -220,6 +220,70 @@ This log records each change to a skill or to an eval case, the test that measur
 - Verdict: helped (the trigger). The hand-over to the installed plugin is not tested
 - Evidence: `docs/work/stack-split/results.md`
 
+### E25: dotnet-11, the move to .NET 11
+- Date and version: 2026-11-19, dev-stack 2.1.0
+- Change: a new skill for the upgrade to `net11.0`. A request of the human to move answers the version gate NET-01.
+- Test: scenario S1 of the behaviour workflow: 6 runs for each arm (2 Haiku, 2 Sonnet, 2 Opus), script checks, and a blind judge. Also the trigger check (5 start and 5 skip queries, Sonnet).
+- Observed: baseline 0.90 checks and grade 6.5, 1.3.0 text 0.79 and 6.3, new 1.00 and 9.0 (after the NET-01 fix). Before the fix, one Haiku run changed no file. Trigger 4 of 5, quiet 5 of 5.
+- Verdict: helped
+- Evidence: `docs/work/stack-split/results.md` (phase 2)
+
+### E26: orleans
+- Date and version: 2026-11-19, dev-stack 2.1.0
+- Change: a new skill for Orleans 10.4: `IPersistentState`, `RegisterGrainTimer`, serialization, the test cluster, and older code.
+- Test: scenario S2 of the behaviour workflow: 6 runs for each arm (2 Haiku, 2 Sonnet, 2 Opus), script checks, and a blind judge. Also the trigger check (5 start and 5 skip queries, Sonnet).
+- Observed: baseline 0.82 and 6.7 with 6 old-pattern hits, new 1.00 and 8.3 with 0 hits. Trigger 5 of 5, quiet 5 of 5.
+- Verdict: helped
+- Evidence: `docs/work/stack-split/results.md` (phase 2)
+
+### E27: aspire
+- Date and version: 2026-11-19, dev-stack 2.1.0
+- Change: a new skill for Aspire 17: the AppHost on `Microsoft.NET.Sdk`, `AddDotnetProject`, `WaitFor`, and the upgrade from 13.x. The second description starts with "Run first for each task that adds, changes, or tests an Aspire AppHost".
+- Test: scenario S3 of the behaviour workflow: 6 runs for each arm (2 Haiku, 2 Sonnet, 2 Opus), script checks, and a blind judge. Also the trigger check (5 start and 5 skip queries, Sonnet).
+- Observed: baseline 0.42 and 3.0 with 11 old-pattern hits, new 1.00 and 8.8 with 0 hits. Trigger: first description 3 of 5, second 5 of 5. Quiet 5 of 5.
+- Verdict: helped
+- Evidence: `docs/work/stack-split/results.md` (phase 2)
+
+### E28: blazor
+- Date and version: 2026-11-19, dev-stack 2.1.0
+- Change: a new skill with a decision table for the render modes, `[PersistentState]`, forms with `AddValidation` and `[ValidatableType]`, and the .NET 11 changes.
+- Test: S4 and S5 of the behaviour workflow: 6 runs for each arm (2 Haiku, 2 Sonnet, 2 Opus), script checks, and a blind judge. Also the trigger check (5 start and 5 skip queries, Sonnet).
+- Observed: S4: baseline 0.83 and 7.5, new 1.00 and 8.8. S5: baseline 0.83 and 6.2, new 1.00 and 8.2. 0 old-pattern hits in the new arm. Trigger 4 of 5, quiet 5 of 5.
+- Verdict: helped
+- Evidence: `docs/work/stack-split/results.md` (phase 2)
+
+### E29: dotnet-mcp
+- Date and version: 2026-11-19, dev-stack 2.1.0
+- Change: a new skill for MCP servers with the C# SDK 2.4. After the test: no project or namespace name that ends in `McpServer`, and `ImplicitUsings` in the project example.
+- Test: scenario S6 of the behaviour workflow: 6 runs for each arm (2 Haiku, 2 Sonnet, 2 Opus), script checks, and a blind judge. Also the trigger check (5 start and 5 skip queries, Sonnet).
+- Observed: baseline 0.72 and 4.8 with 8 old-pattern hits, new 1.00 and 8.0 with 0 hits (second run). The first run had CS0118 in 3 of 6 results, from the example name. Third run, after the `ImplicitUsings` change: 1.00 and 8.5, `ImplicitUsings` in 6 of 6, and 5 of 6 results built (one XML comment with `--`). Trigger 5 of 5, quiet 5 of 5.
+- Verdict: helped
+- Evidence: `docs/work/stack-split/results.md` (phase 2)
+
+### E30: api-design
+- Date and version: 2026-11-19, dev-stack 2.1.0
+- Change: a new skill for the HTTP contract. The decisions API-04, API-12, API-13, and API-17 of `aspnetcore` moved here as APD-02, APD-03, APD-04, and APD-01.
+- Test: scenario S7 of the behaviour workflow: 6 runs for each arm (2 Haiku, 2 Sonnet, 2 Opus), script checks, and a blind judge. Also the trigger check (5 start and 5 skip queries, Sonnet).
+- Observed: baseline 0.92 and 8.7, new 1.00 and 9.0. The baseline already knew most of the contract rules. The gain is merge patch and a safe retry of the create. Trigger 4 of 5, quiet 5 of 5.
+- Verdict: helped (small)
+- Evidence: `docs/work/stack-split/results.md` (phase 2)
+
+### E31: webmcp (frontend-stack)
+- Date and version: 2026-11-19, frontend-stack 1.1.0
+- Change: a new skill, label preview: `document.modelContext.registerTool` with an `AbortSignal`, the feature check, and tool hints.
+- Test: scenario S8 of the behaviour workflow: 6 runs for each arm (2 Haiku, 2 Sonnet, 2 Opus), script checks, and a blind judge. Also the trigger check (5 start and 5 skip queries, Sonnet).
+- Observed: baseline 0.27 and 2.8 with 9 old-pattern hits (`navigator.modelContext`, `provideContext`), new 1.00 and 9.0 with 0 hits. Trigger 5 of 5, quiet 5 of 5.
+- Verdict: helped
+- Evidence: `docs/work/stack-split/results.md` (phase 2)
+
+### E32: .NET 11 sections in existing skills
+- Date and version: 2026-11-19, dev-stack 2.1.0
+- Change: `csharp`, `aspnetcore`, `aspnetcore-openapi`, and `efcore` have a .NET 11 section. `csharp/references/net11.md` is for the GA release. The minimum runtime is 10.0.15, and the SDK pin is 10.0.404.
+- Test: the compile check on SDK 11.0.100 for the C# 15 examples. No behaviour test.
+- Observed: each example of `net11.md` compiled.
+- Verdict: not measured
+- Evidence: `docs/work/stack-split/compile-check.md`
+
 ## Lessons
 
 ### Round 1.1.0 (2026-10-21)

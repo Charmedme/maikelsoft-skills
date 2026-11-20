@@ -2,7 +2,7 @@
 
 Read this file only when the project targets `net11.0`. On `net10.0`, none of these features compile.
 
-Status on 2026-10-27: .NET 11 is at RC 3 (11.0.0-rc.3 of 2026-10-25, SDK 11.0.100-rc.3.26522.148) with go-live support. GA is expected in November 2026. .NET 11 is an STS release (24 months of support). C# 15 is the default language version for `net11.0`. The examples in this file compiled with SDK 11.0.100-rc.2. Check the features again after GA (stack rule 2).
+Status on 2026-11-19: .NET 11 is GA since 2026-11-10 (runtime 11.0.0, SDK 11.0.100). .NET 11 is an STS release. C# 15 is the default language version for `net11.0`. Each example in this file compiled on SDK 11.0.100.
 
 ## Contents
 
@@ -19,8 +19,10 @@ Status on 2026-10-27: .NET 11 is at RC 3 (11.0.0-rc.3 of 2026-10-25, SDK 11.0.10
 
 ## Before you use .NET 11
 
-- .NET 10 is LTS (support until 2028-11-14). .NET 11 is STS. Moving a project to `net11.0` is a decision: ask the human (SOL-03 "Revisit when").
-- Update `global.json` (SOL-05) and `TargetFramework` together. Do not set `LangVersion`.
+- .NET 10 (LTS) and .NET 11 (STS) both end support on 2028-11-14. A move to `net11.0` is about features, not support time. Moving a project is a decision: ask the human (SOL-03 "Revisit when").
+- The steps of the move are in `dev-stack:dotnet-11`: `global.json`, `TargetFramework`, the packages, and the breaking changes. Do not set `LangVersion`.
+- The x86 and x64 runtime needs an `x86-64-v2` CPU. On an older CPU the app does not start.
+- EF Core 11 needs `net11.0`. A project on `net10.0` stays on EF Core 10.
 - A library that also targets `net10.0` cannot use C# 15 features. Write for the lowest target.
 - On the .NET 11 SDK, the environment variable `DOTNET_TEST_RUNNER` (`VSTest` or `Microsoft.Testing.Platform`) overrides the `test` runner of `global.json`. Keep the runner in `global.json`, so that each machine and CI use the same runner.
 
@@ -50,9 +52,10 @@ public static class Describe
 }
 ```
 
+- A missing case is warning CS8509, not an error (tested on SDK 11.0.100). Add `<WarningsAsErrors>$(WarningsAsErrors);CS8509</WarningsAsErrors>` to `Directory.Build.props`. Do not add a `_ =>` arm: it hides a missing case with no warning.
 - Each case type converts implicitly to the union. Return the case value directly.
 - Patterns apply to the `Value` inside the union. `result is SaveResult` does not test the union itself.
-- The generated union is a `struct` that stores the value as `object?`. A value-type case is boxed. `default(SaveResult)` has a null `Value`: handle `null` when the value can be the default.
+- The generated union is a `struct` that stores the value as `object?`. The union boxes a value-type case. `default(SaveResult)` has a null `Value`: handle `null` when the value can be the default.
 - A union adds no equality, no `with`, and no deconstruction. Put data in the case records.
 - Do not add a result library (OneOf, ErrorOr) to a `net11.0` project for new code. Ask the human first when the project already has one.
 - System.Text.Json in .NET 11 supports C# unions.
@@ -76,7 +79,7 @@ public static string Gate(GateState state) => state switch
 ```
 
 - A `closed` type is implicitly abstract. Do not combine it with `sealed`, `static`, or `abstract`.
-- Use `closed` when the cases share data or behavior. Use a `union` when the cases are unrelated types.
+- Use `closed` when the cases share data or behavior. Use a `union` when the cases are types without a shared base.
 - Mark the case types `sealed`, or mark a middle level `closed` too. A non-closed subclass can get subclasses in other assemblies.
 
 ## Collection expression arguments
@@ -118,8 +121,8 @@ Use it instead of a Boolean flag or `goto` in nested loops. IDE0410 suggests it.
 ## Runtime async
 
 - The runtime, not the compiler, can run `async` methods in .NET 11. Stack traces are shorter and `await` costs less.
-- The .NET libraries and the ASP.NET Core shared framework are compiled with runtime async. Your code benefits without changes.
-- For your own assemblies it is a preview opt-in: `<Features>runtime-async=on</Features>`. Do not turn it on without a decision. To turn it off, use `<UseRuntimeAsync>false</UseRuntimeAsync>`.
+- Microsoft compiles the .NET libraries and the ASP.NET Core shared framework with runtime async. Your code benefits without changes.
+- For your own assemblies it is an opt-in with `<Features>runtime-async=on</Features>`, without a preview flag. Do not add `EnablePreviewFeatures`. Do not turn it on without a decision (NET-02 in `dev-stack:dotnet-11`). To turn it off, use `<UseRuntimeAsync>false</UseRuntimeAsync>`. .NET 11 removes the variable `DOTNET_RuntimeAsync`.
 - The C# rules in `async.md` do not change.
 
 ## New keywords that break old code
@@ -136,10 +139,13 @@ Changes that can affect C# library code (from the .NET 11 breaking changes list)
 
 - `DateOnly.TryParse`, `TryParseExact`, and the `TimeOnly` versions throw `ArgumentException` for an invalid `DateTimeStyles` value or format. Before, they returned `false`.
 - `Math.Round` and `MathF.Round` with digits give correctly rounded results. Results can differ in the last digit.
-- `decimal` and `BigInteger` conversions from floating point are correctly rounded.
+- `decimal` and `BigInteger` conversions from floating point round correctly.
 - Floating-point conversions to small integer types (`byte`, `short`) saturate.
 - `ChangeToken.OnChange` has async overloads. An async lambda that compiled as `async void` now binds to the `Task` overload. This fixes a bug, but the timing changes.
 - New APIs that replace own code: `EqualityComparer<T>.Create(keySelector)`, `FullJoin` and tuple-returning `Join` in LINQ, Zstandard in `System.IO.Compression`, `Decimal32`, `Decimal64`, `Decimal128`.
+- A DI scope collects the exceptions of each service that fails in its disposal into an `AggregateException`.
+- An empty string in a later configuration provider now replaces the value of an earlier provider. Do not use an empty string for "not set".
+- 9 `Microsoft.Extensions.*` libraries are now in the shared framework. A project with only `net11.0` gets NU1510 for a reference to one of them. The list is in `dev-stack:dotnet-11`.
 - Host changes (`IHost.RunAsync` throws when a `BackgroundService` fails, async options validation): `dev-stack:aspnetcore`.
 
 ## Not for app code

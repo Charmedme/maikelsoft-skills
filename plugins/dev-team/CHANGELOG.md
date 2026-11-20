@@ -6,6 +6,12 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-11-19
+
+### Changed
+
+- `stack-index` routes to the new skills of dev-stack 2.1.0 (`dotnet-11`, `orleans`, `aspire`, `blazor`, `dotnet-mcp`, `api-design`) and frontend-stack 1.1.0 (`webmcp`).
+
 ## [1.1.0] - 2026-11-18
 
 ### Changed

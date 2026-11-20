@@ -1,0 +1,18 @@
+{
+ "dotnet-mcp": {
+  "start": [
+   "Make a .NET MCP server that a client starts with dnx. It needs a tool get_order_status(orderId) that reads from IOrderStore and a tool cancel_order(orderId).",
+   "Expose our order tools over HTTP as a remote MCP server in ASP.NET Core. Tokens come from our OpenID Connect provider, and the service runs on 3 nodes.",
+   "I ran dotnet new mcpserver. Which ModelContextProtocol version should the project use, and what must I change in .mcp/server.json?",
+   "Our C# MCP tool calls server.ElicitAsync to ask the user before a delete, and it throws in stateless mode. Fix it.",
+   "Write tests for the tools of our C# MCP server without a process or a port."
+  ],
+  "skip": [
+   "Write an MCP server in TypeScript with @modelcontextprotocol/sdk that exposes a search tool.",
+   "Add the GitHub MCP server to the Claude Code settings of this project.",
+   "Let a browser agent add a todo on our web page through document.modelContext.",
+   "Add a REST endpoint POST /api/orders/{id}/cancel that answers 409 when the order is shipped.",
+   "Call the OpenAI chat API from our .NET worker with Microsoft.Extensions.AI and IChatClient."
+  ]
+ }
+}
