@@ -92,3 +92,77 @@ The success rule of the brief is met: on each model, the new arm passes more che
 - One run broke the tool rule (it used Bash `cat`), and said so.
 - The second `aspire` description is not in the behaviour test. The behaviour test reads the skill by path, so the description has no effect there.
 - Tokens: about 20.3 million for all agents of the test and the reruns.
+
+## Phase 3: test-stack 1.1.0
+
+Phase 3 adds `playwright` and `reqnroll` to test-stack, and an xUnit v3 part to `dotnet-testing`. The plan is in `concept-phase3.md`. The facts come from `research-playwright.md`, `research-reqnroll-xunit-mstest.md`, and `compile-check-phase3.md`.
+
+### Trigger check, phase 3
+
+Set: `evals/stack-split/triggers-p3.json`. Each query ran one time on Sonnet, with test-stack, dev-stack, frontend-stack, and product-flow loaded. The runner is `evals/ux-design/trigger.py`.
+
+| Skill | Starts (of 5) | Quiet (of 5) |
+|-------|---------------|--------------|
+| `playwright` | 4 | 5 |
+| `reqnroll` | 4 | 5 |
+| `dotnet-testing` | 4 | 5 |
+
+In each miss, the agent called no skill and answered directly. The misses are a flaky test with `waitForTimeout`, a trace for each Reqnroll scenario, and a `decimal` `DataRow` that fails. No skip query started a skill.
+
+### Behaviour test, phase 3
+
+The same workflow as phase 2: 8 scenarios (`evals/stack-split/scenarios-p3.json`), 6 agents (2 Haiku 5.5, 2 Sonnet 5.5, 2 Opus 5.5), and 3 arms: 144 runs. Each run gave its model ID, and each ID was the expected one.
+
+Arms: "baseline" has no skill. "current" reads the nearest skill of dev-stack 1.3.0 (`dotnet-testing`, `angular`, or `secure-coding`). "new" reads the new skill.
+
+Each cell gives the mean check score, the mean judge grade, and the number of old-pattern hits (16 runs).
+
+| Model | baseline | current | new |
+|-------|----------|---------|-----|
+| Haiku | 0.71, 4.6, 16 | 0.73, 4.8, 16 | 0.99, 7.9, 0 |
+| Sonnet | 0.77, 5.6, 15 | 0.80, 6.1, 13 | 1.00, 8.9, 0 |
+| Opus | 0.85, 6.4, 8 | 0.87, 6.4, 7 | 1.00, 9.1, 0 |
+
+Each cell gives the mean check score, the mean judge grade, and the number of old-pattern hits (6 runs).
+
+| Scenario | Skill | baseline | current | new |
+|----------|-------|----------|---------|-----|
+| S1 TypeScript suite with a sign-in setup | `playwright` | 1.00, 8.7, 0 | 1.00, 8.8, 0 | 1.00, 9.0, 0 |
+| S2 Playwright for .NET with MSTest 4 | `playwright` | 0.71, 4.5, 5 | 0.68, 4.3, 5 | 1.00, 9.0, 0 |
+| S3 Playwright MCP for the team | `playwright` | 0.77, 4.8, 1 | 0.75, 4.7, 1 | 0.98, 7.5, 0 |
+| S4 Reqnroll feature with Playwright steps | `reqnroll` | 0.80, 5.0, 7 | 0.86, 5.0, 4 | 1.00, 8.3, 0 |
+| S5 Imperative feature file to declarative | `reqnroll` | 0.96, 8.3, 2 | 0.94, 7.5, 3 | 1.00, 8.0, 0 |
+| S6 New xUnit v3 project with a database container | `dotnet-testing` | 0.64, 2.8, 12 | 0.69, 3.5, 11 | 1.00, 9.0, 0 |
+| S7 Move from xUnit v2 to v3 | `dotnet-testing` | 0.47, 2.8, 12 | 0.47, 3.2, 12 | 1.00, 9.0, 0 |
+| S8 MSTest 4 data rows with `decimal` | `dotnet-testing` | 0.85, 7.3, 0 | 1.00, 9.0, 0 | 1.00, 9.3, 0 |
+
+The success rule of the brief is met: on each model, the new arm passes more checks than the baseline and writes no old pattern.
+
+- The largest gains are in xUnit v3 (S6, S7) and in Playwright for .NET (S2). Without the skill, each S6 and S7 run used `xunit.v3` 3.x and `CollectionBehavior(DisableTestParallelization = true)`, which does not compile on 4.0. No S2 run without the skill used `Microsoft.Playwright.MSTest.v4`.
+- S1 (TypeScript) and S5 (Gherkin) show no clear gain. The models know these well without a skill. In S5 the judge grade of the new arm (8.0) is lower than the baseline (8.3), with the same check score.
+- The text of dev-stack 1.3.0 gives a gain only in S8. Its `dotnet-testing` already had the MSTest 4 rules.
+
+### Fixes during the test, phase 3
+
+- Five check patterns were wrong. The fixes apply to the 3 arms the same way, and all numbers above use them:
+  - The package ID is `Reqnroll.MsTest`, and the S4 check was case-sensitive.
+  - The S2 checks for the deprecated tool and the `<Playwright>` section of `.runsettings` matched README lines that warn against them.
+  - The S3 check for "not a security boundary" did not accept "Do not treat the settings as a security boundary".
+  - The S3 check for `@latest` matched `deny` rules in `.claude/settings.json`.
+- The S4 judge key did not have two facts of the compile check. These facts are that `public partial class Program` is not necessary on .NET 10, and that `ClientOptions.BaseAddress` is the real address after `StartServer()`. The first judge called each new-arm S4 result a build error (CS0122). The 18 S4 runs had a second judge with the full key. The new arm went from 5.3 to 8.3. The baseline and current arms stayed at 5.0.
+- `playwright`: rule 16 now also names the permission rules of `.claude/settings.json`, and rule 17 asks for the "not a security boundary" sentence in the setup docs. The 6 new-arm S3 runs ran again with this text. Each run wrote the sentence and pinned each version: check score 0.98, grade 7.8 (first run 7.5).
+
+### Build check, phase 3
+
+After the test, the main session built each new-arm result of S2, S4, S7, and S8 with SDK 10.0.404, one build at a time. S6 cannot build, because its task names a data project that the seed does not have.
+
+- 23 of 24 results built.
+- The one failure (S7, Haiku) has a stray `</content>` line at the end of the project file (MSB4025). The tool call of the run wrote it. The skill text has no such line.
+- The build check did not run the tests. S2 and S4 need a browser, and the runs wrote no test data.
+
+### Limits, phase 3
+
+- One trigger run for each query, on one model.
+- The judge is one Sonnet agent with reference facts that this research wrote. In S4, a missing fact changed the grades, and a second judge graded the 18 runs again.
+- The S3 rerun used the changed `playwright` text. The other scenarios used the text of the first run. Rules 16 and 17 have no effect on them.
+- Tokens: about 21 million for all agents of phase 3: research, compile check, build, test, and reruns.

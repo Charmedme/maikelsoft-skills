@@ -1,14 +1,14 @@
 ---
 name: dotnet-testing
-description: .NET test code and test project setup with MSTest 4 (MSTest.Sdk, Microsoft.Testing.Platform), FluentAssertions 7.2.2 or AwesomeAssertions 9, NSubstitute, hand-written fakes, FakeTimeProvider, WebApplicationFactory, Testcontainers 4, and Respawn. Covers what to test, test names, data rows, equivalency traps, the FluentAssertions 7 bridge for MSTest 4, integration test fixtures, parallel runs, coverage, and mutation testing. Use when writing, reviewing, or fixing .NET tests, setting up a test project or global.json for tests, choosing which tests a C# class or API needs, or when a test fails with "threw exception FluentAssertions.Execution.AssertionFailedException". Not for xUnit or NUnit API details, Angular or TypeScript tests, Playwright end-to-end tests, load tests, or the move from FluentAssertions to AwesomeAssertions (test-stack:migrate-fluentassertions).
+description: .NET test code and test project setup with MSTest 4 (MSTest.Sdk, Microsoft.Testing.Platform) or xUnit v3 4.x, FluentAssertions 7.2.2 or AwesomeAssertions 9, NSubstitute, hand-written fakes, FakeTimeProvider, WebApplicationFactory, Testcontainers 4, and Respawn. Covers what to test, test names, data rows and theory data, equivalency traps, the FluentAssertions 7 bridge for MSTest 4, xUnit v3 fixtures and cancellation, the move from xUnit v2, integration test fixtures, parallel runs, coverage, and mutation testing. Use when writing, reviewing, or fixing .NET tests, setting up a test project or global.json for tests, choosing which tests a C# class or API needs, or when a test fails with "threw exception FluentAssertions.Execution.AssertionFailedException". Not for NUnit, Angular or TypeScript tests, Playwright end-to-end tests (test-stack:playwright), Gherkin features or Reqnroll (test-stack:reqnroll), load tests, or the move from FluentAssertions to AwesomeAssertions (test-stack:migrate-fluentassertions).
 metadata:
-  verified: "2026-10-27"
-  versions: ".NET 10 (SDK 10.0.403), MSTest 4.5.2, Microsoft.Testing.Platform 2.5.2, FluentAssertions 7.2.2, AwesomeAssertions 9.6.0, NSubstitute 6.2.0, Microsoft.Extensions.TimeProvider.Testing 10.11.0, Microsoft.AspNetCore.Mvc.Testing 10.0.14, Testcontainers 4.16.0, Respawn 7.0.0, Stryker.NET 5.0.0"
+  verified: "2026-11-21"
+  versions: ".NET 10 (SDK 10.0.403), MSTest 4.5.3, Microsoft.Testing.Platform 2.5.3, xunit.v3 4.0.3, FluentAssertions 7.2.2, AwesomeAssertions 9.6.0, NSubstitute 6.2.0, Microsoft.Extensions.TimeProvider.Testing 10.11.0, Microsoft.AspNetCore.Mvc.Testing 10.0.14, Testcontainers 4.17.0, Respawn 7.0.0, Stryker.NET 5.0.0"
 ---
 
 # .NET testing
 
-Rules for .NET tests: the test project, the test design, the assertions, the test doubles, and the integration tests. The move from FluentAssertions to AwesomeAssertions: `test-stack:migrate-fluentassertions`. The C# rules for the code under test: `dev-stack:csharp`. EF Core data access: `dev-stack:efcore`.
+Rules for .NET tests: the test project, the test design, the assertions, the test doubles, and the integration tests. The move from FluentAssertions to AwesomeAssertions: `test-stack:migrate-fluentassertions`. The C# rules for the code under test: `dev-stack:csharp`. EF Core data access: `dev-stack:efcore`. Browser end-to-end tests: `test-stack:playwright`. Gherkin features and Reqnroll bindings: `test-stack:reqnroll`.
 
 ## First
 
@@ -17,8 +17,8 @@ Rules for .NET tests: the test project, the test design, the assertions, the tes
 
    | Item | Where to look | Read |
    |------|---------------|------|
-   | MSTest version | `global.json` `msbuild-sdks`, `MSTest*` package in `*.csproj` or `Directory.Packages.props` | 4.x: this file and `references/mstest-4.md`. 3.x: tell the human (only the latest MSTest gets support). Do not upgrade unless the task asks. |
-   | Runner | `global.json` `test.runner`, `UseVSTest`, `EnableMSTestRunner` | `references/mstest-4.md` |
+   | Test framework | `global.json` `msbuild-sdks`, the `MSTest*`, `xunit*`, or `NUnit` package in `*.csproj` or `Directory.Packages.props` | MSTest 4.x: this file and `references/mstest-4.md`. MSTest 3.x: tell the human (only the latest MSTest gets support). `xunit.v3`: this file and `references/xunit-v3.md`. `xunit` 2.x: tell the human, and move to v3 with the steps in `references/xunit-v3.md` only when the task asks (TEST-20). NUnit: tell the human that the skill does not cover the NUnit API, and apply only the rules for design, names, assertions, and fakes. Do not upgrade or change the framework unless the task asks. |
+   | Runner | `global.json` `test.runner`, `UseVSTest`, `EnableMSTestRunner`, the `xunit.v3.mtp-off` package | `references/mstest-4.md` or `references/xunit-v3.md` |
    | Assertion library | `FluentAssertions` or `AwesomeAssertions` package, `using` lines | FA 7: `references/fluentassertions-7.md`. AwesomeAssertions: `references/awesomeassertions.md`. FA 8 or later: stop, see rule 6. |
    | Test doubles | `NSubstitute`, `Moq`, `FakeItEasy`, fakes in the test project | rule 15 |
    | Containers | `Testcontainers.*` packages | `references/testcontainers.md` |
@@ -31,11 +31,12 @@ Existing code keeps its style (stack rule 3). For new code, these are the recomm
 
 | Area | Default | Decision |
 |------|---------|----------|
-| Framework | MSTest 4 with `MSTest.Sdk`, version pinned in `global.json` | TEST-01 |
+| Framework | MSTest 4 with `MSTest.Sdk`, version pinned in `global.json`. A repo on xUnit stays on xUnit (`xunit.v3` 4.x). | TEST-01 |
+| Runner | Microsoft.Testing.Platform, selected in `global.json`, one runner mode for each repository | TEST-19 |
 | Layout | `src/` and `tests/`, one `X.UnitTests` per project with logic, one `X.IntegrationTests` per host | TEST-04 |
 | Assertions | AwesomeAssertions 9 in a new repo. FluentAssertions `[7.2.2,8.0.0)` where FA exists. | TEST-02 |
 | Names | `Method_Scenario_ExpectedResult`, class `<ClassUnderTest>Tests` | TEST-05 |
-| Parallel runs | Unit tests `MethodLevel`. Integration tests `ClassLevel` plus `[DoNotParallelize]` on database classes. | TEST-17 |
+| Parallel runs | Unit tests `MethodLevel`. Integration tests `ClassLevel` plus `[DoNotParallelize]` on database classes. xUnit: `references/xunit-v3.md`. | TEST-17 |
 | Test doubles | Hand-written fakes and `FakeTimeProvider` first, NSubstitute 6 at boundaries | TEST-03 |
 | API tests | `WebApplicationFactory<Program>` plus Testcontainers, one container per test assembly | TEST-07 |
 | Test database | Production engine in a container, pinned tag, Respawn reset before each test | DATA-20, TEST-08 |
@@ -48,8 +49,10 @@ Existing code keeps its style (stack rule 3). For new code, these are the recomm
 
 ### Test project
 
+Rules 1, 3, and 4 are for MSTest. For an xUnit v3 project, use the setup in `references/xunit-v3.md`. Rules 2 and 5 apply to both.
+
 1. Use `<Project Sdk="MSTest.Sdk">` and pin the version once in `global.json` under `msbuild-sdks`. The SDK adds the framework, the adapter, the analyzers, the runner, and code coverage. Dependabot and the NuGet UI do not update SDK versions, so bump it by hand.
-2. Select the runner in `global.json`: `"test": { "runner": "Microsoft.Testing.Platform" }`. On the .NET 10 SDK, MSTest.Sdk projects (MTP v2 by default) fail on the old VSTest path of `dotnet test`. When `global.json` selects MTP, each test project in the repository must use MTP.
+2. Select the runner in `global.json`: `"test": { "runner": "Microsoft.Testing.Platform" }`. MSTest.Sdk projects and `xunit.v3` 4.x projects use MTP v2 by default. On the .NET 10 and .NET 11 SDKs, they fail on the old VSTest path of `dotnet test`. When `global.json` selects MTP, each test project in the repository must use MTP.
 3. Set `<MSTestAnalysisMode>Recommended</MSTestAnalysisMode>` and build with warnings as errors in CI. The analyzers find removed APIs, wrong argument order, and missing cancellation.
 4. Declare parallel runs in each test assembly: `[assembly: Parallelize(Scope = ExecutionScope.MethodLevel)]`. MSTest runs tests one by one when you declare nothing (MSTEST0001).
 5. Keep unit tests and integration tests in separate projects. Then the unit test run needs no Docker and stays fast.
@@ -76,7 +79,7 @@ Existing code keeps its style (stack rule 3). For new code, these are the recomm
    }
    ```
 
-   An assembly can have only one `[AssemblyInitialize]`. When one exists (for example the container start), put the line at its top. AwesomeAssertions 9.3 and later detect MSTest 4 and need no bridge.
+   An assembly can have only one `[AssemblyInitialize]`. When one exists (for example the container start), put the line at its top. AwesomeAssertions 9.3 and later detect MSTest 4 and need no bridge. xUnit v3 needs no bridge: FA 7.1 and later detect it.
 8. Write the API of the installed version. FA 7 and AwesomeAssertions 9 have different names for the same options. The tables are in `references/fluentassertions-7.md` and `references/awesomeassertions.md`.
 
 ### What to test
@@ -89,11 +92,11 @@ Existing code keeps its style (stack rule 3). For new code, these are the recomm
 
 12. Test one behavior in each test. Name it `Method_Scenario_ExpectedResult`, for example `CloseAsync_ClosedOrder_ThrowsInvalidOperation`. The name tells the reader what broke.
 13. Write Arrange, Act, Assert with one blank line between the parts. Use one Act line. Put no `if`, loops, or string building in a test. A bug in test logic hides a bug in the code.
-14. Use `[DataRow]` for cases of one behavior with simple values. Use `[DynamicData]` with a property that returns tuples or `TestDataRow<T>` for other values. Give each row a `DisplayName` when the values do not explain the case.
+14. Use `[DataRow]` for cases of one behavior with simple values. Use `[DynamicData]` with a property that returns tuples or `TestDataRow<T>` for other values. Give each row a `DisplayName` when the values do not explain the case. Do not give a `decimal` parameter a `[DataRow]` literal. MSTest does not convert to `decimal`. `[DataRow(100.00)]` gives only warning MSTEST0014, and `[DataRow(100)]` gives no warning. Each row fails at run time. Use `double` parameters with a cast. Or use `[DynamicData]` with `decimal` tuples or `TestDataRow<T>`. In xUnit, use `[InlineData]` for simple values. Use `TheoryData<T1, T2>` with `[MemberData]` for `decimal` and other values.
 15. Prefer real objects and hand-written fakes. Use NSubstitute only at a boundary (clock, network, message bus, payment provider). Check a call with `Received()` only when the call is the behavior, for example "the email is sent".
 16. Inject `TimeProvider` in the code under test and use `FakeTimeProvider` in the test. Call `Advance` to move time. Do not use `Thread.Sleep` or `Task.Delay` to wait.
-17. Use a constructor and `readonly` fields for sync setup. Use `[TestInitialize]` only for async setup. Make test classes `sealed`.
-18. Flow `TestContext.CancellationToken` into each async call (MSTEST0049). Set `CooperativeCancellation = true` on each `[Timeout]` (MSTEST0045).
+17. Use a constructor and `readonly` fields for sync setup. Use `[TestInitialize]` only for async setup (xUnit: `IAsyncLifetime` with `ValueTask`). Make test classes `sealed`.
+18. Flow `TestContext.CancellationToken` into each async call (MSTEST0049). xUnit: `TestContext.Current.CancellationToken` (xUnit1051). Set `CooperativeCancellation = true` on each `[Timeout]` (MSTEST0045).
 19. Use the smallest data that proves the behavior. Give magic values a name (`const`, `static readonly`).
 
 ### Assertions
@@ -107,9 +110,9 @@ Existing code keeps its style (stack rule 3). For new code, these are the recomm
 
 ### Integration tests
 
-26. Start one container per test assembly in `[AssemblyInitialize]` and dispose it in `[AssemblyCleanup]`. A container start costs seconds. MSTest has no class fixture like xUnit.
+26. Start one container per test assembly in `[AssemblyInitialize]` and dispose it in `[AssemblyCleanup]`. A container start costs seconds. xUnit: `[assembly: AssemblyFixture(typeof(DatabaseFixture))]` (`references/xunit-v3.md`).
 27. Give each builder a pinned image: `new PostgreSqlBuilder("postgres:18.6-alpine")`. Use the tag that production uses. Testcontainers 4.10 and later made the constructor without an image obsolete.
-28. Reset the data with Respawn in `[TestInitialize]` and mark the database test classes `[DoNotParallelize]`. A reset takes milliseconds. A new container takes seconds.
+28. Reset the data with Respawn in `[TestInitialize]` and mark the database test classes `[DoNotParallelize]` (xUnit: `references/xunit-v3.md`). A reset takes milliseconds. A new container takes seconds.
 29. Read the address from the container: `GetConnectionString()`, `Hostname`, `GetMappedPublicPort()`. Fixed ports, `localhost`, and fixed container names collide on CI agents.
 30. Override the connection string in `ConfigureWebHost` with `builder.UseSetting("ConnectionStrings:Orders", connectionString)`. `Program.cs` reads configuration before `ConfigureAppConfiguration` runs.
 31. Do not use `WithReuse(true)`, and do not turn off the Resource Reaper. Reuse is experimental and leaves containers after the run.
@@ -124,6 +127,12 @@ Existing code keeps its style (stack rule 3). For new code, these are the recomm
 | `Assert.IsInstanceOfType<T>(x, out var t)` | `var t = Assert.IsInstanceOfType<T>(x);` |
 | `[DataTestMethod]` | `[TestMethod]` |
 | `Assert.AreEqual(a, b, "Got {0}", x)` | `Assert.AreEqual(a, b, $"Got {x}")` |
+| `[DataRow(100.00)]` or `[DataRow(100)]` for a `decimal` parameter | `[DynamicData]` with `decimal` tuples |
+| New `StringAssert` or `CollectionAssert` code | `Assert` methods (MSTest 5 removes both classes) |
+| `<PackageReference Include="xunit" Version="2.9.3" />` | `<PackageReference Include="xunit.v3" Version="4.0.3" />` |
+| `using Xunit.Abstractions;` | `ITestOutputHelper` is in namespace `Xunit` |
+| `[assembly: CollectionBehavior(DisableTestParallelization = true)]` | `[assembly: Parallelization(Mode = ParallelMode.None)]` (CS0619 on xUnit 4) |
+| `IAsyncLifetime` with `Task InitializeAsync()` | `ValueTask InitializeAsync()` |
 | `Microsoft.NET.Test.Sdk` + `MSTest.TestAdapter` + `coverlet.collector` | `<Project Sdk="MSTest.Sdk">` and `dotnet test --coverage` |
 | `<PackageReference Include="FluentAssertions" Version="8.*" />` | `Version="[7.2.2,8.0.0)"`, or AwesomeAssertions 9 |
 | FA 7: `act.Should().Throw();` (no type) | `act.Should().Throw<Exception>();` |
@@ -144,10 +153,10 @@ Existing code keeps its style (stack rule 3). For new code, these are the recomm
 Run these commands from the repository root. Fix each error, then run them again.
 
 1. To build with the analyzers, run `dotnet build -warnaserror`. Pass: 0 warnings, 0 errors.
-2. To run the tests, run `dotnet test`. With the MTP runner, add `--project <path>` for one project. Pass: `Test run summary: Passed!`. When you added or changed an integration test, run the suite 3 times. Pass: 3 times `Passed!`. A test that fails one time in 3 is flaky. Fix the shared state or the timing, then run it 3 times again.
+2. To run the tests, run `dotnet test --no-build` after step 1. With the MTP runner, add `--project <path>` for one project. In MTP mode, `dotnet test` sends MSBuild switches such as `--disable-build-servers` to the test app, which stops with "Unknown option". Put MSBuild switches on `dotnet build`. Pass: `Test run summary: Passed!`. When you added or changed an integration test, run the suite 3 times. Pass: 3 times `Passed!`. A test that fails one time in 3 is flaky. Fix the shared state or the timing, then run it 3 times again.
 3. To collect coverage, run `dotnet test --coverage --coverage-output-format cobertura`. Pass: a `*.cobertura.xml` file in `TestResults/`. There is no gate (TEST-11).
 4. To run the rule check, run `python3 <skill folder>/scripts/stackcheck.py --root <repo>`. In an existing project, add `--changed <base branch>`. Pass: 0 errors.
-5. After a change to the test stack, run one test that fails on purpose (`1.Should().Be(2)`), then remove it. Pass: the output shows "Expected ... to be 2, but found 1", not "threw exception". This proves the FA 7 bridge.
+5. For FA 7 with MSTest 4 only. After a change to the test stack, run one test that fails on purpose (`1.Should().Be(2)`), then remove it. Pass: the output shows "Expected ... to be 2, but found 1", not "threw exception". This proves the FA 7 bridge.
 6. Optional: to find tests that check nothing, run Stryker.NET on one critical project (`references/test-design.md`).
 
 ## Review checklist
@@ -158,7 +167,7 @@ The full list is in `references/review-checklist.md`.
 |---|-------|-----|
 | 1 | FluentAssertions is below 8. Moq is not 4.20.0 or 4.20.1. | tool (TST-PKG-FA8, TST-PKG-MOQ-SPONSORLINK) |
 | 2 | FA 7 with MSTest 4: the `[AssemblyInitialize]` sets `Services.ThrowException`. | tool (TST-PKG-FA7-BRIDGE lists the projects), judge |
-| 3 | No removed MSTest 3 APIs. | tool (TST-EXPECTED-EXCEPTION, TST-THROWS-EXCEPTION, compiler, MSTEST0044) |
+| 3 | No removed MSTest 3 APIs. | tool (TST-EXPECTED-EXCEPTION, TST-THROWS-EXCEPTION, TST-DATATESTMETHOD, compiler, MSTEST0044) |
 | 4 | `global.json` selects Microsoft.Testing.Platform. Analysis mode is `Recommended`. | tool (TST-GLOBALJSON-MTP), judge |
 | 5 | Each assembly declares its parallel mode. | tool (MSTEST0001) |
 | 6 | Async tests flow `TestContext.CancellationToken`. `[Timeout]` is cooperative. | tool (MSTEST0049, MSTEST0045) |
@@ -170,7 +179,8 @@ The full list is in `references/review-checklist.md`.
 | 12 | Mocks only at boundaries. `Received()` only when the call is the behavior. | judge |
 | 13 | Containers have a pinned image, start once per assembly, and use random ports. | tool (TST-TC-NO-IMAGE, TST-TC-LATEST, TST-TC-FIXED-PORT), judge |
 | 14 | No container reuse and no EF Core in-memory provider. | tool (TST-TC-REUSE, TST-PKG-EF-INMEMORY) |
-| 15 | No logic in test bodies. Cases use `[DataRow]` or `[DynamicData]`. | judge |
+| 15 | No logic in test bodies. Cases use `[DataRow]` or `[DynamicData]` (xUnit: `[InlineData]` or `TheoryData`). | judge |
+| 16 | xUnit: `xunit.v3` 4.x, no `Xunit.Abstractions`, no `CollectionBehavior` parallel properties, `ValueTask` lifetimes, `TestContext.Current.CancellationToken`. | tool (TST-XUNIT-V2-PKG, TST-XUNIT-ABSTRACTIONS, TST-XUNIT-COLLECTION-PARALLEL, xUnit1051, compiler CS0619) |
 
 ## Report
 
@@ -179,6 +189,7 @@ End with the report of stack rule 8 (`references/stack-rules.md`): the same head
 ## References
 
 - `references/mstest-4.md`: read before you set up a test project, a runner, an analyzer setting, or fix MSTest 3 code.
+- `references/xunit-v3.md`: read before you set up, write, or fix tests in an xUnit project, or move a project from xUnit v2.
 - `references/fluentassertions-7.md`: read before you write assertions in a project with FluentAssertions 6 or 7.
 - `references/awesomeassertions.md`: read before you write assertions in a project with AwesomeAssertions.
 - `references/testcontainers.md`: read before you write an integration test with a container, Respawn, or `WebApplicationFactory`.

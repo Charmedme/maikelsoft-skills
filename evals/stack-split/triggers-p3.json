@@ -1,0 +1,50 @@
+{
+ "playwright": {
+  "start": [
+   "Write a Playwright test in TypeScript that signs in one time and then checks the order list page. Reuse the signed-in state.",
+   "Our Playwright .NET tests with MSTest 4 build fine but the run finds zero tests. What is wrong with the test project?",
+   "Add an end-to-end browser test project for our ASP.NET Core app with Microsoft.Playwright and xUnit v3. The test must start the app itself.",
+   "Set up the Playwright MCP server for Claude Code in this repo so the agent can look at our local app in a browser.",
+   "This e2e test fails one time in five on CI. It uses page.waitForTimeout(2000) before the click. Make it stable."
+  ],
+  "skip": [
+   "Write a Reqnroll feature and step definitions for the refund flow, in Gherkin, with MSTest.",
+   "Write MSTest unit tests for the DiscountCalculator class with data rows.",
+   "Write a Vitest test for the OrderListComponent of our Angular app.",
+   "Write a Cypress test that checks the checkout page.",
+   "Write a k6 load test that sends 200 requests per second to GET /orders."
+  ]
+ },
+ "reqnroll": {
+  "start": [
+   "Add a Reqnroll feature and step definitions for cancelling an order, on MSTest 4, with Playwright in the steps.",
+   "Review this .feature file. The steps say 'When I click #submit' and 'And I type the password'. How should it look?",
+   "We still use SpecFlow 3.9 with MSTest. Move the acceptance test project to Reqnroll.",
+   "Our Reqnroll scenarios share data through ScenarioContext[\"order\"]. Change that to something type-safe.",
+   "The Reqnroll scenarios with Playwright leave a trace file for each scenario, also the green ones. Keep only the trace of a failed scenario."
+  ],
+  "skip": [
+   "Write a Playwright test in TypeScript for the login page.",
+   "Write the acceptance criteria and the Behaviour spec of a user story for the refund feature in our backlog.",
+   "Write an xUnit v3 test for the PriceCalculator class.",
+   "Write a Cucumber.js step definition file in TypeScript for a login feature.",
+   "Write Jest tests for the cart reducer."
+  ]
+ },
+ "dotnet-testing": {
+  "start": [
+   "Move our test project from xUnit v2 to xUnit v3. It uses Xunit.Abstractions and IAsyncLifetime with Task.",
+   "Create an xUnit v3 integration test project with one PostgreSQL container for the whole test assembly.",
+   "My MSTest DataRow test with decimal parameters builds but each row fails at run time. Why?",
+   "Write unit tests with MSTest 4 for the OrderService class. Use fakes for the repository.",
+   "After the update to xunit.v3 4.0, the line [assembly: CollectionBehavior(DisableTestParallelization = true)] gives error CS0619. Fix it."
+  ],
+  "skip": [
+   "Write a Playwright .NET test that opens the order page in a browser and checks the heading.",
+   "Write a Reqnroll feature for the checkout flow.",
+   "Write a Vitest test for an Angular service.",
+   "Write a pytest test for the invoice module of our Python service.",
+   "Write a JMeter test plan that loads the order API."
+  ]
+ }
+}

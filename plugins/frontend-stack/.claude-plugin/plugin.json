@@ -1,7 +1,7 @@
 {
   "name": "frontend-stack",
   "displayName": "Front-end stack skills",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Front-end stack skills: Angular 22 and 21 next to the official angular-developer skill, security rules for browser code (sanitizer, DOM writes, CSP, Trusted Types, token storage, AngularJS), and a skill that sends HTML, CSS, and client-side JavaScript work to Modern Web Guidance of Google Chrome. Each skill gives version-specific rules, a check step with a tool, and one report format. Output in ASD-STE100 Simplified Technical English or Begrijpelijk Nederlands (B1).",
   "author": {
     "name": "Maikel",

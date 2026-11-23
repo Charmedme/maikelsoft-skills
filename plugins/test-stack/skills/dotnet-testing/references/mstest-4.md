@@ -1,6 +1,6 @@
 # MSTest 4
 
-Facts for MSTest 4.5.2 with Microsoft.Testing.Platform (MTP) 2.5.2 on the .NET 10 SDK. Checked on 2026-10-16, versions checked again on 2026-10-27. Only the latest MSTest release gets support.
+Facts for MSTest 4.5.3 with Microsoft.Testing.Platform (MTP) 2.5.3 on the .NET 10 SDK. Checked on 2026-10-16, versions checked again on 2026-11-21. Version 4.5.3 has bug fixes only. The examples compiled with 4.5.2. Only the latest MSTest release gets support.
 
 ## Contents
 
@@ -12,6 +12,7 @@ Facts for MSTest 4.5.2 with Microsoft.Testing.Platform (MTP) 2.5.2 on the .NET 1
 - Data-driven tests
 - MSTest 3 to 4: removed and changed APIs
 - Behavior changes in version 4
+- MSTest 5 (not released)
 - Traps
 
 ## Project setup
@@ -21,7 +22,7 @@ Facts for MSTest 4.5.2 with Microsoft.Testing.Platform (MTP) 2.5.2 on the .NET 1
 ```json
 {
   "msbuild-sdks": {
-    "MSTest.Sdk": "4.5.2"
+    "MSTest.Sdk": "4.5.3"
   },
   "test": {
     "runner": "Microsoft.Testing.Platform"
@@ -54,7 +55,7 @@ A unit test project (compiled: `examples/tests/Shop.UnitTests/Shop.UnitTests.csp
 - `MSTest.Sdk` adds the framework, the adapter, the analyzers, MTP, code coverage, and TRX reports. It no longer adds `Microsoft.NET.Test.Sdk`.
 - A test project that references a web project and uses `WebApplicationFactory` works with `MSTest.Sdk` (compiled: `examples/tests/Shop.IntegrationTests`).
 - A test project that needs the targets of `Microsoft.NET.Sdk.Web` itself: use `Microsoft.NET.Sdk`, the `MSTest` package, `<EnableMSTestRunner>true</EnableMSTestRunner>`, and `<OutputType>Exe</OutputType>`. `MSTest.Sdk` derives only from `Microsoft.NET.Sdk`.
-- `<UseVSTest>true</UseVSTest>` switches back to VSTest. Use it only when a tool in the pipeline cannot run MTP.
+- `<UseVSTest>true</UseVSTest>` switches back to VSTest. Use it only when a tool in the pipeline cannot run MTP. Then `MSTest.Sdk` 4.5.3 adds `Microsoft.NET.Test.Sdk` 18.10.2.
 - With Central Package Management, put `MSTest` in `Directory.Packages.props` only when you use the package instead of the SDK.
 - An Aspire AppHost test project sets `<EnableAspireTesting>true</EnableAspireTesting>`. The `aspire` skill covers the rest.
 
@@ -72,7 +73,10 @@ With MTP, each test project builds to an executable that runs its own tests.
 | Run the executable | `dotnet bin/Debug/net10.0/Shop.UnitTests.dll` |
 
 - VSTest options such as `--logger trx` or `--collect "XPlat Code Coverage"` do not work with MTP.
-- MTP v2 on the .NET 10 SDK refuses the VSTest path of `dotnet test`. Without the `global.json` runner setting, `dotnet test` fails.
+- MTP v2 on the .NET 10 and .NET 11 SDKs refuses the VSTest path of `dotnet test`. Without the `global.json` runner setting, `dotnet test` fails.
+- One `global.json` serves each test project. Use one runner mode for each repository. An xUnit v3 project on MTP and an MSTest project on VSTest cannot share one repository.
+- In MTP mode, `dotnet test` sends MSBuild switches to the test app. `dotnet test --disable-build-servers` stops with "Unknown option" (exit code 5). Build first, then run `dotnet test --no-build`.
+- MTP detects an AI agent environment and shows less output there. `--show-stdout` and `--show-stderr` control the output.
 
 ## Analyzers
 
@@ -81,6 +85,7 @@ With MTP, each test project builds to an executable that runs its own tests.
 | Rule | Finds |
 |------|-------|
 | MSTEST0001 | No `[assembly: Parallelize]` or `[assembly: DoNotParallelize]` |
+| MSTEST0014 | `DataRow` argument types do not match the parameters. It misses an `int` literal for a `decimal` parameter (see "Data-driven tests"). |
 | MSTEST0017 | `Assert.AreEqual(actual, expected)`: the argument order is wrong |
 | MSTEST0024 | `TestContext` in a static field |
 | MSTEST0040 | Assert in an `async void` context |
@@ -92,6 +97,12 @@ With MTP, each test project builds to an executable that runs its own tests.
 | MSTEST0067 | `Thread.Sleep`, `.Wait()`, `.Result` in tests (off in Recommended, turn it on with `dotnet_diagnostic.MSTEST0067.severity = warning`) |
 | MSTEST0074 to MSTEST0077 | Parallel tests: 0074 process-global state (for example environment variables) without `[ResourceLock]`. 0075 the current folder. 0076 the culture. 0077 hardcoded or shared file paths. |
 | MSTEST0082 | A base class from another MSTest major version: MSTest loses its tests |
+| MSTEST0084 | `OSCondition` conflicts with `SupportedOSPlatform` |
+| MSTEST0085 | `[TestClass]` on an abstract class |
+| MSTEST0086 | A method attribute that the class already gives |
+| MSTEST0087 | Two `DataRow` rows with the same display name |
+| MSTEST0088 | Hosted DI with Native AOT |
+| MSTEST0089 | `DisplayName` and `ArgumentsDisplayName` conflict |
 
 ## Lifecycle
 
@@ -145,7 +156,16 @@ public static IEnumerable<TestDataRow<(decimal Total, decimal Expected)>> Rows =
 ];
 ```
 
-- An attribute cannot hold a `decimal`. Use `double` in `[DataRow]` and cast, or use `[DynamicData]`.
+- An attribute cannot hold a `decimal`, and MSTest does not convert a `DataRow` value to `decimal`. Do not give a `decimal` parameter any `DataRow` literal:
+
+  | Form for `decimal` parameters | Build | Run |
+  |-------------------------------|-------|-----|
+  | `[DataRow(100.00, 10.50, 89.50)]` | warning MSTEST0014 | each row fails: the data does not match the parameters |
+  | `[DataRow("100.00", "10.50", "89.50")]` | warning MSTEST0014 | each row fails |
+  | `[DataRow(100, 10, 90)]` | no warning | each row fails |
+
+  Working forms: `double` parameters with a cast (the first example), `[DynamicData]` with `decimal` tuples, or `TestDataRow<(decimal, decimal)>` (the second example).
+- `ArgumentsDisplayName` (4.5) on `DataRow` and `TestDataRow<T>` sets a label for the arguments.
 - `[DynamicData]` reads a property or a method. Do not pass `DynamicDataSourceType` (MSTEST0052).
 - Return tuples or `TestDataRow<T>`, not `IEnumerable<object[]>`. The compiler checks the types.
 
@@ -176,7 +196,18 @@ For a full migration from MSTest 3, or from VSTest to MTP, use the `dotnet-test-
 - `TreatDiscoveryWarningsAsErrors` is on.
 - `TestCase.Id` changed. Test history in Azure DevOps starts again one time.
 - Version 4 is not binary compatible with libraries built against version 3. Rebuild shared test libraries.
+- A type-load error in the test assembly fails the discovery (version 3 gave a warning). Fix the package versions before you look at the tests.
 - The assembly name changed from `Microsoft.VisualStudio.TestPlatform.TestFramework` to `MSTest.TestFramework`. This is why FluentAssertions 7 does not find MSTest 4.
+
+## MSTest 5 (not released)
+
+The `main` branch of MSTest 5 removes these APIs. Do not write new code with them:
+
+- `StringAssert`: use `Assert` methods or the assertion library.
+- `CollectionAssert`: use `Assert.AreSequenceEqual` or the assertion library.
+- `[DataTestMethod]`: use `[TestMethod]` (MSTEST0044).
+
+MSTest 5 also drops .NET 8 and .NET 9. Check the release notes when 5.0 ships.
 
 ## Traps
 
