@@ -217,8 +217,75 @@
         "global.json"
       ],
       "pattern": "\"runner\"\\s*:\\s*\"Microsoft\\.Testing\\.Platform\"",
-      "message": "global.json does not select Microsoft.Testing.Platform for dotnet test. On the .NET 10 SDK, MSTest.Sdk projects (MTP v2 by default) fail on the old VSTest path.",
-      "fix": "When the test projects use MSTest.Sdk or EnableMSTestRunner, add \"test\": { \"runner\": \"Microsoft.Testing.Platform\" } to global.json. Then each test project in the repo must use MTP. A VSTest-only repo keeps its setup."
+      "message": "global.json does not select Microsoft.Testing.Platform for dotnet test. On the .NET 10 and .NET 11 SDKs, MSTest.Sdk and xunit.v3 4.x projects (MTP v2 by default) fail on the old VSTest path.",
+      "fix": "When the test projects use MSTest.Sdk, EnableMSTestRunner, or xunit.v3 4.x, add \"test\": { \"runner\": \"Microsoft.Testing.Platform\" } to global.json. Then each test project in the repo must use MTP. A VSTest-only repo keeps its setup (TEST-19)."
+    },
+    {
+      "id": "TST-XUNIT-V2-PKG",
+      "kind": "package",
+      "ecosystem": "nuget",
+      "package": "xunit",
+      "versions": "*",
+      "severity": "warning",
+      "message": "The package xunit is xUnit v2 (last release 2.9.3). New code and new projects use xunit.v3 4.x.",
+      "fix": "Keep v2 until the human approves the move (TEST-20). Then follow 'Move from xUnit v2' in references/xunit-v3.md: xunit.v3 4.0.3, OutputType Exe, the global.json runner."
+    },
+    {
+      "id": "TST-XUNIT-ABSTRACTIONS",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "^\\s*(global\\s+)?using\\s+Xunit\\.Abstractions\\s*;",
+      "message": "Xunit.Abstractions is the xUnit v2 namespace. xUnit v3 has no such namespace, so the using does not compile there.",
+      "fix": "Remove the using. In xUnit v3, ITestOutputHelper is in namespace Xunit.",
+      "match": [
+        "using Xunit.Abstractions;",
+        "global using Xunit.Abstractions;"
+      ],
+      "nomatch": [
+        "using Xunit;",
+        "public sealed class OrderTests(ITestOutputHelper output)"
+      ]
+    },
+    {
+      "id": "TST-XUNIT-COLLECTION-PARALLEL",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "CollectionBehavior(Attribute)?\\s*\\([^)]*\\b(DisableTestParallelization|MaxParallelThreads|ParallelAlgorithm)\\s*=",
+      "message": "On xunit.v3 4.x, the parallel properties of CollectionBehavior are obsolete and do not compile (CS0619).",
+      "fix": "Use [assembly: Parallelization(Mode = ParallelMode.None)] (or MaxThreads, Algorithm) with using Xunit.Sdk; and using Xunit.v3;.",
+      "match": [
+        "[assembly: CollectionBehavior(DisableTestParallelization = true)]",
+        "[assembly: CollectionBehavior(CollectionBehavior.CollectionPerAssembly, MaxParallelThreads = 4)]"
+      ],
+      "nomatch": [
+        "[assembly: Parallelization(Mode = ParallelMode.None)]",
+        "[assembly: CollectionBehavior(CollectionBehavior.CollectionPerClass)]"
+      ]
+    },
+    {
+      "id": "TST-DATATESTMETHOD",
+      "kind": "regex",
+      "severity": "warning",
+      "files": [
+        "**/*.cs"
+      ],
+      "pattern": "[\\[,]\\s*DataTestMethod(Attribute)?\\b",
+      "message": "[DataTestMethod] is obsolete in MSTest 4 (MSTEST0044), and MSTest 5 removes it.",
+      "fix": "Use [TestMethod] with the same [DataRow] or [DynamicData] attributes.",
+      "match": [
+        "[DataTestMethod]",
+        "[TestCategory(\"Unit\"), DataTestMethod]"
+      ],
+      "nomatch": [
+        "[TestMethod]",
+        "// Replaced DataTestMethod with TestMethod."
+      ]
     },
     {
       "id": "TST-DET-TEST-01",
@@ -458,11 +525,12 @@
         "**/*.csproj",
         "**/*.props"
       ],
-      "pattern": "\\[assembly:\\s*(Parallelize|DoNotParallelize)\\b|<MSTestParallelizeScope>",
+      "pattern": "\\[assembly:\\s*(Parallelize|DoNotParallelize|Parallelization)\\b|<MSTestParallelizeScope>",
       "match": [
         "[assembly: Parallelize(Scope = ExecutionScope.MethodLevel)]",
         "[assembly: DoNotParallelize]",
-        "<MSTestParallelizeScope>MethodLevel</MSTestParallelizeScope>"
+        "<MSTestParallelizeScope>MethodLevel</MSTestParallelizeScope>",
+        "[assembly: Parallelization(Mode = ParallelMode.None)]"
       ],
       "nomatch": [
         "[DoNotParallelize]"

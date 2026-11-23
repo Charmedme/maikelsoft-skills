@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Score the runs of the stack-split behaviour test with the regex checks of scenarios.json.
 
-    python3 evals/stack-split/score.py <runs> [--judge <runs>/judge.json]
+    python3 evals/stack-split/score.py <runs> [--judge <runs>/judge.json] [--scenarios scenarios-p3.json]
 
 A "must" check passes when its pattern matches a line in one of the files of the work folder.
 A "never" check fails when its pattern matches a line that is not a comment line. The score of a run is
@@ -18,7 +18,7 @@ from collections import defaultdict
 HERE = pathlib.Path(__file__).resolve().parent
 # A comment line can name an old pattern to explain its removal. The "never" checks skip it.
 COMMENT = re.compile(r"^\s*(//|#|@\*|\*|<!--|/\*)")
-TEXT = {".cs", ".csproj", ".json", ".razor", ".props", ".yaml", ".yml", ".js", ".ts", ".html", ".md", ".cshtml", ".xml", ".txt"}
+TEXT = {".cs", ".csproj", ".json", ".razor", ".props", ".yaml", ".yml", ".js", ".ts", ".html", ".md", ".cshtml", ".xml", ".txt", ".feature", ".config", ".runsettings"}
 
 
 def files_text(work: pathlib.Path, seed: dict) -> str:
@@ -57,9 +57,10 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("runs")
     parser.add_argument("--judge", help="judge.json: {run id: {grade: 0-10}}")
+    parser.add_argument("--scenarios", default="scenarios.json", help="file in evals/stack-split")
     args = parser.parse_args()
     runs = pathlib.Path(args.runs).resolve()
-    scenarios = json.loads((HERE / "scenarios.json").read_text(encoding="utf-8"))
+    scenarios = json.loads((HERE / args.scenarios).read_text(encoding="utf-8"))
     plan = json.loads((runs / "plan.json").read_text(encoding="utf-8"))
     judge = json.loads(pathlib.Path(args.judge).read_text(encoding="utf-8")) if args.judge else {}
 

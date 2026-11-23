@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Make the run folders and the skill arms of the stack-split behaviour test.
 
-    python3 evals/stack-split/prepare.py <runs> [--tag dev-stack-v1.3.0] [--models haiku sonnet opus] [--repeats 2]
+    python3 evals/stack-split/prepare.py <runs> [--scenarios scenarios-p3.json] [--tag dev-stack-v1.3.0]
+        [--models haiku sonnet opus] [--repeats 2]
 
 <runs>/arms/current/<skill>/ is the skill folder of the tag (the "current" arm).
 <runs>/arms/new/<skill>/ is the skill folder of the working tree (the "new" arm).
@@ -42,6 +43,7 @@ def copy_tag_skill(tag: str, skill: str, target: pathlib.Path) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("runs")
+    parser.add_argument("--scenarios", default="scenarios.json", help="file in evals/stack-split (phase 3: scenarios-p3.json)")
     parser.add_argument("--tag", default="dev-stack-v1.3.0")
     parser.add_argument("--models", nargs="+", default=["haiku", "sonnet", "opus"])
     parser.add_argument("--repeats", type=int, default=2)
@@ -49,7 +51,7 @@ def main() -> int:
     args = parser.parse_args()
 
     runs = pathlib.Path(args.runs).resolve()
-    scenarios = json.loads((HERE / "scenarios.json").read_text(encoding="utf-8"))
+    scenarios = json.loads((HERE / args.scenarios).read_text(encoding="utf-8"))
     if args.scenario:
         scenarios = {k: v for k, v in scenarios.items() if k in args.scenario}
 

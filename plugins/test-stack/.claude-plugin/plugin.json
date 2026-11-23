@@ -1,7 +1,7 @@
 {
   "name": "test-stack",
   "displayName": "Test stack skills for .NET",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Test stack skills for .NET: tests with MSTest 4, FluentAssertions 7.2.2 or AwesomeAssertions 9, NSubstitute, fakes, FakeTimeProvider, WebApplicationFactory, and Testcontainers, and the step-by-step move from FluentAssertions to AwesomeAssertions. Each skill gives version-specific rules, a check step with a tool, and one report format. Output in ASD-STE100 Simplified Technical English or Begrijpelijk Nederlands (B1).",
   "author": {
     "name": "Maikel",

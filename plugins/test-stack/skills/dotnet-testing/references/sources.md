@@ -4,6 +4,18 @@ All sources checked on 2026-10-16. The researcher read the Microsoft Learn pages
 
 On 2026-10-27, the author checked the versions again. The four test projects of `examples/` ran with MSTest.Sdk 4.5.2 and Microsoft.AspNetCore.Mvc.Testing 10.0.14 (SDK 10.0.113, real Docker daemon). All 54 tests passed.
 
+## Contents
+
+- MSTest and Microsoft.Testing.Platform
+- Versions and xUnit v3 (checked 2026-11-21)
+- FluentAssertions
+- AwesomeAssertions
+- Testcontainers and Respawn
+- ASP.NET Core and EF Core
+- Test doubles and time
+- Design and strategy
+- Credits
+
 ## MSTest and Microsoft.Testing.Platform
 
 - MSTest releases: https://github.com/microsoft/testfx/releases
@@ -23,6 +35,19 @@ On 2026-10-27, the author checked the versions again. The four test projects of 
 - TestContext: https://learn.microsoft.com/dotnet/core/testing/unit-testing-mstest-writing-tests-testcontext
 - MSTest analyzers: https://learn.microsoft.com/dotnet/core/testing/mstest-analyzers/overview (MSTEST0074 to MSTEST0077, checked 2026-10-27)
 - Analyzer severities in Recommended mode: `globalconfigs/mstest-recommended.globalconfig` in the MSTest.Analyzers 4.5.1 package
+
+## Versions and xUnit v3 (checked 2026-11-21)
+
+The author checked the versions on nuget.org (registration API): MSTest 4.5.3, MTP 2.5.3, `xunit.v3` 4.0.3, Testcontainers 4.17.0. A compile check on SDK 10.0.404 and SDK 11.0.100 built and ran the xUnit v3 setup, the assembly attributes, and the `global.json` runner. It also ran the MSTest `decimal` data rows.
+
+- MTP changelog: https://github.com/microsoft/testfx/blob/main/docs/Changelog-Platform.md
+- xUnit v3 4.0.0 release notes: https://xunit.net/releases/v3/4.0.0
+- xUnit v3 migration from v2: https://xunit.net/docs/getting-started/v3/migration
+- What is new in xUnit v3: https://xunit.net/docs/getting-started/v3/whats-new
+- Running tests in parallel (xUnit 4.0 attributes): https://xunit.net/docs/running-tests-in-parallel
+- Testcontainers for xUnit.net: https://dotnet.testcontainers.org/test_frameworks/xunit_net/
+- Microsoft agent skill `migrate-xunit-to-xunit-v3`: https://github.com/dotnet/skills/blob/main/plugins/dotnet-test-migration/skills/migrate-xunit-to-xunit-v3/SKILL.md
+- FluentAssertions 7.1.0 (xUnit v3 detection): https://github.com/fluentassertions/fluentassertions/releases/tag/7.1.0
 
 ## FluentAssertions
 

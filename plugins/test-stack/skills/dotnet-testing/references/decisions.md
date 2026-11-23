@@ -9,6 +9,7 @@ The team decisions of this skill, in the order that a project meets them. Each e
 - TEST-02. Assertion library
 - TEST-05. Test naming convention
 - TEST-17. Test parallelization
+- TEST-19. Test runner mode
 - TEST-03. Mocking library
 - TEST-07. Integration test strategy
 - DATA-20. Test database strategy
@@ -20,16 +21,17 @@ The team decisions of this skill, in the order that a project meets them. Each e
 - TEST-13. API contract tests
 - TEST-09. Snapshot testing
 - TEST-12. Mutation testing
+- TEST-20. Move from xUnit v2 to xUnit v3
 
-Ask TEST-01, TEST-04, TEST-02, TEST-05, and TEST-17 together as one "test setup" question, with all recommendations filled in. Ask the others one by one when the work needs them.
+Ask TEST-01, TEST-04, TEST-02, TEST-05, TEST-17, and TEST-19 together as one "test setup" question, with all recommendations filled in. Ask the others one by one when the work needs them.
 
 ## TEST-01. Unit test framework
 
 - Question: Do we use MSTest 4 with `MSTest.Sdk` for all new .NET test projects?
 - Ask when: the first .NET test project.
-- Options: MSTest 4 with `MSTest.Sdk` and Microsoft.Testing.Platform: first-party runner, analyzers, coverage in one SDK. xUnit v3 (`xunit.v3`, MTP mode): most new adoption, class and collection fixtures. NUnit: mature, many attributes.
+- Options: MSTest 4 with `MSTest.Sdk` and Microsoft.Testing.Platform: first-party runner, analyzers, coverage in one SDK. xUnit v3 (`xunit.v3` 4.x, MTP v2 by default): most new adoption, class, collection, and assembly fixtures. NUnit: mature, many attributes.
 - Recommended: MSTest 4 with `MSTest.Sdk`. It is the current stack, it has analyzers and coverage in one SDK, and a second framework adds cost with no gain.
-- Choose another option when: the repo already uses xUnit or NUnit (keep it). Or the team needs xUnit-style class and collection fixtures as a core pattern.
+- Choose another option when: the repo already uses xUnit or NUnit (keep it). Or the team needs xUnit-style class and collection fixtures as a core pattern. Do not move a repo from one framework to another unless the task asks.
 - Depends on: none.
 - Revisit when: MSTest drops MTP support, or the team moves most code to a repo on another framework.
 - Check: judge
@@ -79,9 +81,22 @@ Ask TEST-01, TEST-04, TEST-02, TEST-05, and TEST-17 together as one "test setup"
 - Recommended: method level for unit tests. Class level plus `[DoNotParallelize]` on database classes for integration tests.
 - Choose another option when: a legacy suite has hidden shared state (start in sequence, fix the state, then run in parallel).
 - Depends on: TEST-01, TEST-08.
+- xUnit v3: unit test assemblies keep the default parallel runs. Integration test assemblies with a shared database use `[assembly: Parallelization(Mode = ParallelMode.None)]`.
 - Revisit when: flaky failures appear only in parallel runs.
 - Check: tool (MSTEST0001)
 - Detect: TST-DET-TEST-17
+
+## TEST-19. Test runner mode
+
+- Question: Do all test projects of the repository run on Microsoft.Testing.Platform (MTP), selected in `global.json`?
+- Ask when: the first test project, or the first xUnit v3 4.x project in a repo with older test projects.
+- Options: MTP for each project, with `"test": { "runner": "Microsoft.Testing.Platform" }` in `global.json`: the default of `MSTest.Sdk` and `xunit.v3` 4.x, no VSTest packages. VSTest for each project (`UseVSTest` for MSTest, `xunit.v3.mtp-off` with `Microsoft.NET.Test.Sdk` and `xunit.runner.visualstudio` for xUnit): for a tool that cannot run MTP.
+- Recommended: MTP for each project. The .NET 10 and .NET 11 SDKs refuse the VSTest path for an MTP project. One `global.json` sets the mode for each test project of the repository.
+- Choose another option when: a tool in the pipeline cannot run MTP. Then each test project of the repository uses VSTest.
+- Depends on: TEST-01.
+- Revisit when: the last VSTest tool of the pipeline supports MTP.
+- Check: tool (TST-GLOBALJSON-MTP)
+- Detect: none
 
 ## TEST-03. Mocking library
 
@@ -214,3 +229,15 @@ Ask TEST-01, TEST-04, TEST-02, TEST-05, and TEST-17 together as one "test setup"
 - Revisit when: a production bug passes a test suite that has full coverage of the code.
 - Check: judge
 - Detect: TST-DET-TEST-12
+
+## TEST-20. Move from xUnit v2 to xUnit v3
+
+- Question: Do we move the xUnit v2 test projects to `xunit.v3` 4.x?
+- Ask when: a repo has the `xunit` 2.x package and the task adds or changes tests.
+- Options: move now, with the steps of `references/xunit-v3.md`: one task, the test count stays the same. Move later as a separate task: the new tests use the v2 API. Stay on v2: `xunit` 2.9.3 has had no release since 2025-01.
+- Recommended: move as a separate task, after the human approves. A move in the middle of a feature mixes two changes in one review.
+- Choose another option when: the task asks for the move, or the repo has only a few tests (move now).
+- Depends on: TEST-01, TEST-19.
+- Revisit when: a package that the tests need drops xUnit v2.
+- Check: tool (TST-XUNIT-V2-PKG)
+- Detect: none

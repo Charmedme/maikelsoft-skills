@@ -6,6 +6,12 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-11-21
+
+### Changed
+
+- `stack-index` routes to the new skills of test-stack 1.1.0: `playwright` for browser tests and Playwright MCP, and `reqnroll` for feature files and step definitions. `dotnet-testing` now covers xUnit v3 too.
+
 ## [1.1.1] - 2026-11-19
 
 ### Changed

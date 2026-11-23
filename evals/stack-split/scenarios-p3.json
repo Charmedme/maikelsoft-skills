@@ -1,0 +1,195 @@
+{
+ "S1": {
+  "skill": "test-stack/playwright",
+  "current": "angular",
+  "task": "This repo has a web app that `npm run start` serves on http://localhost:4200. Write a Playwright Test suite in TypeScript: sign in one time (the user name and password come from the environment variables TEST_USER and TEST_PASSWORD) and reuse the signed-in state in the tests. Write one test that opens /orders and checks that the order list shows order 1042 with the status Shipped. Write playwright.config.ts, the sign-in setup file, and the test file.",
+  "seed": {
+   "package.json": "{\n  \"name\": \"shop-web\",\n  \"private\": true,\n  \"scripts\": { \"start\": \"ng serve --port 4200\" },\n  \"devDependencies\": { \"@playwright/test\": \"1.65.1\" }\n}\n"
+  },
+  "must": {
+   "setup project dependency": "dependencies:\\s*\\[\\s*['\\\"]setup['\\\"]",
+   "stored state": "storageState",
+   "role or label locator": "getBy(Role|Label|Text)\\(",
+   "web-first assertion": "await expect\\([^)]*\\)\\s*\\.\\s*(not\\.)?(toBeVisible|toHaveText|toContainText|toHaveCount|toHaveURL)",
+   "webServer": "webServer"
+  },
+  "never": {
+   "fixed wait": "waitForTimeout\\(",
+   "page.$ query": "page\\.\\$\\$?\\(",
+   "waitForNavigation": "waitForNavigation\\(",
+   "networkidle": "networkidle",
+   "url and port together": "webServer\\s*:\\s*\\{[^}]*\\burl\\s*:[^}]*\\bport\\s*:|webServer\\s*:\\s*\\{[^}]*\\bport\\s*:[^}]*\\burl\\s*:"
+  },
+  "judge_key": "Current facts: Playwright Test 1.65.1, Node.js 22 or later. Sign in one time in a setup project (a *.setup.ts file with test as setup), save context storageState to a file under playwright/.auth, and give the browser projects dependencies: ['setup'] and use.storageState. Credentials from process.env, never in the code. Locators: getByRole, getByLabel, getByText, with filter({ hasText }) for a row; no CSS or XPath chains, no page.$. Web-first assertions (await expect(locator).toHaveText/toBeVisible/toContainText) and no waitForTimeout, waitForNavigation, or networkidle. webServer has command plus url (or port), not both url and port, reuseExistingServer: !process.env.CI. Trace on-first-retry, retries on CI."
+ },
+ "S2": {
+  "skill": "test-stack/playwright",
+  "current": "dotnet-testing",
+  "task": "The repo has src/Shop.Api (ASP.NET Core 10 minimal app, see Program.cs) and global.json. Tests go in tests/.\nAdd an end-to-end test project tests/Shop.E2ETests with Playwright for .NET and MSTest 4. The test starts the Shop.Api app itself and checks that /orders shows the heading Orders and the row of order 1042. Write the test .csproj, the code that starts the app, and the test class. Add tests/Shop.E2ETests/README.md with the commands to install the browser and run the tests.",
+  "seed": {
+   "global.json": "{\n  \"sdk\": { \"version\": \"10.0.404\", \"rollForward\": \"latestFeature\" },\n  \"msbuild-sdks\": { \"MSTest.Sdk\": \"4.5.3\" },\n  \"test\": { \"runner\": \"Microsoft.Testing.Platform\" }\n}\n",
+   "src/Shop.Api/Shop.Api.csproj": "<Project Sdk=\"Microsoft.NET.Sdk.Web\">\n  <PropertyGroup>\n    <TargetFramework>net10.0</TargetFramework>\n    <Nullable>enable</Nullable>\n    <ImplicitUsings>enable</ImplicitUsings>\n  </PropertyGroup>\n</Project>\n",
+   "src/Shop.Api/Program.cs": "var builder = WebApplication.CreateBuilder(args);\nvar app = builder.Build();\n\nvar orders = new List<Order> { new(1042, \"Blue mug\", \"Open\"), new(1043, \"Red mug\", \"Shipped\") };\n\napp.MapGet(\"/orders\", () => Results.Content(\n    \"<h1>Orders</h1><table><tr><th>Order</th><th>Status</th><th></th></tr>\" +\n    string.Concat(orders.Select(o => $\"<tr><td>{o.Id}</td><td>{o.Status}</td><td><form method='post' action='/orders/{o.Id}/cancel'><button>Cancel order {o.Id}</button></form></td></tr>\")) +\n    \"</table>\", \"text/html\"));\n\napp.MapPost(\"/orders/{id:int}/cancel\", (int id) =>\n{\n    var i = orders.FindIndex(o => o.Id == id);\n    if (i < 0) return Results.NotFound();\n    if (orders[i].Status == \"Shipped\") return Results.Content(\"<p role='alert'>A shipped order cannot be cancelled.</p>\", \"text/html\");\n    orders[i] = orders[i] with { Status = \"Cancelled\" };\n    return Results.Redirect(\"/orders\");\n});\n\napp.Run();\n\npublic record Order(int Id, string Product, string Status);\n"
+  },
+  "must": {
+   "MSTest v4 adapter": "Microsoft\\.Playwright\\.MSTest\\.v4",
+   "PageTest base": ":\\s*PageTest\\b",
+   "real Kestrel server": "UseKestrel\\(",
+   "role locator": "GetByRole\\(",
+   "web-first assertion": "await Expect\\(",
+   "browser install script": "playwright\\.ps1|cli\\.js\\s+install"
+  },
+  "never": {
+   "old MSTest adapter": "Include=\\\"Microsoft\\.Playwright\\.MSTest\\\"",
+   "deprecated CLI tool": "dotnet\\s+tool\\s+(install|update)[^\\n]*Microsoft\\.Playwright\\.CLI",
+   "fixed wait": "Task\\.Delay\\(|WaitForTimeoutAsync\\(",
+   "runsettings Playwright section": "<Playwright>\\s*(?:\\n\\s*)?<(BrowserName|LaunchOptions|ExpectTimeout)",
+   "partial Program class": "public\\s+partial\\s+class\\s+Program\\b",
+   "floating version": "Version=\\\"[^\\\"]*\\*"
+  },
+  "judge_key": "Current facts: Microsoft.Playwright 1.65.1. MSTest 4 needs the adapter Microsoft.Playwright.MSTest.v4 (the plain Microsoft.Playwright.MSTest builds with MSTEST0082 warnings under MSTest 4 and then runs 0 tests; compile-checked), with the test class deriving from PageTest. The project uses MSTest.Sdk (version in global.json) on Microsoft.Testing.Platform. On MTP the <Playwright> section of .runsettings is ignored; use environment variables (BROWSER, HEADED) or code. Install browsers with pwsh bin/Debug/net10.0/playwright.ps1 install chromium after a build; the Microsoft.Playwright.CLI dotnet tool is deprecated. Start the app with WebApplicationFactory<Program> plus UseKestrel(0) and StartServer() on .NET 10 (no own CreateHost, no second host); public partial class Program is not needed on .NET 10. Locators GetByRole with Filter(HasText), web-first Expect assertions, no Task.Delay. After StartServer(), factory.ClientOptions.BaseAddress is the real address (compile-checked)."
+ },
+ "S3": {
+  "skill": "test-stack/playwright",
+  "current": "secure-coding",
+  "task": "Our team wants Claude Code to open our local app (http://localhost:5000) in a browser to check pages while it writes code. Add the project configuration for this to the repo, and write docs/browser-agent.md: how to use it, how to use it safely, and when to use another way.",
+  "seed": {
+   "README.md": "# Shop\n\nRun the app with `dotnet run --project src/Shop.Api` (http://localhost:5000).\n"
+  },
+  "must": {
+   "Playwright MCP or CLI": "@playwright/(mcp|cli)",
+   "pinned version": "@playwright/(mcp|cli)@\\d+\\.\\d+\\.\\d+",
+   "CLI named": "playwright-cli|@playwright/cli",
+   "not a security boundary": "(?i)(not|never|no)\\b[^\\n]{0,40}\\bsecurity\\s+boundary",
+   "test account": "(?i)test\\s+(account|user)"
+  },
+  "never": {
+   "latest tag": "^(?![^\\n]*\\\"Bash\\()[^\\n]*@playwright/(mcp|cli)@latest",
+   "unpinned package": "\\\"@playwright/mcp\\\"\\s*[,\\]]",
+   "allowed origins as protection": "(?i)(allowed-origins|allowedOrigins)[^\\n]{0,80}\\b(secure|protects?|prevents?|blocks? (all|any))\\b"
+  },
+  "judge_key": "Current facts: @playwright/mcp 0.0.86 and @playwright/cli 0.1.25 (both 2026-11-18). For a coding agent the Playwright MCP README recommends playwright-cli with its skill for short checks (fewer tokens); MCP fits long exploration. Pin the version in a shared config (0.0.x changes each two weeks), not @latest. Setup in Claude Code: .mcp.json with command npx and args [\"@playwright/mcp@0.0.86\", ...] or claude mcp add. Options such as --isolated, --headless, --storage-state. Security: Playwright MCP is not a security boundary; --allowed-origins does not cover redirects and is not protection, --secrets only replaces text in output; browser_run_code_unsafe is equivalent to remote code execution. Use test accounts and local or trusted apps only."
+ },
+ "S4": {
+  "skill": "test-stack/reqnroll",
+  "current": "dotnet-testing",
+  "task": "The repo has src/Shop.Api (ASP.NET Core 10 minimal app, see Program.cs) and global.json. Tests go in tests/.\nAdd a Reqnroll acceptance test project tests/Shop.Specs with MSTest 4. Write the feature \"Cancel an order\": a customer cancels an open order and then sees the status Cancelled, and a shipped order cannot be cancelled. The step definitions drive the browser with Playwright for .NET against the running Shop.Api app. Write the .csproj, the feature file, the step definitions, and the hooks.",
+  "seed": {
+   "global.json": "{\n  \"sdk\": { \"version\": \"10.0.404\", \"rollForward\": \"latestFeature\" },\n  \"msbuild-sdks\": { \"MSTest.Sdk\": \"4.5.3\" },\n  \"test\": { \"runner\": \"Microsoft.Testing.Platform\" }\n}\n",
+   "src/Shop.Api/Shop.Api.csproj": "<Project Sdk=\"Microsoft.NET.Sdk.Web\">\n  <PropertyGroup>\n    <TargetFramework>net10.0</TargetFramework>\n    <Nullable>enable</Nullable>\n    <ImplicitUsings>enable</ImplicitUsings>\n  </PropertyGroup>\n</Project>\n",
+   "src/Shop.Api/Program.cs": "var builder = WebApplication.CreateBuilder(args);\nvar app = builder.Build();\n\nvar orders = new List<Order> { new(1042, \"Blue mug\", \"Open\"), new(1043, \"Red mug\", \"Shipped\") };\n\napp.MapGet(\"/orders\", () => Results.Content(\n    \"<h1>Orders</h1><table><tr><th>Order</th><th>Status</th><th></th></tr>\" +\n    string.Concat(orders.Select(o => $\"<tr><td>{o.Id}</td><td>{o.Status}</td><td><form method='post' action='/orders/{o.Id}/cancel'><button>Cancel order {o.Id}</button></form></td></tr>\")) +\n    \"</table>\", \"text/html\"));\n\napp.MapPost(\"/orders/{id:int}/cancel\", (int id) =>\n{\n    var i = orders.FindIndex(o => o.Id == id);\n    if (i < 0) return Results.NotFound();\n    if (orders[i].Status == \"Shipped\") return Results.Content(\"<p role='alert'>A shipped order cannot be cancelled.</p>\", \"text/html\");\n    orders[i] = orders[i] with { Status = \"Cancelled\" };\n    return Results.Redirect(\"/orders\");\n});\n\napp.Run();\n\npublic record Order(int Id, string Product, string Status);\n"
+  },
+  "must": {
+   "Reqnroll 3 for MSTest": "(?i)Reqnroll\\.MSTest\\\"\\s+Version=\\\"3\\.",
+   "binding": "\\[Binding\\]",
+   "scenario hook": "\\[BeforeScenario",
+   "new context per scenario": "NewContextAsync\\(",
+   "role locator": "GetByRole\\(",
+   "trace or screenshot on failure": "TestError"
+  },
+  "never": {
+   "SpecFlow": "TechTalk\\.SpecFlow|SpecFlow\\.",
+   "ScenarioContext string key": "ScenarioContext(\\.Current)?\\s*\\[\\s*\\\"|[sS]cenarioContext\\.(Set|Get)\\b",
+   "Reqnroll 2": "Reqnroll[\\w.]*\\\"\\s+Version=\\\"[12]\\.",
+   "UI steps in feature": "^\\s*(Given|When|Then|And|But)\\s+(I|the user|the customer)\\s+(click|clicks|type|types|press|presses|fill|fills)\\b",
+   "fixed wait": "Task\\.Delay\\(|WaitForTimeoutAsync\\(|Thread\\.Sleep\\("
+  },
+  "judge_key": "Current facts: Reqnroll 3.3.4; MSTest 4 needs Reqnroll 3.2 or later (Reqnroll.MSTest 3.x on MSTest.Sdk). Gherkin: declarative domain steps (no clicks or selectors in the feature), one When per scenario, Given-When-Then order, a Rule or two scenarios for the two behaviours. Shared state through context injection of a POCO or a class from [ScenarioDependencies]/constructor injection, not ScenarioContext string keys. Playwright: one browser per test run ([BeforeTestRun]) is fine, but a new IBrowserContext and IPage for each scenario in [BeforeScenario], closed in [AfterScenario] without a throw; trace or screenshot saved only when ScenarioContext.TestError is not null. Locators GetByRole, web-first Expect assertions, no Task.Delay. The app under test starts with WebApplicationFactory UseKestrel(0)/StartServer or a configured base URL. Compile-checked form: static [BeforeTestRun] starts WebApplicationFactory (UseKestrel(0), StartServer) and launches the browser; [BeforeScenario] makes a context with BaseURL and starts tracing into an injected BrowserSession POCO; [AfterScenario] stops tracing with a Path only when TestError is not null, in try, and closes the context in finally. Reqnroll 3.3.4 runs on MSTest.Sdk 4.5.3 and on net11.0. On .NET 10 and later, WebApplicationFactory<Program> works with a top-level-statements Program and no `public partial class Program` and no InternalsVisibleTo: a source generator makes Program public (compile-checked on net10.0 and net11.0); do not count its absence as a build error. After UseKestrel(0) and StartServer(), factory.ClientOptions.BaseAddress is the real Kestrel address with the port (compile-checked); it is correct to read it."
+ },
+ "S5": {
+  "skill": "test-stack/reqnroll",
+  "current": "dotnet-testing",
+  "task": "Rewrite features/Checkout.feature so that it follows good Gherkin practice for Reqnroll. Keep the behaviour that it tests. Add a scenario for a checkout with an empty cart. Write only the feature file.",
+  "seed": {
+   "features/Checkout.feature": "Feature: Checkout\n\n  Scenario: Checkout\n    Given I open \"http://localhost:5000/login\"\n    When I type \"anna@example.com\" in \"#email\"\n    And I type \"Secret123!\" in \"#password\"\n    And I click \"#login\"\n    And I click \"Add to cart\" for \"Blue mug\"\n    And I click \"#checkout\"\n    Then I see \"Thank you\"\n    When I click \"Orders\"\n    Then I see \"Blue mug\" in \"table tr td\"\n"
+  },
+  "must": {
+   "two or more scenarios": "(?s)Scenario( Outline)?:.*Scenario( Outline)?:",
+   "empty cart case": "(?i)empty",
+   "Given step": "^\\s*Given\\s",
+   "Then step": "^\\s*Then\\s"
+  },
+  "never": {
+   "UI action steps": "^\\s*(Given|When|Then|And|But)\\s+I\\s+(click|type|enter|press|open|fill)\\b",
+   "CSS selector": "\\\"[#.][\\w-]+\\\"|\\\"table\\b",
+   "URL in step": "https?://",
+   "password in feature": "Secret123",
+   "When after Then": "^\\s*Then\\s.*\\n(?:\\s*(?:And|But)\\s.*\\n)*\\s*When\\s"
+  },
+  "judge_key": "Current facts (Cucumber and Reqnroll guidance): declarative steps in the language of the domain (\"Given Anna is signed in\", \"When she checks out her cart\"), not UI actions, selectors, or URLs. One behaviour and one When for each scenario, in Given-When-Then order; no When after Then. No passwords or secrets in feature files. Background only for Given steps that each scenario shares. A Rule keyword can group scenarios of one business rule. The empty-cart scenario has its own outcome. Concrete example values are fine."
+ },
+ "S6": {
+  "skill": "test-stack/dotnet-testing",
+  "current": "dotnet-testing",
+  "task": "The repo has src/Orders.Data (EF Core 10 with PostgreSQL: OrdersDbContext with DbSet<Order> Orders; Order has Guid Id, string Customer, decimal Total). The repo uses xUnit. Create a new test project tests/Orders.Data.IntegrationTests with xUnit v3. Start one PostgreSQL container for the whole test assembly, run the database tests one at a time, and write one test that saves an order and reads it back. Write the .csproj, the fixture, and the test class.",
+  "seed": {
+   "global.json": "{\n  \"sdk\": { \"version\": \"10.0.404\", \"rollForward\": \"latestFeature\" }\n}\n"
+  },
+  "must": {
+   "xunit.v3 4.x": "xunit\\.v3\\\"\\s+Version=\\\"4\\.",
+   "assembly fixture": "AssemblyFixture",
+   "ValueTask lifetime": "ValueTask\\s+(InitializeAsync|DisposeAsync)",
+   "test cancellation token": "TestContext\\.Current\\.CancellationToken",
+   "PostgreSQL container": "Testcontainers\\.PostgreSql|PostgreSqlBuilder",
+   "no parallel database tests": "Parallelization\\s*\\(\\s*Mode\\s*=\\s*ParallelMode\\.None|DisableParallelization\\s*=\\s*true|ParallelMode\\.None"
+  },
+  "never": {
+   "xUnit v2 package": "Include=\\\"xunit\\\"",
+   "old xunit.v3": "xunit\\.v3\\\"\\s+Version=\\\"[0-3]\\.",
+   "obsolete CollectionBehavior": "DisableTestParallelization",
+   "Xunit.Abstractions": "Xunit\\.Abstractions",
+   "Task lifetime": "\\bTask\\s+(InitializeAsync|DisposeAsync)\\s*\\(",
+   "floating version": "Version=\\\"[^\\\"]*\\*"
+  },
+  "judge_key": "Current facts: xunit.v3 4.0.3 (2026-11), on Microsoft.Testing.Platform v2 by default; the test project is an executable. global.json sets test.runner Microsoft.Testing.Platform on SDK 10, or the project uses the VSTest opt-out; no xunit.runner.visualstudio with MTP v2. IAsyncLifetime uses ValueTask. One container for the assembly: [assembly: AssemblyFixture(typeof(PostgresFixture))] (or Testcontainers.XunitV3 ContainerFixture) injected through the constructor. No parallel runs: [assembly: Parallelization(Mode = ParallelMode.None)] or a collection with DisableParallelization = true; CollectionBehavior(DisableTestParallelization = true) does not compile on 4.0 (CS0619). Pass TestContext.Current.CancellationToken to async calls (xUnit1051). ITestOutputHelper is in the Xunit namespace, not Xunit.Abstractions. Testcontainers 4.17.0. [assembly: Parallelization(Mode = ParallelMode.None)] needs using Xunit.v3 and using Xunit.Sdk (compile-checked). global.json test.runner Microsoft.Testing.Platform is needed on SDK 10 and SDK 11."
+ },
+ "S7": {
+  "skill": "test-stack/dotnet-testing",
+  "current": "dotnet-testing",
+  "task": "Move the test project in tests/Billing.Tests from xUnit v2 to xUnit v3. Keep each test. Change the files in place.",
+  "seed": {
+   "global.json": "{\n  \"sdk\": { \"version\": \"10.0.404\", \"rollForward\": \"latestFeature\" }\n}\n",
+   "tests/Billing.Tests/Billing.Tests.csproj": "<Project Sdk=\"Microsoft.NET.Sdk\">\n  <PropertyGroup>\n    <TargetFramework>net10.0</TargetFramework>\n    <Nullable>enable</Nullable>\n    <ImplicitUsings>enable</ImplicitUsings>\n    <IsPackable>false</IsPackable>\n  </PropertyGroup>\n  <ItemGroup>\n    <PackageReference Include=\"Microsoft.NET.Test.Sdk\" Version=\"17.14.1\" />\n    <PackageReference Include=\"xunit\" Version=\"2.9.3\" />\n    <PackageReference Include=\"xunit.runner.visualstudio\" Version=\"3.1.4\" />\n  </ItemGroup>\n</Project>\n",
+   "tests/Billing.Tests/InvoiceTests.cs": "using Xunit;\nusing Xunit.Abstractions;\n\n[assembly: CollectionBehavior(DisableTestParallelization = true)]\n\nnamespace Billing.Tests;\n\npublic class InvoiceTests : IAsyncLifetime\n{\n    private readonly ITestOutputHelper _output;\n    private InvoiceStore _store = null!;\n\n    public InvoiceTests(ITestOutputHelper output) => _output = output;\n\n    public Task InitializeAsync()\n    {\n        _store = new InvoiceStore();\n        return Task.CompletedTask;\n    }\n\n    public Task DisposeAsync() => Task.CompletedTask;\n\n    [Theory]\n    [InlineData(100, 21, 121)]\n    [InlineData(0, 21, 0)]\n    public async Task Total_AddsVat(int net, int vatPercent, int expected)\n    {\n        var invoice = await _store.CreateAsync(net, vatPercent);\n        _output.WriteLine($\"Invoice {invoice.Id}\");\n        Assert.Equal(expected, invoice.Total);\n    }\n\n    [Fact(Skip = \"Needs the mail server\")]\n    public void Send_MailsTheCustomer()\n    {\n    }\n}\n\npublic record Invoice(Guid Id, int Total);\n\npublic class InvoiceStore\n{\n    public Task<Invoice> CreateAsync(int net, int vatPercent, CancellationToken cancellationToken = default)\n        => Task.FromResult(new Invoice(Guid.NewGuid(), net + net * vatPercent / 100));\n}\n"
+  },
+  "must": {
+   "xunit.v3 4.x": "xunit\\.v3\\\"\\s+Version=\\\"4\\.",
+   "ValueTask lifetime": "ValueTask\\s+(InitializeAsync|DisposeAsync)",
+   "new parallel attribute": "Parallelization\\s*\\(\\s*Mode\\s*=\\s*ParallelMode\\.None",
+   "test cancellation token": "TestContext\\.Current\\.CancellationToken",
+   "MTP runner or opt-out": "Microsoft\\.Testing\\.Platform|xunit\\.v3\\.mtp-off|UseMicrosoftTestingPlatformRunner"
+  },
+  "never": {
+   "xUnit v2 package": "Include=\\\"xunit\\\"",
+   "Xunit.Abstractions": "Xunit\\.Abstractions",
+   "obsolete CollectionBehavior": "DisableTestParallelization",
+   "Task lifetime": "\\bTask\\s+(InitializeAsync|DisposeAsync)\\s*\\(",
+   "old xunit.v3": "xunit\\.v3\\\"\\s+Version=\\\"[0-3]\\."
+  },
+  "judge_key": "Current facts: xunit.v3 4.0.3 replaces xunit 2.x; it runs on Microsoft.Testing.Platform v2 by default. On SDK 10, global.json needs test.runner Microsoft.Testing.Platform, and the project drops Microsoft.NET.Test.Sdk and xunit.runner.visualstudio (or keeps VSTest with xunit.v3.mtp-off and the VSTest packages). The test project is an executable (OutputType Exe; xunit.v3 sets it). IAsyncLifetime returns ValueTask. ITestOutputHelper moves to the Xunit namespace (no Xunit.Abstractions). [assembly: CollectionBehavior(DisableTestParallelization = true)] gives CS0619 on 4.0: use [assembly: Parallelization(Mode = ParallelMode.None)] (Xunit.v3 and Xunit.Sdk usings). Pass TestContext.Current.CancellationToken to async calls (xUnit1051). Skip stays, or Assert.Skip for a condition. [assembly: Parallelization(Mode = ParallelMode.None)] needs using Xunit.v3 and using Xunit.Sdk (compile-checked). global.json test.runner Microsoft.Testing.Platform is needed on SDK 10 and SDK 11."
+ },
+ "S8": {
+  "skill": "test-stack/dotnet-testing",
+  "current": "dotnet-testing",
+  "task": "Write MSTest 4 data-driven tests for PriceCalculator.Total in src/Pricing, with at least 4 cases (one with a discount of 12.5 percent), and the test project tests/Pricing.UnitTests.",
+  "seed": {
+   "global.json": "{\n  \"sdk\": { \"version\": \"10.0.404\", \"rollForward\": \"latestFeature\" }\n}\n",
+   "src/Pricing/Pricing.csproj": "<Project Sdk=\"Microsoft.NET.Sdk\">\n  <PropertyGroup>\n    <TargetFramework>net10.0</TargetFramework>\n    <Nullable>enable</Nullable>\n    <ImplicitUsings>enable</ImplicitUsings>\n  </PropertyGroup>\n</Project>\n",
+   "src/Pricing/PriceCalculator.cs": "namespace Pricing;\n\npublic static class PriceCalculator\n{\n    /// <summary>Total price, rounded to 2 decimals (away from zero).</summary>\n    public static decimal Total(decimal unitPrice, int quantity, decimal discountPercent)\n    {\n        ArgumentOutOfRangeException.ThrowIfNegative(quantity);\n        if (discountPercent is < 0 or > 100) throw new ArgumentOutOfRangeException(nameof(discountPercent));\n        var gross = unitPrice * quantity;\n        return Math.Round(gross - gross * discountPercent / 100m, 2, MidpointRounding.AwayFromZero);\n    }\n}\n"
+  },
+  "must": {
+   "MSTest.Sdk": "Sdk=\\\"MSTest\\.Sdk|\\\"MSTest\\.Sdk\\\"\\s*:\\s*\\\"4\\.",
+   "SDK pinned in global.json": "\\\"MSTest\\.Sdk\\\"\\s*:\\s*\\\"4\\.\\d+\\.\\d+\\\"",
+   "Parallelize": "\\[assembly:\\s*Parallelize",
+   "data rows": "\\[(DataRow|DynamicData)\\b"
+  },
+  "never": {
+   "decimal DataRow": "\\[DataRow\\([^\\]]*\\)\\]\\s*\\n(?:\\s*\\[[^\\]]*\\]\\s*\\n)*\\s*public\\s+(?:async\\s+)?(?:void|Task)\\s+\\w+\\([^)]*\\bdecimal\\b",
+   "DataTestMethod": "\\[DataTestMethod\\]",
+   "floating version": "Version=\\\"[^\\\"]*\\*",
+   "MSTest 3": "MSTest[\\w.]*\\\"\\s*(Version=)?\\\"?:?\\s*\\\"?3\\.",
+   "StringAssert or CollectionAssert": "\\b(StringAssert|CollectionAssert)\\."
+  },
+  "judge_key": "Current facts: MSTest 4.5.3 with Microsoft.Testing.Platform 2.5.3. A new test project uses <Project Sdk=\"MSTest.Sdk\"> with the version pinned in global.json msbuild-sdks, and global.json test.runner Microsoft.Testing.Platform. [assembly: Parallelize(Scope = ExecutionScope.MethodLevel)] (MSTEST0001). An attribute cannot hold a decimal literal, and MSTest does not convert DataRow values to decimal: [DataRow(100.00)] or [DataRow(\"100.00\")] on a decimal parameter gives warning MSTEST0014 and fails at run time, and [DataRow(100, 10, 90)] with int literals gives no warning but also fails each row at run time (compile-checked); use double or string parameters with a conversion, or [DynamicData] with decimal values. [TestMethod] covers data rows ([DataTestMethod] is removed in MSTest 5; so are StringAssert and CollectionAssert). Test names Method_Scenario_Expected. A case for 12.5 percent checks the rounding. Working forms (compile-checked): double parameters with a cast to decimal, [DynamicData] with IEnumerable<(decimal, decimal, decimal)>, or TestDataRow<(decimal, ...)>."
+ }
+}
