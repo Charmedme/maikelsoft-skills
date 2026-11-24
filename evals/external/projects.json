@@ -1,0 +1,970 @@
+{
+ "verified": "2026-11-23",
+ "note": "Projects to clone at the pinned commit for eval cases. Nothing of these projects is in this repository. Check the license of a project before you copy a file from it.",
+ "projects": [
+  {
+   "repo": "https://github.com/dotnet/eShop",
+   "commit": "ab10e4c68fd26369578ebfb3fd1ccf3b867d0444",
+   "license": "MIT",
+   "pushed": "2026-11-23",
+   "skills": [
+    "aspire",
+    "rabbitmq",
+    "postgresql",
+    "efcore",
+    "redis",
+    "aspnetcore-openapi",
+    "dotnet-observability",
+    "dotnet-testing",
+    "playwright",
+    "blazor",
+    "api-design",
+    "secure-coding"
+   ],
+   "evidence": {
+    "Aspire.Hosting": [
+     "13.6.1",
+     "17.0.0",
+     "17.0.0-preview.1.26567.5",
+     "Aspire.Hosting.AppHost 17.0.0"
+    ],
+    "RabbitMQ.Client": [
+     "17.0.0"
+    ],
+    "Npgsql": [
+     "11.0.0-rc.3",
+     "17.0.0",
+     "17.0.0-preview.1.26567.5",
+     "Npgsql.EntityFrameworkCore.PostgreSQL 11.0.0-rc.3"
+    ],
+    "StackExchange.Redis": [
+     "17.0.0"
+    ],
+    "Asp.Versioning": [
+     "10.2.0",
+     "10.2.1",
+     "10.2.3",
+     "Asp.Versioning.Http 10.2.3"
+    ],
+    "Microsoft.AspNetCore.OpenApi": [
+     "11.0.0",
+     "Microsoft.AspNetCore.OpenApi 11.0.0"
+    ],
+    "OpenTelemetry": [
+     "1.21.0",
+     "1.21.0-beta.1",
+     "OpenTelemetry.Exporter.OpenTelemetryProtocol 1.21.0",
+     "OpenTelemetry.Extensions.Hosting 1.21.0"
+    ],
+    "MSTest": [
+     "4.5.3",
+     "MSTest 4.5.3"
+    ],
+    "@playwright/test": [
+     "^1.62.1"
+    ],
+    "FluentValidation": [
+     "12.2.0",
+     "FluentValidation 12.2.0",
+     "FluentValidation.DependencyInjectionExtensions 12.2.0"
+    ],
+    "Microsoft.EntityFrameworkCore": [
+     "11.0.0-rc.3.26522.148",
+     "Microsoft.EntityFrameworkCore.Relational 11.0.0-rc.3.26522.148",
+     "Microsoft.EntityFrameworkCore.Tools 11.0.0-rc.3.26522.148"
+    ]
+   },
+   "target_frameworks": [
+    "$(TargetFrameworks);net11.0-tizen",
+    "net11.0",
+    "net11.0-android;net11.0-ios;net11.0-maccatalyst"
+   ],
+   "note": "Reference shop with many services. Tracks previews (net11.0, Aspire 17), so pin the commit.",
+   "tasks": [
+    "Add a stock reservation that two orders cannot double-book (efcore concurrency, postgresql isolation).",
+    "Add an integration event with an outbox and an idempotent consumer (rabbitmq).",
+    "Review the Basket API for object-level access (secure-coding)."
+   ]
+  },
+  {
+   "repo": "https://github.com/jasontaylordev/CleanArchitecture",
+   "commit": "45734d28c855301e1332f87a8652eb196b73efda",
+   "license": "MIT",
+   "pushed": "2026-11-23",
+   "skills": [
+    "efcore",
+    "fluentvalidation",
+    "reqnroll",
+    "playwright",
+    "angular",
+    "web-security",
+    "dotnet-testing",
+    "postgresql",
+    "sqlserver"
+   ],
+   "evidence": {
+    "Microsoft.EntityFrameworkCore": [
+     "13.6.5"
+    ],
+    "FluentValidation": [
+     "12.2.0",
+     "FluentValidation.DependencyInjectionExtensions 12.2.0"
+    ],
+    "Reqnroll": [
+     "3.3.4",
+     "Reqnroll.NUnit 3.3.4"
+    ],
+    "Microsoft.Playwright": [
+     "1.65.1",
+     "Microsoft.Playwright 1.65.1"
+    ],
+    "@angular/core": [
+     "$@angular/core",
+     "^22.2.2"
+    ],
+    "Npgsql": [
+     "13.6.5"
+    ]
+   },
+   "target_frameworks": [
+    "net10.0"
+   ],
+   "note": "Template with an Angular 22 front end, Reqnroll 3.3.4 with NUnit, and Playwright 1.65.1.",
+   "tasks": [
+    "Add a Reqnroll feature with Playwright steps for a new todo flow (reqnroll, playwright).",
+    "Add an Angular page that shows rich text from the API (web-security, angular)."
+   ]
+  },
+  {
+   "repo": "https://github.com/JasperFx/CritterStackSamples",
+   "commit": "6084a7d340b1fa42e7052310403c1c762297342d",
+   "license": "MIT",
+   "pushed": "2026-11-22",
+   "skills": [
+    "wolverine"
+   ],
+   "evidence": {
+    "WolverineFx": [
+     "6.29.1",
+     "6.30.0",
+     "6.32.0",
+     "6.34.0"
+    ],
+    "Marten": [
+     "6.30.0",
+     "6.32.0",
+     "6.34.0",
+     "6.38.0"
+    ]
+   },
+   "target_frameworks": [
+    "net10.0",
+    "net9.0"
+   ],
+   "note": "The official Wolverine and Marten samples, current versions (WolverineFx 6.3x).",
+   "tasks": [
+    "Add a handler with a cascading message and a durable outbox on PostgreSQL, with a tracked-session test."
+   ]
+  },
+  {
+   "repo": "https://github.com/mehdihadeli/food-delivery-modular-monolith",
+   "commit": "cb7c30c803a293d2257e063f978c80afa62fd8f1",
+   "license": "MIT",
+   "pushed": "2026-10-14",
+   "skills": [
+    "wolverine",
+    "fluentvalidation",
+    "postgresql",
+    "efcore",
+    "dotnet-testing"
+   ],
+   "evidence": {
+    "WolverineFx": [
+     "6.2.0",
+     "WolverineFx 6.2.0",
+     "WolverineFx.EntityFrameworkCore 6.2.0",
+     "WolverineFx.PostgreSQL 6.2.0"
+    ],
+    "Npgsql": [
+     "10.0.0",
+     "Npgsql.EntityFrameworkCore.PostgreSQL 10.0.0"
+    ],
+    "FluentValidation": [
+     "11.3.1",
+     "FluentValidation.AspNetCore 11.3.1"
+    ],
+    "xunit": [
+     "2.8.2",
+     "2.9.0",
+     "3.2.2",
+     "xunit 2.9.0"
+    ]
+   },
+   "target_frameworks": [
+    "net10.0"
+   ],
+   "note": "Real modular monolith. Old versions: WolverineFx 6.2.0, FluentValidation 11.3.1, xunit 2 and 3 mixed.",
+   "tasks": [
+    "Upgrade FluentValidation to 12 and WolverineFx to the current 6.x (fluentvalidation, wolverine).",
+    "Move the xUnit v2 tests to xUnit v3 (dotnet-testing)."
+   ]
+  },
+  {
+   "repo": "https://github.com/mehdihadeli/vertical-slice-api-template",
+   "commit": "be0da196411b5d8174aa2b435b55902f6b4021a7",
+   "license": "MIT",
+   "pushed": "2026-10-12",
+   "skills": [
+    "aspnetcore-openapi",
+    "wolverine",
+    "api-design"
+   ],
+   "evidence": {
+    "Microsoft.AspNetCore.OpenApi": [
+     "9.0.0",
+     "Microsoft.AspNetCore.OpenApi 9.0.0"
+    ],
+    "Asp.Versioning": [
+     "8.1.0",
+     "Asp.Versioning.Http 8.1.0",
+     "Asp.Versioning.Mvc.ApiExplorer 8.1.0"
+    ],
+    "WolverineFx": [
+     "6.48.1",
+     "WolverineFx 6.48.1",
+     "WolverineFx.EntityFrameworkCore 6.48.1",
+     "WolverineFx.PostgreSQL 6.48.1"
+    ]
+   },
+   "target_frameworks": [
+    "net10.0"
+   ],
+   "note": "net10.0 with Microsoft.AspNetCore.OpenApi 9.0.0 and Asp.Versioning 8.1.0: a version mismatch to find.",
+   "tasks": [
+    "Add a v2 endpoint with deprecation of v1 and a breaking-change check (aspnetcore-openapi, api-design)."
+   ]
+  },
+  {
+   "repo": "https://github.com/foxminchan/BookWorm",
+   "commit": "71bb7057680b560a4fc6d8ddbac50f107e62d9fb",
+   "license": "MIT",
+   "pushed": "2026-11-23",
+   "skills": [
+    "aspire",
+    "wolverine",
+    "dotnet-mcp",
+    "redis"
+   ],
+   "evidence": {
+    "WolverineFx": [
+     "$(WolverineVersion)",
+     "WolverineFx.CosmosDb $(WolverineVersion)",
+     "WolverineFx.EntityFrameworkCore $(WolverineVersion)",
+     "WolverineFx.HealthChecks $(WolverineVersion)"
+    ],
+    "Aspire": [
+     "$(AspireUnstableVersion)",
+     "$(AspireVersion)",
+     "$(QuartzVersion)",
+     "$(ToolKitVersion)"
+    ],
+    "Npgsql": [
+     "$(AspireUnstableVersion)",
+     "$(AspireVersion)"
+    ],
+    "ModelContextProtocol": [
+     "2.4.0",
+     "5.0.0",
+     "ModelContextProtocol.AspNetCore 2.4.0"
+    ],
+    "Redis": [
+     "$(AspireUnstableVersion)",
+     "$(AspireVersion)",
+     "$(DotnetPackagesVersion)",
+     "$(FusionCacheVersion)"
+    ]
+   },
+   "target_frameworks": [
+    "net11.0"
+   ],
+   "note": "Aspire reference app on net11.0 with an MCP server and agents. Versions come from MSBuild properties.",
+   "tasks": [
+    "Add an MCP tool to the existing MCP server, with an in-memory client test (dotnet-mcp)."
+   ]
+  },
+  {
+   "repo": "https://github.com/meysamhadeli/booking-microservices",
+   "commit": "1182f4defd8c36704600c65a380b161e70bb018e",
+   "license": "MIT",
+   "pushed": "2026-10-06",
+   "skills": [
+    "aspire",
+    "fluentvalidation",
+    "dotnet-testing"
+   ],
+   "evidence": {
+    "Aspire": [
+     "13.1.1",
+     "13.1.1-preview.1.26105.8",
+     "9.3.0",
+     "9.9.0"
+    ],
+    "MassTransit": [
+     "8.3.6",
+     "MassTransit 8.3.6"
+    ],
+    "FluentValidation": [
+     "11.3.1",
+     "FluentValidation.AspNetCore 11.3.1"
+    ],
+    "xunit": [
+     "2.9.3",
+     "3.1.5",
+     "xunit 2.9.3",
+     "xunit.runner.visualstudio 3.1.5"
+    ]
+   },
+   "target_frameworks": [
+    "net10.0"
+   ],
+   "note": "Microservices with Aspire 13.1, MassTransit 8.3.6, FluentValidation 11.3.1, xunit 2.9.3.",
+   "tasks": [
+    "Upgrade the tests to xUnit v3 and FluentValidation to 12."
+   ]
+  },
+  {
+   "repo": "https://github.com/dotnet/samples",
+   "commit": "3810558800760fc39282cc939bac645735514209",
+   "license": "CC-BY-4.0",
+   "pushed": "2026-11-12",
+   "skills": [
+    "orleans"
+   ],
+   "evidence": {
+    "Microsoft.Orleans": [
+     "10.0.0",
+     "Microsoft.Orleans.Client 10.0.0",
+     "Microsoft.Orleans.Dashboard 10.0.0",
+     "Microsoft.Orleans.Hosting.Kubernetes 10.0.0"
+    ]
+   },
+   "target_frameworks": [
+    "$(DefaultTargetFramework)",
+    "net10.0",
+    "net6.0"
+   ],
+   "note": "Official Orleans 10 samples in the orleans/ folder.",
+   "tasks": [
+    "Add a grain with a timer that flushes state, and a test with the in-process test cluster."
+   ]
+  },
+  {
+   "repo": "https://github.com/OrleansContrib/SignalR.Orleans",
+   "commit": "fb6e706968e24d18135ab1b2cb02bc47c850e3c9",
+   "license": "MIT",
+   "pushed": "2026-02-05",
+   "skills": [
+    "orleans"
+   ],
+   "evidence": {
+    "Microsoft.Orleans": [
+     "10.0.0",
+     "Microsoft.Orleans.Server 10.0.0",
+     "Microsoft.Orleans.Streaming 10.0.0"
+    ]
+   },
+   "target_frameworks": [
+    "net10.0"
+   ],
+   "note": "A real Orleans 10 library with grains and streams.",
+   "tasks": [
+    "Review a change to the grain state for reentrancy and persistence errors."
+   ]
+  },
+  {
+   "repo": "https://github.com/FritzAndFriends/SharpSite",
+   "commit": "c35e5e06c5e17b3e0fbada8fb006d30dadcbf5e6",
+   "license": "MIT",
+   "pushed": "2026-04-30",
+   "skills": [
+    "blazor",
+    "playwright",
+    "aspire",
+    "postgresql"
+   ],
+   "evidence": {
+    "Microsoft.AspNetCore.Components": [
+     "10.0.7",
+     "Microsoft.AspNetCore.Components 10.0.7",
+     "Microsoft.AspNetCore.Components.Authorization 10.0.7",
+     "Microsoft.AspNetCore.Components.QuickGrid 10.0.7"
+    ],
+    "Microsoft.Playwright": [
+     "1.50.0",
+     "Microsoft.Playwright.Xunit 1.50.0"
+    ],
+    "Aspire": [
+     "13.2.0",
+     "13.2.4",
+     "Aspire.Hosting.AppHost 13.2.4",
+     "Aspire.Hosting.PostgreSQL 13.2.4"
+    ],
+    "Npgsql": [
+     "13.2.4"
+    ]
+   },
+   "target_frameworks": [
+    "net10.0"
+   ],
+   "note": "Blazor CMS on .NET 10 with Aspire and Playwright 1.50.0 for xUnit.",
+   "tasks": [
+    "Add a page with a form under static SSR with nested validation (blazor).",
+    "Upgrade the Playwright tests to the current adapter (playwright)."
+   ]
+  },
+  {
+   "repo": "https://github.com/danroth27/BestForYouRecipes",
+   "commit": "8732e8e0046070672808692cad10174f0a9e46da",
+   "license": "MIT",
+   "pushed": "2026-10-26",
+   "skills": [
+    "blazor"
+   ],
+   "evidence": {
+    "Microsoft.AspNetCore.Components": [
+     "8.0.0",
+     "8.0.32",
+     "Microsoft.AspNetCore.Components.Web 8.0.0",
+     "Microsoft.AspNetCore.Components.WebAssembly 8.0.0"
+    ]
+   },
+   "target_frameworks": [
+    "net8.0"
+   ],
+   "note": "Small Blazor app on .NET 8.",
+   "tasks": [
+    "Move the app to .NET 10 and the current render modes (blazor, dotnet-11 rules for later)."
+   ]
+  },
+  {
+   "repo": "https://github.com/dotnet/blazor-samples",
+   "commit": "f05a64eaa14ed9e98c3b298661cdec136cc86f9d",
+   "license": "CC-BY-4.0",
+   "pushed": "2026-11-12",
+   "skills": [
+    "blazor"
+   ],
+   "evidence": {
+    "Microsoft.AspNetCore.Components": [
+     "$(MauiVersion)",
+     "10.0.0",
+     "10.0.10",
+     "3.2.1"
+    ]
+   },
+   "target_frameworks": [
+    "$(TargetFrameworks);net8.0-tizen",
+    "$(TargetFrameworks);net9.0-tizen",
+    "net10.0"
+   ],
+   "note": "Official Blazor samples for .NET 10.",
+   "tasks": [
+    "Fix the render mode of a page that loads its data two times."
+   ]
+  },
+  {
+   "repo": "https://github.com/microsoft/mcp",
+   "commit": "0f7657191448366ba55606ccf66f5417568fe71a",
+   "license": "MIT",
+   "pushed": "2026-11-23",
+   "skills": [
+    "dotnet-mcp"
+   ],
+   "evidence": {
+    "ModelContextProtocol": [
+     "2.2.0",
+     "ModelContextProtocol 2.2.0",
+     "ModelContextProtocol.AspNetCore 2.2.0"
+    ]
+   },
+   "target_frameworks": [
+    "net10.0"
+   ],
+   "note": "Large real MCP server in C# (ModelContextProtocol 2.2.0).",
+   "tasks": [
+    "Add a read-only tool with annotations and a destructive tool with elicitation (dotnet-mcp)."
+   ]
+  },
+  {
+   "repo": "https://github.com/modelcontextprotocol/csharp-sdk",
+   "commit": "64cfd66b147553d8cf953f9e2a374aae96014968",
+   "license": "NOASSERTION",
+   "pushed": "2026-11-23",
+   "skills": [
+    "dotnet-mcp"
+   ],
+   "evidence": {
+    "ModelContextProtocol": "present"
+   },
+   "target_frameworks": [
+    "$(DefaultTestTargetFrameworks)",
+    "net10.0",
+    "net10.0;net9.0;net8.0"
+   ],
+   "note": "The C# MCP SDK with samples.",
+   "tasks": [
+    "Use a sample server as a base for a new stdio server with a NuGet package."
+   ]
+  },
+  {
+   "repo": "https://github.com/asc-lab/dotnetcore-microservices-poc",
+   "commit": "6500daaf5ca6287385bfdfe5246cd1f3959c73fd",
+   "license": "Apache-2.0",
+   "pushed": "2026-09-17",
+   "skills": [
+    "elasticsearch"
+   ],
+   "evidence": {
+    "Elastic.Clients.Elasticsearch": [
+     "8.9.3",
+     "Elastic.Clients.Elasticsearch 8.9.3"
+    ],
+    "Marten": [
+     "7.19.1",
+     "Marten 7.19.1"
+    ]
+   },
+   "target_frameworks": [
+    "net8.0"
+   ],
+   "note": "Insurance microservices on .NET 8 with Elastic.Clients.Elasticsearch 8.9.3 and Marten 7.",
+   "tasks": [
+    "Move the search to client 9 with an alias and a zero-downtime reindex (elasticsearch)."
+   ]
+  },
+  {
+   "repo": "https://github.com/elsa-workflows/elsa-core",
+   "commit": "be796b65e89a83941af78351582f988ed391d9f4",
+   "license": "MIT",
+   "pushed": "2026-11-23",
+   "skills": [
+    "elasticsearch",
+    "mailkit"
+   ],
+   "evidence": {
+    "Elastic.Clients.Elasticsearch": [
+     "9.2.2",
+     "Elastic.Clients.Elasticsearch 9.2.2"
+    ],
+    "MailKit": [
+     "4.16.0",
+     "MailKit 4.16.0"
+    ]
+   },
+   "target_frameworks": [
+    "net10.0",
+    "net8.0;net9.0;net10.0"
+   ],
+   "note": "Workflow engine with Elastic client 9.2.2 and MailKit 4.16.0.",
+   "tasks": [
+    "Review the mail activity for TLS and retry behaviour (mailkit)."
+   ]
+  },
+  {
+   "repo": "https://github.com/ardalis/CleanArchitecture",
+   "commit": "c2781d2fb5703de98dc1019d65ab7246fb95e3e6",
+   "license": "MIT",
+   "pushed": "2026-11-20",
+   "skills": [
+    "mailkit",
+    "sqlserver",
+    "efcore",
+    "fluentvalidation",
+    "dotnet-testing"
+   ],
+   "evidence": {
+    "MailKit": [
+     "5.0.0",
+     "MailKit 5.0.0"
+    ],
+    "Microsoft.EntityFrameworkCore.SqlServer": [
+     "11.0.0",
+     "Microsoft.EntityFrameworkCore.SqlServer 11.0.0"
+    ],
+    "FluentValidation": [
+     "12.2.0",
+     "FluentValidation 12.2.0"
+    ],
+    "xunit": [
+     "4.0.1",
+     "4.0.3",
+     "xunit.runner.visualstudio 4.0.1",
+     "xunit.v3.mtp-off 4.0.3"
+    ]
+   },
+   "target_frameworks": [
+    "net11.0"
+   ],
+   "note": "Template on net11.0 with MailKit 5.0.0, EF Core SqlServer 11, FluentValidation 12.2.0, xunit.v3 4.0.",
+   "tasks": [
+    "Add a mail outbox with a background sender and Mailpit tests (mailkit)."
+   ]
+  },
+  {
+   "repo": "https://github.com/OrchardCMS/OrchardCore",
+   "commit": "3fc465bbb4a8ffd7a95ca902c09ccd2c89c7c533",
+   "license": "BSD-3-Clause",
+   "pushed": "2026-11-23",
+   "skills": [
+    "mailkit",
+    "elasticsearch"
+   ],
+   "evidence": {
+    "MailKit": [
+     "4.18.2",
+     "MailKit 4.18.2"
+    ],
+    "Elastic.Clients.Elasticsearch": [
+     "8.19.27",
+     "Elastic.Clients.Elasticsearch 8.19.27"
+    ]
+   },
+   "target_frameworks": [],
+   "note": "Large CMS with MailKit 4.18.2 and Elastic client 8.19.",
+   "tasks": [
+    "Review the SMTP settings code (mailkit)."
+   ]
+  },
+  {
+   "repo": "https://github.com/ariacom/Seal-Report",
+   "commit": "316dec885d09dfd1eb9900b0990c147fc9736e38",
+   "license": "MIT",
+   "pushed": "2026-11-23",
+   "skills": [
+    "puppeteersharp"
+   ],
+   "evidence": {
+    "PuppeteerSharp": [
+     "25.12.0",
+     "PuppeteerSharp 25.12.0"
+    ]
+   },
+   "target_frameworks": [
+    "net10.0",
+    "net10.0-windows7.0"
+   ],
+   "note": "Reporting tool that renders PDF with PuppeteerSharp 25.12.0.",
+   "tasks": [
+    "Review the PDF rendering for the sandbox, timeouts, and user text in HTML (puppeteersharp, secure-coding)."
+   ]
+  },
+  {
+   "repo": "https://github.com/realworld-apps/aspnetcore-realworld-example-app",
+   "commit": "0b3599256ed4acbf839f10d5cc265f09f942135e",
+   "license": "MIT",
+   "pushed": "2026-11-20",
+   "skills": [
+    "efcore",
+    "fluentvalidation",
+    "aspnetcore",
+    "api-design",
+    "sqlserver"
+   ],
+   "evidence": {
+    "Microsoft.EntityFrameworkCore": [
+     "10.0.15",
+     "Microsoft.EntityFrameworkCore.Design 10.0.15",
+     "Microsoft.EntityFrameworkCore.InMemory 10.0.15",
+     "Microsoft.EntityFrameworkCore.SqlServer 10.0.15"
+    ],
+    "FluentValidation": [
+     "12.2.0",
+     "FluentValidation 12.2.0",
+     "FluentValidation.DependencyInjectionExtensions 12.2.0"
+    ],
+    "xunit": [
+     "2.9.3",
+     "4.0.1",
+     "xunit 2.9.3",
+     "xunit.runner.visualstudio 4.0.1"
+    ]
+   },
+   "target_frameworks": [
+    "net10.0"
+   ],
+   "note": "RealWorld API on .NET 10 with EF Core 10.0.15 and FluentValidation 12.2.0. Has a public API spec.",
+   "tasks": [
+    "Add paging to the article feed for a large changing set (api-design, efcore).",
+    "Review the article update for lost updates (efcore)."
+   ]
+  },
+  {
+   "repo": "https://github.com/amasen02/freshcart-backend",
+   "commit": "518aab1ed09411f3916664674b4f69a1e1ae5ed2",
+   "license": "MIT",
+   "pushed": "2026-09-12",
+   "skills": [
+    "postgresql",
+    "aspire",
+    "fluentvalidation"
+   ],
+   "evidence": {
+    "Npgsql": [
+     "10.0.0",
+     "9.0.4",
+     "9.5.2",
+     "Npgsql 9.0.4"
+    ],
+    "Aspire": [
+     "9.5.2",
+     "Aspire.Hosting.AppHost 9.5.2",
+     "Aspire.Hosting.Azure.CosmosDB 9.5.2",
+     "Aspire.Hosting.MongoDB 9.5.2"
+    ],
+    "FluentValidation": [
+     "11.10.0",
+     "FluentValidation 11.10.0",
+     "FluentValidation.DependencyInjectionExtensions 11.10.0"
+    ]
+   },
+   "target_frameworks": [
+    "net10.0"
+   ],
+   "note": "Shop microservices on .NET 10 with Npgsql and Aspire 9.5.2.",
+   "tasks": [
+    "Add a daily sales report per local day (postgresql)."
+   ]
+  },
+  {
+   "repo": "https://github.com/microsoft/fhir-server",
+   "commit": "85aa75448d59a0080190c580a35e22a0ee52edab",
+   "license": "MIT",
+   "pushed": "2026-11-23",
+   "skills": [
+    "dotnet-observability",
+    "sqlserver"
+   ],
+   "evidence": {
+    "OpenTelemetry": [
+     "$(OpenTelemetryPackageVersion)",
+     "1.20.1-alpha.1",
+     "1.6.0",
+     "OpenTelemetry $(OpenTelemetryPackageVersion)"
+    ],
+    "Microsoft.Data.SqlClient": [
+     "7.1.1",
+     "Microsoft.Data.SqlClient 7.1.1",
+     "Microsoft.Data.SqlClient.Extensions.Azure 7.1.1"
+    ]
+   },
+   "target_frameworks": [
+    "net11.0"
+   ],
+   "note": "Large Microsoft service with OpenTelemetry and SqlClient 7.1.1.",
+   "tasks": [
+    "Review a change to the logs for personal data (dotnet-observability)."
+   ]
+  },
+  {
+   "repo": "https://github.com/FastEndpoints/FastEndpoints",
+   "commit": "765b5722e6bb26b749e46fe7419b5dc4cf7cd4fd",
+   "license": "MIT",
+   "pushed": "2026-11-22",
+   "skills": [
+    "dotnet-testing"
+   ],
+   "evidence": {
+    "xunit.v3": [
+     "4.0.3",
+     "xunit.v3 4.0.3",
+     "xunit.v3.extensibility.core 4.0.3"
+    ]
+   },
+   "target_frameworks": [
+    "net10.0",
+    "net10.0;net11.0",
+    "netstandard2.0"
+   ],
+   "note": "Uses xunit.v3 4.0.3.",
+   "tasks": [
+    "Add tests in the existing xUnit v3 style."
+   ]
+  },
+  {
+   "repo": "https://github.com/ardalis/Specification",
+   "commit": "e28763f5a6f24e461d0111a2605fcaae844a5666",
+   "license": "MIT",
+   "pushed": "2026-11-18",
+   "skills": [
+    "migrate-fluentassertions"
+   ],
+   "evidence": {
+    "FluentAssertions": [
+     "FluentAssertions [7.2.0]",
+     "[7.2.0]"
+    ]
+   },
+   "target_frameworks": [
+    "net10.0;net11.0",
+    "net10.0;net11.0;net472;",
+    "net10.0;net11.0;netstandard2.0"
+   ],
+   "note": "FluentAssertions pinned to [7.2.0].",
+   "tasks": [
+    "Move the tests to AwesomeAssertions."
+   ]
+  },
+  {
+   "repo": "https://github.com/ardalis/Result",
+   "commit": "14cf45a126daa56f6798d033f4d5091aeb0900fc",
+   "license": "MIT",
+   "pushed": "2026-11-13",
+   "skills": [
+    "migrate-fluentassertions"
+   ],
+   "evidence": {
+    "FluentAssertions": [
+     "7.0.0",
+     "FluentAssertions 7.0.0"
+    ]
+   },
+   "target_frameworks": [
+    "$(NetCoreFrameworks)",
+    "net48;$(NetCoreFrameworks)",
+    "net8.0"
+   ],
+   "note": "FluentAssertions 7.0.0.",
+   "tasks": [
+    "Move the tests to AwesomeAssertions."
+   ]
+  },
+  {
+   "repo": "https://github.com/atata-framework/atata",
+   "commit": "703107ef80db9e6f7a9dd2bdd516ff5839fa370f",
+   "license": "Apache-2.0",
+   "pushed": "2026-09-18",
+   "skills": [
+    "reqnroll"
+   ],
+   "evidence": {
+    "Reqnroll": "present"
+   },
+   "target_frameworks": [
+    "net10.0",
+    "net10.0;net462",
+    "net8.0;net462"
+   ],
+   "note": "Web test framework with Reqnroll samples.",
+   "tasks": [
+    "Add a Reqnroll scenario in the style of the samples."
+   ]
+  },
+  {
+   "repo": "https://github.com/gothinkster/angular-realworld-example-app",
+   "commit": "a7a19c511b0b25aab1d929a4c0fe6ba55aaeff5c",
+   "license": "NOASSERTION",
+   "pushed": "2026-11-20",
+   "skills": [
+    "angular",
+    "web-security"
+   ],
+   "evidence": {
+    "@angular/core": [
+     "21.2.12"
+    ]
+   },
+   "target_frameworks": [],
+   "note": "RealWorld Angular front end on Angular 21.2.",
+   "tasks": [
+    "Move to Angular 22 (angular).",
+    "Review where the app keeps its token (web-security)."
+   ]
+  },
+  {
+   "repo": "https://github.com/jhipster/jhipster-sample-app",
+   "commit": "6b000b5d23a36c45e01472471b84a44fa2464044",
+   "license": "Apache-2.0",
+   "pushed": "2026-09-18",
+   "skills": [
+    "angular"
+   ],
+   "evidence": {
+    "@angular/core": [
+     "22.1.6"
+    ]
+   },
+   "target_frameworks": [],
+   "note": "Generated app with Angular 22.1.",
+   "tasks": [
+    "Add a form with server errors on the fields (angular)."
+   ]
+  },
+  {
+   "repo": "https://github.com/quartznet/quartznet",
+   "commit": "32c91e10bdd3b018494888a291b85d593acd32e6",
+   "license": "Apache-2.0",
+   "pushed": "2026-11-23",
+   "skills": [
+    "dotnet-analyzers",
+    "csharp"
+   ],
+   "evidence": {
+    "Meziantou.Analyzer": [
+     "3.0.341",
+     "Meziantou.Analyzer 3.0.341"
+    ]
+   },
+   "target_frameworks": [
+    "net10.0",
+    "net10.0;net11.0",
+    "net11.0"
+   ],
+   "note": "Large library with Meziantou.Analyzer 3.0.341.",
+   "tasks": [
+    "Clean a module for the analyzer warnings without NoWarn (dotnet-analyzers)."
+   ]
+  },
+  {
+   "repo": "https://github.com/evolutionary-architecture/evolutionary-architecture-by-example",
+   "commit": "441a7cd94d3acfbac7d210a95ea8e78429fc9f47",
+   "license": "MIT",
+   "pushed": "2026-10-26",
+   "skills": [
+    "dotnet-testing",
+    "postgresql",
+    "efcore"
+   ],
+   "evidence": {
+    "Testcontainers": [
+     "4.14.0",
+     "Testcontainers 4.14.0",
+     "Testcontainers.PostgreSql 4.14.0"
+    ],
+    "Npgsql": [
+     "10.0.0",
+     "Npgsql 10.0.0",
+     "Npgsql.EntityFrameworkCore.PostgreSQL 10.0.0"
+    ],
+    "xunit": [
+     "1.24.0",
+     "1.26.0",
+     "2.0.8",
+     "2.8.2"
+    ]
+   },
+   "target_frameworks": [
+    "net10.0"
+   ],
+   "note": "Testcontainers 4.14 with PostgreSQL, mixed xunit versions.",
+   "tasks": [
+    "Move the integration tests to MSTest 4 or xUnit v3 with one container for the assembly (dotnet-testing)."
+   ]
+  }
+ ],
+ "gaps": {
+  "webmcp": "No real app found. The code search for modelContext.registerTool returns MCP SDK code, not WebMCP. Keep the scenario test (S8).",
+  "dotnet-11": "Use eShop, BookWorm, or ardalis/CleanArchitecture (net11.0), or move a net10.0 project above.",
+  "secure-coding, web-security": "Review-only use of the projects above. Exploit fixtures are paused (refer to docs/work/security-evals/concept.md).",
+  "dotnet-analyzers": "Roslynator was not found in the shortlist. Quartz.NET has Meziantou only."
+ }
+}
