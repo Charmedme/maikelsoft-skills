@@ -48,8 +48,9 @@ def grade(job, args):
         shutil.copy(run / "final.md", copy / "final.md")
         shutil.copytree(run / "repo", copy / "repo", ignore=IGNORE, symlinks=True)
     env = {k: v for k, v in os.environ.items() if k not in PARENT_VARS}
+    env["CLAUDE_CODE_DISABLE_BACKGROUND_TASKS"] = "1"
     cmd = ["claude", "-p", grader_prompt(ev, copy), "--model", args.model, "--permission-mode", "bypassPermissions",
-           "--disallowedTools", "Agent", "Skill", "--output-format", "json"]
+           "--disallowedTools", "Agent", "Skill", "Monitor", "--output-format", "json"]
     with open(copy / "grader.json", "w") as out, open(copy / "grader.err", "w") as err:
         subprocess.run(cmd, cwd=copy, env=env, stdout=out, stderr=err, timeout=args.timeout)
     result = copy / "grade.json"

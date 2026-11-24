@@ -70,7 +70,7 @@
       "id": "P9",
       "file": "tests/Orders.Api.Tests/ParcelBookingTests.cs",
       "line": 99,
-      "description": "The test that should prove the retry of a platform outage uses InvokeMessageAndWaitAsync. Invoke runs the handler inline and throws to the caller: error policies (retries, scheduled retries, the error queue) apply only to messages from a queue. The test passes with any policy, also with none. Use SendMessageAndWaitAsync and assert on the attempts or on session.MovedToErrorQueue.",
+      "description": "The test that should prove the retry of a platform outage uses InvokeMessageAndWaitAsync and asserts only that HttpRequestException reaches the caller. Invoke runs the handler inline: it applies only Retry and RetryWithCooldown, then throws to the caller. Scheduled retries, requeue, and the error queue apply only to messages from a queue. So the test passes with any policy, also with none, and it cannot show that the policy lacks scheduled retries (P4). Use SendMessageAndWaitAsync and assert on the attempts or on session.MovedToErrorQueue.",
       "severity": "low",
       "subtle": true
     }
@@ -104,7 +104,7 @@
       "id": "D5",
       "file": "src/Orders.Api/Program.cs",
       "line": 79,
-      "description": "Publisher confirms without UseQuorumQueues() is correct here: the existing queues (orders-api.payment-captured, orders-api.carrier-events) exist as classic queues on the broker, and a declaration as quorum fails with PRECONDITION_FAILED. A move to quorum queues needs its own migration plan. The confirms are safe to turn on."
+      "description": "Publisher confirms without UseQuorumQueues() is correct here: README.md says that orders-api.payment-captured and orders-api.carrier-events exist on the broker as classic queues, and that the move to quorum queues has its own migration plan. With AutoProvision(), a declaration as quorum fails with PRECONDITION_FAILED. The confirms are safe to turn on. A review that notes the quorum migration as a later, planned step is not a false positive; a finding that asks to add UseQuorumQueues() in this change is."
     }
   ]
 }

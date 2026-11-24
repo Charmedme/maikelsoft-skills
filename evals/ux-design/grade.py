@@ -99,7 +99,7 @@ def grade_pair(job, model):
     crits.update(CASES[case].get("extra_criteria", {}).get(kind, {}))
     crit = "\n".join(f"- {k}: {v}" for k, v in crits.items())
     cmd = ["claude", "-p", PROMPT.format(what=what, criteria=crit), "--model", model, "--permission-mode", "default",
-           "--allowedTools", "Read", "Glob", "--disallowedTools", "Write", "Edit", "Bash", "Agent", "Skill",
+           "--allowedTools", "Read", "Glob", "--disallowedTools", "Write", "Edit", "Bash", "Agent", "Monitor", "Skill",
            "--output-format", "json"]
     r = subprocess.run(cmd, cwd=work, env=child_env(), capture_output=True, text=True, timeout=1200)
     try:

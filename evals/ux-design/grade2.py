@@ -75,7 +75,7 @@ def grade_pair(job, model, root, ctx_src):
     res = {"_error": "no answer"}
     for _ in range(2):
         cmd = ["claude", "-p", PROMPT.format(criteria=crit), "--model", model, "--permission-mode", "default",
-               "--allowedTools", "Read", "Glob", "--disallowedTools", "Write", "Edit", "Bash", "Agent", "Skill",
+               "--allowedTools", "Read", "Glob", "--disallowedTools", "Write", "Edit", "Bash", "Agent", "Monitor", "Skill",
                "--output-format", "json"]
         r = subprocess.run(cmd, cwd=work, env=child_env(), capture_output=True, text=True, timeout=1200)
         text = ""

@@ -9,6 +9,8 @@ stderr.log and final.md next to it. The prompt is the common part of runner.md, 
 for the variant 'skill'. A run folder that has a final.md is skipped.
 The runs cannot use the Agent and Skill tools: the account skills of the machine (for example a personal
 csharp or valkey-caching skill) must not reach either variant. The skill variant reads SKILL.md by path.
+The runs also cannot use Monitor or start background tasks: a task notification after the report starts a
+new turn, and its short answer replaced final.md once (E35).
 Then score with: python3 evals/dev-stack/score.py <runs>
 
 Needs claude, git, the dotnet CLI, and Docker.
@@ -96,13 +98,20 @@ def skill_folder(name):
 
 
 def final_message(stream):
+    """The answer of the run: the longest result text of the stream.
+
+    A run that started a background task gets one more turn after the task notification. That turn ends
+    with a second result event, often a short note, and must not replace the report of the main turn.
+    """
     final = ""
     for line in stream.read_text(encoding="utf-8", errors="ignore").splitlines():
         if '"type":"result"' in line.replace(" ", ""):
             try:
-                final = json.loads(line).get("result", final)
+                text = json.loads(line).get("result") or ""
             except ValueError:
-                pass
+                continue
+            if len(text) >= len(final):
+                final = text
     return final
 
 
@@ -126,9 +135,11 @@ def start(run, ev, variant, args):
     if not repo.exists():
         prepare.make_repo(ev, repo)
     cmd = ["claude", "-p", "--model", args.model,
-           "--permission-mode", "bypassPermissions", "--disallowedTools", "Agent", "Skill",
+           "--permission-mode", "bypassPermissions", "--disallowedTools", "Agent", "Skill", "Monitor",
            "--output-format", "stream-json", "--verbose", "--max-budget-usd", str(args.budget)]
     env = {k: v for k, v in os.environ.items() if k not in PARENT_VARS}
+    # No background tasks: a task notification after the report starts a new turn (see final_message).
+    env["CLAUDE_CODE_DISABLE_BACKGROUND_TASKS"] = "1"
     env["PATH"] = env.get("PATH", "") + os.pathsep + str(pathlib.Path.home() / ".dotnet")
     code = runwatch.run_watched(cmd, repo, env, run, {"max_minutes": args.max_minutes, "stall_minutes": args.stall_minutes},
                                 stdin_text=prompt_for(ev, variant, repo))

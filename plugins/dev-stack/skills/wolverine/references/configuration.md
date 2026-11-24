@@ -92,7 +92,7 @@ The configuration values are read when the builder runs. `WebApplicationFactory`
 
 | Setting | Default | Set |
 |---------|---------|-----|
-| Queue type | classic | `.UseQuorumQueues()` |
+| Queue type | classic | `.UseQuorumQueues()` for new queues (MSG-07). An existing classic queue needs a migration: a declaration with another type fails with `PRECONDITION_FAILED` |
 | `x-delivery-limit` on a quorum queue of a durable inbox | none, so the broker default of 20 applies. Wolverine logs a startup warning | `.DeliveryLimitForDurableQuorumQueues(-1)`, or `.DeliveryLimit(-1)` on one listener (6.51.3 or later) |
 | Publisher confirms | off | `.ConfigureChannelCreation(o => { o.PublisherConfirmationsEnabled = true; o.PublisherConfirmationTrackingEnabled = true; })` |
 | Topology | not declared | `.AutoProvision()`, or declared by operations |
@@ -122,8 +122,7 @@ opts.ListenToRabbitQueue("orders-api.audit").ListenerCount(4).PreFetchCount(20);
 ## Durability settings
 
 ```csharp
-opts.Durability.KeepAfterMessageHandling = 10.Minutes(); // window for duplicate detection by envelope ID
-opts.Durability.InboxStaleTime = 20.Minutes();           // longer than the longest handler with its retries
+opts.Durability.KeepAfterMessageHandling = 10.Minutes(); // window for duplicate detection by envelope ID (default 5 minutes)
 ```
 
 `DeliveryOptions.DeduplicationId` sets a business key for duplicate detection on the receiver:
@@ -131,6 +130,8 @@ opts.Durability.InboxStaleTime = 20.Minutes();           // longer than the long
 ```csharp
 await bus.PublishAsync(evt, new DeliveryOptions { DeduplicationId = $"order-placed:{orderId}" });
 ```
+
+Do not set `InboxStaleTime`. The Wolverine documentation says that it is not necessary: a heartbeat restarts its clock while a handler runs. Only `DurabilityMode.ServerlessWithOutbox` needs it longer than the longest handler (5 minutes by default there).
 
 ## Code generation
 

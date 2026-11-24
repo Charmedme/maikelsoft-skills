@@ -23,6 +23,8 @@ The service uses Wolverine with the RabbitMQ transport and the PostgreSQL messag
 | In | `ParcelDelivered` | queue `orders-api.carrier-events` | carrier adapter |
 | Out | `OrderPaid`, `OrderCancelled`, `ShipmentBooked` | exchange `orders.events` | this service |
 
+The queues `orders-api.payment-captured` and `orders-api.carrier-events` exist on the production broker as classic queues since the first release. A move to quorum queues is on the platform roadmap, with its own migration plan.
+
 The contracts are in `src/Orders.Api/Contracts`. The parcel platform API is described in `docs/carrier-api.md`, the warehouse interface in `docs/warehouse.md`.
 
 ## Build and test
