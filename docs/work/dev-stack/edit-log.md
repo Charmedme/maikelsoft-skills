@@ -319,8 +319,14 @@ This log records each change to a skill or to an eval case, the test that measur
   - Without the skill, each model missed P1 (forwarder registration) and P2 (typed `HttpClient` and service location) in most runs. With the skill, no run flagged a decoy.
 - Harness problem: one Sonnet run started a background task. The turn after its notification replaced `final.md` with a short note, so the grader saw no review. The run was done again.
 - Harness fix: each eval runner and grader now sets `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1` and blocks the `Monitor` tool. A runner that reads a stream keeps the longest result text, not the last one. This applies to dev-stack, dev-setup, review-flow, and ux-design. `tests/test_devstack_run.py` tests the dev-stack function.
-- Verdict: helped on each model. The D5 false positives of E34 are gone.
-- Evidence: run folder `wolverine-fix`, outside the repository. Grades in `grade.json` of each run.
+- Test after the harness fix: `wolverine-hard`, 3 runs for each variant on each model, with the same scorers.
+- Observed (checks of 39, judge items of 15, without and with the skill):
+  - Haiku: 36 and 39, 9 and 14.
+  - Sonnet: 34 and 39, 9 and 13. One run without the skill stopped at the 25-minute limit with no final message. Its judge items count as failed.
+  - Opus: 39 and 39, 12 and 15.
+  - Without the skill, J5 (open team decisions marked as assumed) failed in 7 of 9 runs. With the skill, J5 failed in 2 runs: the final message did not mark MSG-10 as assumed. One Sonnet run with the skill did not say how the generated code reaches production (J4).
+- Verdict: helped on each model. The D5 false positives of E34 are gone. On `wolverine-hard`, the skill adds the most to the check items on Haiku and Sonnet, and to the judge items on each model.
+- Evidence: run folders `wolverine-fix` and `wolverine-fix-hard`, outside the repository. Grades in `grade.json` of each run.
 
 ## Lessons
 
