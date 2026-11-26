@@ -322,10 +322,10 @@ This log records each change to a skill or to an eval case, the test that measur
 - Test after the harness fix: `wolverine-hard`, 3 runs for each variant on each model, with the same scorers.
 - Observed (checks of 39, judge items of 15, without and with the skill):
   - Haiku: 36 and 39, 9 and 14.
-  - Sonnet: 34 and 39, 9 and 13. One run without the skill stopped at the 25-minute limit with no final message. Its judge items count as failed.
+  - Sonnet: 37 and 39, 13 and 13. The first run 1 without the skill stopped at the 25-minute limit with no final message. Its rerun on 2026-11-26 replaces it: 13 of 13 checks, and 4 of 5 judge items (J4 failed).
   - Opus: 39 and 39, 12 and 15.
-  - Without the skill, J5 (open team decisions marked as assumed) failed in 7 of 9 runs. With the skill, J5 failed in 2 runs: the final message did not mark MSG-10 as assumed. One Sonnet run with the skill did not say how the generated code reaches production (J4).
-- Verdict: helped on each model. The D5 false positives of E34 are gone. On `wolverine-hard`, the skill adds the most to the check items on Haiku and Sonnet, and to the judge items on each model.
+  - Without the skill, J5 (open team decisions marked as assumed) failed in 6 of 9 runs. With the skill, J5 failed in 2 runs: the final message did not mark MSG-10 as assumed. One Sonnet run with the skill did not say how the generated code reaches production (J4).
+- Verdict: helped on each model. The D5 false positives of E34 are gone. On `wolverine-hard`, the skill adds the most to the check items on Haiku and Sonnet, and to the judge items on Haiku and Opus. On Sonnet, the judge items are equal.
 - Evidence: run folders `wolverine-fix` and `wolverine-fix-hard`, outside the repository. Grades in `grade.json` of each run.
 
 ## Lessons
