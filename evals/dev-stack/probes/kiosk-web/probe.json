@@ -1,0 +1,28 @@
+{
+  "target": "frontend",
+  "folder": "src/app/eval-probes",
+  "kind": "ng_spec",
+  "files": [
+    "web-probes.spec.ts"
+  ],
+  "run": "npx ng test --no-watch --include src/app/eval-probes/web-probes.spec.ts",
+  "flaws": {
+    "W1": [
+      "W1 product description markup cannot run script"
+    ],
+    "W2": [
+      "W2 search term is not rendered as markup"
+    ],
+    "W3": [
+      "W3 admin route is not opened by a token that the browser made up"
+    ],
+    "W4": [
+      "W4 session token is not kept in web storage that scripts can read"
+    ]
+  },
+  "decoys": {
+    "D3": [
+      "D3 decoy campaign video still plays from its fixed address"
+    ]
+  }
+}

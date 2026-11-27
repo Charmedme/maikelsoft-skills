@@ -1,0 +1,26 @@
+{
+  "naive": {
+    "tests_pass": true,
+    "W1": true,
+    "W2": false,
+    "W3": false,
+    "W4": false,
+    "D3": true
+  },
+  "good": {
+    "tests_pass": true,
+    "W1": true,
+    "W2": true,
+    "W3": true,
+    "W4": true,
+    "D3": true
+  },
+  "fixture": {
+    "tests_pass": true,
+    "W1": false,
+    "W2": false,
+    "W3": false,
+    "W4": false,
+    "D3": true
+  }
+}

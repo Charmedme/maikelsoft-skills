@@ -1,0 +1,18 @@
+<header class="top-bar">
+  <a routerLink="/search" class="brand">Kiosk</a>
+  <nav>
+    <a routerLink="/search">Shop</a>
+    <a routerLink="/about">About us</a>
+    @if (auth.isAdmin()) {
+      <a routerLink="/admin">Administration</a>
+    }
+    @if (auth.isLoggedIn()) {
+      <button type="button" (click)="auth.logout()">Sign out</button>
+    } @else {
+      <a routerLink="/login">Sign in</a>
+    }
+  </nav>
+</header>
+<main>
+  <router-outlet />
+</main>

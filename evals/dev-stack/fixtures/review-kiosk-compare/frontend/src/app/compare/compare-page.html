@@ -1,0 +1,37 @@
+@if (heading(); as text) {
+  <h1 class="headline" [innerHTML]="text"></h1>
+} @else {
+  <h1>Compare products</h1>
+}
+@if (rows().length === 0) {
+  <p class="empty">Pick up to 4 products in the <a routerLink="/search">shop</a> to compare them.</p>
+} @else {
+  <table class="compare">
+    <tbody>
+      <tr>
+        <th scope="row">Product</th>
+        @for (row of rows(); track row.id) {
+          <td>
+            @if (row.imageUrl) {
+              <img [src]="row.imageUrl" [alt]="row.name" width="120" height="120" />
+            }
+            <strong>{{ row.name }}</strong>
+            <button type="button" (click)="remove(row.id)">Remove</button>
+          </td>
+        }
+      </tr>
+      <tr>
+        <th scope="row">Price</th>
+        @for (row of rows(); track row.id) {
+          <td>{{ row.price | currency: 'EUR' }}</td>
+        }
+      </tr>
+      <tr>
+        <th scope="row">Details</th>
+        @for (row of rows(); track row.id) {
+          <td class="details" [innerHTML]="row.details"></td>
+        }
+      </tr>
+    </tbody>
+  </table>
+}

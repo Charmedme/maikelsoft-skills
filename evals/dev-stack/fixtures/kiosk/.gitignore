@@ -1,0 +1,10 @@
+bin/
+obj/
+*.user
+TestResults/
+node_modules/
+dist/
+.angular/
+src/Kiosk.Api/logs/
+src/Kiosk.Api/wwwroot/uploads/
+src/Kiosk.Api/wwwroot/profile-images/

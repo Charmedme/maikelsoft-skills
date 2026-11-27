@@ -1,0 +1,46 @@
+{
+  "id": 272,
+  "name": "api-design-review-juice",
+  "skill": "api-design",
+  "stack": "kiosk",
+  "kind": "review",
+  "fixture": "review-kiosk-contracts",
+  "base": "review-kiosk-base",
+  "planted": "planted/review-kiosk-contracts.json",
+  "human": "absent",
+  "request": "Review this change before we merge it. The mobile app team builds against a written contract from now on, so we add the contract of the shop API in docs/api/kiosk-api.yaml. We also move the contract of the partner order API (version 2, published to our retail partners in 2024) from the partner portal repository into docs/api/partner-orders.yaml. Both files go to the developer portal after this review. The code does not change in this branch; we build the endpoints from the contract next sprint.",
+  "assertions": [
+    {
+      "id": "C1",
+      "check": "files_unchanged"
+    },
+    {
+      "id": "J1",
+      "judge": "The review finds at least 7 of the 10 planted mistakes."
+    },
+    {
+      "id": "J2",
+      "judge": "The review finds every planted mistake with severity 'high' (P1, P2, P3, P8)."
+    },
+    {
+      "id": "J3",
+      "judge": "The review finds at least 4 of the 6 planted mistakes marked 'subtle' (P3, P4, P6, P7, P8, P10)."
+    },
+    {
+      "id": "J4",
+      "judge": "The review flags none of the decoys (D1 to D5), and has at most 2 other false positives. Advice to move the existing partner contract to OpenAPI 3.1 in this change counts as flagging D1. A false positive is a claim that is wrong, or a fix that uses a header, status code, or keyword that does not exist or is outdated. A real problem that is not on the answer sheet is not a false positive."
+    },
+    {
+      "id": "J5",
+      "judge": "For errors, the review asks for RFC 9457 application/problem+json with a stable code (not RFC 7807, not an own envelope), and for rate limits it asks for 429 with Retry-After, not the X-RateLimit-* headers."
+    },
+    {
+      "id": "J6",
+      "judge": "Each finding gives the file and the line (or quotes the contract) and a concrete change to the contract."
+    },
+    {
+      "id": "J7",
+      "judge": "The review separates blocking issues from minor ones and ends with a clear merge verdict that does not approve the change as it is."
+    }
+  ]
+}

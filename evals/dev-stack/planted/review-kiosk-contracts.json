@@ -1,0 +1,118 @@
+{
+  "skill": "api-design",
+  "base": "review-kiosk-base",
+  "planted": [
+    {
+      "id": "P1",
+      "file": "docs/api/kiosk-api.yaml",
+      "line": 183,
+      "severity": "high",
+      "subtle": false,
+      "description": "Object-level access in the contract: GET /api/baskets/{basketId} reads a basket by a sequential integer ID, with only a 200 response and no word on who may read it. A client counts IDs and reads the baskets of other customers. Use /api/baskets/mine for the own basket, or state that the server answers 404 for a basket of another customer (and document the 404 and 401)."
+    },
+    {
+      "id": "P2",
+      "file": "docs/api/kiosk-api.yaml",
+      "line": 316,
+      "severity": "high",
+      "subtle": false,
+      "description": "Mass assignment in the contract: the registration schema accepts role (customer, accounting, admin). A client registers itself as admin. Remove role from UserRegistration (the server sets customer), and set additionalProperties: false."
+    },
+    {
+      "id": "P3",
+      "file": "docs/api/kiosk-api.yaml",
+      "line": 165,
+      "severity": "high",
+      "subtle": true,
+      "description": "PUT /api/products/{productId} has security: [] (copied from the public GET), so the contract says that anybody, without a sign-in, changes the name, description, and price of a product. Remove the override (the global bearerAuth applies) and document 401 and 403 (admin role)."
+    },
+    {
+      "id": "P4",
+      "file": "docs/api/kiosk-api.yaml",
+      "line": 40,
+      "severity": "medium",
+      "subtle": true,
+      "description": "Rate limits: the 429 of the login documents X-RateLimit-Limit, X-RateLimit-Remaining, and X-RateLimit-Reset (old, not standard) and no Retry-After. The anonymous password reset with the security answer (line 106) has no 429 at all, so the contract promises no limit on answer guessing. Document 429 with Retry-After and a problem body on both (draft RateLimit fields only when marked as draft)."
+    },
+    {
+      "id": "P5",
+      "file": "docs/api/kiosk-api.yaml",
+      "line": 293,
+      "severity": "medium",
+      "subtle": false,
+      "description": "Errors: the shared Error schema is an own envelope { error, stack } with the server stack trace, not RFC 9457 application/problem+json. The stack trace gives internal details to each client, and clients must parse the error text. Use problem details with type, title, status, detail, a stable code, and traceId, and no stack."
+    },
+    {
+      "id": "P6",
+      "file": "docs/api/kiosk-api.yaml",
+      "line": 1,
+      "severity": "medium",
+      "subtle": true,
+      "description": "A new contract written as openapi: 3.0.3 with nullable: true (for example the Error and User schemas). A new contract must be OpenAPI 3.1 (or 3.2) with JSON Schema 2020-12, type: [string, 'null'] instead of nullable. (The partner contract is an existing 3.0 contract and stays 3.0, see D1.)"
+    },
+    {
+      "id": "P7",
+      "file": "docs/api/kiosk-api.yaml",
+      "line": 223,
+      "severity": "medium",
+      "subtle": true,
+      "description": "POST /api/orders charges the card and the mobile app retries on a timeout, but the contract has no retry safety: no Idempotency-Key header (with 400, 409, 422) and no client order ID. A retry places and charges a second order. Add Idempotency-Key, as the operation has an external side effect."
+    },
+    {
+      "id": "P8",
+      "file": "docs/api/partner-orders.yaml",
+      "line": 46,
+      "severity": "high",
+      "subtle": true,
+      "description": "orderLinesData is JSON inside a string ('customer specific JSON format'). The schema cannot validate it (the quantity minimum and the types of orderLines do not apply), the server must parse or evaluate the text a second time, and the example already breaks the OrderLine shape (customerReference as an array, an extra couponCode). This is the input that lets a partner inject code or objects into the parser. Remove it, or make it a typed array with additionalProperties: false."
+    },
+    {
+      "id": "P9",
+      "file": "docs/api/partner-orders.yaml",
+      "line": 24,
+      "severity": "medium",
+      "subtle": false,
+      "description": "POST /orders answers 200 (not 201 with Location), has no error responses at all (no 400, 401, 403, 422, 429 with problem details), and has no retry safety: a partner that retries after a timeout places a second order of 500 units. Add 201, the problem responses, and an Idempotency-Key or a unique partner order reference."
+    },
+    {
+      "id": "P10",
+      "file": "docs/api/partner-orders.yaml",
+      "line": 42,
+      "severity": "low",
+      "subtle": true,
+      "description": "Unbounded input: quantity has no maximum and orderLines has no maxItems, so one request orders any amount (OWASP API4:2023). uniqueItems: true on the string properties cid and orderNo (line 35) has no effect: it applies only to arrays, so the contract does not make them unique. Add maximum and maxItems, and remove uniqueItems from strings."
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "docs/api/partner-orders.yaml",
+      "line": 1,
+      "description": "openapi: 3.0.0 is correct for the partner contract: it is an existing, published 3.0 contract that partner code generators use. It stays 3.0 (with nullable when needed); an upgrade to 3.1 is a separate, announced change."
+    },
+    {
+      "id": "D2",
+      "file": "docs/api/kiosk-api.yaml",
+      "line": 135,
+      "description": "The public product list with security: [], a cursor, and limit with maximum 100 (and maxItems 100 on the page) is correct."
+    },
+    {
+      "id": "D3",
+      "file": "docs/api/kiosk-api.yaml",
+      "line": 94,
+      "description": "PATCH /api/users/me with application/merge-patch+json (RFC 7396) and a UserPatch schema with additionalProperties: false and no role is correct."
+    },
+    {
+      "id": "D4",
+      "file": "docs/api/kiosk-api.yaml",
+      "line": 263,
+      "description": "404 for an order of another customer (not 403) is correct: it does not tell that the order exists."
+    },
+    {
+      "id": "D5",
+      "file": "docs/api/partner-orders.yaml",
+      "line": 52,
+      "description": "The global bearerAuth requirement with a JWT bearer scheme is correct for the partner API; each operation needs a token."
+    }
+  ]
+}

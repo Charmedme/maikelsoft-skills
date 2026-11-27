@@ -1,0 +1,46 @@
+{
+  "id": 268,
+  "name": "secure-coding-review-hard",
+  "skill": "secure-coding",
+  "stack": "kiosk",
+  "kind": "review",
+  "fixture": "review-kiosk-wishlist",
+  "base": "review-kiosk-base",
+  "planted": "planted/review-kiosk-wishlist.json",
+  "human": "absent",
+  "request": "Review this change before we merge it. Customers can now keep wish lists: they make private or public lists, add products with a note and a target price for a price alert, search the public lists of other customers, export a list as text with a birthday or wedding header, and import a gift registry file from another shop. A share link lets friends open a list without an account and put its items in their own basket. Moderators remove lists with offensive names, and the office sees the most wished products. The heart in the header shows the lists of the customer with the same short cache as the basket badge.",
+  "assertions": [
+    {
+      "id": "C1",
+      "check": "files_unchanged"
+    },
+    {
+      "id": "J1",
+      "judge": "The review finds at least 7 of the 10 planted mistakes."
+    },
+    {
+      "id": "J2",
+      "judge": "The review finds every planted mistake with severity 'high' (P1 to P5)."
+    },
+    {
+      "id": "J3",
+      "judge": "The review finds at least 4 of the 6 planted mistakes marked 'subtle' (P3, P4, P5, P6, P8, P9)."
+    },
+    {
+      "id": "J4",
+      "judge": "The review flags none of the decoys (D1 to D8), and has at most 2 other false positives. A false positive is a claim that is wrong, or a fix that would break the code or that uses an API that does not exist. A real problem that is not on the answer sheet is not a false positive."
+    },
+    {
+      "id": "J5",
+      "judge": "For P3, the review says that the cache key does not vary by user, so one customer gets the lists of another, and compares it with the basket policy or gives the VaryByValues fix. For P4, it names the password hash or the TOTP secret of the owner in the anonymous response."
+    },
+    {
+      "id": "J6",
+      "judge": "Each finding gives the file and the line (or quotes the code) and a concrete fix."
+    },
+    {
+      "id": "J7",
+      "judge": "The review separates blocking issues from minor ones and ends with a clear merge verdict that does not approve the change as it is."
+    }
+  ]
+}

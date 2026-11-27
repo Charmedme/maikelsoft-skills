@@ -1,0 +1,33 @@
+{
+  "target": "tests",
+  "folder": "EvalProbes",
+  "flaws": {
+    "K8": [
+      "K8_SecurityAnswerGuessing_IsRateLimited",
+      "K8_WeakPassword_IsRejected"
+    ],
+    "K9": [
+      "K9_SystemPrompt_HoldsNoCustomerText",
+      "K9_Coupon_AboveLimit_IsNotIssued",
+      "K9_Coupon_WithoutOwnDamagedOrder_IsNotIssued"
+    ],
+    "N1": [
+      "N1_TokenSignedWithRepositoryKey_IsRejected"
+    ],
+    "N18": [
+      "N18_PasswordHashes_AreSaltedAndNotPlainDigests",
+      "N18_ResetToken_CannotBePredicted"
+    ],
+    "N19": [
+      "N19_ResetLink_DoesNotUseRequestHost"
+    ],
+    "N21": [
+      "N21_CookieForgedWithRepositoryKeyRing_IsRejected"
+    ]
+  },
+  "decoys": {
+    "D4": [
+      "D4_Decoy_EmptySecretSetting_KeyComesFromConfiguration"
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Kiosk.Api/Kiosk.Api.csproj" />
+    <Project Path="src/Kiosk.Worker/Kiosk.Worker.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Kiosk.Api.Tests/Kiosk.Api.Tests.csproj" />
+  </Folder>
+</Solution>

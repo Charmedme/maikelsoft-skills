@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <RootNamespace>Kiosk.Api</RootNamespace>
+    <UserSecretsId>kiosk-api-41d7c2</UserSecretsId>
+    <!-- Reviewed in the 2026 platform migration: the legacy data access and the hash format of imported
+         accounts stay until the old shop database is switched off. -->
+    <NoWarn>$(NoWarn);EF1002;CA5351</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <PackageReference Include="Microsoft.AspNetCore.JsonPatch.SystemTextJson" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="keys/**" CopyToOutputDirectory="Never" />
+    <Content Update="App_Data/**" CopyToOutputDirectory="Never" />
+  </ItemGroup>
+
+</Project>

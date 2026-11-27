@@ -1,0 +1,12 @@
+.compare {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.compare th,
+.compare td {
+  border: 1px solid #d8dce5;
+  padding: 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
