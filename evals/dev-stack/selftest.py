@@ -22,11 +22,14 @@ HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import score  # noqa: E402
 import cases  # noqa: E402
+import prepare  # noqa: E402
 
 
 def build(ev, variant, dest):
-    """Variant 'fixture' is the fixture with no overlay (the start point of the case)."""
-    shutil.copytree(score.FIXTURES / ev["fixture"], dest, ignore=shutil.ignore_patterns(*score.SKIP_DIRS))
+    """Variant 'fixture' is the fixture with no overlay (the start point of the case).
+    The copy leaves out the files of the .eval-exclude list of the fixture, as prepare.py does."""
+    src = score.FIXTURES / ev["fixture"]
+    shutil.copytree(src, dest, ignore=prepare.fixture_ignore(src, shutil.ignore_patterns(*score.SKIP_DIRS)))
     for layer in () if variant == "fixture" else ("common", variant):
         src = HERE / "selftest" / ev["name"] / layer
         if src.is_dir():

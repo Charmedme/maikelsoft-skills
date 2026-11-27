@@ -1,0 +1,400 @@
+openapi: 3.0.3
+info:
+  title: Kiosk Shop API
+  version: 1.0.0
+  description: |
+    The API of the Kiosk shop for the mobile app and the storefront.
+    Sign in with POST /api/auth/login and send the token as a bearer token.
+servers:
+  - url: https://shop.kiosk.example
+tags:
+  - name: Auth
+  - name: Users
+  - name: Products
+  - name: Baskets
+  - name: Orders
+security:
+  - bearerAuth: []
+paths:
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      operationId: login
+      summary: Sign in with email and password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Signed in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          $ref: '#/components/responses/Error'
+        '429':
+          description: Too many sign-in attempts
+          headers:
+            X-RateLimit-Limit:
+              schema: { type: integer }
+            X-RateLimit-Remaining:
+              schema: { type: integer }
+            X-RateLimit-Reset:
+              schema: { type: integer }
+  /api/users:
+    post:
+      tags: [Users]
+      operationId: registerUser
+      summary: Create a customer account
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegistration'
+      responses:
+        '201':
+          description: Account created
+          headers:
+            Location:
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/Error'
+  /api/users/me:
+    get:
+      tags: [Users]
+      operationId: getMe
+      summary: The signed-in user
+      responses:
+        '200':
+          description: The user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Error'
+    patch:
+      tags: [Users]
+      operationId: updateMe
+      summary: Change the display name or the newsletter choice
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              $ref: '#/components/schemas/UserPatch'
+      responses:
+        '200':
+          description: The changed user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/Error'
+  /api/users/reset-password:
+    post:
+      tags: [Users]
+      operationId: resetPassword
+      summary: Set a new password with the answer to the security question
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordReset'
+      responses:
+        '204':
+          description: Password changed
+        '400':
+          $ref: '#/components/responses/Error'
+  /api/products:
+    get:
+      tags: [Products]
+      operationId: listProducts
+      summary: Products in the catalog, newest first
+      security: []
+      parameters:
+        - name: cursor
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      responses:
+        '200':
+          description: One page of products
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductPage'
+        '400':
+          $ref: '#/components/responses/Error'
+  /api/products/{productId}:
+    parameters:
+      - $ref: '#/components/parameters/ProductId'
+    get:
+      tags: [Products]
+      operationId: getProduct
+      security: []
+      responses:
+        '200':
+          description: The product
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          $ref: '#/components/responses/Error'
+    put:
+      tags: [Products]
+      operationId: updateProduct
+      summary: Change the name, description, and price of a product
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductUpdate'
+      responses:
+        '200':
+          description: The changed product
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+  /api/baskets/{basketId}:
+    get:
+      tags: [Baskets]
+      operationId: getBasket
+      summary: The basket with this ID, with its items and total
+      parameters:
+        - name: basketId
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1, example: 42 }
+      responses:
+        '200':
+          description: The basket
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Basket'
+  /api/baskets/mine/items:
+    post:
+      tags: [Baskets]
+      operationId: addBasketItem
+      summary: Add a product to the own basket
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BasketItemRequest'
+      responses:
+        '200':
+          description: The basket after the change
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Basket'
+        '400':
+          $ref: '#/components/responses/Error'
+  /api/orders:
+    post:
+      tags: [Orders]
+      operationId: placeOrder
+      summary: Place an order for the own basket and charge the card
+      description: The server charges the card of the customer with the payment provider, then empties the basket.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+      responses:
+        '201':
+          description: Order placed and paid
+          headers:
+            Location:
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/responses/Error'
+        '402':
+          $ref: '#/components/responses/Error'
+  /api/orders/{orderId}:
+    get:
+      tags: [Orders]
+      operationId: getOrder
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        '200':
+          description: The order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '404':
+          description: The order does not exist, or it belongs to another customer.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    ProductId:
+      name: productId
+      in: path
+      required: true
+      schema: { type: integer, minimum: 1 }
+  responses:
+    Error:
+      description: The request failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string, example: Product not found }
+        stack: { type: string, nullable: true, description: Server stack trace, to help support find the cause }
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+    LoginResponse:
+      type: object
+      required: [token, email, role]
+      properties:
+        token: { type: string }
+        email: { type: string, format: email }
+        role: { type: string }
+    UserRegistration:
+      type: object
+      required: [email, password, securityQuestionId, securityAnswer]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password, minLength: 12 }
+        displayName: { type: string, maxLength: 80, nullable: true }
+        securityQuestionId: { type: integer }
+        securityAnswer: { type: string, maxLength: 100 }
+        role: { type: string, enum: [customer, accounting, admin], default: customer }
+    User:
+      type: object
+      required: [id, email, role]
+      properties:
+        id: { type: integer }
+        email: { type: string, format: email }
+        role: { type: string }
+        displayName: { type: string, nullable: true }
+        newsletter: { type: boolean }
+    UserPatch:
+      type: object
+      additionalProperties: false
+      properties:
+        displayName: { type: string, maxLength: 80, nullable: true }
+        newsletter: { type: boolean }
+    PasswordReset:
+      type: object
+      required: [email, answer, newPassword]
+      properties:
+        email: { type: string, format: email }
+        answer: { type: string }
+        newPassword: { type: string, format: password, minLength: 12 }
+    Product:
+      type: object
+      required: [id, name, price]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        description: { type: string }
+        price: { type: number, format: decimal, example: 39.95 }
+        imageUrl: { type: string, format: uri, nullable: true }
+        category: { type: string }
+    ProductPage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          maxItems: 100
+          items: { $ref: '#/components/schemas/Product' }
+        nextCursor: { type: string, nullable: true }
+    ProductUpdate:
+      type: object
+      required: [name, description, price]
+      properties:
+        name: { type: string, maxLength: 100 }
+        description: { type: string, maxLength: 4000 }
+        price: { type: number, format: decimal, minimum: 0 }
+    BasketItemRequest:
+      type: object
+      required: [productId, quantity]
+      properties:
+        productId: { type: integer }
+        quantity: { type: integer, minimum: 1, maximum: 99 }
+    Basket:
+      type: object
+      required: [id, items, total]
+      properties:
+        id: { type: integer }
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              productId: { type: integer }
+              name: { type: string }
+              quantity: { type: integer }
+              price: { type: number, format: decimal }
+        total: { type: number, format: decimal }
+    OrderRequest:
+      type: object
+      required: [deliveryAddress, paymentMethodId]
+      properties:
+        deliveryAddress: { type: string, maxLength: 300 }
+        paymentMethodId: { type: string }
+        couponCode: { type: string, nullable: true }
+    Order:
+      type: object
+      required: [id, orderNumber, status, total]
+      properties:
+        id: { type: integer }
+        orderNumber: { type: string, example: K-1001 }
+        status: { type: string, enum: [Placed, Paid, Shipped, Delivered, DamageReported] }
+        total: { type: number, format: decimal }

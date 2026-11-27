@@ -1,12 +1,16 @@
 """Check kinds for the cases with "stack": "angular". score.py sends these kinds here.
 
-- ng_build: `npx ng build` exits 0.
-- ng_test: `npx ng test --no-watch` exits 0.
+- ng_build: `npx ng build` exits 0. An optional "dir" names the folder of the Angular app (default: the repo root).
+- ng_test: `npx ng test --no-watch` exits 0. Takes "dir" too.
 - ui_probe: build the app, start the mock API of the fixture with the built app, and run the named tests of
   probes/<probe>/probe.py with Playwright (probes/angular-common/harness.py). Each named test must pass.
+- ng_spec_probe: copy the spec files of probes/<probe>/ into <target>/<folder> (from probe.json) of a separate copy of
+  the run, run the "run" command of probe.json with the Vitest JSON reporter, and read the result of each test.
+  Each named test (the title of its it() call) must pass. A spec file that does not compile gives no passed test.
 - tests_added_min: new it( and test( calls in *.spec.ts files, compared with the fixture.
 
-All work runs in one copy of the run for each repo, so the run folder does not change. node_modules comes
+All work runs in one copy of the run for each repo (and one more copy for each spec probe), so the run folder
+does not change. node_modules comes
 from the run (hard links when possible), or from `npm ci` into a cache that is shared by package-lock.json hash.
 The mock API is the one of the fixture, not the one of the run: a run cannot change the test hooks.
 """
@@ -16,6 +20,7 @@ import json
 import os
 import pathlib
 import re
+import shlex
 import shutil
 import socket
 import subprocess
@@ -29,8 +34,8 @@ FIXTURES = HERE / "fixtures"
 PROBES = HERE / "probes"
 HARNESS = PROBES / "angular-common" / "harness.py"
 CACHE = pathlib.Path(os.environ.get("EVAL_ANGULAR_CACHE", pathlib.Path.home() / ".cache" / "maikelsoft-evals" / "angular"))
-KINDS = {"ng_build", "ng_test", "ui_probe"}
-COPY_SKIP = {".git", "node_modules", "dist", ".angular", "coverage", "out-tsc", "__pycache__"}
+KINDS = {"ng_build", "ng_test", "ui_probe", "ng_spec_probe"}
+COPY_SKIP = {".git", "node_modules", "dist", ".angular", "coverage", "out-tsc", "__pycache__", "bin", "obj", "TestResults"}
 NODE_SKIP = (".vite", ".cache", ".vitest")
 TIMEOUT_INSTALL = 900
 TIMEOUT_BUILD = 600
@@ -38,12 +43,14 @@ TIMEOUT_TEST = 600
 TIMEOUT_PROBE = 900
 SPEC_TEST = re.compile(r"^\s*(?:it|test)(?:\.(?:only|concurrent|each\s*\([^)]*\)|each\s*`[^`]*`))?\s*\(", re.M)
 
+_COPIES = {}
 _WORK = {}
 _RESULTS = {}
 
 
 def handles(kind, ev):
-    return kind in KINDS or (kind == "tests_added_min" and ev.get("stack") == "angular")
+    """The Angular kinds, and the spec count of a case with "stack": "angular" or a "node_dir" field."""
+    return kind in KINDS or (kind == "tests_added_min" and (ev.get("stack") == "angular" or bool(ev.get("node_dir"))))
 
 
 def node_env():
@@ -119,35 +126,44 @@ def cached_node_modules(lock):
     return target / "node_modules", None
 
 
-def workspace(repo):
-    """One copy of the run for all Angular checks of this repo: (folder, None) or (None, error)."""
-    key = str(repo)
+def copy_of(repo, tag):
+    """One copy of the run for each tag: 'run' for the checks of the run itself, 'probe-<name>' for a spec probe."""
+    key = (str(repo), tag)
+    if key not in _COPIES:
+        CACHE.mkdir(parents=True, exist_ok=True)
+        root = pathlib.Path(tempfile.mkdtemp(prefix="ng-", dir=CACHE))
+        atexit.register(shutil.rmtree, root, True)
+        shutil.copytree(repo, root / "repo", ignore=shutil.ignore_patterns(*COPY_SKIP))
+        _COPIES[key] = root / "repo"
+    return _COPIES[key]
+
+
+def workspace(repo, sub="", tag="run"):
+    """The Angular app in the folder 'sub' of a copy of the run, with node_modules: (folder, None) or (None, error)."""
+    key = (str(repo), tag, sub)
     if key in _WORK:
         return _WORK[key]
-    CACHE.mkdir(parents=True, exist_ok=True)
-    root = pathlib.Path(tempfile.mkdtemp(prefix="ng-", dir=CACHE))
-    atexit.register(shutil.rmtree, root, True)
-    copy = root / "repo"
-    shutil.copytree(repo, copy, ignore=shutil.ignore_patterns(*COPY_SKIP))
+    copy = copy_of(repo, tag)
+    folder, source = (copy / sub, repo / sub) if sub else (copy, repo)
     error = None
-    lock = copy / "package-lock.json"
-    if (repo / "node_modules" / ".package-lock.json").is_file():
-        link_tree(repo / "node_modules", copy / "node_modules")
+    lock = folder / "package-lock.json"
+    if (source / "node_modules" / ".package-lock.json").is_file():
+        link_tree(source / "node_modules", folder / "node_modules")
     elif lock.is_file():
         modules, error = cached_node_modules(lock)
         if modules:
-            link_tree(modules, copy / "node_modules")
+            link_tree(modules, folder / "node_modules")
     else:
-        error = "no package-lock.json"
-    _WORK[key] = (None, error) if error else (copy, None)
+        error = f"no package-lock.json in {sub or 'the repo root'}"
+    _WORK[key] = (None, error) if error else (folder, None)
     return _WORK[key]
 
 
-def ng(repo, step):
-    """Run 'build' or 'test' once for each repo. Return (exit code, short log)."""
-    key = (str(repo), step)
+def ng(repo, step, sub=""):
+    """Run 'build' or 'test' once for each repo and app folder. Return (exit code, short log)."""
+    key = (str(repo), step, sub)
     if key not in _RESULTS:
-        copy, error = workspace(repo)
+        copy, error = workspace(repo, sub)
         if error:
             _RESULTS[key] = (1, error)
         elif step == "build":
@@ -232,17 +248,75 @@ def probe_results(repo, ev, probe):
     return _RESULTS[key]
 
 
-def check_ui_probe(repo, ev, a):
-    results, log = probe_results(repo, ev, a["probe"])
-    if not results:
-        return False, f"probe did not run: {log}"
+def named_results(results, names, log):
+    """(all passed, {name: outcome}) for the named tests of a results dict {name: {outcome, message}}."""
     got, ok = {}, True
-    for name in a["tests"]:
+    for name in names:
         r = results.get(name, {"outcome": "Missing", "message": log})
         passed = r["outcome"] == "Passed"
         ok &= passed
         got[name] = r["outcome"] + ("" if passed else f": {r['message'][:200]}")
     return ok, got
+
+
+def check_ui_probe(repo, ev, a):
+    results, log = probe_results(repo, ev, a["probe"])
+    if not results:
+        return False, f"probe did not run: {log}"
+    return named_results(results, a["tests"], log)
+
+
+# --- Spec probes ----------------------------------------------------------------------------------
+
+VITEST_OUTCOME = {"passed": "Passed", "failed": "Failed", "skipped": "Skipped", "pending": "Skipped", "todo": "Skipped"}
+
+
+def parse_vitest_json(path):
+    """{test title: {outcome, message}} from a Vitest JSON report, and the first line of each file error."""
+    data = json.loads(pathlib.Path(path).read_text(encoding="utf-8"))
+    results, errors = {}, []
+    for test_file in data.get("testResults", []):
+        if test_file.get("status") == "failed" and (test_file.get("message") or "").strip():
+            errors.append(test_file["message"].strip().splitlines()[0][:200])
+        for t in test_file.get("assertionResults", []):
+            results[t["title"]] = {"outcome": VITEST_OUTCOME.get(t.get("status"), str(t.get("status"))),
+                                   "message": " ".join(t.get("failureMessages") or []).strip()}
+    return results, errors
+
+
+def spec_probe_results(repo, probe):
+    """Run the spec files of probes/<probe> in a separate copy of the run, once for each repo.
+    Return (results or None, log)."""
+    key = (str(repo), "spec", probe)
+    if key in _RESULTS:
+        return _RESULTS[key]
+    meta = json.loads((PROBES / probe / "probe.json").read_text(encoding="utf-8"))
+    tag = f"probe-{probe}"
+    folder, error = workspace(repo, meta.get("target", ""), tag)
+    if error:
+        _RESULTS[key] = (None, error)
+        return _RESULTS[key]
+    dest = folder / meta["folder"]
+    dest.mkdir(parents=True, exist_ok=True)
+    for name in meta["files"]:
+        shutil.copy(PROBES / probe / name, dest / name)
+    report = copy_of(repo, tag).parent / f"spec-{probe}.json"
+    start = time.monotonic()
+    code, out = run(shlex.split(meta["run"]) + ["--reporters=json", f"--output-file={report}"], folder, TIMEOUT_TEST)
+    log = f"exit {code}: " + tail(out, r"error|ERROR|Error|FAIL", 2) + f" ({time.monotonic() - start:.0f} s)"
+    if not report.is_file():
+        _RESULTS[key] = (None, "no test report: " + log)
+        return _RESULTS[key]
+    results, errors = parse_vitest_json(report)
+    _RESULTS[key] = (results, " | ".join(errors) or log)
+    return _RESULTS[key]
+
+
+def check_spec_probe(repo, a):
+    results, log = spec_probe_results(repo, a["probe"])
+    if not results:
+        return False, f"probe did not run: {log}"
+    return named_results(results, a["tests"], log)
 
 
 def check(kind, repo, ev, a, fixture):
@@ -251,11 +325,13 @@ def check(kind, repo, ev, a, fixture):
         got = count_spec_tests(repo) - count_spec_tests(fixture)
         return got >= a["value"], got
     if kind == "ng_build":
-        code, log = ng(repo, "build")
+        code, log = ng(repo, "build", a.get("dir", ""))
         return code == 0, f"exit {code}: {log}"
     if kind == "ng_test":
-        code, log = ng(repo, "test")
+        code, log = ng(repo, "test", a.get("dir", ""))
         return code == 0, f"exit {code}: {log}"
     if kind == "ui_probe":
         return check_ui_probe(repo, ev, a)
+    if kind == "ng_spec_probe":
+        return check_spec_probe(repo, a)
     raise ValueError(f"not an Angular check: {kind}")

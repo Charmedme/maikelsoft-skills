@@ -1,0 +1,18 @@
+@if (searchValue(); as value) {
+  <p class="search-term">Results for "<span id="searchValue">{{ value }}</span>"</p>
+}
+@if (loaded() && rows().length === 0) {
+  <p class="empty">No products match your search.</p>
+}
+<ul class="products">
+  @for (product of rows(); track product.id) {
+    <li class="product">
+      <h2>{{ product.name }}</h2>
+      <div class="description" [innerHTML]="product.description"></div>
+      <span class="price">{{ product.price | currency: 'EUR' }}</span>
+      <button type="button" [disabled]="compare.full() && !compare.has(product.id)" (click)="compare.toggle(product.id)">
+        {{ compare.has(product.id) ? 'Remove from compare' : 'Compare' }}
+      </button>
+    </li>
+  }
+</ul>

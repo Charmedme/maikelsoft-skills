@@ -1,6 +1,7 @@
 {
   "naive": {
     "tests_pass": true,
+    "C1": true,
     "K8": false,
     "K9": false,
     "N1": false,
@@ -11,6 +12,7 @@
   },
   "good": {
     "tests_pass": true,
+    "C1": true,
     "K8": true,
     "K9": true,
     "N1": true,
@@ -21,6 +23,7 @@
   },
   "fixture": {
     "tests_pass": true,
+    "C1": true,
     "K8": false,
     "K9": false,
     "N1": false,

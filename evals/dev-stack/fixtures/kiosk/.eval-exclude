@@ -1,0 +1,5 @@
+# Paths that prepare.py keeps out of each run repository (one glob pattern for each line).
+# The run agents must not see the name of the project that this fixture derives from,
+# or the README that says the code has intentional defects.
+LICENSE-juice-shop
+README.md

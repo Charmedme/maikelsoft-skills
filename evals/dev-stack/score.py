@@ -37,6 +37,7 @@ from collections import defaultdict
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import cases  # noqa: E402
 import angular_checks  # noqa: E402
+import prepare  # noqa: E402
 
 HERE = pathlib.Path(__file__).resolve().parent
 FIXTURES = HERE / "fixtures"
@@ -136,7 +137,18 @@ def major(version):
 
 
 def fixture_of(ev):
-    return FIXTURES / ev["fixture"]
+    """The fixture folder of the case. An overlay fixture (overlay.json, see prepare.copy_fixture) is
+    built once into a temporary folder."""
+    path = FIXTURES / ev["fixture"]
+    if not (path / "overlay.json").is_file():
+        return path
+    if ("fixture", ev["fixture"]) not in _CACHE:
+        import prepare  # noqa: E402 (prepare imports nothing from score)
+        dest = pathlib.Path(tempfile.mkdtemp(prefix="fixture-")) / ev["fixture"]
+        dest.mkdir()
+        prepare.copy_fixture(ev["fixture"], dest)
+        _CACHE[("fixture", ev["fixture"])] = dest
+    return _CACHE[("fixture", ev["fixture"])]
 
 
 def check_package_policy(repo, ev, approved):
@@ -233,11 +245,23 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def git_ignored(repo, paths):
+    """The paths (relative to repo) that the .gitignore files of the git repository repo ignore."""
+    if not paths or not (pathlib.Path(repo) / ".git").exists():
+        return set()
+    out = subprocess.run(["git", "-C", str(repo), "check-ignore", "--no-index", "--stdin"],
+                         input="\n".join(sorted(paths)), capture_output=True, text=True).stdout
+    return set(out.splitlines())
+
+
 def check_unchanged(repo, ev):
     base = fixture_of(ev)
-    a, b = set(files(base)), set(files(repo))
+    skip = prepare.excluded(base)  # The run repository never gets these files.
+    a, b = {f for f in files(base) if not prepare.is_excluded(f, skip)}, set(files(repo))
     changed = sorted(f for f in a & b if digest(base / f) != digest(repo / f))
-    added = sorted(b - a)
+    # Files that the repository ignores are output of a build or a test run (for example uploads that the
+    # tests write under wwwroot), not a change by the reviewer.
+    added = sorted(set(b - a) - git_ignored(repo, b - a))
     removed = sorted(a - b)
     ok = not changed and not removed and not [f for f in added if not f.endswith((".md", ".sarif", ".txt", ".log"))]
     return ok, {"changed": changed[:10], "added": added[:10], "removed": removed[:10]}

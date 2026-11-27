@@ -4,7 +4,7 @@ The orchestrator gives this prompt to a new agent. Use one agent for each run.
 
 ## Before the runs
 
-1. Run `python3 evals/dev-stack/prepare.py <runs>`. The script makes one git repository for each run in `<runs>/<eval>/<variant>/<n>/repo`. For an Angular case, it also runs `npm ci` in the repository.
+1. Run `python3 evals/dev-stack/prepare.py <runs>`. The script makes one git repository for each run in `<runs>/<eval>/<variant>/<n>/repo`. For an Angular case, it also runs `npm ci` in the repository. For a case with a `node_dir` field, it runs `npm ci` in that folder. The script leaves out each file that the `.eval-exclude` file of the fixture names.
 2. A write case starts on `main`. A review case starts on the branch `feature`. The base branch is `main`.
 3. Give the run agent the prompt below. Replace the values in angle brackets with the values of the case in `evals.json`.
 4. Save the final message of the agent as `<run>/final.md`. Save the full log as `<run>/transcript.md` if the tool can export it.
@@ -48,6 +48,12 @@ Use the common part with no change. Do not name a skill.
 For a case with `"stack": "angular"`, replace the first paragraph of the common part with this paragraph. Keep the rest of the common part.
 
 You work in the git repository `<repo>`. It is an Angular 22 app. This machine has Node.js 26 and npm, and `npm ci` has installed the packages. Use `npx ng build`, `npx ng test --no-watch`, and `npx ng lint`. To run the app, build it and start `python3 mock-api/server.py`: it gives the app and a mock API on one port (`PORT`, default 8080). `README.md` tells more.
+
+## Stack: kiosk
+
+For a case with `"stack": "kiosk"`, replace the first paragraph of the common part with this paragraph. Keep the rest of the common part. The repository of such a case is a .NET solution with an Angular front end in `frontend/`.
+
+You work in the git repository `<repo>`: a .NET 10 solution with an Angular 22 front end in `frontend/`. The .NET SDK is in `/root/.dotnet`, so run `export PATH=/root/.dotnet:$PATH` before you use `dotnet`. Docker runs on this machine, and the container images of the case are in the local cache. Use `dotnet build` and `dotnet test --solution Kiosk.slnx` for the back end. Node.js 26 and npm are on this machine, and `npm ci` has installed the packages in `frontend/`: there, use `npx ng build` and `npx ng test --no-watch`. `README.md` tells more.
 
 ## Trap cases
 

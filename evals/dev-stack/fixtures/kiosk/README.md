@@ -32,4 +32,4 @@ npx ng test --no-watch
 
 ## License
 
-The notice of the project that this fixture derives from is in `LICENSE-juice-shop`.
+This fixture derives from a project under the MIT license. The eval repository keeps the license notice of that project in the fixture folder.

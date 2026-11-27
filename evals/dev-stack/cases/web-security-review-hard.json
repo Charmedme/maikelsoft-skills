@@ -1,0 +1,43 @@
+{
+  "id": 271,
+  "name": "web-security-review-hard",
+  "skill": "web-security",
+  "stack": "kiosk",
+  "node_dir": "frontend",
+  "kind": "review",
+  "fixture": "review-kiosk-compare",
+  "base": "review-kiosk-base",
+  "planted": "planted/review-kiosk-compare.json",
+  "human": "absent",
+  "request": "Review this change to the storefront in frontend/ before we merge it. Customers can now compare up to 4 products side by side: they pick products in the search results, and the compare page shows the picture, the price, and the details from the spec sheet of each maker (with its lists and tables). Marketing sends shared comparison links with a headline (?ids=1,2&headline=...) that has bold or italic words. A shared link that opens in a new tab keeps the sign-in, and the admin menu no longer waits for a server call on each navigation.",
+  "assertions": [
+    {
+      "id": "C1",
+      "check": "files_unchanged"
+    },
+    {
+      "id": "J1",
+      "judge": "The review finds at least 3 of the 4 planted mistakes."
+    },
+    {
+      "id": "J2",
+      "judge": "The review finds every planted mistake with severity 'high' (P1, P2, P4)."
+    },
+    {
+      "id": "J3",
+      "judge": "The review finds at least 2 of the 2 planted mistakes marked 'subtle' (P1, P3), and for P1 it says that the Angular sanitizer already keeps lists and tables, so the bypass is not needed."
+    },
+    {
+      "id": "J4",
+      "judge": "The review flags none of the decoys (D1 to D3), and has at most 2 other false positives. A false positive is a claim that is wrong, or a fix that would break the page or that uses an Angular API that does not exist. A real problem that is not on the answer sheet is not a false positive."
+    },
+    {
+      "id": "J5",
+      "judge": "Each finding gives the file and the line (or quotes the code) and a concrete fix."
+    },
+    {
+      "id": "J6",
+      "judge": "The review separates blocking issues from minor ones and ends with a clear merge verdict that does not approve the change as it is."
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "skill": "web-security",
+  "base": "review-kiosk-base",
+  "planted": [
+    {
+      "id": "P1",
+      "file": "frontend/src/app/compare/compare-page.ts",
+      "line": 69,
+      "severity": "high",
+      "subtle": true,
+      "description": "Stored XSS: toRow passes each product description through bypassSecurityTrustHtml, and the template binds it with [innerHTML] (compare-page.html line 32). The Angular sanitizer keeps lists and tables, so the bypass is not needed for the spec sheets; with it, a description with an event handler or a javascript: link runs script for each customer who compares the product. Bind the plain string to [innerHTML] (the sanitizer removes handlers and script URLs), or sanitize with SecurityContext.HTML."
+    },
+    {
+      "id": "P2",
+      "file": "frontend/src/app/compare/compare-page.ts",
+      "line": 39,
+      "severity": "high",
+      "subtle": false,
+      "description": "Reflected XSS: the headline comes from the query string of a shared link (?headline=...) and goes through bypassSecurityTrustHtml into [innerHTML] (compare-page.html line 2). A link with an img onerror in the headline runs script in the shop for each person who opens it. Show it as text with interpolation, or bind the plain string to [innerHTML] so that the sanitizer keeps only bold and italic."
+    },
+    {
+      "id": "P3",
+      "file": "frontend/src/app/auth/admin.guard.ts",
+      "line": 12,
+      "severity": "medium",
+      "subtle": true,
+      "description": "The admin guard goes back to a decision from the role claim that the browser decodes from the stored token, without the signature check that only the server can do. Together with the token in localStorage (P4), a user edits the token and opens the admin pages. The old guard asked the server (GET /api/users/me); keep that, and keep the server policy on the admin API as the real protection."
+    },
+    {
+      "id": "P4",
+      "file": "frontend/src/app/auth/auth.service.ts",
+      "line": 24,
+      "severity": "high",
+      "subtle": false,
+      "description": "Session token in localStorage (read at line 24, written at line 29): each script in the page reads it, so one XSS (P1, P2) steals a session that stays valid after the tab closes. Keep the token in memory as before (a new tab signs in again), or move to an HttpOnly cookie on the server."
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "frontend/src/app/compare/compare-list.ts",
+      "line": 22,
+      "description": "sessionStorage for the compare list is correct: it holds only product IDs, no token or personal data, and restore() accepts only integers."
+    },
+    {
+      "id": "D2",
+      "file": "frontend/src/app/compare/compare-page.html",
+      "line": 16,
+      "description": "[src]=\"row.imageUrl\" on an img is correct: Angular sanitizes the URL context (javascript: URLs are removed), and an image source is not a resource URL that needs a bypass."
+    },
+    {
+      "id": "D3",
+      "file": "frontend/src/app/compare/compare-page.ts",
+      "line": 54,
+      "description": "Title.setTitle with the headline is correct: it sets document.title as text, not HTML, so the same untrusted headline is safe here."
+    }
+  ]
+}

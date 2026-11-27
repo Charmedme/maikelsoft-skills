@@ -1,0 +1,136 @@
+{
+  "skill": "secure-coding",
+  "base": "review-kiosk-base",
+  "planted": [
+    {
+      "id": "P1",
+      "file": "src/Kiosk.Api/Wishlists/WishlistQueries.cs",
+      "line": 13,
+      "description": "SQL injection: SearchPublicAsync builds the SQL with FromSqlRaw and an interpolated string. FromSqlRaw does not turn the interpolation into parameters (only FromSql or FromSqlInterpolated do), and EF1002 is suppressed in Kiosk.Api.csproj, so the build shows no warning. A search term such as x%' UNION SELECT ... -- reads other tables (the user table with the password hashes). Use FromSql($\"...\") with ILIKE {'%' + term + '%'}, or LINQ with EF.Functions.ILike.",
+      "severity": "high",
+      "subtle": false
+    },
+    {
+      "id": "P2",
+      "file": "src/Kiosk.Api/Wishlists/WishlistEndpoints.cs",
+      "line": 53,
+      "description": "Broken object level authorization: GET /api/wishlists/{id} loads any list by ID with no check of the owner or of IsPublic. Each signed-in customer reads the private lists (names, notes, target prices) of each other customer by counting IDs. Filter on OwnerId == userId (or IsPublic), and return 404 otherwise.",
+      "severity": "high",
+      "subtle": false
+    },
+    {
+      "id": "P3",
+      "file": "src/Kiosk.Api/Hosting/OutputCacheSetup.cs",
+      "line": 66,
+      "description": "Cache leak between users: the new WishlistSnapshotPolicy copies the basket policy but drops the VaryByValues[\"user\"] line, and it enables caching for authenticated requests. GET /api/wishlists/mine is the same URL for each user, so for 20 seconds each customer gets the cached lists of the first customer who called it. Vary by the user ID (as the basket policy does), or do not cache this endpoint.",
+      "severity": "high",
+      "subtle": true
+    },
+    {
+      "id": "P4",
+      "file": "src/Kiosk.Api/Wishlists/WishlistSharingEndpoints.cs",
+      "line": 45,
+      "description": "Excessive data exposure: the anonymous share page returns the EF entity with Include(w => w.Owner). The JSON holds the User entity of the owner: Email, PasswordHash, TotpSecret, SecurityAnswer and Role. Anybody with a share link gets the password hash and the TOTP secret. Return a DTO with the list name, the items and at most the display name.",
+      "severity": "high",
+      "subtle": true
+    },
+    {
+      "id": "P5",
+      "file": "src/Kiosk.Api/Admin/WishlistAdminEndpoints.cs",
+      "line": 18,
+      "description": "Missing authorization: DELETE /api/admin/wishlists/{id} has no RequireAuthorization. The group has no policy, each other endpoint sets its own, and the app has no fallback policy, so an anonymous caller deletes any wish list. Add RequireAuthorization(Policies.Admin) or Staff (or put the policy on the group).",
+      "severity": "high",
+      "subtle": true
+    },
+    {
+      "id": "P6",
+      "file": "src/Kiosk.Api/Wishlists/WishlistTokens.cs",
+      "line": 15,
+      "description": "Predictable token: the unsubscribe token is new Random(wishlistId).Next(...), so it depends only on the public list ID; anybody computes it and turns off the price alerts of any list through the anonymous POST /api/wishlists/{id}/alerts/unsubscribe (WishlistSharingEndpoints.cs line 71, compared with ==). Use a random token stored on the list (RandomNumberGenerator) or a Data Protection or HMAC token, and compare with CryptographicOperations.FixedTimeEquals.",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P7",
+      "file": "src/Kiosk.Api/Wishlists/WishlistExporter.cs",
+      "line": 14,
+      "description": "Path traversal: the export takes the template name from the query and builds Path.Combine(root, template + \".txt\"). An absolute name (/etc/...) replaces the root, and ../ leaves the folder, so a customer reads any .txt file that the process can read. Allow only names from a fixed list (or check that the full path stays under the root with Path.GetFullPath and a trailing separator).",
+      "severity": "medium",
+      "subtle": false
+    },
+    {
+      "id": "P8",
+      "file": "src/Kiosk.Api/Wishlists/WishlistSharingEndpoints.cs",
+      "line": 36,
+      "description": "Host header injection: the share link uses Request.Scheme and Request.Host, and AllowedHosts is \"*\" with no host filter. A forged Host header gives a link to another site, and the link is cached or shown to friends. Use the configured App:PublicBaseUrl (as the password reset mail must).",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P9",
+      "file": "src/Kiosk.Api/Wishlists/WishlistSharingEndpoints.cs",
+      "line": 66,
+      "description": "Open redirect: BuyAsync accepts a returnUrl that starts with '/', but //evil.example and /\\\\evil.example also start with '/' and the browser goes to another site after the purchase. Use Results.LocalRedirect or Url.IsLocalUrl (the /back endpoint of the same file does it correctly).",
+      "severity": "medium",
+      "subtle": true
+    },
+    {
+      "id": "P10",
+      "file": "src/Kiosk.Api/Wishlists/WishlistEndpoints.cs",
+      "line": 66,
+      "description": "Missing input validation: AddItemAsync stores any Quantity (0, negative, int.MaxValue) and any TargetPrice; BuyAsync then copies the negative quantity into the basket of the visitor, which gives a negative basket total. The import has a 1 to 100 check; the endpoint must have the same check and return a validation problem.",
+      "severity": "medium",
+      "subtle": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "src/Kiosk.Api/Wishlists/WishlistQueries.cs",
+      "line": 19,
+      "description": "FromSql with an interpolated string makes a parameter for {email}. It is correct (only the FromSqlRaw call in the same file is a problem)."
+    },
+    {
+      "id": "D2",
+      "file": "src/Kiosk.Api/Wishlists/WishlistTokens.cs",
+      "line": 11,
+      "description": "RandomNumberGenerator.GetString with 12 characters from a 33-character alphabet gives about 60 bits from a cryptographic random source, enough for a share link that only reads a list. It is correct."
+    },
+    {
+      "id": "D3",
+      "file": "src/Kiosk.Api/Wishlists/WishlistSharingEndpoints.cs",
+      "line": 19,
+      "description": "Results.LocalRedirect throws for a URL that is not local, so the /back endpoint is not an open redirect. It is correct."
+    },
+    {
+      "id": "D4",
+      "file": "src/Kiosk.Api/appsettings.json",
+      "line": 34,
+      "description": "The SMS key is empty in appsettings.json with a user-secrets note; the real key comes from configuration. It is correct."
+    },
+    {
+      "id": "D5",
+      "file": "src/Kiosk.Api/Wishlists/WishlistImporter.cs",
+      "line": 14,
+      "description": "XmlReader.Create with default XmlReaderSettings has DtdProcessing.Prohibit and no resolver, so the importer does not resolve external entities. It is correct."
+    },
+    {
+      "id": "D6",
+      "file": "src/Kiosk.Api/Wishlists/WishlistEndpoints.cs",
+      "line": 28,
+      "description": "DisableAntiforgery on the import is correct: the endpoint requires the ApiClient policy, which accepts only the JWT bearer scheme. A cross-site form cannot add a bearer header, so CSRF does not apply."
+    },
+    {
+      "id": "D7",
+      "file": "src/Kiosk.Api/Wishlists/WishlistSharingEndpoints.cs",
+      "line": 17,
+      "description": "CacheOutput with the default policy on the share page caches only anonymous GET requests, keyed on the path with the token, and the share endpoint evicts the tag. It is correct (the problem of this endpoint is the entity in the response, P4)."
+    },
+    {
+      "id": "D8",
+      "file": "src/Kiosk.Api/Admin/WishlistAdminEndpoints.cs",
+      "line": 17,
+      "description": "The popular-wishes report for Staff returns only product IDs, names and counts, with no personal data. Staff is a correct policy for it."
+    }
+  ]
+}
