@@ -166,3 +166,26 @@ After the test, the main session built each new-arm result of S2, S4, S7, and S8
 - The judge is one Sonnet agent with reference facts that this research wrote. In S4, a missing fact changed the grades, and a second judge graded the 18 runs again.
 - The S3 rerun used the changed `playwright` text. The other scenarios used the text of the first run. Rules 16 and 17 have no effect on them.
 - Tokens: about 21 million for all agents of phase 3: research, compile check, build, test, and reruns.
+
+## S9: a harder api-design scenario (2026-11-23)
+
+S7 measured little: in 5 extra Haiku runs, the baseline got grade 8.6 and the skill 9.0. S9 (`evals/stack-split/scenarios-api.json`, made by `make_api_hard.py`) starts from a published partner contract. The contract has 5 planted defects and 1 decoy. The task asks for 5 additions and a review. Each arm ran 3 times on each model, with script checks and a blind Sonnet judge.
+
+| Model | baseline | new |
+|-------|----------|-----|
+| Haiku | 0.76, 6.0, 3 | 1.00, 9.0, 0 |
+| Sonnet | 0.65, 5.7, 4 | 1.00, 8.7, 0 |
+| Opus | 0.91, 8.0, 0 | 1.00, 9.0, 0 |
+
+Each cell gives the mean check score, the mean judge grade, and the old-pattern hits (3 runs).
+
+- Baseline misses over 9 runs:
+  - No merge patch (9).
+  - The search is not called safe and idempotent (8).
+  - `rel="successor-version"` for the deprecation link (6).
+  - The old `RateLimit-*` fields (5).
+  - No `webhook-timestamp` (4).
+  - No structured `Deprecation` date (3).
+- Without the skill, the new operations copied the old error envelope of the contract in each of the 6 Haiku and Sonnet runs. With the skill, the new operations used problem details, and the old operations kept their envelope as an open point.
+- No run in either arm flagged the decoy.
+- One Haiku baseline run removed the existing `PUT` operation, which breaks the published clients. No run with the skill removed an existing operation.

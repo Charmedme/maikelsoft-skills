@@ -284,6 +284,50 @@ This log records each change to a skill or to an eval case, the test that measur
 - Verdict: not measured
 - Evidence: `docs/work/stack-split/compile-check.md`
 
+### E33: api-design on a harder scenario (eval change, no skill change)
+- Date and version: 2026-11-23, dev-stack 2.1.0
+- Change: a new scenario S9 (`evals/stack-split/scenarios-api.json`). It starts from a published partner contract with 5 planted defects and 1 decoy. It asks for a signed webhook, the end of an operation, a rate limit, a complex search, and a concurrent partial update. S7 was too easy: Haiku without the skill got 8.6 in 5 extra runs, against 9.0 with the skill.
+- Test: S9, 3 runs for each arm and model (Haiku, Sonnet, Opus), script checks, and a blind Sonnet judge.
+- Observed: baseline checks 0.76, 0.65, 0.91 and grades 6.0, 5.7, 8.0 (Haiku, Sonnet, Opus). With the skill: checks 1.00 and grades 9.0, 8.7, 9.0. Baseline misses: no merge patch (9 of 9 runs), search not called safe (8), `rel="successor-version"` (6), the old `RateLimit-*` fields (5), no `webhook-timestamp` (4).
+- Verdict: helped. The gain of E30 was small because S7 was easy, not because the skill adds little.
+- Evidence: `docs/work/stack-split/results.md` (S9)
+
+### E34: wolverine on Haiku (eval run, no skill change)
+- Date and version: 2026-11-23, dev-stack 2.1.0
+- Change: none. The question was whether to remove `wolverine`: on Sonnet (2026-10-25), `wolverine-hard` scored 96% without the skill and 91% with it.
+- Test: `wolverine-hard` and `wolverine-review-hard`, 3 runs for each variant on Haiku 5.5 (`run.py --model haiku`), `score.py`, and blind Sonnet graders (`grade.py`).
+- Observed:
+  - `wolverine-hard`: checks 35/39 without the skill and 38/39 with it. Judge items 12/15 and 15/15. The baseline failed probes C5, C7, and C12 and judge items J2 and J5.
+  - `wolverine-review-hard`: planted mistakes found 22/27 without the skill and 27/27 with it. Judge items 15/21 and 19/21.
+  - With the skill, 2 of 3 reviews flagged decoy D5. They asked for `UseQuorumQueues()` on existing classic queues without a migration. Rule 14 of `SKILL.md` does not say that a classic queue on the broker refuses a quorum declaration (`PRECONDITION_FAILED`).
+- Verdict: helped on Haiku. Keep the skill. Proposed change: add the migration condition to rule 14, then run `wolverine-review-hard` again.
+- Evidence: run folder `wolverine` of the Haiku check, outside the repository. Grades in `grade.json` of each run.
+- Correction (2026-11-23): the D5 result was a defect of the case, not of the skill. The fixture did not say that the two queues are classic, so a reviewer could not know it. E35 fixes the case and the skill.
+
+### E35: wolverine checked against the Wolverine 6.65.1 docs (skill change and case change)
+- Date and version: 2026-11-23, dev-stack 2.1.1
+- Change: a check of each fact against the docs and the source of WolverineFx 6.65.1 found three wrong rules.
+  - Rule 20: `InvokeAsync` applies `Retry` and `RetryWithCooldown` inline. Only scheduled retries, requeue, and the error queue need a queued message.
+  - Rule 13: the skill no longer tells you to set `InboxStaleTime`. The docs say that it is not necessary outside `ServerlessWithOutbox`.
+  - Rule 14: quorum queues are a decision of this stack, not a Wolverine requirement. Existing classic queues move only with a migration plan.
+- Case change: the README of `review-wolverine-hard` now says that the two listener queues are classic, so decoy D5 is fair. P9 has the correct reason.
+- Test: `wolverine-review-hard`, 3 runs for each variant on Haiku, Sonnet, and Opus 5.5, `score.py`, and blind Sonnet graders.
+- Observed (planted mistakes found of 27, judge items of 21, without and with the skill):
+  - Haiku: 22 and 27, 13 and 21.
+  - Sonnet: 20 and 27, 12 and 21. Without the skill, 2 runs flagged D5.
+  - Opus: 20 and 27, 14 and 21.
+  - Without the skill, each model missed P1 (forwarder registration) and P2 (typed `HttpClient` and service location) in most runs. With the skill, no run flagged a decoy.
+- Harness problem: one Sonnet run started a background task. The turn after its notification replaced `final.md` with a short note, so the grader saw no review. The run was done again.
+- Harness fix: each eval runner and grader now sets `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1` and blocks the `Monitor` tool. A runner that reads a stream keeps the longest result text, not the last one. This applies to dev-stack, dev-setup, review-flow, and ux-design. `tests/test_devstack_run.py` tests the dev-stack function.
+- Test after the harness fix: `wolverine-hard`, 3 runs for each variant on each model, with the same scorers.
+- Observed (checks of 39, judge items of 15, without and with the skill):
+  - Haiku: 36 and 39, 9 and 14.
+  - Sonnet: 37 and 39, 13 and 13. The first run 1 without the skill stopped at the 25-minute limit with no final message. Its rerun on 2026-11-26 replaces it: 13 of 13 checks, and 4 of 5 judge items (J4 failed).
+  - Opus: 39 and 39, 12 and 15.
+  - Without the skill, J5 (open team decisions marked as assumed) failed in 6 of 9 runs. With the skill, J5 failed in 2 runs: the final message did not mark MSG-10 as assumed. One Sonnet run with the skill did not say how the generated code reaches production (J4).
+- Verdict: helped on each model. The D5 false positives of E34 are gone. On `wolverine-hard`, the skill adds the most to the check items on Haiku and Sonnet, and to the judge items on Haiku and Opus. On Sonnet, the judge items are equal.
+- Evidence: run folders `wolverine-fix` and `wolverine-fix-hard`, outside the repository. Grades in `grade.json` of each run.
+
 ## Lessons
 
 ### Round 1.1.0 (2026-10-21)

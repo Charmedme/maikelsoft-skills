@@ -129,7 +129,7 @@ def score_review(run, slug, model, defects_file):
     res = {"_error": "no answer"}
     for _ in range(2):
         cmd = ["claude", "-p", REVIEW_PROMPT, "--model", model, "--permission-mode", "default",
-               "--allowedTools", "Read", "--disallowedTools", "Write", "Edit", "Bash", "Agent", "Skill",
+               "--allowedTools", "Read", "--disallowedTools", "Write", "Edit", "Bash", "Agent", "Monitor", "Skill",
                "--output-format", "json"]
         r = subprocess.run(cmd, cwd=work, env=child_env(), capture_output=True, text=True, timeout=900)
         text = ""
@@ -221,7 +221,7 @@ def judge_handoff(run, slug, model, need, design):
     res = {}
     for _ in range(2):
         cmd = ["claude", "-p", HANDOFF_PROMPT, "--model", model, "--permission-mode", "default",
-               "--allowedTools", "Read", "--disallowedTools", "Write", "Edit", "Bash", "Agent", "Skill", "--output-format", "json"]
+               "--allowedTools", "Read", "--disallowedTools", "Write", "Edit", "Bash", "Agent", "Monitor", "Skill", "--output-format", "json"]
         r = subprocess.run(cmd, cwd=work, env=child_env(), capture_output=True, text=True, timeout=900)
         text = ""
         for line in r.stdout.strip().splitlines():

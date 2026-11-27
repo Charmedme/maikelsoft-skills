@@ -29,7 +29,7 @@ def run_query(skill, kind, query, args, out):
     for plugin in args.plugin:
         cmd += ["--plugin-dir", str(Path(plugin).resolve())]
     cmd += ["--permission-mode", "default", "--allowedTools", "Skill", "Read", "Glob", "Grep",
-           "--disallowedTools", "Write", "Edit", "Bash", "Agent", "WebFetch", "WebSearch",
+           "--disallowedTools", "Write", "Edit", "Bash", "Agent", "Monitor", "WebFetch", "WebSearch",
            "--max-turns", "3", "--output-format", "stream-json", "--verbose", "--max-budget-usd", "1"]
     r = subprocess.run(cmd, cwd=work, env=child_env(), capture_output=True, text=True, timeout=600)
     called = []

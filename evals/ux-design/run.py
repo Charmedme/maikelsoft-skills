@@ -39,6 +39,9 @@ def child_env():
     for k, v in os.environ.items():
         if k in KEEP or (not k.startswith(DROP_PREFIX) and k not in DROP):
             env[k] = v
+    # No background tasks: a task notification after the answer starts a new turn, and its short
+    # answer can replace the final result (dev-stack E35).
+    env["CLAUDE_CODE_DISABLE_BACKGROUND_TASKS"] = "1"
     return env
 
 
@@ -77,7 +80,7 @@ def run_one(job, args):
     # that the task needs. python3 runs the checkers and Playwright renders.
     cmd = ["claude", "-p", prompt, "--model", args.model, "--permission-mode", "acceptEdits",
            "--allowedTools", "Read", "Write", "Edit", "Glob", "Grep", "Bash(python3:*)", "Bash(ls:*)",
-           "--disallowedTools", "Agent", "Skill", "WebFetch", "WebSearch",
+           "--disallowedTools", "Agent", "Monitor", "Skill", "WebFetch", "WebSearch",
            "--output-format", "stream-json", "--verbose", "--max-budget-usd", str(args.budget)]
     if variant.startswith("skill"):
         cmd += ["--add-dir", str(plugin)]
@@ -93,7 +96,7 @@ def run_one(job, args):
             ev = json.loads(line)
         except json.JSONDecodeError:
             continue
-        if ev.get("type") == "result":
+        if ev.get("type") == "result" and len(ev.get("result") or "") >= len(final):
             final = ev.get("result") or ""
             cost = ev.get("total_cost_usd") or 0.0
     meta = {"case": case["name"], "variant": variant, "exit": code, "cost_usd": cost,

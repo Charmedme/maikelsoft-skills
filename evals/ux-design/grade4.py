@@ -109,7 +109,7 @@ def grade(run, case, model):
     res = {"_error": "no answer"}
     for _ in range(2):
         cmd = ["claude", "-p", prompt, "--model", model, "--permission-mode", "default",
-               "--allowedTools", "Read", "Glob", "Grep", "--disallowedTools", "Write", "Edit", "Bash", "Agent", "Skill",
+               "--allowedTools", "Read", "Glob", "Grep", "--disallowedTools", "Write", "Edit", "Bash", "Agent", "Monitor", "Skill",
                "--output-format", "json"]
         r = subprocess.run(cmd, cwd=work, env=child_env(), capture_output=True, text=True, timeout=1800)
         text, cost = "", 0.0

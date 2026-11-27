@@ -6,6 +6,15 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-11-23
+
+### Fixed
+
+- `wolverine`: tests of an error policy. `InvokeMessageAndWaitAsync` applies `Retry` and `RetryWithCooldown`, so such a test does not pass with any policy. It does not show scheduled retries, requeue, or the error queue. Use `SendMessageAndWaitAsync` for these.
+- `wolverine`: the skill no longer tells you to set `InboxStaleTime`. The Wolverine documentation says that it is not necessary, except in `ServerlessWithOutbox` mode.
+- `wolverine`: quorum queues are a decision of this stack, not a Wolverine requirement. For existing classic queues, the skill now asks for a migration plan instead of a direct `UseQuorumQueues()`. The broker refuses a declaration with another queue type.
+- `wolverine`: the facts are checked against WolverineFx 6.65.1.
+
 ## [2.1.0] - 2026-11-19
 
 Six new skills for the .NET back end. They give the current form of each technique, because the training data of a model holds older forms.

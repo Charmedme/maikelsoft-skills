@@ -45,7 +45,7 @@ def run_one(job, args):
     (run_dir / "prompt.md").write_text(prompt, encoding="utf-8")
     cmd = ["claude", "-p", prompt, "--model", args.model, "--permission-mode", "acceptEdits",
            "--allowedTools", "Read", "Write", "Edit", "Glob", "Grep", "Bash(python3:*)", "Bash(ls:*)",
-           "--disallowedTools", "Agent", "Skill", "WebFetch", "WebSearch",
+           "--disallowedTools", "Agent", "Monitor", "Skill", "WebFetch", "WebSearch",
            "--output-format", "stream-json", "--verbose", "--max-budget-usd", str(args.budget)]
     if variant == "skill":
         cmd += ["--add-dir", str(plugin)]
@@ -68,7 +68,9 @@ def run_one(job, args):
         except json.JSONDecodeError:
             continue
         if ev.get("type") == "result":
-            final, cost = ev.get("result") or "", ev.get("total_cost_usd") or 0.0
+            cost = ev.get("total_cost_usd") or cost
+            if len(ev.get("result") or "") >= len(final):
+                final = ev.get("result") or ""
     meta = {"case": case, "variant": variant, "exit": code, "cost_usd": cost, "seconds": round(time.time() - t0), "model": args.model}
     (run_dir / "meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
     (run_dir / "final.md").write_text(final or f"(no final message, exit {code})", encoding="utf-8")

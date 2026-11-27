@@ -74,7 +74,7 @@ def pinned_dirs(arm, args):
 def command(prompt, arm, args):
     cmd = ["claude", "-p", prompt, "--model", args.model, "--permission-mode", "bypassPermissions",
            "--setting-sources", "project,local", "--output-format", "stream-json", "--verbose",
-           "--max-budget-usd", str(args.budget)]
+           "--disallowedTools", "Monitor", "--max-budget-usd", str(args.budget)]
     for folder in pinned_dirs(arm, args):
         cmd += ["--plugin-dir", folder]
     return cmd
@@ -90,13 +90,16 @@ def environment():
 
 
 def final_message(stream):
+    """The longest result text: a turn after a task notification must not replace the answer (dev-stack E35)."""
     final = ""
     for line in stream.read_text(encoding="utf-8", errors="ignore").splitlines():
         if '"type":"result"' in line.replace(" ", ""):
             try:
-                final = json.loads(line).get("result", final)
+                text = json.loads(line).get("result") or ""
             except ValueError:
-                pass
+                continue
+            if len(text) >= len(final):
+                final = text
     return final
 
 

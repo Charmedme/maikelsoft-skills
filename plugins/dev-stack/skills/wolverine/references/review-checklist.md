@@ -43,13 +43,13 @@ Each check is `tool (<rule ID>)` when a tool finds it, or `judge` when a reviewe
 | 14 | The message store, the EF Core transactions, `AutoApplyTransactions`, the durable outbox on all senders, and the durable inbox on business listeners are all configured. | judge |
 | 15 | Endpoints and background services use `IDbContextOutbox<T>` or `InvokeAsync`. No `SaveChangesAsync` followed by `PublishAsync`. | judge |
 | 16 | Business duplicates are handled by a natural key or `DeduplicationId`, not by the inbox window alone. | judge |
-| 17 | `InboxStaleTime` is longer than the longest handler with its retries. | judge |
+| 17 | `InboxStaleTime` is not set, except in `DurabilityMode.ServerlessWithOutbox` (there longer than the longest handler). | judge |
 
 ## Transport
 
 | # | Check | Type |
 |---|-------|------|
-| 18 | `UseQuorumQueues()` and both publisher confirm flags on the RabbitMQ transport. WolverineFx 6.51.3 or later. Quorum queues of a durable inbox have delivery limit -1 (`DeliveryLimitForDurableQuorumQueues(-1)` or a broker policy). | judge |
+| 18 | Both publisher confirm flags on the RabbitMQ transport. `UseQuorumQueues()` for new queues. Existing classic queues move only with a migration plan. WolverineFx 6.51.3 or later. Quorum queues of a durable inbox have delivery limit -1 (`DeliveryLimitForDurableQuorumQueues(-1)` or a broker policy). | judge |
 | 19 | The topology is declared (`AutoProvision()` or by operations). The exchange type fits the consumers (fanout is the default). A queue or exchange that another team owns is `ExternallyOwned()`. | judge |
 | 20 | One dead-letter queue per service with `CustomizeDeadLetterQueueing`. | judge |
 | 21 | The listener mode fits each endpoint. No `BufferedInMemory` for business messages. | judge |

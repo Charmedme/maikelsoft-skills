@@ -51,7 +51,7 @@ def extract_once(run, model):
     work = f"docs/work/{case['slug']}"
     qs = "\n".join(f"- {k}: {' | '.join(v)}" for k, v in case["questions"].items())
     cmd = ["claude", "-p", PROMPT.format(work=work, questions=qs), "--model", model, "--permission-mode", "default",
-           "--allowedTools", "Read", "Glob", "Grep", "--disallowedTools", "Write", "Edit", "Bash", "Agent", "Skill",
+           "--allowedTools", "Read", "Glob", "Grep", "--disallowedTools", "Write", "Edit", "Bash", "Agent", "Monitor", "Skill",
            "--output-format", "json"]
     r = subprocess.run(cmd, cwd=run / "repo", env=child_env(), capture_output=True, text=True, timeout=900)
     try:

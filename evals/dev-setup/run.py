@@ -74,7 +74,8 @@ def turn(cmd: list, repo: pathlib.Path, env: dict, stdin: str, out: pathlib.Path
         except ValueError:
             continue
         session = item.get("session_id", session)
-        if item.get("type") == "result":
+        # The longest result: a turn after a task notification must not replace the answer (dev-stack E35).
+        if item.get("type") == "result" and len(item.get("result") or "") >= len(result):
             result = item.get("result", "") or ""
     return session, result
 
@@ -93,11 +94,12 @@ def start(run: pathlib.Path, ev: dict, variant: str, args) -> str:
     if login.is_file():
         (home / ".claude" / ".credentials.json").symlink_to(login)
     env.update(HOME=str(home), GIT_AUTHOR_NAME="Eval", GIT_AUTHOR_EMAIL="eval@example.com",
-               GIT_COMMITTER_NAME="Eval", GIT_COMMITTER_EMAIL="eval@example.com")
+               GIT_COMMITTER_NAME="Eval", GIT_COMMITTER_EMAIL="eval@example.com",
+               CLAUDE_CODE_DISABLE_BACKGROUND_TASKS="1")
     # Only the settings of the run repository: no plugins, hooks, or skills of the person who runs the evals.
     base = ["claude", "-p", "--model", args.model, "--setting-sources", "project,local",
             "--permission-mode", "bypassPermissions",
-            "--disallowedTools", "Agent", "Skill", "--output-format", "stream-json", "--verbose",
+            "--disallowedTools", "Agent", "Skill", "Monitor", "--output-format", "stream-json", "--verbose",
             "--max-budget-usd", str(args.budget)]
     log = [f"# Transcript: {ev['name']} / {variant} / {run.name}\n", f"## Human\n\n{ev['request']}\n"]
     session, message = turn(base, repo, env, prompt_for(ev, variant, repo, data), run / "turn-1.jsonl", args.timeout)

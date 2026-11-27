@@ -2,8 +2,8 @@
 name: wolverine
 description: Messaging code with Wolverine 6 (WolverineFx) in .NET 9 and 10 services. Use when code or a review touches UseWolverine, message handlers, IMessageBus, InvokeAsync, SendAsync, PublishAsync, cascading messages, the durable outbox and inbox on EF Core with PostgreSQL or SQL Server, AutoApplyTransactions, IDbContextOutbox, error policies and retries, the dead-letter queue, local queues, scheduled messages, code generation (TypeLoadMode, codegen write), tracked session tests, or the Wolverine RabbitMQ transport. Not for raw RabbitMQ.Client or EasyNetQ code and broker topology (dev-stack:rabbitmq), DbContext design (dev-stack:efcore), Wolverine.HTTP endpoints, Marten, or MassTransit and NServiceBus.
 metadata:
-  verified: "2026-10-27"
-  versions: "WolverineFx 6.56.0 (6.51.3 or later), JasperFx 2.96, RabbitMQ 4.3, EF Core 10, .NET 9 and 10"
+  verified: "2026-11-23"
+  versions: "WolverineFx 6.65.1 (6.51.3 or later), RabbitMQ 4.3, EF Core 10, .NET 9 and 10"
 ---
 
 # Wolverine
@@ -98,11 +98,13 @@ private static async Task<Created<OrderResponse>> CreateAsync(
 }
 ```
 
-13. The durable inbox removes duplicates by envelope ID for `Durability.KeepAfterMessageHandling` (5 minutes by default). For business duplicates, use a natural key (MSG-10) or `DeliveryOptions.DeduplicationId`. Keep `Durability.InboxStaleTime` longer than the longest handler with its retries.
+13. The durable inbox removes duplicates by envelope ID for `Durability.KeepAfterMessageHandling` (5 minutes by default). For business duplicates, use a natural key (MSG-10) or `DeliveryOptions.DeduplicationId`. Do not set `Durability.InboxStaleTime`. The Wolverine documentation says that it is not necessary. A heartbeat keeps a running handler from release. The exception is `DurabilityMode.ServerlessWithOutbox`: there it must be longer than the longest handler.
 
 ### RabbitMQ transport
 
-14. Call `.UseQuorumQueues()` and `.ConfigureChannelCreation(o => { o.PublisherConfirmationsEnabled = true; o.PublisherConfirmationTrackingEnabled = true; })`. The transport declares classic queues and turns confirms off by default. Wolverine deletes the outbox row when it writes the frame. So the outbox alone does not protect against a broker refusal (Wolverine documentation).
+14. Call `.ConfigureChannelCreation(o => { o.PublisherConfirmationsEnabled = true; o.PublisherConfirmationTrackingEnabled = true; })`. The transport turns confirms off by default, and Wolverine deletes the outbox row when it writes the frame. So the outbox alone does not protect against a broker refusal (Wolverine documentation).
+
+    The transport declares classic queues by default. Quorum queues are a decision of this stack (MSG-07 in `dev-stack:rabbitmq`), not a Wolverine requirement: call `.UseQuorumQueues()` in a new service. A queue that already exists on the broker keeps its type. A declaration with another type fails with `PRECONDITION_FAILED`. So for existing classic queues, add `UseQuorumQueues()` only with a migration (a new queue, drain the old one) as a separate change. In a review, report the missing call as a migration to plan, not as a defect to fix in the change.
 
     Use WolverineFx 6.51.3 or later with the RabbitMQ transport and the durable inbox. Versions before 6.51.3 can lose messages after a broker outage (issue GH-5123). On quorum queues that a durable inbox reads, add `.DeliveryLimitForDurableQuorumQueues(-1)` on the transport, or `.DeliveryLimit(-1)` on one listener. Each restart, reconnect, or shutdown returns the in-flight messages to the queue, and RabbitMQ 4 drops or dead-letters a message at its 21st return. The inbox owns the retries (MSG-08).
 
@@ -123,7 +125,7 @@ The full `Program.cs` is in `references/configuration.md`.
 
 ### Tests
 
-20. Test with tracked sessions: `host.TrackActivity().Timeout(30.Seconds()).InvokeMessageAndWaitAsync(message)`, then assert on `session.Sent`, `session.MovedToErrorQueue`, or `session.AllRecordsInOrder(...)`. Get the host with `factory.Services.GetRequiredService<IHost>()`. Do not use `Task.Delay`. A test of an error policy uses `SendMessageAndWaitAsync`: `InvokeMessageAndWaitAsync` runs inline, so it passes with any policy.
+20. Test with tracked sessions: `host.TrackActivity().Timeout(30.Seconds()).InvokeMessageAndWaitAsync(message)`, then assert on `session.Sent`, `session.MovedToErrorQueue`, or `session.AllRecordsInOrder(...)`. Get the host with `factory.Services.GetRequiredService<IHost>()`. Do not use `Task.Delay`. A test of an error policy uses `SendMessageAndWaitAsync`. `InvokeMessageAndWaitAsync` runs inline: it applies only `Retry` and `RetryWithCooldown`, and throws to the test after them. Scheduled retries, requeue, and the error queue apply only to a message from a queue.
 21. In tests, call `services.DisableAllExternalWolverineTransports()` and `services.RunWolverineInSoloMode()`. When `Program.cs` ends with `RunJasperFxCommands(args)`, set `JasperFxEnvironment.AutoStartHost = true` (namespace `JasperFx.CommandLine`) before you create the `WebApplicationFactory`. Without it, the factory fails with "The server has not been started". Detail: `references/testing.md`.
 
 ### Review
@@ -142,7 +144,7 @@ Wolverine 6 defects build and pass the tests, and show only in production. In a 
 | `public static bool Handle(CheckStock m)` and `InvokeAsync<bool>(...)` | `public static StockResult Handle(CheckStock m)` with `record StockResult(bool InStock)` |
 | `class OrderPlacedConsumer : IConsumer<OrderPlaced>` with `ConsumeContext<T>` | `public static class OrderPlacedHandler { public static void Handle(OrderPlaced message, ...) }` |
 | `await db.SaveChangesAsync(ct); await bus.PublishAsync(evt);` in an endpoint | `IDbContextOutbox<T>`: `PublishAsync`, then `SaveChangesAndFlushMessagesAsync(ct)` |
-| `opts.UseRabbitMq(uri).AutoProvision();` and nothing else | `.UseQuorumQueues().DeliveryLimitForDurableQuorumQueues(-1).ConfigureChannelCreation(o => { both confirm flags }).AutoProvision()` |
+| `opts.UseRabbitMq(uri).AutoProvision();` and nothing else in a new service | `.UseQuorumQueues().DeliveryLimitForDurableQuorumQueues(-1).ConfigureChannelCreation(o => { both confirm flags }).AutoProvision()` |
 | `x.Production.GeneratedCodeMode = TypeLoadMode.Dynamic` | `TypeLoadMode.Static` and `codegen write` in CI |
 | A handler that injects `ICarrierClient` from `AddHttpClient<ICarrierClient, HttpCarrierClient>(...)` | `opts.CodeGeneration.AlwaysUseServiceLocationFor<ICarrierClient>()` with a reason |
 | `opts.RestoreV5Defaults()` to make the host start | Fix the registrations (rule 4), or `AlwaysUseServiceLocationFor<T>()` for one type with a reason |
@@ -189,7 +191,7 @@ The full list is in `references/review-checklist.md`.
 2. No `RestoreV5Defaults()`. tool (WOLV-RESTORE-V5)
 3. Endpoints and background services use `IDbContextOutbox<T>` or `InvokeAsync`. No `SaveChangesAsync` followed by `PublishAsync`. judge
 4. The durable outbox has all its parts (rule 11). judge
-5. The RabbitMQ transport has `UseQuorumQueues()` and both confirm flags, and the topology is declared. WolverineFx is 6.51.3 or later, and quorum queues of a durable inbox have delivery limit -1. Queues of another team are `ExternallyOwned()`. judge
+5. The RabbitMQ transport has both confirm flags, and the topology is declared. New queues are quorum queues. Existing classic queues move only with a migration plan (rule 14). WolverineFx is 6.51.3 or later, and quorum queues of a durable inbox have delivery limit -1. Queues of another team are `ExternallyOwned()`. judge
 6. Handlers return records, tuples, or `OutgoingMessages`, never a primitive. judge
 7. Handlers do not catch and log exceptions. judge
 8. Error policies exist for each exception type. Business errors go to the error queue at once. judge

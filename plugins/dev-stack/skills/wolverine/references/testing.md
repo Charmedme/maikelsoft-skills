@@ -49,7 +49,7 @@ var session = await host.TrackActivity()
 Assert.IsNotNull(session.Sent.SingleMessage<OrderShipped>());
 ```
 
-- `InvokeMessageAndWaitAsync`: runs the handler inline. An exception goes to the test.
+- `InvokeMessageAndWaitAsync`: runs the handler inline. It applies only `Retry` and `RetryWithCooldown`, then the exception goes to the test. Scheduled retries, requeue, and the error queue do not apply.
 - `SendMessageAndWaitAsync`: sends through the routed endpoint, so the error policies apply.
 - `ExecuteAndWaitAsync(ctx => ...)`: runs your own code, for example an HTTP call, and waits for the messages that it starts.
 - The session throws on a handler exception. Add `.DoNotAssertOnExceptionsDetected()` when the test expects one.
