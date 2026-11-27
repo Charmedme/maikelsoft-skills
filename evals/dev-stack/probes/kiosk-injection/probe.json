@@ -1,0 +1,26 @@
+{
+  "target": "tests",
+  "folder": "EvalProbes",
+  "flaws": {
+    "K1": [
+      "K1_Login_SqlInEmail_DoesNotSignIn"
+    ],
+    "K2": [
+      "K2_Search_UnionQuery_DoesNotReturnUserTable"
+    ],
+    "N2": [
+      "N2_Category_UnionQuery_DoesNotReturnUserTable"
+    ],
+    "K7": [
+      "K7_ReviewUpdate_SelectorObject_ChangesNoReviewOfOthers"
+    ],
+    "K11": [
+      "K11_Redirect_AllowedUrlInsideForeignUrl_IsRejected"
+    ]
+  },
+  "decoys": {
+    "D1": [
+      "D1_Decoy_SupplierFilter_StillWorksAndTreatsInputAsValue"
+    ]
+  }
+}

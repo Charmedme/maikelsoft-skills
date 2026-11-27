@@ -184,7 +184,7 @@ Each stage 2 case follows the hard-case rules of dev-stack. It has a business re
 | `evals/dev-stack/cases/secure-coding-*.json`, `web-security-*.json`, `api-design-review-juice.json` | The case objects |
 | `evals/dev-stack/probes/kiosk-*/` | The hidden exploit tests |
 | `evals/dev-stack/planted/*-review-hard.json` | Planted defects and decoys |
-| `evals/dev-stack/selftest/kiosk-*/` | The `naive` and `good` overlays |
+| `evals/dev-stack/selftest/<case>/` | The `naive` and `good` overlays of each hard fix case. The folder has the name of the case, because `selftest.py` finds the case by this name |
 | `evals/security/codefix/` | The anonymized challenges, the answer key, and `codefix.py` |
 | `docs/work/security-evals/results.md` | The results |
 

@@ -1,0 +1,13 @@
+.products {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.product {
+  border: 1px solid #d8dce5;
+  border-radius: 0.5rem;
+  padding: 1rem;
+}

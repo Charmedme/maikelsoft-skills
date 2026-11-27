@@ -1,0 +1,54 @@
+{
+  "target": "tests",
+  "folder": "EvalProbes",
+  "flaws": {
+    "K3": [
+      "K3_Basket_OfOtherCustomer_IsNotReadable"
+    ],
+    "K4": [
+      "K4_Register_WithAdminRole_GetsNoAdminRole"
+    ],
+    "K5": [
+      "K5_ProductUpdate_Anonymous_IsRejected",
+      "K5_ProductUpdate_Customer_IsRejected"
+    ],
+    "K6": [
+      "K6_Review_AuthorInBody_IsNotUsed"
+    ],
+    "K10": [
+      "K10_ShopSummary_Anonymous_IsRejected",
+      "K10_ShopSummary_Customer_IsRejected",
+      "K10_AccessLogs_AreNotPublic",
+      "K10_FileFolder_HasNoDirectoryListing"
+    ],
+    "N3": [
+      "N3_JsonPatch_Role_IsNotWritable"
+    ],
+    "N4": [
+      "N4_Me_DoesNotExposeSecrets"
+    ],
+    "N5": [
+      "N5_GuestOrder_IsNotReadableByCustomer"
+    ],
+    "N6": [
+      "N6_AdminReviewDelete_Anonymous_IsRejected",
+      "N6_AdminReviewDelete_Customer_IsRejected"
+    ],
+    "N16": [
+      "N16_BasketCache_DoesNotServeOtherCustomer"
+    ]
+  },
+  "guards": {
+    "N5-guard": [
+      "N5_OrderOfOtherCustomer_IsNotReadable"
+    ]
+  },
+  "decoys": {
+    "D2": [
+      "D2_Decoy_AdminUserList_KeepsServerSidePolicy"
+    ],
+    "D8": [
+      "D8_Decoy_PublicProductList_StaysCached"
+    ]
+  }
+}

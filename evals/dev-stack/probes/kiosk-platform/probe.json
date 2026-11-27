@@ -1,0 +1,59 @@
+{
+  "target": "tests",
+  "folder": "EvalProbes",
+  "flaws": {
+    "N7": [
+      "N7_SignIn_ReturnUrlToOtherHost_StaysLocal"
+    ],
+    "N8": [
+      "N8_InvoiceDownload_PathOutsideInvoiceFolder_IsRejected"
+    ],
+    "N9": [
+      "N9_Upload_ActiveContentWithImageType_IsNotServedAsActiveContent"
+    ],
+    "N10": [
+      "N10_XmlOrder_ExternalEntity_IsNotResolved"
+    ],
+    "N11": [
+      "N11_JsonOrder_TypeName_DoesNotCreateAppType"
+    ],
+    "N12": [
+      "N12_ProfileImage_InternalAddress_IsNotFetched"
+    ],
+    "N13": [
+      "N13_ChangeEmail_CrossSiteFormWithoutToken_IsRejected",
+      "N13_SessionCookie_IsNotSentCrossSite"
+    ],
+    "N14": [
+      "N14_Cors_ForeignOrigin_GetsNoCredentialedAccess"
+    ],
+    "N15": [
+      "N15_Metrics_SpoofedForwardedFor_IsRejected",
+      "N15_LoginRateLimit_SpoofedForwardedFor_StillLimits"
+    ],
+    "N17": [
+      "N17_UnhandledError_InProduction_HidesDetails"
+    ],
+    "N20": [
+      "N20_RequestLogs_DoNotContainPasswords"
+    ],
+    "N22": [
+      "N22_SupportHub_OtherCustomer_CannotReadConversation"
+    ],
+    "N23": [
+      "N23_Order_NegativeQuantity_IsRejected",
+      "N23_Review_RatingOutOfRange_IsRejected"
+    ]
+  },
+  "decoys": {
+    "D5": [
+      "D5_Decoy_StaffSignIn_KeepsLocalRedirect"
+    ],
+    "D6": [
+      "D6_Decoy_PriceList_StillRejectsDocumentTypes"
+    ],
+    "D7": [
+      "D7_Decoy_WorkerTrustsOnlyItsKnownProxy"
+    ]
+  }
+}

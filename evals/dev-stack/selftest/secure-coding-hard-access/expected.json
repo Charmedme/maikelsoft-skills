@@ -1,0 +1,50 @@
+{
+  "naive": {
+    "tests_pass": true,
+    "K3": true,
+    "K4": true,
+    "K5": false,
+    "K6": true,
+    "K10": false,
+    "N3": false,
+    "N4": true,
+    "N5": false,
+    "N6": false,
+    "N16": true,
+    "D2": true,
+    "D8": true,
+    "N5-guard": true
+  },
+  "good": {
+    "tests_pass": true,
+    "K3": true,
+    "K4": true,
+    "K5": true,
+    "K6": true,
+    "K10": true,
+    "N3": true,
+    "N4": true,
+    "N5": true,
+    "N6": true,
+    "N16": true,
+    "D2": true,
+    "D8": true,
+    "N5-guard": true
+  },
+  "fixture": {
+    "tests_pass": true,
+    "K3": false,
+    "K4": false,
+    "K5": false,
+    "K6": false,
+    "K10": false,
+    "N3": false,
+    "N4": false,
+    "N5": false,
+    "N6": false,
+    "N16": false,
+    "D2": true,
+    "D8": true,
+    "N5-guard": true
+  }
+}

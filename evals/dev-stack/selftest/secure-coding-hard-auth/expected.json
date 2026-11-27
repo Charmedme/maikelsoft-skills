@@ -1,0 +1,32 @@
+{
+  "naive": {
+    "tests_pass": true,
+    "K8": false,
+    "K9": false,
+    "N1": false,
+    "N18": true,
+    "N19": true,
+    "N21": false,
+    "D4": true
+  },
+  "good": {
+    "tests_pass": true,
+    "K8": true,
+    "K9": true,
+    "N1": true,
+    "N18": true,
+    "N19": true,
+    "N21": true,
+    "D4": true
+  },
+  "fixture": {
+    "tests_pass": true,
+    "K8": false,
+    "K9": false,
+    "N1": false,
+    "N18": false,
+    "N19": false,
+    "N21": false,
+    "D4": true
+  }
+}

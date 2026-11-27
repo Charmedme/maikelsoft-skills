@@ -1,0 +1,1 @@
+src/Kiosk.Api/keys/key-3f2b8c1e-5a47-4d9b-9e21-6c0d7a4b1f10.xml
